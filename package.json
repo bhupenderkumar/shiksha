@@ -9,9 +9,16 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "supabase:migration": "supabase db push",
-    "supabase:generate-types": "supabase gen types typescript --local > src/types/supabase.ts"
+    "supabase:generate-types": "supabase gen types typescript --local > src/types/supabase.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
+    "prisma:migrate": "prisma migrate deploy",
+    "sync:supabase": "ts-node scripts/sync-supabase.ts",
+    "db:sync": "npm run prisma:generate && npm run prisma:migrate && npm run policies:generate && npm run sync:supabase",
+    "policies:generate": "ts-node scripts/generate-policies.ts"
   },
   "dependencies": {
+    "@prisma/client": "^5.6.0",
     "@radix-ui/react-dialog": "^1.0.5",
     "@radix-ui/react-dropdown-menu": "^2.1.4",
     "@radix-ui/react-label": "^2.1.1",
@@ -25,6 +32,7 @@
     "date-fns": "^4.1.0",
     "lucide-react": "^0.344.0",
     "next-themes": "^0.4.4",
+    "prisma": "^5.6.0",
     "react": "^18.3.1",
     "react-day-picker": "^9.5.0",
     "react-dom": "^18.3.1",
@@ -47,6 +55,7 @@
     "supabase": "^2.2.1",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.3.3",
-    "vite": "^5.1.4"
+    "vite": "^5.1.4",
+    "ts-node": "^10.9.1"
   }
 }

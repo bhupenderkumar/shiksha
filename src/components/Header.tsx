@@ -1,57 +1,78 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth';
-import { Bell, Moon, Sun } from 'lucide-react';
-import { useTheme } from 'next-themes';
+import { LogOut, User } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { useState } from 'react';
 
-export function Header() {
+const Header = () => {
+  const router = useRouter();
   const { profile, signOut } = useAuth();
-  const { setTheme, theme } = useTheme();
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 max-w-screen-2xl items-center justify-between px-4 md:px-8 lg:px-12">
-        <div className="flex items-center gap-4">
-          <span className="text-xl font-bold tracking-tight">Shiksha</span>
-        </div>
+    <header className="fixed w-full top-0 z-50 px-4 py-2">
+      <nav className="glass-effect px-6 py-4 rounded-2xl max-w-7xl mx-auto">
+        <div className="flex items-center justify-between">
+          <Link href="/" className="flex items-center space-x-2 hover-lift">
+            <span className="text-3xl font-bold bg-gradient-to-r from-white to-gray-100 bg-clip-text text-transparent">
+              Shiksha
+            </span>
+          </Link>
 
-        <div className="flex items-center gap-3 md:gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative hover:bg-transparent"
-            aria-label="Notifications"
-          >
-            <Bell className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-            className="hover:bg-transparent"
-            aria-label="Toggle theme"
-          >
-            <Sun className="h-5 w-5 rotate-0 scale-100 transition-all text-muted-foreground hover:text-foreground dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all text-muted-foreground hover:text-foreground dark:rotate-0 dark:scale-100" />
-          </Button>
-
-          <div className="flex items-center gap-3 pl-2 md:pl-4 border-l">
-            <Avatar className="h-8 w-8 ring-2 ring-background">
-              <AvatarImage src={profile?.avatar} alt={profile?.name || 'User'} />
-              <AvatarFallback className="bg-primary/10 text-primary">
-                {profile?.name?.charAt(0) || 'U'}
-              </AvatarFallback>
-            </Avatar>
-            <div className="hidden md:block">
-              <p className="text-sm font-medium leading-none mb-1">{profile?.name}</p>
-              <p className="text-xs text-muted-foreground capitalize">
-                {profile?.role}
-              </p>
-            </div>
+          <div className="flex items-center space-x-8">
+            <NavLink href="/" text="Home" active={router.pathname === '/'} />
+            <NavLink href="/courses" text="Courses" active={router.pathname === '/courses'} />
+            <NavLink href="/about" text="About" active={router.pathname === '/about'} />
+            {profile ? (
+              <div className="relative">
+                <button
+                  className="flex items-center space-x-2"
+                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                >
+                  <Avatar>
+                    <AvatarImage src={profile.avatar} alt={profile.name} />
+                    <AvatarFallback>{profile.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-white font-medium">{profile.name}</span>
+                </button>
+                {showProfileMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1">
+                    <Link href="/profile" className="block px-4 py-2 text-gray-800 hover:bg-gray-100">
+                      <User className="mr-2 h-4 w-4" />
+                      Profile
+                    </Link>
+                    <button
+                      onClick={signOut}
+                      className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button className="px-6 py-2.5 rounded-xl glass-effect hover-lift text-white font-medium">
+                Sign In
+              </button>
+            )}
           </div>
         </div>
-      </div>
+      </nav>
     </header>
   );
-}
+};
+
+const NavLink = ({ href, text, active }: { href: string; text: string; active: boolean }) => (
+  <Link
+    href={href}
+    className={`nav-link text-sm font-medium ${
+      active ? 'text-white active' : 'text-gray-200 hover:text-white'
+    }`}
+  >
+    {text}
+  </Link>
+);
+
+export default Header;

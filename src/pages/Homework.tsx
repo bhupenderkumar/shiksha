@@ -1,55 +1,32 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/lib/auth';
-import { supabase } from '@/lib/supabase';
+import { useAuth } from '../lib/auth';
 import { toast } from 'react-hot-toast';
-import { Calendar } from "@/components/ui/calendar";
-import { FileUploader } from '@/components/FileUploader';
-import { ImageCarousel } from '@/components/ImageCarousel';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Calendar } from '../components/ui/calendar';
+import { FileUploader } from '../components/FileUploader';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '../components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+} from '../components/ui/dialog';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
+import type { Homework } from '@prisma/client';
+import { loadHomeworks, loadAllHomeworks, createOrUpdateHomework, deleteHomework } from '../services/homeworkService';
+import HomeworkCard from '../components/HomeworkCard';
 
-interface Assignment {
-  id: string;
-  subject: string;
-  title: string;
-  description: string;
-  assignment_date: string;
-  due_date: string; // Add this field
-  created_at: string;
-  updated_at: string;
-  created_by: string;
-  class_id: string;
-  files?: AssignmentFile[];
-}
-
-interface AssignmentFile {
-  id: string;
-  assignment_id: string;
-  file_path: string;
-  file_type: 'image' | 'pdf';
-  file_name: string;
-  uploaded_by: string;
-  uploaded_at: string;
-}
-
-const Homework = () => {
+const HomeworkComponent = () => {
   const { profile } = useAuth();
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [allAssignments, setAllAssignments] = useState<Assignment[]>([]);
+  const [homeworks, setHomeworks] = useState<Homework[]>([]);
+  const [allHomeworks, setAllHomeworks] = useState<Homework[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [loading, setLoading] = useState(false);
-  const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
+  const [editingHomework, setEditingHomework] = useState<Homework | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     subject: '',
@@ -57,168 +34,85 @@ const Homework = () => {
     description: '',
     assignment_date: new Date().toISOString().split('T')[0],
     due_date: new Date().toISOString().split('T')[0],
-    class_id: '', // Add this line
+    class_id: '',
   });
 
   const isEditable = profile?.role === 'admin' || profile?.role === 'teacher';
 
   useEffect(() => {
-    loadAssignments(selectedDate);
-    if (isEditable) {
-      loadAllAssignments();
-    }
+    const fetchHomeworks = async () => {
+      setHomeworks(await loadHomeworks(selectedDate, isEditable));
+      if (isEditable) {
+        setAllHomeworks(await loadAllHomeworks());
+      }
+    };
+    fetchHomeworks();
   }, [selectedDate, isEditable]);
 
-  const loadAssignments = async (date: Date) => {
-    try {
-      setLoading(true);
-      const dateStr = date.toISOString().split('T')[0];
-
-      let query = supabase
-        .from('assignments')
-        .select(`
-          *,
-          assignment_files (
-            id,
-            file_path,
-            file_type,
-            file_name,
-            uploaded_at,
-            uploaded_by
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (!isEditable) {
-        query = query.eq('assignment_date', dateStr);
-      }
-
-      const { data, error } = await query;
-      
-      if (error) throw error;
-      setAssignments(data || []);
-    } catch (error) {
-      toast.error('Failed to load assignments');
-      console.error('Error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadAllAssignments = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('assignments')
-      .select(`
-        *,
-        assignment_files (*)
-      `)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      toast.error('Failed to load all assignments');
-      console.error(error);
-    } else {
-      setAllAssignments(data || []);
-    }
-    setLoading(false);
-  };
-
-  // Add this function to handle edit initialization
-  const handleEdit = (assignment: Assignment) => {
-    setEditingAssignment(assignment);
+  const handleEdit = (homework: Homework) => {
+    setEditingHomework(homework);
     setFormData({
-      subject: assignment.subject,
-      title: assignment.title,
-      description: assignment.description,
-      assignment_date: new Date(assignment.assignment_date).toISOString().split('T')[0],
-      due_date: assignment.due_date ? new Date(assignment.due_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-      class_id: assignment.class_id || '',
+      subject: homework.subject,
+      title: homework.title,
+      description: homework.description,
+      assignment_date: new Date(homework.assignment_date).toISOString().split('T')[0],
+      due_date: homework.due_date ? new Date(homework.due_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      class_id: homework.class_id || '',
     });
-    setIsDialogOpen(true); // Open dialog when editing
+    setIsDialogOpen(true);
   };
 
-  // Add handleDialogClose
   const handleDialogClose = () => {
     setIsDialogOpen(false);
-    setEditingAssignment(null);
+    setEditingHomework(null);
     resetForm();
   };
 
-  // Update the handleSubmit function
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    try {
-      setLoading(true);
+    const homeworkData = {
+      subject: formData.subject,
+      title: formData.title,
+      description: formData.description,
+      assignment_date: formData.assignment_date,
+      due_date: formData.due_date,
+      class_id: formData.class_id || null,
+      updated_at: new Date().toISOString()
+    };
 
-      const assignmentData = {
-        subject: formData.subject,
-        title: formData.title,
-        description: formData.description,
-        assignment_date: formData.assignment_date,
-        due_date: formData.due_date,
-        class_id: formData.class_id || null,
-        updated_at: new Date().toISOString()
-      };
-
-      const { error } = editingAssignment
-        ? await supabase
-            .from('assignments')
-            .update(assignmentData)
-            .eq('id', editingAssignment.id)
-        : await supabase
-            .from('assignments')
-            .insert([{ ...assignmentData, created_by: profile?.id }]);
-
-      if (error) throw error;
-
-      toast.success(
-        `Assignment ${editingAssignment ? 'updated' : 'created'} successfully`
-      );
-      setEditingAssignment(null);
-      resetForm();
-      loadAssignments(selectedDate);
-      if (isEditable) {
-        loadAllAssignments();
-      }
-      setIsDialogOpen(false);
-    } catch (error) {
-      toast.error('Failed to save assignment');
-      console.error(error);
-    } finally {
-      setLoading(false);
+    await createOrUpdateHomework(homeworkData, editingHomework?.id);
+    setEditingHomework(null);
+    resetForm();
+    setHomeworks(await loadHomeworks(selectedDate, isEditable));
+    if (isEditable) {
+      setAllHomeworks(await loadAllHomeworks());
     }
+    setIsDialogOpen(false);
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this assignment?')) {
+    if (!window.confirm('Are you sure you want to delete this homework?')) {
       return;
     }
-
-    const { error } = await supabase.from('assignments').delete().eq('id', id);
-
-    if (error) {
-      toast.error('Failed to delete assignment');
-      console.error(error);
-    } else {
-      toast.success('Assignment deleted successfully');
-      loadAssignments(selectedDate);
+    await deleteHomework(id);
+    setHomeworks(await loadHomeworks(selectedDate, isEditable));
+    if (isEditable) {
+      setAllHomeworks(await loadAllHomeworks());
     }
   };
 
   const handleDeleteFile = async (fileId: string) => {
     try {
       const { error } = await supabase
-        .from('assignment_files')
+        .from('homework_files')
         .delete()
         .eq('id', fileId);
 
       if (error) throw error;
-      
-      // Reload assignments to reflect changes
-      loadAssignments(selectedDate);
+
+      loadHomeworks(selectedDate);
       if (isEditable) {
-        loadAllAssignments();
+        loadAllHomeworks();
       }
     } catch (error) {
       console.error('Error deleting file:', error);
@@ -233,7 +127,7 @@ const Homework = () => {
       description: '',
       assignment_date: new Date().toISOString().split('T')[0],
       due_date: new Date().toISOString().split('T')[0],
-      class_id: '', // Add this line
+      class_id: '',
     });
   };
 
@@ -242,37 +136,37 @@ const Homework = () => {
       <Tabs defaultValue="daily" className="w-full space-y-8">
         <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
           <TabsTrigger value="daily">📅 Daily View</TabsTrigger>
-          {isEditable && <TabsTrigger value="all">📚 All Assignments</TabsTrigger>}
+          {isEditable && <TabsTrigger value="all">📚 All Homeworks</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="daily">
           <Card>
             <CardHeader>
-              <CardTitle>Daily Assignments</CardTitle>
+              <CardTitle>Daily Homeworks</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid gap-6">
                 <Calendar
                   mode="single"
                   selected={selectedDate}
-                  onSelect={(date) => date && setSelectedDate(date)}
+                  onSelect={(date) => setSelectedDate(date)}
                   className="rounded-md border"
                 />
-                
+
                 {isEditable && (
                   <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
                       <Button onClick={() => {
                         resetForm();
-                        setEditingAssignment(null);
+                        setEditingHomework(null);
                       }}>
-                        Create New Assignment
+                        Create New Homework
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
                         <DialogTitle>
-                          {editingAssignment ? 'Edit Assignment' : 'Create Assignment'}
+                          {editingHomework ? 'Edit Homework' : 'Create Homework'}
                         </DialogTitle>
                       </DialogHeader>
                       <form onSubmit={handleSubmit} className="space-y-4">
@@ -342,19 +236,19 @@ const Homework = () => {
                             />
                           </div>
                         )}
-                        {editingAssignment && (
+                        {editingHomework && (
                           <div className="mt-4 border-t pt-4">
-                            <Label className="block text-sm font-medium text-gray-700">Assignment Files</Label>
+                            <Label className="block text-sm font-medium text-gray-700">Homework Files</Label>
                             <FileUploader
-                              assignmentId={editingAssignment.id}
-                              onUploadComplete={() => loadAssignments(selectedDate)}
-                              existingFiles={editingAssignment.files}
+                              homeworkId={editingHomework.id}
+                              onUploadComplete={() => loadHomeworks(selectedDate)}
+                              existingFiles={editingHomework.files}
                               onFileDelete={handleDeleteFile}
                             />
                           </div>
                         )}
                         <Button type="submit" className="mt-4">
-                          {editingAssignment ? 'Update Assignment' : 'Create Assignment'}
+                          {editingHomework ? 'Update Homework' : 'Create Homework'}
                         </Button>
                       </form>
                     </DialogContent>
@@ -365,20 +259,19 @@ const Homework = () => {
                   <div className="flex justify-center items-center h-64">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
                   </div>
-                ) : assignments.length === 0 ? (
+                ) : homeworks.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
-                    No assignments found for this date.
+                    No homeworks found for this date.
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {assignments.map((assignment) => (
-                      <AssignmentCard
-                        key={assignment.id}
-                        assignment={assignment}
+                    {homeworks.map((homework) => (
+                      <HomeworkCard
+                        key={homework.id}
+                        homework={homework}
                         isEditable={isEditable}
-                        onEdit={handleEdit} // Changed from setEditingAssignment to handleEdit
+                        onEdit={handleEdit}
                         onDelete={handleDelete}
-                        onUploadComplete={() => loadAssignments(selectedDate)}
                       />
                     ))}
                   </div>
@@ -392,18 +285,17 @@ const Homework = () => {
           <TabsContent value="all">
             <Card>
               <CardHeader>
-                <CardTitle>All Assignments</CardTitle>
+                <CardTitle>All Homeworks</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {allAssignments.map((assignment) => (
-                    <AssignmentCard
-                      key={assignment.id}
-                      assignment={assignment}
+                  {allHomeworks.map((homework) => (
+                    <HomeworkCard
+                      key={homework.id}
+                      homework={homework}
                       isEditable={isEditable}
-                      onEdit={handleEdit} // Changed from setEditingAssignment to handleEdit
+                      onEdit={handleEdit}
                       onDelete={handleDelete}
-                      onUploadComplete={loadAllAssignments}
                     />
                   ))}
                 </div>
@@ -416,128 +308,4 @@ const Homework = () => {
   );
 };
 
-// Update the AssignmentCard component props type
-interface AssignmentCardProps {
-  assignment: Assignment;
-  isEditable: boolean;
-  onEdit: (assignment: Assignment) => void;
-  onDelete: (id: string) => void;
-  onUploadComplete: () => void;
-}
-
-const AssignmentCard = ({ assignment, isEditable, onEdit, onDelete, onUploadComplete }: AssignmentCardProps) => {
-  const handleFileDelete = async (fileId: string) => {
-    try {
-      const file = assignment.files?.find(f => f.id === fileId);
-      if (!file) return;
-
-      // Delete from storage
-      const { error: storageError } = await supabase.storage
-        .from('assignment-files')
-        .remove([file.file_path]);
-
-      if (storageError) throw storageError;
-
-      // Delete from database
-      const { error: dbError } = await supabase
-        .from('assignment_files')
-        .delete()
-        .eq('id', fileId);
-
-      if (dbError) throw dbError;
-
-      toast.success('File deleted successfully');
-      onUploadComplete();
-    } catch (error) {
-      console.error('Error deleting file:', error);
-      toast.error('Failed to delete file');
-    }
-  };
-
-  return (
-    <Card className="hover:shadow-lg transition-shadow duration-200">
-      <CardContent className="p-6">
-        <div className="space-y-4">
-          {/* Header Section */}
-          <div className="flex justify-between items-start">
-            <div className="space-y-1">
-              <div className="flex items-center space-x-2">
-                <h3 className="text-xl font-semibold text-primary">{assignment.title}</h3>
-                <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
-                  {assignment.subject}
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Created: {new Date(assignment.created_at).toLocaleDateString()}
-              </p>
-            </div>
-            {isEditable && (
-              <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onEdit(assignment)}
-                  className="hover:bg-primary/10"
-                >
-                  <span className="mr-2">✏️</span>
-                  Edit
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => {
-                    if (window.confirm('Are you sure you want to delete this assignment?')) {
-                      onDelete(assignment.id);
-                    }
-                  }}
-                  className="hover:bg-destructive/90"
-                >
-                  <span className="mr-2">🗑️</span>
-                  Delete
-                </Button>
-              </div>
-            )}
-          </div>
-
-          {/* Description Section */}
-          <div className="prose prose-sm max-w-none">
-            <p className="text-gray-600">{assignment.description}</p>
-          </div>
-
-          {/* Due Date Section */}
-          <div className="flex items-center space-x-2 text-sm">
-            <span className="font-medium text-orange-600">Due Date:</span>
-            <span className="text-gray-600">
-              {new Date(assignment.due_date).toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
-            </span>
-          </div>
-
-          {/* Files Section */}
-          {assignment.files && assignment.files.length > 0 && (
-            <div className="mt-4 border-t pt-4">
-              <h4 className="text-sm font-semibold mb-2">Attached Files</h4>
-              <ImageCarousel files={assignment.files} />
-            </div>
-          )}
-
-          {/* File Uploader Section */}
-          {isEditable && (
-            <div className="mt-4 border-t pt-4">
-              <FileUploader
-                assignmentId={assignment.id}
-                onUploadComplete={onUploadComplete}
-              />
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-export default Homework;
+export default HomeworkComponent;

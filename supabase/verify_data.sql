@@ -1,26 +1,45 @@
-    -- Check if there are any fees in the table
-    SELECT COUNT(*) FROM fees;
+-- First verify if there are any fees
+SELECT COUNT(*) FROM fees;
 
-    -- Check if the teacher's role is correctly set
-    SELECT id, role 
-    FROM profiles 
-    WHERE id = 'b0c020ca-b47f-4e04-8eae-9ce60019b504';
-
-    -- Insert a test fee if none exists
-    INSERT INTO fees (
+-- Insert test fees for the teacher
+INSERT INTO fees (
+    id,
     title,
     description,
     amount,
     due_date,
     created_by,
     created_at,
-    updated_at
-    ) VALUES (
-    'Test Fee',
-    'Test Description',
-    100,
-    CURRENT_DATE,
+    updated_at,
+    class_id
+) VALUES 
+(
+    gen_random_uuid(),
+    'Test Fee 1',
+    'Monthly fee for January',
+    1000,
+    '2025-01-04',
     'b0c020ca-b47f-4e04-8eae-9ce60019b504',
     NOW(),
-    NOW()
-    );
+    NOW(),
+    'class-1'
+),
+(
+    gen_random_uuid(),
+    'Test Fee 2',
+    'Monthly fee for February',
+    1500,
+    '2025-02-04',
+    'b0c020ca-b47f-4e04-8eae-9ce60019b504',
+    NOW(),
+    NOW(),
+    'class-1'
+);
+
+-- Verify the inserted data
+SELECT * FROM fees 
+WHERE created_by = 'b0c020ca-b47f-4e04-8eae-9ce60019b504'
+ORDER BY created_at DESC;
+
+-- Verify the policy for the teacher
+SELECT has_table_privilege('authenticated', 'fees', 'SELECT');

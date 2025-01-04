@@ -1,23 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/lib/auth';
-import { supabase } from '@/lib/supabase';
+import { useAuth } from '../lib/auth';
+import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
-import { Calendar } from "@/components/ui/calendar";
-import { FileUploader } from '@/components/FileUploader';
-import { ImageCarousel } from '@/components/ImageCarousel';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Calendar } from '../components/ui/calendar';
+import { FileUploader } from '../components/FileUploader';
+import { ImageCarousel } from '../components/ImageCarousel';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '../components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+} from '../components/ui/dialog';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
 
 interface Fee {
   id: string;
@@ -29,6 +29,11 @@ interface Fee {
   updated_at: string;
   created_by: string;
   class_id: string;
+  user_id: string;
+  month: string;
+  fee_type: string;
+  payment_mode: string;
+  transaction_key: string;
   files?: FeeFile[];
 }
 
@@ -46,7 +51,7 @@ const Fees = () => {
   const { profile } = useAuth();
   const [fees, setFees] = useState<Fee[]>([]);
   const [allFees, setAllFees] = useState<Fee[]>([]);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [loading, setLoading] = useState(false);
   const [editingFee, setEditingFee] = useState<Fee | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -56,6 +61,11 @@ const Fees = () => {
     amount: 0,
     due_date: new Date().toISOString().split('T')[0],
     class_id: '',
+    user_id: '',
+    month: '',
+    fee_type: '',
+    payment_mode: '',
+    transaction_key: '',
   });
   const [selectedUserId, setSelectedUserId] = useState('');
   const [users, setUsers] = useState<Array<{id: string, full_name: string}>>([]);
@@ -134,7 +144,7 @@ const Fees = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from('fees')
-      .select('*') // Removed fee_files selection
+      .select('*')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -154,8 +164,13 @@ const Fees = () => {
       amount: fee.amount,
       due_date: new Date(fee.due_date).toISOString().split('T')[0],
       class_id: fee.class_id || '',
+      user_id: fee.user_id || '',
+      month: fee.month || '',
+      fee_type: fee.fee_type || '',
+      payment_mode: fee.payment_mode || '',
+      transaction_key: fee.transaction_key || '',
     });
-    setSelectedUserId(fee.id || '');
+    setSelectedUserId(fee.user_id || '');
     setIsDialogOpen(true);
   };
 
@@ -176,6 +191,11 @@ const Fees = () => {
         amount: formData.amount,
         due_date: formData.due_date,
         class_id: formData.class_id || null,
+        user_id: selectedUserId || null,
+        month: formData.month,
+        fee_type: formData.fee_type,
+        payment_mode: formData.payment_mode,
+        transaction_key: formData.transaction_key,
         updated_at: new Date().toISOString()
       };
 
@@ -250,6 +270,11 @@ const Fees = () => {
       amount: 0,
       due_date: new Date().toISOString().split('T')[0],
       class_id: '',
+      user_id: '',
+      month: '',
+      fee_type: '',
+      payment_mode: '',
+      transaction_key: '',
     });
     setSelectedUserId('');
   };
@@ -272,7 +297,7 @@ const Fees = () => {
                 <Calendar
                   mode="single"
                   selected={selectedDate}
-                  onSelect={(date) => date && setSelectedDate(date)}
+                  onSelect={(date: Date | undefined) => date && setSelectedDate(date)}
                   className="rounded-md border"
                 />
                 
@@ -360,6 +385,52 @@ const Fees = () => {
                               onChange={(e) => setFormData({ ...formData, class_id: e.target.value })}
                               required
                               placeholder="Enter class ID"
+                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                            />
+                          </div>
+                        )}
+                        <div>
+                          <Label className="block text-sm font-medium text-gray-700">Month</Label>
+                          <Input
+                            type="text"
+                            value={formData.month}
+                            onChange={(e) => setFormData({ ...formData, month: e.target.value })}
+                            required
+                            placeholder="Enter month"
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                          />
+                        </div>
+                        <div>
+                          <Label className="block text-sm font-medium text-gray-700">Fee Type</Label>
+                          <Input
+                            type="text"
+                            value={formData.fee_type}
+                            onChange={(e) => setFormData({ ...formData, fee_type: e.target.value })}
+                            required
+                            placeholder="Enter fee type"
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                          />
+                        </div>
+                        <div>
+                          <Label className="block text-sm font-medium text-gray-700">Payment Mode</Label>
+                          <select
+                            value={formData.payment_mode}
+                            onChange={(e) => setFormData({ ...formData, payment_mode: e.target.value })}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                          >
+                            <option value="">Select Payment Mode</option>
+                            <option value="online">Online</option>
+                            <option value="offline">Offline</option>
+                          </select>
+                        </div>
+                        {formData.payment_mode === 'online' && (
+                          <div>
+                            <Label className="block text-sm font-medium text-gray-700">Transaction Key</Label>
+                            <Input
+                              type="text"
+                              value={formData.transaction_key}
+                              onChange={(e) => setFormData({ ...formData, transaction_key: e.target.value })}
+                              placeholder="Enter transaction key"
                               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                             />
                           </div>
