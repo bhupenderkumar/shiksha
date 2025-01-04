@@ -1,3 +1,4 @@
+import React, { useEffect, ReactNode } from 'react';
 import { create } from 'zustand';
 import { supabase } from './supabase';
 import { User } from '@supabase/supabase-js';
@@ -24,7 +25,6 @@ export const useAuth = create<AuthState>((set) => ({
     if (error) throw error;
   },
   signUp: async (email, password, role, fullName) => {
-    // First, create the auth user
     const { data: authData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -34,7 +34,6 @@ export const useAuth = create<AuthState>((set) => ({
     
     if (authData.user) {
       try {
-        // Then create the profile with the new auth user's ID
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([
@@ -47,7 +46,6 @@ export const useAuth = create<AuthState>((set) => ({
         
         if (profileError) throw profileError;
       } catch (error) {
-        // If profile creation fails, we should clean up the auth user
         await supabase.auth.admin.deleteUser(authData.user.id);
         throw error;
       }
@@ -79,3 +77,17 @@ export const useAuth = create<AuthState>((set) => ({
     }
   },
 }));
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const loadUser = useAuth((state) => state.loadUser);
+
+  useEffect(() => {
+    loadUser();
+  }, [loadUser]);
+
+  return children;
+}; 
