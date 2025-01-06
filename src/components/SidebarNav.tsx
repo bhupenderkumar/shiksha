@@ -2,22 +2,25 @@ import { useState, useEffect } from 'react';
 import { cn } from '../lib/utils';
 import { Button } from './ui/button';
 import { useAuth } from '../lib/auth';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Users, BookOpen, DollarSign, Book, Calendar } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useProfile } from '@/services/profileService';
 
-interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {}
+interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
+  onItemClick?: () => void;
+}
 
-export function SidebarNav({ className, ...props }: SidebarNavProps) {
+export function SidebarNav({ className, onItemClick, ...props }: SidebarNavProps) {
   const { profile, loading } = useProfile();
   const location = useLocation();
+  const navigate = useNavigate();
   const pathname = location.pathname;
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <span>Loading Sidebar...</span>
+        <span className="text-muted-foreground">Loading Sidebar...</span>
       </div>
     );
   }
@@ -71,6 +74,11 @@ export function SidebarNav({ className, ...props }: SidebarNavProps) {
     item.roles.includes(profile?.role || '')
   );
 
+  const handleItemClick = (href: string) => {
+    navigate(href);
+    onItemClick?.();
+  };
+
   return (
     <nav
       className={cn(
@@ -95,12 +103,10 @@ export function SidebarNav({ className, ...props }: SidebarNavProps) {
               : 'text-default hover:bg-secondary hover:text-default',
             'flex items-center gap-3'
           )}
-          asChild
+          onClick={() => handleItemClick(item.href)}
         >
-          <Link to={item.href}>
-            {item.icon}
-            <span>{item.title}</span>
-          </Link>
+          {item.icon}
+          <span>{item.title}</span>
         </Button>
       ))}
     </nav>

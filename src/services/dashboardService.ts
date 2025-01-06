@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/api-client';
 
 export interface DashboardSummary {
   totalStudents: number;

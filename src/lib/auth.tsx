@@ -1,99 +1,80 @@
-import React, { useEffect, ReactNode } from 'react';
-import { create } from 'zustand';
-import { User } from '@supabase/supabase-js';
-import { supabase } from './supabase';
-import { getOrCreateProfile } from '@/services/profileService';
+// Keep this file as is - it contains our core authentication logic
 
-interface AuthState {
+import { createContext, useContext, useEffect, useState } from 'react';
+import { User } from '@supabase/supabase-js';
+import { supabase } from './api-client';
+
+interface AuthContextType {
   user: User | null;
-  profile: any | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, role: string, fullName: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  loadUser: () => Promise<void>;
 }
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const useAuth = create<AuthState>((set) => ({
+const AuthContext = createContext<AuthContextType>({
   user: null,
-  profile: null,
   loading: true,
-  signIn: async (email, password) => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      if (data?.user) {
-        const profile = getOrCreateProfile(data?.user)
-        set({ user: data.user, profile });
-        window.location.href = '/dashboard';
-      }
-    } catch (error) {
-      console.error('Sign-in error:', error);
-    }
-  },
-  signUp: async (email, password, role, fullName) => {
-    try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
-      if (authError) throw authError;
-      if (authData?.user) {
-        try {
-          const { error: profileError } = await supabase.from('Profile').insert({
-            id: authData.user.id,
-            user_id: authData.user.id,
-            role: role.toUpperCase(),
-            full_name: fullName,
-            avatar_url: null,
-          });
-          if (profileError) throw profileError;
-          // Update Supabase profile after successful insertion
-          const { error: updateError } = await supabase.auth.updateUser({
-            data: {
-              full_name: fullName,
-              role: role.toUpperCase(),
-            },
-          });
-          if (updateError) throw updateError;
-          set({ user: authData.user, profile: { role, full_name: fullName } });
-        } catch (error) {
-          console.error("Error creating or updating profile:", error);
-          await supabase.auth.admin.deleteUser(authData.user.id);
-          throw error;
-        }
-      }
-    } catch (error) {
-      console.error('Registration error:', error);
-    }
-  },
-  signOut: async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      set({ user: null, profile: null });
-    } catch (error) {
-      console.error('Sign-out error:', error);
-    }
-  },
-  loadUser: async () => {
-    try {
-      const { data: { user } = {} } = await supabase.auth.getUser();
-      set({ user: user, loading: false });
-    } catch (error) {
-      console.error('Error loading user:', error);
-      set({ user: null, profile: null, loading: false });
-    }
-  },
-}));
+  signIn: async () => {},
+  signUp: async () => {},
+  signOut: async () => {},
+});
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const loadUser = useAuth((state) => state.loadUser);
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadUser();
-  }, [loadUser]);
+    // Check active sessions and sets the user
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
 
-  return children;
+    // Listen for changes on auth state (logged in, signed out, etc.)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+  };
+
+  const signUp = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) throw error;
+  };
+
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+  };
+
+  const value = {
+    user,
+    loading,
+    signIn,
+    signUp,
+    signOut,
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {!loading && children}
+    </AuthContext.Provider>
+  );
+}
+
+// Custom hook to use auth context
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

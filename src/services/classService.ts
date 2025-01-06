@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/api-client";
 
 export interface ClassType {
   id: string;
@@ -6,12 +6,27 @@ export interface ClassType {
   section: string;
 }
 
-export const loadClasses = async () => {
-  const { data, error } = await supabase
-    .schema('school')
-    .from('Class')
-    .select('id, name, section');
-  
-  if (error) throw error;
-  return data;
+export const classService = {
+  async getAll() {
+    const { data, error } = await supabase
+      .schema('school')
+      .from('Class')
+      .select('id, name, section')
+      .order('name');
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async getById(id: string) {
+    const { data, error } = await supabase
+      .schema('school')
+      .from('Class')
+      .select('id, name, section')
+      .eq('id', id)
+      .single();
+    
+    if (error) throw error;
+    return data;
+  }
 };

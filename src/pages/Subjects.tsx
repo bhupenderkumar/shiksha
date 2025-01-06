@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../lib/auth';
-import { supabase } from '@/lib/supabase';
+import { supabase } from "@/lib/api-client";
 import { toast } from 'react-hot-toast';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -56,20 +56,22 @@ export default function SubjectsPage() {
       
       // Fetch subjects with related data
       const { data: subjectsData, error: subjectsError } = await supabase
-        .from('subjects')
+         .schema('school')
+        .from('Subject')
         .select(`
           *,
-          teacher:staff(name),
-          class:classes(name)
+          teacher:Staff(name),
+          class:Class(name)
         `)
-        .order('created_at', { ascending: true });
+        .order('createdAt', { ascending: true });
 
       if (subjectsError) throw subjectsError;
       setSubjects(subjectsData || []);
 
       // Fetch classes
       const { data: classesData, error: classesError } = await supabase
-        .from('classes')
+        .schema('school')
+        .from('Class')
         .select('id, name');
 
       if (classesError) throw classesError;
@@ -77,7 +79,7 @@ export default function SubjectsPage() {
 
       // Fetch teachers
       const { data: teachersData, error: teachersError } = await supabase
-        .from('staff')
+        .from('Staff')
         .select('id, name')
         .eq('role', 'TEACHER');
 

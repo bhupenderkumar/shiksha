@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { KeyRound } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
+import { supabase } from '@/lib/api-client';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');

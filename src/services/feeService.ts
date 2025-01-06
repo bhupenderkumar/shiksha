@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase } from "@/lib/api-client";
 // Add uuid import
 import { v4 as uuidv4 } from 'uuid';
 
@@ -15,6 +15,12 @@ export interface Fee {
   createdAt: Date;
   updatedAt: Date;
   attachments?: File[];
+  student?: {
+    id: string;
+    name: string;
+    admissionNumber: string;
+    class?: string;
+  };
 }
 
 export enum FeeType {
@@ -136,7 +142,7 @@ export const deleteFileFromFee = async (fileId: string, filePath: string) => {
   try {
     // Delete from storage
     const { error: storageError } = await supabase.storage
-      .from('fee-files')
+      .from('File')
       .remove([filePath]);
 
     if (storageError) throw storageError;
@@ -144,7 +150,7 @@ export const deleteFileFromFee = async (fileId: string, filePath: string) => {
     // Delete from database
     const { error: dbError } = await supabase
       .schema('school')
-      .from('fee_files')
+      .from('File')
       .delete()
       .eq('id', fileId);
 

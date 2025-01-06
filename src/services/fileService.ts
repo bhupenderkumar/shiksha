@@ -1,80 +1,55 @@
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/api-client';
+import { v4 as uuidv4 } from 'uuid';
 
-export interface FileType {
-  id: string;
-  fileName: string;
-  fileType: string;
-  filePath: string;
-  uploadedAt: Date;
-}
-
-export const uploadFile = async (
-  file: File, 
-  folderPath: string, 
-  metadata: {
-    homeworkId?: string;
-    classworkId?: string;
-    feeId?: string;
-    grievanceId?: string;
-    studentId?: string;
-  }
-) => {
-  try {
+export const fileService = {
+  async uploadFile(file: File, path: string) {
     const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}.${fileExt}`;
-    const filePath = `${folderPath}/${fileName}`;
+    const fileName = `${uuidv4()}.${fileExt}`;
+    const filePath = `${path}/${fileName}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from('files')
+    const { data, error } = await supabase.storage
+      .from('File')
       .upload(filePath, file);
 
-    if (uploadError) throw uploadError;
+    if (error) throw error;
 
-    const { data, error } = await supabase
-      .schema('school')
+    return {
+      id: data.path,
+      fileName: file.name,
+      filePath: data.path
+    };
+  },
+
+  async deleteFile(filePath: string) {
+    const { error } = await supabase.storage
       .from('File')
-      .insert([{
-        fileName: file.name,
-        fileType: file.type,
-        filePath,
-        uploadedAt: new Date(),
-        ...metadata
-      }])
-      .select()
-      .single();
+      .remove([filePath]);
 
     if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('Error uploading file:', error);
-    throw error;
-  }
-};
+  },
 
-export const deleteFile = async (fileId: string) => {
-  try {
-    const { data: file } = await supabase
-      .schema('school')
+  async downloadFile(filePath: string, fileName: string) {
+    const { data, error } = await supabase.storage
       .from('File')
-      .select('filePath')
-      .eq('id', fileId)
-      .single();
-
-    if (file?.filePath) {
-      await supabase.storage
-        .from('files')
-        .remove([file.filePath]);
-    }
-
-    const { error } = await supabase
-      .schema('school')
-      .from('File')
-      .delete()
-      .eq('id', fileId);
+      .download(filePath);
 
     if (error) throw error;
-  } catch (error) {
-    console.error('Error deleting file:', error);
-    throw error;
+
+    // Create a download link
+    const url = window.URL.createObjectURL(data);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
+
+  getPublicUrl(filePath: string) {
+    const { data } = supabase.storage
+      .from('File')
+      .getPublicUrl(filePath);
+    return data.publicUrl;
   }
 };

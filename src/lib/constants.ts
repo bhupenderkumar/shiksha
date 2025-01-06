@@ -9,3 +9,5 @@ export const GENDERS = {
   FEMALE: 'FEMALE',
   OTHER: 'OTHER'
 } as const;
+
+export const STORAGE_BUCKET = 'File' // or whatever your bucket name is in Supabase

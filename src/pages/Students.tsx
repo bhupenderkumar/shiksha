@@ -16,9 +16,26 @@ import {
 } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { loadClasses, Class } from '@/services/classService';
+import { classService } from '@/services/classService';
 import { useForm } from 'react-hook-form';
 import { Textarea } from '@/components/ui/textarea';
+import { motion } from 'framer-motion';
+import {
+  Users,
+  Search,
+  Plus,
+  Filter,
+  SortAsc,
+  Mail,
+  Phone,
+  MapPin,
+  MoreVertical,
+  Edit,
+  Trash,
+} from 'lucide-react';
+import { PageAnimation } from '@/components/ui/page-animation';
+import { AnimatedText } from '@/components/ui/animated-text';
+import { CardAnimation, CardHoverAnimation } from '@/components/ui/card-animation';
 
 const formClasses = {
   select: "w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary",
@@ -183,6 +200,11 @@ export default function StudentsPage() {
     classId: ''
   });
   const [classes, setClasses] = useState<Class[]>([]);
+  const [credentials, setCredentials] = useState<{
+    email: string;
+    password: string;
+    username: string;
+  } | null>(null);
 
   // Load students data
   useEffect(() => {
@@ -208,25 +230,23 @@ export default function StudentsPage() {
     e.preventDefault();
     try {
       setLoading(true);
-
-      const studentData = {
-        ...formData,
-        dateOfBirth: new Date(formData.dateOfBirth)
-      };
-
       if (editingStudent) {
-        await updateStudent(editingStudent.id, studentData);
+        await updateStudent(editingStudent.id, formData);
         toast.success('Student updated successfully');
       } else {
-        await createStudent(studentData);
+        const result = await createStudent(formData);
+        setCredentials(result.credentials);
         toast.success('Student created successfully');
       }
-
-      handleDialogClose();
       loadStudentData();
+      if (!editingStudent) {
+        setIsDialogOpen(true); // Keep dialog open to show credentials
+      } else {
+        handleDialogClose();
+      }
     } catch (error) {
-      toast.error('Failed to save student');
-      console.error(error);
+      console.error('Error:', error);
+      toast.error('Operation failed');
     } finally {
       setLoading(false);
     }
@@ -286,7 +306,7 @@ export default function StudentsPage() {
   useEffect(() => {
     const fetchClasses = async () => {
       try {
-        const classData = await loadClasses();
+        const classData = await classService.getAll();
         setClasses(classData);
       } catch (error) {
         console.error('Error loading classes:', error);
@@ -306,41 +326,127 @@ export default function StudentsPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-foreground">Students</h1>
-        <Button onClick={() => setIsDialogOpen(true)}>Add New Student</Button>
-      </div>
+    <PageAnimation>
+      <div className="container mx-auto p-6 space-y-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <motion.div
+                initial={{ rotate: -90 }}
+                animate={{ rotate: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <Users className="h-8 w-8 text-primary" />
+              </motion.div>
+              <AnimatedText
+                text="Students"
+                className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent"
+                variant="slideUp"
+              />
+            </div>
+            <p className="text-muted-foreground mt-1">Manage and view all students</p>
+          </div>
 
-      {/* Student Form Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>{editingStudent ? 'Edit Student' : 'Add New Student'}</DialogTitle>
-          </DialogHeader>
-          <StudentForm
-            handleSubmit={handleSubmit}
-            formData={formData}
-            setFormData={setFormData}
-            loading={loading}
-            editingStudent={editingStudent}
-            classes={classes}
-          />
-        </DialogContent>
-      </Dialog>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon">
+              <Filter className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon">
+              <SortAsc className="h-4 w-4" />
+            </Button>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Student
+            </Button>
+          </div>
+        </div>
 
-      {/* Students List */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {students.map((student) => (
-          <StudentCard
-            key={student.id}
-            student={student}
-            onEdit={() => handleEdit(student)}
-            onDelete={() => handleDelete(student.id)}
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search students..."
+            value=""
+            onChange={(e) => {}}
+            className="pl-10 bg-card/50 backdrop-blur-sm"
           />
-        ))}
+        </div>
+
+        {/* Students Grid */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {loading ? (
+            // Loading skeleton
+            Array.from({ length: 6 }).map((_, index) => (
+              <Card key={index} className="bg-card/50 backdrop-blur-sm animate-pulse">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-4">
+                    <div className="h-12 w-12 rounded-full bg-primary/20" />
+                    <div className="space-y-2 flex-1">
+                      <div className="h-4 bg-primary/20 rounded w-3/4" />
+                      <div className="h-3 bg-primary/20 rounded w-1/2" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            students.map((student, index) => (
+              <CardAnimation key={student.id} delay={index * 0.1}>
+                <CardHoverAnimation>
+                  <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span className="text-lg font-medium text-primary">
+                              {student.name[0].toUpperCase()}
+                            </span>
+                          </div>
+                          <div>
+                            <h3 className="font-medium">{student.name}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {student.class} - {student.section}
+                            </p>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="icon">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      <div className="mt-4 space-y-2">
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <Mail className="h-4 w-4 mr-2" />
+                          {student.email}
+                        </div>
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <Phone className="h-4 w-4 mr-2" />
+                          {student.phone}
+                        </div>
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <MapPin className="h-4 w-4 mr-2" />
+                          {student.address}
+                        </div>
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-end gap-2">
+                        <Button variant="ghost" size="icon">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-destructive">
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </CardHoverAnimation>
+              </CardAnimation>
+            ))
+          )}
+        </div>
       </div>
-    </div>
+    </PageAnimation>
   );
 }
 
@@ -372,4 +478,3 @@ const StudentCard = ({
     </CardContent>
   </Card>
 );
-

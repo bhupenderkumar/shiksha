@@ -1,120 +1,183 @@
-import React, { useState, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Button } from './ui/button';
-import { toast } from 'react-hot-toast';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/Select';
-import { useDropzone } from 'react-dropzone';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Upload, X, File, Download } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
-interface FileUploaderProps {
-  homeworkId: string;
-  onUploadComplete: () => void;
-  existingFiles?: any[];
-  onFileDelete: (fileId: string) => void;
-}
+type FileUploaderProps = {
+  onFilesSelected?: (files: File[]) => void;
+  onFileDelete?: (fileId: string) => void;
+  existingFiles?: Array<{ id: string; fileName: string; filePath: string }>;
+  maxFiles?: number;
+  acceptedFileTypes?: string[];
+};
 
-export const FileUploader: React.FC<FileUploaderProps> = ({
-  homeworkId,
-  onUploadComplete,
+export function FileUploader({
+  onFilesSelected,
+  onFileDelete,
   existingFiles = [],
-  onFileDelete
-}) => {
-  const [uploading, setUploading] = useState(false);
+  maxFiles = 5,
+  acceptedFileTypes = ['image/*'],
+}: FileUploaderProps) {
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  const uploadFile = async (file: File, id: string) => {
-    try {
-      setUploading(true);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files?.length) return;
 
-      // Upload file to storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${id}/${Math.random()}.${fileExt}`;
-      const filePath = `${fileName}`;
+    const fileArray = Array.from(files);
+    if (fileArray.length + existingFiles.length > maxFiles) {
+      toast.error(`You can only upload a maximum of ${maxFiles} files.`);
+      return;
+    }
 
-      const { error: uploadError } = await supabase.storage
-        .from('homework-files')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      // Get the public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('homework-files')
-        .getPublicUrl(filePath);
-
-      // Save file reference to homework_files table
-      const { error: dbError } = await supabase
-        .from('homework_files')
-        .insert([
-          {
-            homework_id: id,
-            file_path: publicUrl,
-            file_type: fileExt?.toLowerCase() === 'pdf' ? 'pdf' : 'image',
-            file_name: file.name,
-          },
-        ]);
-
-      if (dbError) throw dbError;
-
-      toast.success('File uploaded successfully');
-      onUploadComplete();
-
-    } catch (error) {
-      toast.error('Error uploading file');
-      console.error(error);
-    } finally {
-      setUploading(false);
+    setSelectedFiles(prev => [...prev, ...fileArray]);
+    if (onFilesSelected) {
+      onFilesSelected(fileArray);
     }
   };
 
   const handleDelete = async (fileId: string) => {
-    if (!onFileDelete) return;
     try {
-      setUploading(true);
-      await onFileDelete(fileId);
-      toast.success('File deleted successfully');
+      if (onFileDelete) {
+        onFileDelete(fileId);
+      }
     } catch (error) {
-      toast.error('Error deleting file');
-      console.error(error);
-    } finally {
-      setUploading(false);
+      console.error('Error deleting file:', error);
+      toast.error('Failed to delete file');
     }
   };
 
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    try {
-      const uploadPromises = acceptedFiles.map(file => 
-        uploadFile(file, homeworkId)
-      );
-      await Promise.all(uploadPromises);
-      onUploadComplete();
-    } catch (error) {
-      console.error('Upload error:', error);
-    }
-  }, [homeworkId, onUploadComplete]);
+  const handleRemoveSelected = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
 
-  const { getRootProps, getInputProps } = useDropzone({ onDrop });
+  const isImage = (fileName: string): boolean => {
+    if (!fileName) return false;
+    const extension = fileName.split('.').pop()?.toLowerCase() || '';
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension);
+  };
+
+  const handlePreview = (filePath: string) => {
+    // Use the complete URL provided in filePath
+    setPreviewImage(filePath);
+  };
 
   return (
-    <div>
-      <div {...getRootProps()} className="border-2 border-dashed p-4 text-center">
-        <input {...getInputProps()} />
-        <p>Drag & drop files here, or click to select files</p>
+    <div className="space-y-4">
+      <div className="flex items-center justify-center w-full">
+        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
+          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+            <Upload className="w-8 h-8 mb-2" />
+            <p className="mb-2 text-sm">
+              <span className="font-semibold">Click to upload</span> or drag and drop
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Accepted file types: {acceptedFileTypes.join(', ')}
+            </p>
+          </div>
+          <input
+            type="file"
+            className="hidden"
+            onChange={handleFileChange}
+            accept={acceptedFileTypes.join(',')}
+            multiple={maxFiles > 1}
+          />
+        </label>
       </div>
-      
-      {existingFiles && existingFiles.length > 0 && (
-        <div className="mt-4">
-          <h4>Attached Files:</h4>
-          <ul>
-            {existingFiles.map((file: any) => (
-              <li key={file.id} className="flex items-center justify-between">
-                <span>{file.file_name}</span>
-                <button onClick={() => handleDelete(file.id)}>Delete</button>
-              </li>
+
+      {/* Existing Files */}
+      {existingFiles.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium">Uploaded Files:</h3>
+          <div className="space-y-2">
+            {existingFiles.map((file) => (
+              <div
+                key={file.id}
+                className="flex items-center justify-between p-2 border rounded-lg"
+              >
+                <div className="flex items-center space-x-2">
+                  {isImage(file.fileName) ? (
+                    <img
+                      src={file.filePath}
+                      alt={file.fileName}
+                      className="w-8 h-8 object-cover cursor-pointer"
+                      onClick={() => handlePreview(file.filePath)}
+                    />
+                  ) : (
+                    <File className="w-8 h-8" />
+                  )}
+                  <span className="text-sm truncate max-w-[200px]">
+                    {file.fileName}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    asChild
+                  >
+                    <a href={file.filePath} download target="_blank" rel="noopener noreferrer">
+                      <Download className="w-4 h-4" />
+                    </a>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDelete(file.id)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
       )}
+
+      {/* Selected Files */}
+      {selectedFiles.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium">Selected Files:</h3>
+          {selectedFiles.map((file, index) => (
+            <div
+              key={index}
+              className="flex items-center justify-between p-2 border rounded-lg"
+            >
+              <div className="flex items-center space-x-2">
+                <File className="w-8 h-8" />
+                <span className="text-sm truncate max-w-[200px]">
+                  {file.name}
+                </span>
+              </div>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={() => handleRemoveSelected(index)}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Image Preview Dialog */}
+      <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
+        <DialogContent className="max-w-4xl p-0">
+          {previewImage && (
+            <img
+              src={previewImage}
+              alt="Preview"
+              className="w-full h-auto"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
-};
+}

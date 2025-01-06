@@ -1,156 +1,162 @@
-import { supabase } from '@/lib/supabase';
-import { HomeworkStatus } from '@prisma/client';
+import { supabase } from '@/lib/api-client';
 import { v4 as uuidv4 } from 'uuid';
-import { uploadFile, deleteFile } from './fileService';
+import { HomeworkStatus } from '@prisma/client';
 
-export interface HomeworkType {
+export type HomeworkType = {
   id: string;
   title: string;
   description: string;
-  dueDate: Date | string;
-  studentId: string;
-  subjectId: string;
+  dueDate: Date;
   classId: string;
+  subjectId: string;
   status: HomeworkStatus;
-  createdAt?: Date;
-  updatedAt?: Date;
-  attachments?: Array<{ id: string; fileName: string }>;
-}
-
-export interface FileType {
-  id: string;
-  fileName: string;
-  fileType: string;
-  filePath: string;
-  uploadedAt: Date;
-}
-
-export const loadHomeworks = async (userId: string, role: string) => {
-  try {
-    if (role === 'ADMIN' || role === 'TEACHER') {
-      // Get all homeworks for admin/teacher
-      const { data, error } = await supabase
-      .schema('school')
-        .from('Homework')
-        .select(`
-          *,
-          subject:subjectId(*),
-          class:classId(*),
-          attachments:File(*)
-        `);
-
-      if (error) throw error;
-      return data;
-    } else {
-      // For students, first get their profile to know their classId
-      const { data: profile, error: profileError } = await supabase
-        .schema('school')
-      .from('Student')
-        .select('classId')
-        .eq('id', userId)
-        .single();
-
-      if (profileError) throw profileError;
-
-      // Then get homeworks for their class
-      const { data, error } = await supabase
-      .schema('school')
-        .from('Homework')
-        .select(`
-          *,
-          subject:subjectId(*),
-          class:classId(*),
-          attachments:File(*),
-          submissions:HomeworkSubmission(*)
-        `)
-        .eq('classId', profile.classId);
-
-      if (error) throw error;
-      return data;
-    }
-  } catch (error) {
-    console.error('Error loading homeworks:', error);
-    throw error;
-  }
+  createdAt: Date;
+  updatedAt: Date;
+  attachments?: Array<{ id: string; fileName: string; filePath: string }>;
+  class?: {
+    id: string;
+    name: string;
+    section: string;
+  };
+  subject?: {
+    id: string;
+    name: string;
+  };
 };
 
-export const createHomework = async (homework: Omit<HomeworkType, 'id' | 'createdAt' | 'updatedAt'>) => {
-  try {
-    const { data, error } = await supabase
+type CreateHomeworkData = Omit<HomeworkType, 'id' | 'createdAt' | 'updatedAt'>;
+type UpdateHomeworkData = Partial<CreateHomeworkData>;
+
+export const homeworkService = {
+  async getAll(role: string, classId?: string) {
+    let query = supabase
+      .schema('school')
+      .from('Homework')
+      .select(`
+        *,
+        class:Class(id, name, section),
+        subject:Subject(id, name),
+        attachments:File(*)
+      `)
+      .order('dueDate', { ascending: false });
+
+    if (role === 'STUDENT' && classId) {
+      query = query.eq('classId', classId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    return (data as HomeworkType[]).map(homework => ({
+      ...homework,
+      dueDate: new Date(homework.dueDate),
+      createdAt: new Date(homework.createdAt),
+      updatedAt: new Date(homework.updatedAt),
+    }));
+  },
+
+  async create(data: CreateHomeworkData) {
+    const { attachments, ...homeworkData } = data;
+    
+    // Generate ID for homework
+    const homeworkId = uuidv4();
+    
+    // First create the homework
+    const { data: homework, error: homeworkError } = await supabase
       .schema('school')
       .from('Homework')
       .insert([{
-        ...homework,
-        id: uuidv4(),
+        id: homeworkId,
+        ...homeworkData,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }])
       .select()
       .single();
 
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('Error creating homework:', error);
-    throw error;
-  }
-};
+    if (homeworkError) throw homeworkError;
 
-export const updateHomework = async (id: string, homework: Partial<HomeworkType>) => {
-  try {
-    const { data, error } = await supabase
-    .schema('school')
+    // Then create file records if there are any attachments
+    if (attachments && attachments.length > 0) {
+      const { error: filesError } = await supabase
+        .schema('school')
+        .from('File')
+        .insert(
+          attachments.map(file => ({
+            ...file,
+            id: uuidv4(),
+            homeworkId: homeworkId
+          }))
+        );
+
+      if (filesError) throw filesError;
+    }
+
+    return homework;
+  },
+
+  async update(id: string, data: UpdateHomeworkData) {
+    const { attachments, ...homeworkData } = data;
+    
+    const { error: homeworkError } = await supabase
+      .schema('school')
       .from('Homework')
       .update({
-        ...homework,
-        updatedAt: new Date()
+        ...homeworkData,
+        updatedAt: new Date().toISOString()
       })
-      .eq('id', id)
-      .select()
-      .single();
+      .eq('id', id);
 
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('Error updating homework:', error);
-    throw error;
-  }
-};
+    if (homeworkError) throw homeworkError;
 
-export const deleteHomework = async (id: string) => {
-  try {
+    if (attachments) {
+      // Delete existing files not in the new attachments
+      const { error: deleteError } = await supabase
+        .schema('school')
+        .from('File')
+        .delete()
+        .eq('homeworkId', id)
+        .not('id', 'in', attachments.map(f => f.id));
+
+      if (deleteError) throw deleteError;
+
+      // Add new files
+      const newFiles = attachments.filter(f => !f.id);
+      if (newFiles.length > 0) {
+        const { error: filesError } = await supabase
+          .schema('school')
+          .from('File')
+          .insert(
+            newFiles.map(file => ({
+              ...file,
+              id: uuidv4(),
+              homeworkId: id
+            }))
+          );
+
+        if (filesError) throw filesError;
+      }
+    }
+  },
+
+  async delete(id: string) {
+    // Delete associated files first
+    const { error: filesError } = await supabase
+      .schema('school')
+      .from('File')
+      .delete()
+      .eq('homeworkId', id);
+
+    if (filesError) throw filesError;
+
+    // Then delete the homework
     const { error } = await supabase
-    .schema('school')
+      .schema('school')
       .from('Homework')
       .delete()
       .eq('id', id);
 
     if (error) throw error;
-  } catch (error) {
-    console.error('Error deleting homework:', error);
-    throw error;
-  }
-};
-
-export const uploadHomeworkFile = async (file: File, homeworkId: string) => {
-  return uploadFile(file, `homeworks/${homeworkId}`, { homeworkId });
-};
-
-export const deleteHomeworkFile = async (fileId: string) => {
-  return deleteFile(fileId);
-};
-
-export const loadSubjects = async () => {
-  try {
-    const { data, error } = await supabase
-    .schema('school')
-      .from('Subject')
-      .select('id, name, code');
-
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('Error loading subjects:', error);
-    throw error;
   }
 };

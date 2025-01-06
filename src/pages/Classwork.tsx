@@ -1,209 +1,197 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../lib/auth';
+import { useAsync } from '@/hooks/use-async';
+import { classworkService, type ClassworkType } from '@/services/classworkService';
+import { PageHeader } from '@/components/ui/page-header';
+import { ClassworkCard } from '@/components/ClassworkCard';
+import { EmptyState } from '@/components/ui/empty-state';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ClassworkForm } from '@/components/forms/classwork-form';
+import { Book, Plus } from 'lucide-react';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { useProfileAccess } from '@/services/profileService';
-import { ClassworkCard } from '../components/ClassworkCard';
-import { 
-  ClassworkType,
-  loadClassworks, 
-  createClasswork, 
-  updateClasswork, 
-  deleteClasswork 
-} from '../services/classworkService';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Calendar } from '../components/ui/calendar';
-import { Textarea } from '../components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/Select';
-import { toast } from 'react-hot-toast';
+import toast from 'react-hot-toast';
+import { useMediaQuery } from 'react-responsive';
 
 export default function ClassworkPage() {
-  const { user } = useAuth();
-  const { profile, isAdminOrTeacher } = useProfileAccess();
   const [classworks, setClassworks] = useState<ClassworkType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedClasswork, setSelectedClasswork] = useState<ClassworkType | null>(null);
-  const [formData, setFormData] = useState<Omit<ClassworkType, 'id' | 'createdAt' | 'updatedAt'>>({
-    title: '',
-    description: '',
-    date: new Date(),
-    classId: '',
+  const [dialogState, setDialogState] = useState<{
+    isOpen: boolean;
+    mode: 'create' | 'edit';
+  }>({
+    isOpen: false,
+    mode: 'create'
   });
-  const [classes, setClasses] = useState<any[]>([]);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedClasswork, setSelectedClasswork] = useState<ClassworkType | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const data = await loadClassworks(selectedDate.toISOString());
-      setClassworks(data || []);
-    } catch (error) {
-      toast.error('Failed to load classworks');
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { profile, loading: profileLoading, isAdminOrTeacher } = useProfileAccess();
+
+  const isMobile = useMediaQuery({ query: '(max-width: 640px)' });
+
+  const { loading, execute: fetchClassworks } = useAsync(
+    async () => {
+      if (!profile) return;
+      const data = await classworkService.getAll(profile.role, profile.classId);
+      setClassworks(data);
+    },
+    { showErrorToast: true }
+  );
+
+  const { execute: createClasswork } = useAsync(
+    async (data) => {
+      await classworkService.create(data);
+      await fetchClassworks();
+      handleCloseDialog();
+      toast.success('Classwork created successfully!');
+    },
+    { showErrorToast: true }
+  );
+
+  const { execute: updateClasswork } = useAsync(
+    async (data) => {
+      if (!selectedClasswork) return;
+      await classworkService.update(selectedClasswork.id, data);
+      await fetchClassworks();
+      handleCloseDialog();
+      toast.success('Classwork updated successfully!');
+    },
+    { showErrorToast: true }
+  );
+
+  const { execute: deleteClasswork } = useAsync(
+    async () => {
+      if (!selectedClasswork) return;
+      await classworkService.delete(selectedClasswork.id);
+      await fetchClassworks();
+      setIsDeleteDialogOpen(false);
+      setSelectedClasswork(null);
+      toast.success('Classwork deleted successfully!');
+    },
+    { showErrorToast: true }
+  );
 
   useEffect(() => {
-    loadData();
-  }, [selectedDate]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (selectedClasswork) {
-        await updateClasswork(selectedClasswork.id, formData);
-        toast.success('Classwork updated successfully');
-      } else {
-        await createClasswork(formData);
-        toast.success('Classwork created successfully');
-      }
-      
-      setIsDialogOpen(false);
-      resetForm();
-      loadData();
-    } catch (error) {
-      toast.error('Failed to save classwork');
-      console.error(error);
+    if (profile) {
+      fetchClassworks();
     }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this classwork?')) return;
-    
-    try {
-      await deleteClasswork(id);
-      toast.success('Classwork deleted successfully');
-      loadData();
-    } catch (error) {
-      toast.error('Failed to delete classwork');
-      console.error(error);
-    }
-  };
+  }, [profile]);
 
   const handleEdit = (classwork: ClassworkType) => {
     setSelectedClasswork(classwork);
-    setFormData({
-      title: classwork.title,
-      description: classwork.description,
-      date: new Date(classwork.date),
-      classId: classwork.classId,
-    });
-    setIsDialogOpen(true);
+    setDialogState({ isOpen: true, mode: 'edit' });
+    setFiles(classwork.files);
   };
 
-  const resetForm = () => {
+  const handleCloseDialog = () => {
+    setDialogState({ isOpen: false, mode: 'create' });
     setSelectedClasswork(null);
-    setFormData({
-      title: '',
-      description: '',
-      date: new Date(),
-      classId: '',
-    });
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
+  const handleDelete = (classwork: ClassworkType) => {
+    setSelectedClasswork(classwork);
+    setIsDeleteDialogOpen(true);
+  };
+
+  if (loading || profileLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
   }
 
   return (
     <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Classwork</h1>
-        {profile?.role === 'TEACHER' && (
-          <Button onClick={() => setIsDialogOpen(true)}>
-            Add New Classwork
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        title="Classwork"
+        subtitle="Manage and track class activities"
+        icon={<Book className="text-primary-500" />}
+        action={
+          isAdminOrTeacher ? (
+            <Button className="text-sm" onClick={() => setDialogState({ isOpen: true, mode: 'create' })}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Classwork
+            </Button>
+          ) : null
+        }
+      />
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {classworks.map((classwork) => (
-          <ClassworkCard
-            key={classwork.id}
-            classwork={classwork}
-            onEdit={isAdminOrTeacher ? handleEdit : undefined}
-            onDelete={isAdminOrTeacher ? handleDelete : undefined}
-          />
-        ))}
-      </div>
-
-      {isDialogOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">
-              {selectedClasswork ? 'Edit Classwork' : 'Add New Classwork'}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div>
-                <Label>Date</Label>
-                <Calendar
-                  mode="single"
-                  selected={formData.date}
-                  onSelect={(date) => setFormData({ ...formData, date: date ?? new Date() })}
-                  className="rounded-md border"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="class">Class</Label>
-                <Select
-                  value={formData.classId}
-                  onValueChange={(value) => setFormData({ ...formData, classId: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a class" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {classes.map((cls) => (
-                      <SelectItem key={cls.id} value={cls.id}>
-                        {cls.name} - {cls.section}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex justify-end space-x-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setIsDialogOpen(false);
-                    resetForm();
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit">
-                  {selectedClasswork ? 'Update' : 'Create'}
-                </Button>
-              </div>
-            </form>
+      {classworks.length === 0 ? (
+        <EmptyState
+          title="No classwork yet!"
+          description={isAdminOrTeacher ? "Start by creating a new classwork" : "No classwork has been assigned yet"}
+          icon={<Book className="w-full h-full" />}
+          action={
+            isAdminOrTeacher ? (
+              <Button className="text-sm" onClick={() => setDialogState({ isOpen: true, mode: 'create' })}>
+                Create Classwork
+              </Button>
+            ) : null
+          }
+        />
+      ) : (
+        <div className="overflow-auto"> {/* Added overflow-auto for scrollbar */}
+          <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}> {/* Modified grid classes for responsiveness */}
+            {classworks.map((classwork) => (
+              <ClassworkCard
+                key={classwork.id}
+                classwork={classwork}
+                onEdit={isAdminOrTeacher ? () => handleEdit(classwork) : undefined}
+                onDelete={isAdminOrTeacher ? () => handleDelete(classwork) : undefined}
+                isStudent={!isAdminOrTeacher}
+              />
+            ))}
           </div>
         </div>
+      )}
+
+      {isAdminOrTeacher && (
+        <>
+          <Dialog open={dialogState.isOpen} onOpenChange={(open) => {
+            if (!open) handleCloseDialog();
+          }}>
+            <DialogContent className="max-w-4xl w-[95%] h-[90vh] overflow-y-auto">
+              <DialogHeader className="sticky top-0 bg-background z-10 pb-4 border-b">
+                <DialogTitle>
+                  {dialogState.mode === 'create' ? 'Create Classwork' : 'Edit Classwork'}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="py-4">
+                <ClassworkForm
+                  onSubmit={dialogState.mode === 'create' ? createClasswork : updateClasswork}
+                  initialData={dialogState.mode === 'edit' ? selectedClasswork : undefined}
+                  files={dialogState.mode === 'edit' ? selectedClasswork?.files : undefined}
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <AlertDialog
+            open={isDeleteDialogOpen}
+            onOpenChange={setIsDeleteDialogOpen}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Classwork</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this classwork? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={deleteClasswork}
+                  className="bg-red-500 hover:bg-red-600 text-white"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
       )}
     </div>
   );
