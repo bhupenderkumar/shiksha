@@ -1,7 +1,8 @@
 import React, { useEffect, ReactNode } from 'react';
 import { create } from 'zustand';
-import { supabase } from './supabase';
 import { User } from '@supabase/supabase-js';
+import { supabase } from './supabase';
+import { getOrCreateProfile } from '@/services/profileService';
 
 interface AuthState {
   user: User | null;
@@ -13,74 +14,79 @@ interface AuthState {
   loadUser: () => Promise<void>;
 }
 
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
 export const useAuth = create<AuthState>((set) => ({
   user: null,
   profile: null,
   loading: true,
   signIn: async (email, password) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) throw error;
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      if (data?.user) {
+        const profile = getOrCreateProfile(data?.user)
+        set({ user: data.user, profile });
+        window.location.href = '/dashboard';
+      }
+    } catch (error) {
+      console.error('Sign-in error:', error);
+    }
   },
   signUp: async (email, password, role, fullName) => {
-    const { data: authData, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-    
-    if (signUpError) throw signUpError;
-    
-    if (authData.user) {
-      try {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              user_id: authData.user.id,
-              role,
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
+      if (authError) throw authError;
+      if (authData?.user) {
+        try {
+          const { error: profileError } = await supabase.from('Profile').insert({
+            id: authData.user.id,
+            user_id: authData.user.id,
+            role: role.toUpperCase(),
+            full_name: fullName,
+            avatar_url: null,
+          });
+          if (profileError) throw profileError;
+          // Update Supabase profile after successful insertion
+          const { error: updateError } = await supabase.auth.updateUser({
+            data: {
               full_name: fullName,
-            }
-          ]);
-        
-        if (profileError) throw profileError;
-      } catch (error) {
-        await supabase.auth.admin.deleteUser(authData.user.id);
-        throw error;
+              role: role.toUpperCase(),
+            },
+          });
+          if (updateError) throw updateError;
+          set({ user: authData.user, profile: { role, full_name: fullName } });
+        } catch (error) {
+          console.error("Error creating or updating profile:", error);
+          await supabase.auth.admin.deleteUser(authData.user.id);
+          throw error;
+        }
       }
+    } catch (error) {
+      console.error('Registration error:', error);
     }
   },
   signOut: async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-    set({ user: null, profile: null });
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      set({ user: null, profile: null });
+    } catch (error) {
+      console.error('Sign-out error:', error);
+    }
   },
   loadUser: async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        set({ user, profile, loading: false });
-      } else {
-        set({ user: null, profile: null, loading: false });
-      }
+      const { data: { user } = {} } = await supabase.auth.getUser();
+      set({ user: user, loading: false });
     } catch (error) {
       console.error('Error loading user:', error);
       set({ user: null, profile: null, loading: false });
     }
   },
 }));
-
-interface AuthProviderProps {
-  children: ReactNode;
-}
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const loadUser = useAuth((state) => state.loadUser);
@@ -90,4 +96,4 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [loadUser]);
 
   return children;
-}; 
+};

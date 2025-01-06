@@ -1,103 +1,207 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../lib/auth';
-import { supabase } from '../lib/supabase';
-import { useNavigate } from 'react-router-dom';
-import {
-  Card,
-  CardContent,
-} from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
+import { useProfileAccess } from '@/services/profileService';
+import { Student, loadStudents, createStudent, updateStudent, deleteStudent } from '@/services/studentService';
+import { ROLES, GENDERS } from '@/lib/constants';
 import { toast } from 'react-hot-toast';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
+import { loadClasses, Class } from '@/services/classService';
+import { useForm } from 'react-hook-form';
+import { Textarea } from '@/components/ui/textarea';
 
-interface Student {
-  id: string;
-  user_id: string;
-  grade_level: number;
-  enrollment_date: string;
-  parent_contact: string;
-  profile: {
-    avatar_url: string;
-    full_name: string;
-  };
-}
+const formClasses = {
+  select: "w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary",
+  input: "w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary",
+  label: "block text-sm font-medium text-foreground mb-1",
+  card: "backdrop-blur-sm bg-card/80 hover:bg-card/90 transition-all border border-border",
+};
 
-interface Profile {
-  id: string;
-  full_name: string;
-}
+const StudentForm = ({ handleSubmit, formData, setFormData, loading, editingStudent, classes }) => (
+  <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="grid grid-cols-2 gap-4">
+      <div>
+        <Label className={formClasses.label}>Admission Number*</Label>
+        <Input
+          value={formData.admissionNumber}
+          onChange={(e) => setFormData({ ...formData, admissionNumber: e.target.value })}
+          required
+          placeholder="Enter admission number"
+          className={formClasses.input}
+        />
+      </div>
+      <div>
+        <Label className={formClasses.label}>Name*</Label>
+        <Input
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          required
+          placeholder="Enter full name"
+          className={formClasses.input}
+        />
+      </div>
+      <div>
+        <Label className={formClasses.label}>Date of Birth*</Label>
+        <Input
+          type="date"
+          value={formData.dateOfBirth}
+          onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+          required
+          className={formClasses.input}
+        />
+      </div>
+      <div>
+        <Label className={formClasses.label}>Gender*</Label>
+        <select
+          value={formData.gender}
+          onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+          required
+          className={formClasses.select}
+        >
+          <option value="">Select Gender</option>
+          {Object.values(GENDERS).map(gender => (
+            <option key={gender} value={gender}>{gender}</option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <Label className={formClasses.label}>Class*</Label>
+        <select
+          value={formData.classId}
+          onChange={(e) => setFormData({ ...formData, classId: e.target.value })}
+          required
+          className={formClasses.select}
+        >
+          <option value="">Select Class</option>
+          {classes.map(cls => (
+            <option key={cls.id} value={cls.id}>
+              {cls.name} - {cls.section}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <Label className={formClasses.label}>Blood Group</Label>
+        <Input
+          value={formData.bloodGroup}
+          onChange={(e) => setFormData({ ...formData, bloodGroup: e.target.value })}
+          placeholder="Enter blood group"
+          className={formClasses.input}
+        />
+      </div>
+      <div className="col-span-2">
+        <Label className={formClasses.label}>Address*</Label>
+        <Textarea
+          value={formData.address}
+          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+          required
+          placeholder="Enter full address"
+          className={formClasses.input}
+          rows={3}
+        />
+      </div>
+      <div>
+        <Label className={formClasses.label}>Contact Number*</Label>
+        <Input
+          type="tel"
+          value={formData.contactNumber}
+          onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
+          required
+          placeholder="Enter contact number"
+          className={formClasses.input}
+        />
+      </div>
+      <div>
+        <Label className={formClasses.label}>Parent Name*</Label>
+        <Input
+          value={formData.parentName}
+          onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
+          required
+          placeholder="Enter parent name"
+          className={formClasses.input}
+        />
+      </div>
+      <div>
+        <Label className={formClasses.label}>Parent Contact*</Label>
+        <Input
+          type="tel"
+          value={formData.parentContact}
+          onChange={(e) => setFormData({ ...formData, parentContact: e.target.value })}
+          required
+          placeholder="Enter parent contact"
+          className={formClasses.input}
+        />
+      </div>
+      <div>
+        <Label className={formClasses.label}>Parent Email*</Label>
+        <Input
+          type="email"
+          value={formData.parentEmail}
+          onChange={(e) => setFormData({ ...formData, parentEmail: e.target.value })}
+          required
+          placeholder="Enter parent email"
+          className={formClasses.input}
+        />
+      </div>
+    </div>
+    <div className="flex justify-end space-x-2">
+      <Button type="submit" disabled={loading}>
+        {loading ? 'Saving...' : editingStudent ? 'Update Student' : 'Create Student'}
+      </Button>
+    </div>
+  </form>
+);
 
 export default function StudentsPage() {
-  const { profile } = useAuth();
+  const { profile, loading: profileLoading, isAdminOrTeacher } = useProfileAccess();
   const navigate = useNavigate();
   const [students, setStudents] = useState<Student[]>([]);
-  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
-    user_id: '',
-    grade_level: '',
-    enrollment_date: '',
-    parent_contact: '',
+    admissionNumber: '',
+    name: '',
+    dateOfBirth: '',
+    gender: '',
+    address: '',
+    contactNumber: '',
+    parentName: '',
+    parentContact: '',
+    parentEmail: '',
+    bloodGroup: '',
+    classId: ''
   });
+  const [classes, setClasses] = useState<Class[]>([]);
 
-  const loadData = async () => {
+  // Load students data
+  useEffect(() => {
+    if (!profileLoading && isAdminOrTeacher) {
+      loadStudentData();
+    }
+  }, [profileLoading, isAdminOrTeacher]);
+
+  const loadStudentData = async () => {
     try {
-      console.log("Loading student data");
-      const { data: studentData, error: studentError } = await supabase
-        .from('students')
-        .select(`
-          id,
-          user_id,
-          grade_level,
-          enrollment_date,
-          parent_contact,
-          profiles (
-            avatar_url,
-            full_name
-          )
-        `)
-        .order('grade_level', { ascending: true });
-
-      if (studentError) throw studentError;
-      console.log("Student data:", studentData); // Debug log
-      setStudents(studentData || []);
-
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, full_name');
-
-      if (profileError) throw profileError;
-      console.log("Profile data:", profileData); // Debug log
-      setProfiles(profileData || []);
+      setLoading(true);
+      const data = await loadStudents();
+      setStudents(data || []);
     } catch (error) {
-      toast.error('Failed to load data');
-      console.error('Error:', error);
+      toast.error('Failed to load students');
+      console.error(error);
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadData();
-  }, [profile, navigate]);
-
-  const handleEdit = (student: Student) => {
-    setEditingStudent(student);
-    setFormData({
-      user_id: student.user_id,
-      grade_level: student.grade_level.toString(),
-      enrollment_date: student.enrollment_date,
-      parent_contact: student.parent_contact,
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleDialogClose = () => {
-    setIsDialogOpen(false);
-    setEditingStudent(null);
-    resetForm();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -106,31 +210,20 @@ export default function StudentsPage() {
       setLoading(true);
 
       const studentData = {
-        user_id: formData.user_id,
-        grade_level: parseInt(formData.grade_level),
-        enrollment_date: formData.enrollment_date,
-        parent_contact: formData.parent_contact,
-        fee: parseFloat(formData.fee), // Add this field
+        ...formData,
+        dateOfBirth: new Date(formData.dateOfBirth)
       };
 
-      const { error } = editingStudent
-        ? await supabase
-            .from('students')
-            .update(studentData)
-            .eq('id', editingStudent.id)
-        : await supabase
-            .from('students')
-            .insert([studentData]);
+      if (editingStudent) {
+        await updateStudent(editingStudent.id, studentData);
+        toast.success('Student updated successfully');
+      } else {
+        await createStudent(studentData);
+        toast.success('Student created successfully');
+      }
 
-      if (error) throw error;
-
-      toast.success(
-        `Student ${editingStudent ? 'updated' : 'created'} successfully`
-      );
-      setEditingStudent(null);
-      resetForm();
-      loadData();
-      setIsDialogOpen(false);
+      handleDialogClose();
+      loadStudentData();
     } catch (error) {
       toast.error('Failed to save student');
       console.error(error);
@@ -139,176 +232,144 @@ export default function StudentsPage() {
     }
   };
 
+  const handleEdit = (student: Student) => {
+    setEditingStudent(student);
+    setFormData({
+      admissionNumber: student.admissionNumber,
+      name: student.name,
+      dateOfBirth: new Date(student.dateOfBirth).toISOString().split('T')[0],
+      gender: student.gender,
+      address: student.address,
+      contactNumber: student.contactNumber,
+      parentName: student.parentName,
+      parentContact: student.parentContact,
+      parentEmail: student.parentEmail,
+      bloodGroup: student.bloodGroup || '',
+      classId: student.classId
+    });
+    setIsDialogOpen(true);
+  };
+
   const handleDelete = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this student?')) {
       return;
     }
 
-    const { error } = await supabase.from('students').delete().eq('id', id);
-
-    if (error) {
+    try {
+      await deleteStudent(id);
+      toast.success('Student deleted successfully');
+      loadStudentData();
+    } catch (error) {
       toast.error('Failed to delete student');
       console.error(error);
-    } else {
-      toast.success('Student deleted successfully');
-      loadData();
     }
   };
 
-  const resetForm = () => {
+  const handleDialogClose = () => {
+    setIsDialogOpen(false);
+    setEditingStudent(null);
     setFormData({
-      user_id: '',
-      grade_level: '',
-      enrollment_date: '',
-      parent_contact: '',
-      fee: '', // Add this field
+      admissionNumber: '',
+      name: '',
+      dateOfBirth: '',
+      gender: '',
+      address: '',
+      contactNumber: '',
+      parentName: '',
+      parentContact: '',
+      parentEmail: '',
+      bloodGroup: '',
+      classId: ''
     });
   };
 
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        const classData = await loadClasses();
+        setClasses(classData);
+      } catch (error) {
+        console.error('Error loading classes:', error);
+        toast.error('Failed to load classes');
+      }
+    };
+
+    fetchClasses();
+  }, []);
+
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <div>Loading...</div>;
+  }
+
+  if (!isAdminOrTeacher) {
+    return <div>Access denied</div>;
   }
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-8 px-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Students</h1>
-        <Button onClick={() => {
-          resetForm();
-          setEditingStudent(null);
-          setIsDialogOpen(true);
-        }}>
-          Add New Student
-        </Button>
+        <h1 className="text-3xl font-bold text-foreground">Students</h1>
+        <Button onClick={() => setIsDialogOpen(true)}>Add New Student</Button>
       </div>
 
+      {/* Student Form Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{editingStudent ? 'Edit Student' : 'Add New Student'}</DialogTitle>
+          </DialogHeader>
+          <StudentForm
+            handleSubmit={handleSubmit}
+            formData={formData}
+            setFormData={setFormData}
+            loading={loading}
+            editingStudent={editingStudent}
+            classes={classes}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Students List */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {students.map((student) => (
-          <Card key={student.id} className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src={student.profile?.avatar_url} />
-                  <AvatarFallback>{student.profile?.full_name[0]}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="text-lg font-semibold">{student.profile?.full_name}</h3>
-                  <p className="text-sm text-gray-500">Grade {student.grade_level}</p>
-                  <p className="text-sm text-gray-500">Fee: ${student.fee}</p> {/* Add this line */}
-                </div>
-              </div>
-              <div className="mt-4 flex space-x-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => navigate(`/students/${student.id}`)}
-                >
-                  View Details
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => handleEdit(student)}
-                >
-                  Edit
-                </Button>
-                <Button 
-                  variant="destructive" 
-                  size="sm"
-                  onClick={() => handleDelete(student.id)}
-                >
-                  Delete
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <StudentCard
+            key={student.id}
+            student={student}
+            onEdit={() => handleEdit(student)}
+            onDelete={() => handleDelete(student.id)}
+          />
         ))}
       </div>
-
-      {isDialogOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-            <h2 className="text-xl font-bold mb-4">
-              {editingStudent ? 'Edit Student' : 'Add New Student'}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="user_id" className="block text-sm font-medium text-gray-700">Profile</label>
-                <select
-                  id="user_id"
-                  value={formData.user_id}
-                  onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
-                  required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                >
-                  <option value="">Select Profile</option>
-                  {profiles.map((profile) => (
-                    <option key={profile.id} value={profile.id}>
-                      {profile.full_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label htmlFor="grade_level" className="block text-sm font-medium text-gray-700">Grade Level</label>
-                <input
-                  type="number"
-                  id="grade_level"
-                  value={formData.grade_level}
-                  onChange={(e) => setFormData({ ...formData, grade_level: e.target.value })}
-                  required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                />
-              </div>
-              <div>
-                <label htmlFor="enrollment_date" className="block text-sm font-medium text-gray-700">Enrollment Date</label>
-                <input
-                  type="date"
-                  id="enrollment_date"
-                  value={formData.enrollment_date}
-                  onChange={(e) => setFormData({ ...formData, enrollment_date: e.target.value })}
-                  required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                />
-              </div>
-              <div>
-                <label htmlFor="parent_contact" className="block text-sm font-medium text-gray-700">Parent Contact</label>
-                <input
-                  type="text"
-                  id="parent_contact"
-                  value={formData.parent_contact}
-                  onChange={(e) => setFormData({ ...formData, parent_contact: e.target.value })}
-                  required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                />
-              </div>
-              <div>
-                <label htmlFor="fee" className="block text-sm font-medium text-gray-700">Fee</label>
-                <input
-                  type="number"
-                  id="fee"
-                  value={formData.fee}
-                  onChange={(e) => setFormData({ ...formData, fee: e.target.value })}
-                  required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                />
-              </div>
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={handleDialogClose}>
-                  Cancel
-                </Button>
-                <Button type="submit">
-                  {editingStudent ? 'Update' : 'Add'}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
+
+// StudentCard Component
+const StudentCard = ({
+  student,
+  onEdit,
+  onDelete
+}: {
+  student: Student;
+  onEdit: () => void;
+  onDelete: () => void;
+}) => (
+  <Card className={formClasses.card}>
+    <CardContent className="p-6">
+      <div className="space-y-2">
+        <h3 className="text-lg font-semibold">{student.name}</h3>
+        <p className="text-sm text-muted-foreground">Admission: {student.admissionNumber}</p>
+        <p className="text-sm text-muted-foreground">Class: {student.class?.name} {student.class?.section}</p>
+        <div className="flex space-x-2 mt-4">
+          <Button variant="outline" size="sm" onClick={onEdit}>
+            Edit
+          </Button>
+          <Button variant="destructive" size="sm" onClick={onDelete}>
+            Delete
+          </Button>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
+

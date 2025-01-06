@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../lib/auth';
-import { supabase } from '../lib/supabase';
+import { useProfileAccess, useAllStudents } from '@/services/profileService';
 import { toast } from 'react-hot-toast';
-import { Calendar } from '../components/ui/calendar';
 import { FileUploader } from '../components/FileUploader';
 import { ImageCarousel } from '../components/ImageCarousel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
@@ -18,119 +16,56 @@ import {
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
+import { 
+  Fee, 
+  FeeType,
+  FeeStatus,
+  loadFees, 
+  createFee, 
+  updateFee, 
+  deleteFee, 
+  deleteFileFromFee 
+} from '@/services/feeService';
 
-interface Fee {
-  id: string;
-  title: string;
-  description: string;
-  amount: number;
-  due_date: string;
-  created_at: string;
-  updated_at: string;
-  created_by: string;
-  class_id: string;
-  user_id: string;
-  month: string;
-  fee_type: string;
-  payment_mode: string;
-  transaction_key: string;
-  files?: FeeFile[];
-}
-
-interface FeeFile {
-  id: string;
-  fee_id: string;
-  file_path: string;
-  file_type: 'image' | 'pdf';
-  file_name: string;
-  uploaded_by: string;
-  uploaded_at: string;
-}
+const formClasses = {
+  select: "w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary",
+  input: "w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary",
+  label: "block text-sm font-medium text-foreground mb-1",
+  card: "backdrop-blur-sm bg-card/80 hover:bg-card/90 transition-all border border-border",
+  button: {
+    primary: "bg-primary hover:bg-primary/90 text-primary-foreground",
+    secondary: "bg-secondary hover:bg-secondary/90 text-secondary-foreground",
+    destructive: "bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+  }
+};
 
 const Fees = () => {
-  const { profile } = useAuth();
+  const { profile, loading: profileLoading, isAdminOrTeacher } = useProfileAccess();
+  const { students, loading: studentsLoading } = useAllStudents();
   const [fees, setFees] = useState<Fee[]>([]);
-  const [allFees, setAllFees] = useState<Fee[]>([]);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [loading, setLoading] = useState(false);
   const [editingFee, setEditingFee] = useState<Fee | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
     amount: 0,
-    due_date: new Date().toISOString().split('T')[0],
-    class_id: '',
-    user_id: '',
-    month: '',
-    fee_type: '',
-    payment_mode: '',
-    transaction_key: '',
+    dueDate: new Date().toISOString().split('T')[0],
+    feeType: FeeType.TUITION,
+    status: FeeStatus.PENDING,
+    paymentMethod: '',
+    receiptNumber: '',
+    studentId: ''
   });
-  const [selectedUserId, setSelectedUserId] = useState('');
-  const [users, setUsers] = useState<Array<{id: string, full_name: string}>>([]);
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name')
-      
-      if (error) {
-        console.error('Error fetching users:', error)
-      } else {
-        setUsers(data || [])
-      }
+    if (!profileLoading && profile) {
+      loadFeeData();
     }
-    if (profile?.role === 'admin' || profile?.role === 'teacher') {
-      fetchUsers();
-    }
-  }, [profile]);
+  }, [profile, profileLoading]);
 
-  useEffect(() => {
-    loadFees(selectedDate);
-    if (profile?.role === 'admin' || profile?.role === 'teacher') {
-      loadAllFees();
-    }
-  }, [selectedDate, profile]);
-
-  const loadFees = async (date: Date) => {
+  const loadFeeData = async () => {
     try {
       setLoading(true);
-      const dateStr = date.toISOString().split('T')[0];
-
-      console.log('Loading fees with:', {
-        role: profile?.role,
-        userId: profile?.id,
-        date: dateStr
-      });
-
-      const { data: userProfile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', profile?.id)
-        .single();
-
-      console.log('User profile from DB:', userProfile);
-
-      let query = supabase
-        .from('fees')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (profile?.role !== 'admin' && profile?.role !== 'teacher') {
-        query = query.eq('due_date', dateStr);
-      }
-
-      const { data, error } = await query;
-
-      console.log('Fees query result:', { data, error });
-
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
-      }
-
+      const data = await loadFees(profile?.role === 'STUDENT' ? profile.id : undefined);
       setFees(data || []);
     } catch (error) {
       console.error('Error in loadFees:', error);
@@ -140,44 +75,18 @@ const Fees = () => {
     }
   };
 
-  const loadAllFees = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('fees')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      toast.error('Failed to load all fees');
-      console.error(error);
-    } else {
-      setAllFees(data || []);
-    }
-    setLoading(false);
-  };
-
   const handleEdit = (fee: Fee) => {
     setEditingFee(fee);
     setFormData({
-      title: fee.title,
-      description: fee.description,
       amount: fee.amount,
-      due_date: new Date(fee.due_date).toISOString().split('T')[0],
-      class_id: fee.class_id || '',
-      user_id: fee.user_id || '',
-      month: fee.month || '',
-      fee_type: fee.fee_type || '',
-      payment_mode: fee.payment_mode || '',
-      transaction_key: fee.transaction_key || '',
+      dueDate: new Date(fee.dueDate).toISOString().split('T')[0],
+      feeType: fee.feeType,
+      status: fee.status,
+      paymentMethod: fee.paymentMethod || '',
+      receiptNumber: fee.receiptNumber || '',
+      studentId: fee.studentId
     });
-    setSelectedUserId(fee.user_id || '');
     setIsDialogOpen(true);
-  };
-
-  const handleDialogClose = () => {
-    setIsDialogOpen(false);
-    setEditingFee(null);
-    resetForm();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -185,41 +94,30 @@ const Fees = () => {
     try {
       setLoading(true);
 
+      if (!formData.studentId && !isAdminOrTeacher) {
+        toast.error('Student ID is required');
+        return;
+      }
+
       const feeData = {
-        title: formData.title,
-        description: formData.description,
+        studentId: formData.studentId || profile?.id,
         amount: formData.amount,
-        due_date: formData.due_date,
-        class_id: formData.class_id || null,
-        user_id: selectedUserId || null,
-        month: formData.month,
-        fee_type: formData.fee_type,
-        payment_mode: formData.payment_mode,
-        transaction_key: formData.transaction_key,
-        updated_at: new Date().toISOString()
+        dueDate: new Date(formData.dueDate),
+        feeType: formData.feeType,
+        status: formData.status,
+        paymentMethod: formData.paymentMethod || undefined,
+        receiptNumber: formData.receiptNumber || undefined
       };
 
-      const { error } = editingFee
-        ? await supabase
-            .from('fees')
-            .update(feeData)
-            .eq('id', editingFee.id)
-        : await supabase
-            .from('fees')
-            .insert([{ ...feeData, created_by: profile?.id }]);
-
-      if (error) throw error;
-
-      toast.success(
-        `Fee ${editingFee ? 'updated' : 'created'} successfully`
-      );
-      setEditingFee(null);
-      resetForm();
-      loadFees(selectedDate);
-      if (profile?.role === 'admin' || profile?.role === 'teacher') {
-        loadAllFees();
+      if (editingFee) {
+        await updateFee(editingFee.id, feeData);
+      } else {
+        await createFee(feeData);
       }
-      setIsDialogOpen(false);
+
+      toast.success(`Fee ${editingFee ? 'updated' : 'created'} successfully`);
+      handleDialogClose();
+      loadFeeData();
     } catch (error) {
       toast.error('Failed to save fee');
       console.error(error);
@@ -228,399 +126,246 @@ const Fees = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this fee?')) {
-      return;
-    }
-
-    const { error } = await supabase.from('fees').delete().eq('id', id);
-
-    if (error) {
-      toast.error('Failed to delete fee');
-      console.error(error);
-    } else {
-      toast.success('Fee deleted successfully');
-      loadFees(selectedDate);
-    }
-  };
-
-  const handleDeleteFile = async (fileId: string) => {
-    try {
-      const { error } = await supabase
-        .from('fee_files')
-        .delete()
-        .eq('id', fileId);
-
-      if (error) throw error;
-      
-      loadFees(selectedDate);
-      if (profile?.role === 'admin' || profile?.role === 'teacher') {
-        loadAllFees();
-      }
-    } catch (error) {
-      console.error('Error deleting file:', error);
-      toast.error('Failed to delete file');
-    }
-  };
-
-  const resetForm = () => {
+  const handleDialogClose = () => {
+    setIsDialogOpen(false);
+    setEditingFee(null);
     setFormData({
-      title: '',
-      description: '',
       amount: 0,
-      due_date: new Date().toISOString().split('T')[0],
-      class_id: '',
-      user_id: '',
-      month: '',
-      fee_type: '',
-      payment_mode: '',
-      transaction_key: '',
+      dueDate: new Date().toISOString().split('T')[0],
+      feeType: FeeType.TUITION,
+      status: FeeStatus.PENDING,
+      paymentMethod: '',
+      receiptNumber: '',
+      studentId: ''
     });
-    setSelectedUserId('');
   };
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
-      <Tabs defaultValue="daily" className="w-full space-y-8">
-        <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
-          <TabsTrigger value="daily">📅 Daily View</TabsTrigger>
-          {(profile?.role === 'admin' || profile?.role === 'teacher') && <TabsTrigger value="all">📚 All Fees</TabsTrigger>}
+      <Tabs defaultValue="all" className="w-full space-y-8">
+        <TabsList className="grid w-full grid-cols-1 max-w-md mx-auto bg-muted/50 backdrop-blur-sm">
+          <TabsTrigger value="all" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            📚 All Fees
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="daily">
-          <Card>
+        <TabsContent value="all">
+          <Card className={formClasses.card}>
             <CardHeader>
-              <CardTitle>Daily Fees</CardTitle>
+              <CardTitle className="text-2xl font-bold text-foreground">All Fees</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-6">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(date: Date | undefined) => date && setSelectedDate(date)}
-                  className="rounded-md border"
-                />
-                
-                {(profile?.role === 'admin' || profile?.role === 'teacher') && (
-                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button onClick={() => {
-                        resetForm();
-                        setEditingFee(null);
-                      }}>
-                        Create New Fee
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-h-[90vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>
-                          {editingFee ? 'Edit Fee' : 'Create Fee'}
-                        </DialogTitle>
-                      </DialogHeader>
-                      <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Create/Edit Fee Dialog */}
+              {isAdminOrTeacher && (
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className={`${formClasses.button.primary} mb-6`}>
+                      Create New Fee
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="bg-background/95 backdrop-blur-md border border-border">
+                    <DialogHeader>
+                      <DialogTitle>{editingFee ? 'Edit Fee' : 'Create Fee'}</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                      {/* Student Selection - Only for Admin/Teacher */}
+                      {isAdminOrTeacher && (
                         <div>
-                          <Label className="block text-sm font-medium text-gray-700">Title</Label>
-                          <Input
-                            type="text"
-                            value={formData.title}
-                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                            required
-                            placeholder="Enter title"
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                          />
-                        </div>
-                        <div className="col-span-2">
-                          <Label className="block text-sm font-medium text-gray-700">Description</Label>
-                          <Textarea
-                            value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            required
-                            rows={4}
-                            placeholder="Enter description"
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                          />
-                        </div>
-                        <div>
-                          <Label className="block text-sm font-medium text-gray-700">Amount</Label>
-                          <Input
-                            type="number"
-                            value={formData.amount}
-                            onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) })}
-                            required
-                            placeholder="Enter amount"
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                          />
-                        </div>
-                        <div>
-                          <Label className="block text-sm font-medium text-gray-700">Due Date</Label>
-                          <Input
-                            type="date"
-                            value={formData.due_date}
-                            onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                            required
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                          />
-                        </div>
-                        {(profile?.role === 'admin' || profile?.role === 'teacher') && (
-                          <div>
-                            <Label className="block text-sm font-medium text-gray-700">User</Label>
-                            <select
-                              value={selectedUserId}
-                              onChange={(e) => setSelectedUserId(e.target.value)}
-                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                            >
-                              <option value="">Select User</option>
-                              {users.map(user => (
-                                <option key={user.id} value={user.id}>{user.full_name}</option>
-                              ))}
-                            </select>
-                          </div>
-                        )}
-                        {profile?.role !== 'admin' && profile?.role !== 'teacher' && (
-                          <div>
-                            <Label className="block text-sm font-medium text-gray-700">Class</Label>
-                            <Input
-                              type="text"
-                              value={formData.class_id}
-                              onChange={(e) => setFormData({ ...formData, class_id: e.target.value })}
-                              required
-                              placeholder="Enter class ID"
-                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                            />
-                          </div>
-                        )}
-                        <div>
-                          <Label className="block text-sm font-medium text-gray-700">Month</Label>
-                          <Input
-                            type="text"
-                            value={formData.month}
-                            onChange={(e) => setFormData({ ...formData, month: e.target.value })}
-                            required
-                            placeholder="Enter month"
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                          />
-                        </div>
-                        <div>
-                          <Label className="block text-sm font-medium text-gray-700">Fee Type</Label>
-                          <Input
-                            type="text"
-                            value={formData.fee_type}
-                            onChange={(e) => setFormData({ ...formData, fee_type: e.target.value })}
-                            required
-                            placeholder="Enter fee type"
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                          />
-                        </div>
-                        <div>
-                          <Label className="block text-sm font-medium text-gray-700">Payment Mode</Label>
+                          <Label className={formClasses.label}>Student</Label>
                           <select
-                            value={formData.payment_mode}
-                            onChange={(e) => setFormData({ ...formData, payment_mode: e.target.value })}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                            value={formData.studentId}
+                            onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
+                            required
+                            className={formClasses.select}
                           >
-                            <option value="">Select Payment Mode</option>
-                            <option value="online">Online</option>
-                            <option value="offline">Offline</option>
+                            <option value="">Select Student</option>
+                            {students.map(student => (
+                              <option key={student.id} value={student.id}>
+                                {student.name} ({student.admissionNumber})
+                              </option>
+                            ))}
                           </select>
                         </div>
-                        {formData.payment_mode === 'online' && (
+                      )}
+
+                      {/* Fee Type */}
+                      <div>
+                        <Label className={formClasses.label}>Fee Type</Label>
+                        <select
+                          value={formData.feeType}
+                          onChange={(e) => setFormData({ ...formData, feeType: e.target.value as FeeType })}
+                          required
+                          className={formClasses.select}
+                        >
+                          {Object.values(FeeType).map(type => (
+                            <option key={type} value={type}>{type}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Amount */}
+                      <div>
+                        <Label className={formClasses.label}>Amount</Label>
+                        <Input
+                          type="number"
+                          value={formData.amount}
+                          onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) })}
+                          required
+                          className={formClasses.input}
+                        />
+                      </div>
+
+                      {/* Due Date */}
+                      <div>
+                        <Label className={formClasses.label}>Due Date</Label>
+                        <Input
+                          type="date"
+                          value={formData.dueDate}
+                          onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                          required
+                          className={formClasses.input}
+                        />
+                      </div>
+
+                      {/* Status */}
+                      <div>
+                        <Label className={formClasses.label}>Status</Label>
+                        <select
+                          value={formData.status}
+                          onChange={(e) => setFormData({ ...formData, status: e.target.value as FeeStatus })}
+                          required
+                          className={formClasses.select}
+                        >
+                          {Object.values(FeeStatus).map(status => (
+                            <option key={status} value={status}>{status}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Payment Details - Only show if status is PAID or PARTIAL */}
+                      {(formData.status === FeeStatus.PAID || formData.status === FeeStatus.PARTIAL) && (
+                        <>
                           <div>
-                            <Label className="block text-sm font-medium text-gray-700">Transaction Key</Label>
+                            <Label className={formClasses.label}>Payment Method</Label>
                             <Input
-                              type="text"
-                              value={formData.transaction_key}
-                              onChange={(e) => setFormData({ ...formData, transaction_key: e.target.value })}
-                              placeholder="Enter transaction key"
-                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                              value={formData.paymentMethod}
+                              onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
+                              className={formClasses.input}
                             />
                           </div>
-                        )}
-                        {editingFee && (
-                          <div className="mt-4 border-t pt-4">
-                            <Label className="block text-sm font-medium text-gray-700">Fee Files</Label>
-                            <FileUploader
-                              assignmentId={editingFee.id}
-                              onUploadComplete={() => loadFees(selectedDate)}
-                              existingFiles={editingFee.files}
-                              onFileDelete={handleDeleteFile}
+                          <div>
+                            <Label className={formClasses.label}>Receipt Number</Label>
+                            <Input
+                              value={formData.receiptNumber}
+                              onChange={(e) => setFormData({ ...formData, receiptNumber: e.target.value })}
+                              className={formClasses.input}
                             />
                           </div>
-                        )}
-                        <Button type="submit" className="mt-4">
-                          {editingFee ? 'Update Fee' : 'Create Fee'}
-                        </Button>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
-                )}
+                        </>
+                      )}
 
-                {loading ? (
-                  <div className="flex justify-center items-center h-64">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                  </div>
-                ) : fees.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    No fees found for this date.
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {fees.map((fee) => (
-                      <FeeCard
-                        key={fee.id}
-                        fee={fee}
-                        isEditable={profile?.role === 'admin' || profile?.role === 'teacher'}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                        onUploadComplete={() => loadFees(selectedDate)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                      <Button type="submit" disabled={loading} className={formClasses.button.primary}>
+                        {loading ? 'Saving...' : editingFee ? 'Update Fee' : 'Create Fee'}
+                      </Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              )}
 
-        {(profile?.role === 'admin' || profile?.role === 'teacher') && (
-          <TabsContent value="all">
-            <Card>
-              <CardHeader>
-                <CardTitle>All Fees</CardTitle>
-              </CardHeader>
-              <CardContent>
+              {/* Fees List */}
+              {loading ? (
+                <div className="flex justify-center items-center h-64">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                </div>
+              ) : fees.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">No fees found.</div>
+              ) : (
                 <div className="space-y-4">
-                  {allFees.map((fee) => (
+                  {fees.map((fee) => (
                     <FeeCard
                       key={fee.id}
                       fee={fee}
-                      isEditable={profile?.role === 'admin' || profile?.role === 'teacher'}
+                      isEditable={isAdminOrTeacher}
                       onEdit={handleEdit}
-                      onDelete={handleDelete}
-                      onUploadComplete={loadAllFees}
+                      onDelete={async (id) => {
+                        if (window.confirm('Are you sure?')) {
+                          await deleteFee(id);
+                          loadFeeData();
+                        }
+                      }}
                     />
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        )}
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
 };
 
-interface FeeCardProps {
+// Separate FeeCard component
+const FeeCard: React.FC<{
   fee: Fee;
   isEditable: boolean;
   onEdit: (fee: Fee) => void;
   onDelete: (id: string) => void;
-  onUploadComplete: () => void;
-}
-
-const FeeCard = ({ fee, isEditable, onEdit, onDelete, onUploadComplete }: FeeCardProps) => {
-  const handleFileDelete = async (fileId: string) => {
-    try {
-      const file = fee.files?.find(f => f.id === fileId);
-      if (!file) return;
-
-      const { error: storageError } = await supabase.storage
-        .from('fee-files')
-        .remove([file.file_path]);
-
-      if (storageError) throw storageError;
-
-      const { error: dbError } = await supabase
-        .from('fee_files')
-        .delete()
-        .eq('id', fileId);
-
-      if (dbError) throw dbError;
-
-      toast.success('File deleted successfully');
-      onUploadComplete();
-    } catch (error) {
-      console.error('Error deleting file:', error);
-      toast.error('Failed to delete file');
-    }
-  };
-
-  return (
-    <Card className="hover:shadow-lg transition-shadow duration-200">
-      <CardContent className="p-6">
-        <div className="space-y-4">
-          <div className="flex justify-between items-start">
-            <div className="space-y-1">
-              <div className="flex items-center space-x-2">
-                <h3 className="text-xl font-semibold text-primary">{fee.title}</h3>
-                
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Created: {new Date(fee.created_at).toLocaleDateString()}
-              </p>
-            </div>
-            {isEditable && (
-              <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onEdit(fee)}
-                  className="hover:bg-primary/10"
-                >
-                  <span className="mr-2">✏️</span>
-                  Edit
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => {
-                    if (window.confirm('Are you sure you want to delete this fee?')) {
-                      onDelete(fee.id);
-                    }
-                  }}
-                  className="hover:bg-destructive/90"
-                >
-                  <span className="mr-2">🗑️</span>
-                  Delete
-                </Button>
-              </div>
-            )}
-          </div>
-
-          <div className="prose prose-sm max-w-none">
-            <p className="text-gray-600">{fee.description}</p>
-          </div>
-
-          <div className="flex items-center space-x-2 text-sm">
-            <span className="font-medium text-orange-600">Due Date:</span>
-            <span className="text-gray-600">
-              {new Date(fee.due_date).toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
+}> = ({ fee, isEditable, onEdit, onDelete }) => (
+  <Card className={`${formClasses.card} transition-all duration-200 hover:shadow-lg`}>
+    <CardContent className="p-6">
+      <div className="flex justify-between items-start">
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold text-foreground">{fee.feeType}</h3>
+          <p className="text-sm font-medium text-primary">Amount: ₹{fee.amount}</p>
+          <p className="text-sm text-muted-foreground">
+            Due Date: {new Date(fee.dueDate).toLocaleDateString()}
+          </p>
+          <div className="flex items-center gap-2">
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+              fee.status === FeeStatus.PAID 
+                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100'
+                : fee.status === FeeStatus.PENDING
+                ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100'
+                : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'
+            }`}>
+              {fee.status}
             </span>
           </div>
-
-          {fee.files && fee.files.length > 0 && (
-            <div className="mt-4 border-t pt-4">
-              <h4 className="text-sm font-semibold mb-2">Attached Files</h4>
-              <ImageCarousel files={fee.files} />
-            </div>
+          {fee.paymentMethod && (
+            <p className="text-sm text-muted-foreground">
+              Payment Method: {fee.paymentMethod}
+            </p>
           )}
-
-          {isEditable && (
-            <div className="mt-4 border-t pt-4">
-              <FileUploader
-                assignmentId={fee.id}
-                onUploadComplete={onUploadComplete}
-              />
-            </div>
+          {fee.receiptNumber && (
+            <p className="text-sm text-muted-foreground">
+              Receipt: {fee.receiptNumber}
+            </p>
           )}
         </div>
-      </CardContent>
-    </Card>
-  );
-};
+        {isEditable && (
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onEdit(fee)}
+              className="hover:bg-primary/10"
+            >
+              Edit
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => onDelete(fee.id)}
+              className="hover:bg-destructive/90"
+            >
+              Delete
+            </Button>
+          </div>
+        )}
+      </div>
+    </CardContent>
+  </Card>
+);
 
 export default Fees;

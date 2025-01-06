@@ -1,129 +1,149 @@
-import React from 'react';
-import { useAuth } from '../lib/auth';
-import {
-  Users,
-  GraduationCap,
-  BookOpen,
-  FileText,
-  TrendingUp
-} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/lib/auth';
+import { getDashboardSummary } from '@/services/dashboardService';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Calendar } from '@/components/ui/calendar';
+import { Bell, Book, Calculator, Calendar as CalendarIcon, Clock, Users } from 'lucide-react';
+import StudentDashboard from './StudentDashboard';
 
-const Dashboard = () => {
-  const { profile } = useAuth();
+export default function Dashboard() {
+  const { user, profile } = useAuth();
+  const [summary, setSummary] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user && profile?.role !== 'STUDENT') {
+      loadDashboardData();
+    }
+  }, [user, profile]);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      const data = await getDashboardSummary(user!.id);
+      setSummary(data);
+    } catch (error) {
+      console.error('Error loading dashboard:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (profile?.role === 'STUDENT') {
+    return <StudentDashboard />;
+  }
 
   const stats = [
-    { name: 'Total Students', value: '2,300', icon: Users },
-    { name: 'Total Teachers', value: '120', icon: GraduationCap },
-    { name: 'Active Classes', value: '45', icon: BookOpen },
-    { name: 'Pending Assignments', value: '28', icon: FileText },
-    { name: 'Average Performance', value: '87%', icon: TrendingUp },
+    {
+      title: "Total Students",
+      value: summary?.totalStudents || 0,
+      icon: Users,
+      description: "Active students",
+      trend: "up",
+    },
+    {
+      title: "Total Teachers",
+      value: summary?.totalTeachers || 0,
+      icon: Book,
+      description: "Teaching staff",
+      trend: "stable",
+    },
+    {
+      title: "Active Classes",
+      value: summary?.totalClasses || 0,
+      icon: Calculator,
+      description: "Running classes",
+      trend: "up",
+    },
+    {
+      title: "Average Attendance",
+      value: `${summary?.averageAttendance || 0}%`,
+      icon: Clock,
+      description: "Daily attendance",
+      trend: "down",
+    },
   ];
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Welcome back, {profile?.full_name}!
-        </h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Here's what's happening in your school today
-        </p>
+    <div className="container mx-auto p-6 space-y-8">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">School Dashboard</h1>
+          <p className="text-muted-foreground">Welcome back, {profile?.full_name}</p>
+        </div>
+        <div className="flex items-center space-x-4">
+          <Badge variant="outline" className="flex items-center space-x-2">
+            <CalendarIcon className="w-4 h-4" />
+            <span>{new Date().toLocaleDateString()}</span>
+          </Badge>
+          <Badge variant="secondary" className="flex items-center space-x-2">
+            <Bell className="w-4 h-4" />
+            <span>{summary?.pendingHomeworks || 0} Pending</span>
+          </Badge>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Stats Grid */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
-          <div
-            key={stat.name}
-            className="bg-white overflow-hidden shadow rounded-lg"
-          >
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <stat.icon className="h-6 w-6 text-gray-400" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      {stat.name}
-                    </dt>
-                    <dd className="text-lg font-semibold text-gray-900">
-                      {stat.value}
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
+          <Card key={stat.title}>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {stat.title}
+              </CardTitle>
+              <stat.icon className="w-4 h-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stat.value}</div>
+              <p className="text-xs text-muted-foreground mt-1">{stat.description}</p>
+              <Progress 
+                value={typeof stat.value === 'string' ? parseInt(stat.value) : stat.value} 
+                className="mt-4"
+              />
+            </CardContent>
+          </Card>
         ))}
       </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-2">
-        {/* Recent Activity */}
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">
-              Recent Activity
-            </h3>
-            <div className="mt-5">
-              <div className="flow-root">
-                <ul className="-mb-8">
-                  <li className="relative pb-8">
-                    <div className="relative flex space-x-3">
-                      <div>
-                        <span className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-8 ring-white">
-                          <FileText className="h-5 w-5 text-white" />
-                        </span>
-                      </div>
-                      <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
-                        <div>
-                          <p className="text-sm text-gray-500">
-                            New assignment posted in <span className="font-medium text-gray-900">Mathematics</span>
-                          </p>
-                        </div>
-                        <div className="text-right text-sm whitespace-nowrap text-gray-500">
-                          <time dateTime="2024-01-13">1h ago</time>
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-                </ul>
-              </div>
+      {/* Activity and Calendar Section */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Activities</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {summary?.recentActivities?.map((activity: any) => (
+                <div key={activity.id} className="flex items-center space-x-4">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{activity.title}</p>
+                    <p className="text-xs text-muted-foreground">{activity.timestamp}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* Upcoming Deadlines */}
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">
-              Upcoming Deadlines
-            </h3>
-            <div className="mt-5">
-              <div className="flow-root">
-                <ul className="-my-5 divide-y divide-gray-200">
-                  <li className="py-4">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex-shrink-0">
-                        <BookOpen className="h-6 w-6 text-gray-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          Physics Assignment
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          Due in 2 days
-                        </p>
-                      </div>
-                    </div>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Calendar</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Calendar
+              mode="single"
+              selected={new Date()}
+              className="rounded-md border"
+            />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
-};
-
-export default Dashboard;
+}

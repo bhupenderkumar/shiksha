@@ -1,89 +1,156 @@
-import { supabase } from '../lib/supabase';
-import { Homework } from '@prisma/client';
-import { toast } from 'react-hot-toast';
+import { supabase } from '@/lib/supabase';
+import { HomeworkStatus } from '@prisma/client';
+import { v4 as uuidv4 } from 'uuid';
+import { uploadFile, deleteFile } from './fileService';
 
-export const loadHomeworks = async (date: Date, isEditable: boolean): Promise<Homework[]> => {
+export interface HomeworkType {
+  id: string;
+  title: string;
+  description: string;
+  dueDate: Date | string;
+  studentId: string;
+  subjectId: string;
+  classId: string;
+  status: HomeworkStatus;
+  createdAt?: Date;
+  updatedAt?: Date;
+  attachments?: Array<{ id: string; fileName: string }>;
+}
+
+export interface FileType {
+  id: string;
+  fileName: string;
+  fileType: string;
+  filePath: string;
+  uploadedAt: Date;
+}
+
+export const loadHomeworks = async (userId: string, role: string) => {
   try {
-    const dateStr = date.toISOString().split('T')[0];
+    if (role === 'ADMIN' || role === 'TEACHER') {
+      // Get all homeworks for admin/teacher
+      const { data, error } = await supabase
+      .schema('school')
+        .from('Homework')
+        .select(`
+          *,
+          subject:subjectId(*),
+          class:classId(*),
+          attachments:File(*)
+        `);
 
-    let query = supabase
-      .from('homework') // Ensure this matches your database table name
-      .select(`
-        *,
-        homework_files (
-          id,
-          file_path,
-          file_type,
-          file_name,
-          uploaded_at,
-          uploaded_by
-        )
-      `)
-      .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    } else {
+      // For students, first get their profile to know their classId
+      const { data: profile, error: profileError } = await supabase
+        .schema('school')
+      .from('Student')
+        .select('classId')
+        .eq('id', userId)
+        .single();
 
-    if (!isEditable) {
-      query = query.eq('assignment_date', dateStr);
+      if (profileError) throw profileError;
+
+      // Then get homeworks for their class
+      const { data, error } = await supabase
+      .schema('school')
+        .from('Homework')
+        .select(`
+          *,
+          subject:subjectId(*),
+          class:classId(*),
+          attachments:File(*),
+          submissions:HomeworkSubmission(*)
+        `)
+        .eq('classId', profile.classId);
+
+      if (error) throw error;
+      return data;
     }
-
-    const { data, error } = await query;
-
-    if (error) throw error;
-    return data || [];
   } catch (error) {
-    toast.error('Failed to load homeworks');
-    console.error('Error:', error);
-    return [];
+    console.error('Error loading homeworks:', error);
+    throw error;
   }
 };
 
-export const loadAllHomeworks = async (): Promise<Homework[]> => {
+export const createHomework = async (homework: Omit<HomeworkType, 'id' | 'createdAt' | 'updatedAt'>) => {
   try {
     const { data, error } = await supabase
-      .from('homework') // Ensure this matches your database table name
-      .select(`*, homework_files (*)`)
-      .order('created_at', { ascending: false });
+      .schema('school')
+      .from('Homework')
+      .insert([{
+        ...homework,
+        id: uuidv4(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }])
+      .select()
+      .single();
 
-    if (error) {
-      toast.error('Failed to load all homeworks');
-      console.error(error);
-      return [];
-    }
-    return data || [];
+    if (error) throw error;
+    return data;
   } catch (error) {
-    toast.error('Failed to load all homeworks');
-    console.error('Error:', error);
-    return [];
+    console.error('Error creating homework:', error);
+    throw error;
   }
 };
 
-export const createOrUpdateHomework = async (homeworkData: Partial<Homework>, editingHomeworkId?: string) => {
+export const updateHomework = async (id: string, homework: Partial<HomeworkType>) => {
   try {
-    const { error } = editingHomeworkId
-      ? await supabase
-          .from('homework') // Ensure this matches your database table name
-          .update(homeworkData)
-          .eq('id', editingHomeworkId)
-      : await supabase
-          .from('homework') // Ensure this matches your database table name
-          .insert([{ ...homeworkData }]);
+    const { data, error } = await supabase
+    .schema('school')
+      .from('Homework')
+      .update({
+        ...homework,
+        updatedAt: new Date()
+      })
+      .eq('id', id)
+      .select()
+      .single();
 
     if (error) throw error;
-
-    toast.success(`Homework ${editingHomeworkId ? 'updated' : 'created'} successfully`);
+    return data;
   } catch (error) {
-    toast.error('Failed to save homework');
-    console.error(error);
+    console.error('Error updating homework:', error);
+    throw error;
   }
 };
 
 export const deleteHomework = async (id: string) => {
   try {
-    const { error } = await supabase.from('homework').delete().eq('id', id); // Ensure this matches your database table name
-    if (error) throw error;
+    const { error } = await supabase
+    .schema('school')
+      .from('Homework')
+      .delete()
+      .eq('id', id);
 
-    toast.success('Homework deleted successfully');
+    if (error) throw error;
   } catch (error) {
-    toast.error('Failed to delete homework');
-    console.error(error);
+    console.error('Error deleting homework:', error);
+    throw error;
   }
-}; 
+};
+
+export const uploadHomeworkFile = async (file: File, homeworkId: string) => {
+  return uploadFile(file, `homeworks/${homeworkId}`, { homeworkId });
+};
+
+export const deleteHomeworkFile = async (fileId: string) => {
+  return deleteFile(fileId);
+};
+
+export const loadSubjects = async () => {
+  try {
+    const { data, error } = await supabase
+    .schema('school')
+      .from('Subject')
+      .select('id, name, code');
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error loading subjects:', error);
+    throw error;
+  }
+};

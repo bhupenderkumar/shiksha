@@ -9,8 +9,12 @@ import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import Homework from './pages/Homework';
-import Students from './pages/students';
+import Students from './pages/Students';
+import Subjects from './pages/Subjects'; // Add this import
 import Fees from './pages/Fees';
+import ClassworkComponent from './pages/Classwork';
+import StudentDashboard from './pages/StudentDashboard'; // Add this import
+import AttendancePage from './pages/Attendance';
 
 function App() {
   const { loadUser, loading } = useAuth();
@@ -28,26 +32,32 @@ function App() {
   }
 
   return (
-    <Router>
+    <>
       <Toaster position="top-right" />
-      <Routes>
-        {/* Public routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Router>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        {/* Protected routes wrapped in Layout */}
-        <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/homework" element={<Homework />} />
-          <Route path="/students" element={<ProtectedRoute><Students /></ProtectedRoute>} />
-          <Route path="/fees" element={<ProtectedRoute><Fees /></ProtectedRoute>} />
-        </Route>
+          {/* Protected routes */}
+          <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+            <Route index element={<Dashboard />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="students" element={<Students />} />
+            <Route path="subjects" element={<Subjects />} />
+            <Route path="homework" element={<Homework />} />
+            <Route path="classwork" element={<ClassworkComponent />} />
+            <Route path="student-dashboard" element={<StudentDashboard />} /> {/* Add this route */}
+            <Route path="fees" element={<Fees />} />
+            <Route path="attendance" element={<AttendancePage />} />
+          </Route>
 
-        {/* Catch all route */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Router>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </>
   );
 }
 

@@ -1,6 +1,8 @@
 import React from 'react';
 import { useTheme } from './providers/theme-provider';
 import { Sun, Moon } from 'lucide-react';
+import { Button } from './ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/Select';
 
 export const ThemeToggleButton: React.FC = () => {
   const { theme, setTheme } = useTheme();
@@ -10,12 +12,18 @@ export const ThemeToggleButton: React.FC = () => {
   };
 
   return (
-    <button
+    <Button
       onClick={toggleTheme}
-      className="flex items-center w-full px-4 py-3 text-gray-700 hover:bg-gray-100"
+      variant="ghost"
+      size="sm"
+      className="text-default hover:bg-secondary"
     >
-      {theme === 'light' ? <Moon className="w-5 h-5 mr-3" /> : <Sun className="w-5 h-5 mr-3" />}
-      {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
-    </button>
+      {theme === 'light' ? (
+        <Moon className="h-5 w-5" />
+      ) : (
+        <Sun className="h-5 w-5" />
+      )}
+      <span className="ml-2">{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
+    </Button>
   );
 };

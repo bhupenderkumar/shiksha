@@ -4,6 +4,8 @@ export type HomeworkWithRelations = Prisma.HomeworkGetPayload<{
   include: {
     student: true;
     teacher: true;
+    subjects: true;
+    file: true;
   }
 }>;
 

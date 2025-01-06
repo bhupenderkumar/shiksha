@@ -7,9 +7,10 @@ interface HomeworkCardProps {
   isEditable: boolean;
   onEdit: (homework: Homework) => void;
   onDelete: (id: string) => void;
+  onFileUpload?: (file: File, homeworkId: string) => void;
 }
 
-const HomeworkCard: React.FC<HomeworkCardProps> = ({ homework, isEditable, onEdit, onDelete }) => {
+const HomeworkCard: React.FC<HomeworkCardProps> = ({ homework, isEditable, onEdit, onDelete, onFileUpload }) => {
   return (
     <div className="border rounded-lg p-4 shadow-md">
       <h3 className="text-lg font-semibold">{homework.title}</h3>
@@ -24,6 +25,9 @@ const HomeworkCard: React.FC<HomeworkCardProps> = ({ homework, isEditable, onEdi
             <Button onClick={() => onDelete(homework.id)} variant="destructive">
               Delete
             </Button>
+            {onFileUpload && (
+              <input type="file" onChange={(e) => onFileUpload(e.target.files![0], homework.id)} />
+            )}
           </>
         )}
       </div>
@@ -31,4 +35,4 @@ const HomeworkCard: React.FC<HomeworkCardProps> = ({ homework, isEditable, onEdi
   );
 };
 
-export default HomeworkCard; 
+export default HomeworkCard;

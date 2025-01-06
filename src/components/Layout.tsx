@@ -1,87 +1,96 @@
-import React from 'react';
-import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import {
-  LayoutDashboard,
-  Users,
-  GraduationCap,
-  BookOpen,
-  FileText,
-  ClipboardList,
+  Settings,
   LogOut,
-  DollarSign,
+  ChevronDown,
 } from 'lucide-react';
 import { ThemeToggleButton } from './ThemeToggleButton';
+import { SidebarNav } from './SidebarNav';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
 
-interface LayoutProps {
-  children?: React.ReactNode;
-}
-
-const Layout: React.FC<LayoutProps> = () => {
+export default function Layout() {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-
-  const menuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/', roles: ['admin', 'teacher', 'student'] },
-    { icon: Users, label: 'Students', path: '/students', roles: ['admin', 'teacher'] },
-    { icon: GraduationCap, label: 'Teachers', path: '/teachers', roles: ['admin'] },
-    { icon: BookOpen, label: 'Classes', path: '/classes', roles: ['admin', 'teacher'] },
-    { icon: FileText, label: 'Homework', path: '/homework', roles: ['admin', 'teacher', 'student'] },
-    { icon: ClipboardList, label: 'Assignments', path: '/assignments', roles: ['admin', 'teacher', 'student'] },
-    { icon: DollarSign, label: 'Fees', path: '/fees', roles: ['admin', 'teacher', 'student'] },
-  ];
-
-  const handleSignOut = async () => {
+  
+  const handleLogout = async () => {
     await signOut();
     navigate('/login');
   };
 
-  return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
-      <div className="w-64 bg-white shadow-lg">
-        <div className="p-4">
-          <h1 className="text-2xl font-bold text-gray-800">School MS</h1>
-        </div>
-        <nav className="mt-4">
-          {menuItems.map((item, index) => (
-            item.roles.includes(profile?.role) && (
-              <Link
-                key={index}
-                to={item.path}
-                className={`flex items-center px-4 py-3 text-gray-700 hover:bg-gray-100 ${
-                  location.pathname === item.path ? 'bg-gray-100 text-indigo-600' : ''
-                }`}
-              >
-                <item.icon className={`w-5 h-5 mr-3 ${
-                  location.pathname === item.path ? 'text-indigo-600' : ''
-                }`} />
-                {item.label}
-              </Link>
-            )
-          ))}
-          <button
-            onClick={handleSignOut}
-            className="flex items-center w-full px-4 py-3 text-gray-700 hover:bg-gray-100"
-          >
-            <LogOut className="w-5 h-5 mr-3" />
-            Sign Out
-          </button>
-        </nav>
-      </div>
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase();
+  };
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        <header className="bg-white shadow-md p-4 flex justify-end">
-          <ThemeToggleButton />
-        </header>
-        <main>
-          <Outlet />
+  return (
+    <div className="min-h-screen bg-subtle">
+      <div className="flex">
+        <aside className="hidden lg:block w-72 min-h-screen p-6">
+          <SidebarNav />
+        </aside>
+        <main className="flex-1 p-6 lg:p-8">
+          <div className="mx-auto max-w-7xl">
+            <header className="bg-card shadow-sm p-4 flex justify-between items-center rounded-lg mb-6 border border-subtle">
+              <h1 className="text-xl font-semibold text-default">First Step Public School</h1>
+              <div className="flex items-center space-x-4">
+                <ThemeToggleButton />
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="focus:outline-none group">
+                    <div className="flex items-center space-x-2 hover:bg-accent rounded-full p-1 transition-colors duration-200">
+                      <Avatar className="h-8 w-8 transition-transform group-hover:ring-2 ring-primary">
+                        <AvatarImage src={profile?.avatar_url} />
+                        <AvatarFallback className="bg-primary text-primary-foreground">
+                          {profile?.full_name ? getInitials(profile.full_name) : '??'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-hover:text-foreground group-data-[state=open]:rotate-180" />
+                    </div>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <div className="flex items-center justify-start gap-2 p-2">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{profile?.full_name}</p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {profile?.email}
+                        </p>
+                      </div>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={() => navigate('/settings')}
+                      className="cursor-pointer"
+                    >
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={handleLogout}
+                      className="cursor-pointer text-destructive focus:text-destructive"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </header>
+            <div className="bg-card shadow-sm rounded-lg p-6 border border-subtle">
+              <Outlet />
+            </div>
+          </div>
         </main>
       </div>
     </div>
   );
-};
-
-export default Layout;
+}

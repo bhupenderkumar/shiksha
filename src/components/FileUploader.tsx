@@ -1,26 +1,28 @@
-import { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Button } from './ui/button';
 import { toast } from 'react-hot-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/Select';
+import { useDropzone } from 'react-dropzone';
 
 interface FileUploaderProps {
-  assignmentId?: string;
-  feeId?: string;
+  homeworkId: string;
   onUploadComplete: () => void;
-  existingFiles?: Array<{id: string, file_name: string}>;
-  onFileDelete?: (fileId: string) => void;
+  existingFiles?: any[];
+  onFileDelete: (fileId: string) => void;
 }
 
-export const FileUploader = ({ assignmentId, feeId, onUploadComplete, existingFiles, onFileDelete }: FileUploaderProps) => {
+export const FileUploader: React.FC<FileUploaderProps> = ({
+  homeworkId,
+  onUploadComplete,
+  existingFiles = [],
+  onFileDelete
+}) => {
   const [uploading, setUploading] = useState(false);
-  const id = assignmentId || feeId;
-  const bucketName = assignmentId ? 'assignment-files' : 'fee-files';
 
-  const uploadFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const uploadFile = async (file: File, id: string) => {
     try {
       setUploading(true);
-      const file = event.target.files?.[0];
-      if (!file) return;
 
       // Upload file to storage
       const fileExt = file.name.split('.').pop();
@@ -28,7 +30,7 @@ export const FileUploader = ({ assignmentId, feeId, onUploadComplete, existingFi
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from(bucketName)
+        .from('homework-files')
         .upload(filePath, file);
 
       if (uploadError) {
@@ -37,15 +39,15 @@ export const FileUploader = ({ assignmentId, feeId, onUploadComplete, existingFi
 
       // Get the public URL
       const { data: { publicUrl } } = supabase.storage
-        .from(bucketName)
+        .from('homework-files')
         .getPublicUrl(filePath);
 
-      // Save file reference to assignment_files table
+      // Save file reference to homework_files table
       const { error: dbError } = await supabase
-        .from(assignmentId ? 'assignment_files' : 'fee_files')
+        .from('homework_files')
         .insert([
           {
-            [assignmentId ? 'assignment_id' : 'fee_id']: id,
+            homework_id: id,
             file_path: publicUrl,
             file_type: fileExt?.toLowerCase() === 'pdf' ? 'pdf' : 'image',
             file_name: file.name,
@@ -79,40 +81,35 @@ export const FileUploader = ({ assignmentId, feeId, onUploadComplete, existingFi
     }
   };
 
-  return (
-    <div className="space-y-4">
-      <div>
-        <input
-          type="file"
-          accept="image/*,.pdf"
-          onChange={uploadFile}
-          disabled={uploading}
-          className="hidden"
-          id={`file-upload-${id}`}
-        />
-        <label htmlFor={`file-upload-${id}`}>
-          <Button asChild variant="outline">
-            <span>{uploading ? 'Uploading...' : 'Upload File'}</span>
-          </Button>
-        </label>
-      </div>
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    try {
+      const uploadPromises = acceptedFiles.map(file => 
+        uploadFile(file, homeworkId)
+      );
+      await Promise.all(uploadPromises);
+      onUploadComplete();
+    } catch (error) {
+      console.error('Upload error:', error);
+    }
+  }, [homeworkId, onUploadComplete]);
 
+  const { getRootProps, getInputProps } = useDropzone({ onDrop });
+
+  return (
+    <div>
+      <div {...getRootProps()} className="border-2 border-dashed p-4 text-center">
+        <input {...getInputProps()} />
+        <p>Drag & drop files here, or click to select files</p>
+      </div>
+      
       {existingFiles && existingFiles.length > 0 && (
-        <div className="mt-2">
-          <h4 className="text-sm font-medium mb-2">Existing Files:</h4>
-          <ul className="space-y-2">
-            {existingFiles.map((file) => (
+        <div className="mt-4">
+          <h4>Attached Files:</h4>
+          <ul>
+            {existingFiles.map((file: any) => (
               <li key={file.id} className="flex items-center justify-between">
-                <span className="text-sm truncate">{file.file_name}</span>
-                {onFileDelete && (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(file.id)}
-                  >
-                    Delete
-                  </Button>
-                )}
+                <span>{file.file_name}</span>
+                <button onClick={() => handleDelete(file.id)}>Delete</button>
               </li>
             ))}
           </ul>

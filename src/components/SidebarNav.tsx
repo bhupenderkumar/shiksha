@@ -1,59 +1,82 @@
+import { useState, useEffect } from 'react';
 import { cn } from '../lib/utils';
 import { Button } from './ui/button';
 import { useAuth } from '../lib/auth';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, BookOpen, DollarSign } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { LayoutDashboard, Users, BookOpen, DollarSign, Book, Calendar } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { useProfile } from '@/services/profileService';
 
-interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
-  // ...existing code...
-}
+interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {}
 
 export function SidebarNav({ className, ...props }: SidebarNavProps) {
-  const { profile } = useAuth();
-  const pathname = usePathname();
-  const isTeacherOrAdmin = profile?.role === 'admin' || profile?.role === 'teacher';
+  const { profile, loading } = useProfile();
+  const location = useLocation();
+  const pathname = location.pathname;
 
-  console.log('Profile:', profile); // Debug log
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <span>Loading Sidebar...</span>
+      </div>
+    );
+  }
+
   const items = [
     {
       title: 'Dashboard',
       href: '/dashboard',
       icon: <LayoutDashboard className="w-4 h-4" />,
-      roles: ['admin', 'teacher', 'student']
+      roles: ['ADMIN', 'TEACHER', 'STUDENT'],
     },
     {
       title: 'Students',
       href: '/students',
       icon: <Users className="w-4 h-4" />,
-      roles: ['admin', 'teacher']
+      roles: ['ADMIN', 'TEACHER'],
+    },
+    {
+      title: 'Subjects',
+      href: '/subjects',
+      icon: <Book className="w-4 h-4" />,
+      roles: ['ADMIN', 'TEACHER', 'STUDENT'],
     },
     {
       title: 'Homework',
       href: '/homework',
       icon: <BookOpen className="w-4 h-4" />,
-      roles: ['admin', 'teacher', 'student']
+      roles: ['ADMIN', 'TEACHER', 'STUDENT'],
     },
     {
       title: 'Fees',
       href: '/fees',
       icon: <DollarSign className="w-4 h-4" />,
-      roles: ['admin', 'teacher', 'student']
-    }
+      roles: ['ADMIN', 'TEACHER', 'STUDENT'],
+    },
+    {
+      title: 'Classwork',
+      href: '/classwork',
+      icon: <BookOpen className="w-4 h-4" />,
+      roles: ['ADMIN', 'TEACHER', 'STUDENT'],
+    },
+    {
+      title: 'Attendance',
+      href: '/attendance',
+      icon: <Calendar className="w-4 h-4" />,
+      roles: ['ADMIN', 'TEACHER', 'STUDENT'],
+    },
   ];
 
-  const filteredItems = items.filter(item => 
+  const filteredItems = items.filter((item) =>
     item.roles.includes(profile?.role || '')
   );
-
-  console.log('Filtered Items:', filteredItems); // Debug log
 
   return (
     <nav
       className={cn(
-        'flex space-x-2 lg:flex-col lg:space-x-0 lg:space-y-1',
-        'p-6 rounded-xl bg-background/60 backdrop-blur-lg border border-border/40',
-        'max-h-[calc(100vh-6rem)] overflow-y-auto',
+        'flex flex-col space-y-2',
+        'rounded-xl bg-card shadow-sm border border-subtle',
+        'p-4',
         className
       )}
       {...props}
@@ -63,19 +86,20 @@ export function SidebarNav({ className, ...props }: SidebarNavProps) {
           key={item.href}
           variant={pathname === item.href ? 'default' : 'ghost'}
           className={cn(
-            'justify-start w-full text-sm font-medium transition-all',
-            'hover:bg-primary/10 hover:text-primary',
+            'w-full justify-start',
+            'text-sm font-medium',
+            'h-10 px-4',
+            'rounded-lg transition-colors',
             pathname === item.href
-              ? 'bg-primary/10 text-primary'
-              : 'text-muted-foreground',
-            'px-4 py-2 h-11 rounded-lg',
+              ? 'bg-primary text-primary-foreground'
+              : 'text-default hover:bg-secondary hover:text-default',
             'flex items-center gap-3'
           )}
           asChild
         >
-          <Link href={item.href}>
+          <Link to={item.href}>
             {item.icon}
-            <span className="hidden md:inline-block">{item.title}</span>
+            <span>{item.title}</span>
           </Link>
         </Button>
       ))}
