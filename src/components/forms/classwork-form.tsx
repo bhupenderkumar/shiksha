@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +10,7 @@ import { useClassSubjects } from '@/hooks/use-class-subjects';
 import type { ClassworkType } from '@/services/classworkService';
 import toast from 'react-hot-toast';
 import { fileService } from '@/services/fileService';
+import { fetchClassworkDetails } from '@/services/classworkService';
 
 type ClassworkFormProps = {
   onSubmit: (data: any) => Promise<void>;
@@ -24,8 +25,26 @@ export function ClassworkForm({ onSubmit, initialData }: ClassworkFormProps) {
     description: initialData?.description || '',
     date: initialData?.date || new Date(),
     classId: initialData?.classId || '',
-    attachments: initialData?.attachments || [],
+    attachments: initialData?.attachments || [], // Ensure attachments is initialized as an array
   });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (initialData) {
+        const classworkDetails = await fetchClassworkDetails(initialData.id);
+        setFormData({
+          ...formData,
+          title: classworkDetails.title,
+          description: classworkDetails.description,
+          date: classworkDetails.date,
+          classId: classworkDetails.classId,
+          attachments: classworkDetails.attachments,
+        });
+      }
+    };
+
+    fetchData();
+  }, [initialData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,17 +79,17 @@ export function ClassworkForm({ onSubmit, initialData }: ClassworkFormProps) {
     }
   };
 
-  const handleFileUpload = (files: any[]) => {
+  const handleFileUpload = (files: File[]) => {
     setFormData(prev => ({
       ...prev,
-      attachments: [...prev.attachments, ...files]
+      attachments: [...prev.attachments || [], ...files] // Ensure attachments is always an array
     }));
   };
 
   const handleFileDelete = (fileId: string) => {
     setFormData(prev => ({
       ...prev,
-      attachments: prev.attachments.filter(file => file.id !== fileId)
+      attachments: (prev.attachments || []).filter(file => file.id !== fileId)
     }));
   };
 
@@ -139,7 +158,7 @@ export function ClassworkForm({ onSubmit, initialData }: ClassworkFormProps) {
             onFileDelete={handleFileDelete}
             existingFiles={formData.attachments}
             maxFiles={5}
-            acceptedFileTypes={['image/*', 'application/pdf', '.doc', '.docx']}
+            acceptedFileTypes={['image/*']} // Only allow images
           />
         </div>
       </div>

@@ -9,10 +9,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Dialog,
+  DialogTrigger,
   DialogContent,
   DialogHeader,
+  DialogFooter,
   DialogTitle,
-  DialogTrigger,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -100,7 +102,7 @@ const StudentForm = ({ handleSubmit, formData, setFormData, loading, editingStud
           className={formClasses.select}
         >
           <option value="">Select Class</option>
-          {classes.map(cls => (
+          {classes?.map(cls => (
             <option key={cls.id} value={cls.id}>
               {cls.name} - {cls.section}
             </option>
@@ -205,6 +207,7 @@ export default function StudentsPage() {
     password: string;
     username: string;
   } | null>(null);
+  const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
 
   // Load students data
   useEffect(() => {
@@ -270,19 +273,9 @@ export default function StudentsPage() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this student?')) {
-      return;
-    }
-
-    try {
-      await deleteStudent(id);
-      toast.success('Student deleted successfully');
-      loadStudentData();
-    } catch (error) {
-      toast.error('Failed to delete student');
-      console.error(error);
-    }
+  const handleDelete = (student: Student) => {
+    setStudentToDelete(student);
+    setIsDialogOpen(true);
   };
 
   const handleDialogClose = () => {
@@ -391,7 +384,7 @@ export default function StudentsPage() {
               </Card>
             ))
           ) : (
-            students.map((student, index) => (
+            students?.map((student, index) => (
               <CardAnimation key={student.id} delay={index * 0.1}>
                 <CardHoverAnimation>
                   <Card className="bg-card/50 backdrop-blur-sm border-border/50">
@@ -406,13 +399,39 @@ export default function StudentsPage() {
                           <div>
                             <h3 className="font-medium">{student.name}</h3>
                             <p className="text-sm text-muted-foreground">
-                              {student.class} - {student.section}
+                              {student.class?.name || 'No Class'} - {student.class?.section || 'No Section'}
                             </p>
                           </div>
                         </div>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(student)}>
+                          <Edit className="h-4 w-4" />
                         </Button>
+                        <Dialog open={isDialogOpen && studentToDelete === student} onOpenChange={setIsDialogOpen}>
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-destructive">
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Confirm Deletion</DialogTitle>
+                              <DialogDescription>
+                                Are you sure you want to delete {studentToDelete?.name}? This action cannot be undone.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                              <Button onClick={async () => {
+                                if (studentToDelete) {
+                                  await deleteStudent(studentToDelete.id);
+                                  toast.success('Student deleted successfully');
+                                  loadStudentData();
+                                }
+                                setIsDialogOpen(false);
+                              }}>Delete</Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
                       </div>
 
                       <div className="mt-4 space-y-2">
@@ -431,12 +450,6 @@ export default function StudentsPage() {
                       </div>
 
                       <div className="mt-4 flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="icon">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="text-destructive">
-                          <Trash className="h-4 w-4" />
-                        </Button>
                       </div>
                     </CardContent>
                   </Card>

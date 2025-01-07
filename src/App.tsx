@@ -13,6 +13,8 @@ import { useAuth } from '@/lib/auth';
 import SettingsPage from './pages/Settings';
 import Home from './pages/Home';
 import { Toaster } from 'react-hot-toast';
+import ClassworkDetail from './pages/ClassworkDetail';
+import HomeworkDetail from './pages/HomeworkDetail';
 
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/'];
@@ -120,6 +122,35 @@ function AppRoutes() {
         <PrivateRoute>
           <Layout>
             <SettingsPage />
+          </Layout>
+        </PrivateRoute>
+      } />
+      <Route path="/classwork/:id/edit" element={
+        <PrivateRoute>
+          <Layout>
+            <ClassworkDetail />
+          </Layout>
+        </PrivateRoute>
+      } />
+
+    <Route path="/classwork/:id" element={
+        <PrivateRoute>
+          <Layout>
+            <ClassworkDetail />
+          </Layout>
+        </PrivateRoute>
+      } />
+      <Route path="/homework/:id/edit" element={
+        <PrivateRoute>
+          <Layout>
+            <HomeworkDetail />
+          </Layout>
+        </PrivateRoute>
+      } />
+       <Route path="/homework/:id" element={
+        <PrivateRoute>
+          <Layout>
+            <HomeworkDetail />
           </Layout>
         </PrivateRoute>
       } />

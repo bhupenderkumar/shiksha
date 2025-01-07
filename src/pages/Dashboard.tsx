@@ -149,7 +149,7 @@ export default function Dashboard() {
 
   return (
     <PageAnimation>
-      <div className="space-y-6">
+      <div className="flex-1 overflow-y-auto p-4 space-y-6">
         {/* Welcome Section */}
         <div className="flex flex-col gap-2">
           <AnimatedText

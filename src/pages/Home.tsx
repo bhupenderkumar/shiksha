@@ -16,6 +16,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageAnimation } from "@/components/ui/page-animation";
 import { AnimatedText } from "@/components/ui/animated-text";
 import { Link } from "react-router-dom";
+import { useEffect } from 'react';
 
 const features = [
   {
@@ -63,6 +64,10 @@ const testimonials = [
 ];
 
 export default function Home() {
+  useEffect(() => {
+    window.scrollTo(0, 0); // Scroll to top on load
+  }, []);
+
   return (
     <PageAnimation>
       {/* Hero Section */}
@@ -275,7 +280,7 @@ export default function Home() {
             </div>
           </div>
           <div className="mt-8 pt-8 border-t text-center text-muted-foreground">
-            <p>© {new Date().getFullYear()} {SCHOOL_INFO.name}. All rights reserved.</p>
+            <p> {new Date().getFullYear()} {SCHOOL_INFO.name}. All rights reserved.</p>
           </div>
         </div>
       </footer>

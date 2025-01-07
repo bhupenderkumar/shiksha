@@ -1,11 +1,13 @@
 export const ROUTES = {
   HOME: '/',
+  DASHBOARD: '/dashboard',
   STUDENTS: '/students',
   TEACHERS: '/teachers',
   SUBJECTS: '/subjects',
   CLASSES: '/classes',
   FEES: '/fees',
   HOMEWORK: '/homework',
+  CLASSWORK: '/classwork',
   ATTENDANCE: '/attendance',
   SETTINGS: '/settings',
 } as const;

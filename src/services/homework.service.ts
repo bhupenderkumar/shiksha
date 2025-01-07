@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/api-client';
 import type { Homework, CreateHomeworkDto, UpdateHomeworkDto } from '@/types/homework';
+import { supabase } from '@/lib/api-client';
 
 class HomeworkService {
   private readonly baseUrl = '/api/homeworks';
@@ -30,3 +31,14 @@ class HomeworkService {
 }
 
 export const homeworkService = new HomeworkService();
+
+export const fetchHomeworkDetails = async (id) => {
+  const { data, error } = await supabase
+    .from('homework')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+};

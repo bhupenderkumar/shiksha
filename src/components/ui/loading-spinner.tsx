@@ -12,21 +12,23 @@ export function LoadingSpinner({ size = 'md', className = '' }: LoadingSpinnerPr
 
   return (
     <div className="flex items-center justify-center">
-      <div className={`relative ${sizeClasses[size]} ${className}`}>
+      <div className={`relative ${sizeClasses[size]} ${className}`}> 
         <div className="absolute w-full h-full border-4 border-primary-200 rounded-full animate-spin" />
-        <div className="absolute w-full h-full border-4 border-primary-500 rounded-full animate-spin-slow opacity-75" style={{ animationDirection: 'reverse' }} />
+        <div className="absolute w-full h-full border-4 border-primary-500 rounded-full animate-spin-slow opacity-75" />
         <div className="absolute w-full h-full border-4 border-transparent border-t-secondary-500 rounded-full animate-bounce opacity-50" />
       </div>
-      <style jsx>{`
-        @keyframes spin-slow {
-          to {
-            transform: rotate(360deg);
+      <style>
+        {`
+          @keyframes spin-slow {
+            to {
+              transform: rotate(360deg);
+            }
           }
-        }
-        .animate-spin-slow {
-          animation: spin-slow 3s linear infinite;
-        }
-      `}</style>
+          .animate-spin-slow {
+            animation: spin-slow 3s linear infinite;
+          }
+        `}
+      </style>
     </div>
   );
-} 
+}

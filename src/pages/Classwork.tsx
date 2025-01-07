@@ -8,11 +8,12 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ClassworkForm } from '@/components/forms/classwork-form';
-import { Book, Plus } from 'lucide-react';
+import { Book, Plus, Edit, Trash, EyeIcon } from 'lucide-react';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { useProfileAccess } from '@/services/profileService';
 import toast from 'react-hot-toast';
 import { useMediaQuery } from 'react-responsive';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function ClassworkPage() {
   const [classworks, setClassworks] = useState<ClassworkType[]>([]);
@@ -30,6 +31,8 @@ export default function ClassworkPage() {
   const { profile, loading: profileLoading, isAdminOrTeacher } = useProfileAccess();
 
   const isMobile = useMediaQuery({ query: '(max-width: 640px)' });
+
+  const navigate = useNavigate();
 
   const { loading, execute: fetchClassworks } = useAsync(
     async () => {
@@ -61,17 +64,18 @@ export default function ClassworkPage() {
     { showErrorToast: true }
   );
 
-  const { execute: deleteClasswork } = useAsync(
-    async () => {
-      if (!selectedClasswork) return;
-      await classworkService.delete(selectedClasswork.id);
+  const handleDeleteClasswork = async (id: string) => {
+    try {
+      await classworkService.delete(id); // Ensure this uses the updated delete method
       await fetchClassworks();
       setIsDeleteDialogOpen(false);
       setSelectedClasswork(null);
       toast.success('Classwork deleted successfully!');
-    },
-    { showErrorToast: true }
-  );
+    } catch (error) {
+      console.error('Error deleting classwork:', error);
+      // Handle error, e.g., show a notification
+    }
+  };
 
   useEffect(() => {
     if (profile) {
@@ -81,8 +85,7 @@ export default function ClassworkPage() {
 
   const handleEdit = (classwork: ClassworkType) => {
     setSelectedClasswork(classwork);
-    setDialogState({ isOpen: true, mode: 'edit' });
-    setFiles(classwork.files);
+    setDialogState({ isOpen: true, mode: 'edit' }); // Open dialog for editing
   };
 
   const handleCloseDialog = () => {
@@ -136,13 +139,25 @@ export default function ClassworkPage() {
         <div className="overflow-auto"> {/* Added overflow-auto for scrollbar */}
           <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}> {/* Modified grid classes for responsiveness */}
             {classworks.map((classwork) => (
-              <ClassworkCard
-                key={classwork.id}
-                classwork={classwork}
-                onEdit={isAdminOrTeacher ? () => handleEdit(classwork) : undefined}
-                onDelete={isAdminOrTeacher ? () => handleDelete(classwork) : undefined}
-                isStudent={!isAdminOrTeacher}
-              />
+              <div key={classwork.id} className="relative">
+                  <ClassworkCard
+                    classwork={classwork}
+                    isStudent={!isAdminOrTeacher}
+                  />
+                {isAdminOrTeacher && (
+                  <div className="absolute top-2 right-2 flex space-x-2">
+                    <button onClick={() => handleEdit(classwork)}>
+                      <Edit className="text-blue-500" />
+                    </button>
+                    <button onClick={() => handleDelete(classwork)}>
+                      <Trash className="text-red-500" />
+                    </button>
+                    <button>
+                      <EyeIcon className="text-red-500"  onClick={() => navigate(`/classwork/${classwork.id}`)}/>
+                    </button>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         </div>
@@ -163,7 +178,6 @@ export default function ClassworkPage() {
                 <ClassworkForm
                   onSubmit={dialogState.mode === 'create' ? createClasswork : updateClasswork}
                   initialData={dialogState.mode === 'edit' ? selectedClasswork : undefined}
-                  files={dialogState.mode === 'edit' ? selectedClasswork?.files : undefined}
                 />
               </div>
             </DialogContent>
@@ -183,7 +197,7 @@ export default function ClassworkPage() {
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction 
-                  onClick={deleteClasswork}
+                  onClick={() => handleDeleteClasswork(selectedClasswork?.id || '')}
                   className="bg-red-500 hover:bg-red-600 text-white"
                 >
                   Delete

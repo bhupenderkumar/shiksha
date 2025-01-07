@@ -50,7 +50,8 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles }: Hom
     handleSubmit,
     formState: { errors },
     setValue,
-    watch
+    watch,
+    getValues
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData ? {
@@ -63,6 +64,7 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles }: Hom
 
   const selectedDate = watch('dueDate');
   const selectedClassId = watch('classId');
+  const attachments = watch('attachments');
 
   // Load classes
   useEffect(() => {
@@ -96,22 +98,27 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles }: Hom
 
   const handleFormSubmit = async (data: FormData) => {
     try {
-      // Handle file uploads first
-      const uploadedFiles = await Promise.all(
+      const uploadedFiles = attachments.length > 0 ? await Promise.all(
         files.map(async (file) => {
           return await fileService.uploadFile(file, `homework/${data.classId}`);
         })
-      );
+      ) : [];
 
-      const formData = {
-        ...data,
-        attachments: [
-          ...existingFiles,
-          ...uploadedFiles
-        ]
-      };
+      // Only call delete if there are existing files to remove
+      if (existingFiles.length > 0 || uploadedFiles.length > 0) {
+        const formData = {
+          ...data,
+          attachments: [
+            ...existingFiles,
+            ...uploadedFiles
+          ].filter(file => file.id) // Ensure only files with IDs are included
+        };
 
-      await onSubmit(formData);
+        await onSubmit(formData);
+      } else {
+        // If no attachments, just submit the data without calling file service
+        await onSubmit(data);
+      }
     } catch (error) {
       console.error('Error submitting homework:', error);
       toast.error('Failed to create homework');
@@ -305,4 +312,4 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles }: Hom
       </div>
     </form>
   );
-} 
+}

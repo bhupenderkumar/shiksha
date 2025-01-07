@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import {
@@ -38,9 +38,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { id: 1, icon: Home, label: 'Dashboard', path: ROUTES.DASHBOARD },
     { id: 2, icon: Users, label: 'Students', path: ROUTES.STUDENTS },
     { id: 3, icon: BookOpen, label: 'Homework', path: ROUTES.HOMEWORK },
-    { id: 4, icon: Calendar, label: 'Attendance', path: ROUTES.ATTENDANCE },
-    { id: 5, icon: CreditCard, label: 'Fees', path: ROUTES.FEES },
-    { id: 6, icon: Settings, label: 'Settings', path: ROUTES.SETTINGS },
+    { id: 4, icon: BookOpen, label: 'Classwork', path: ROUTES.CLASSWORK },
+    { id: 5, icon: Calendar, label: 'Attendance', path: ROUTES.ATTENDANCE },
+    { id: 6, icon: CreditCard, label: 'Fees', path: ROUTES.FEES },
+    { id: 7, icon: Settings, label: 'Settings', path: ROUTES.SETTINGS },
   ];
 
   const variants = {
@@ -138,7 +139,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Main Layout */}
       <div className="flex flex-1 pt-16">
-        {/* Sidebar */}
+        {/* Sidebar Overlay */}
         <AnimatePresence mode="wait">
           {isSidebarOpen && (
             <motion.div
@@ -152,13 +153,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           )}
         </AnimatePresence>
 
+        {/* Sidebar */}
         <aside
           className={cn(
-            "fixed md:sticky top-16 h-[calc(100vh-4rem)] w-64",
-            "bg-background/50 backdrop-blur-sm border-r",
+            "fixed top-0 left-0 z-50 h-screen w-64 bg-background/70 backdrop-blur-sm border-r",
             "transition-transform duration-300 ease-in-out",
             "md:translate-x-0",
-            !isSidebarOpen && "-translate-x-full md:translate-x-0"
+            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >
           <nav className="h-full p-4 space-y-2 overflow-y-auto">
@@ -174,7 +175,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   animate="visible"
                   variants={variants}
                 >
-                  <Link to={item.path}>
+                  <Link to={item.path} onClick={() => setIsSidebarOpen(false)}>  
                     <Button
                       variant={isActive ? "secondary" : "ghost"}
                       className={cn(

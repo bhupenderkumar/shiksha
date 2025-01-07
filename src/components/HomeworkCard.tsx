@@ -1,10 +1,11 @@
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash, Paperclip, Download, Calendar } from 'lucide-react';
+import { Edit, Trash, Paperclip, Download, Calendar, Eye } from 'lucide-react';
 import type { HomeworkType } from '@/services/homeworkService';
 import { Badge } from '@/components/ui/badge';
 import { fileService } from '@/services/fileService';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 type HomeworkCardProps = {
   homework: HomeworkType;
@@ -14,6 +15,8 @@ type HomeworkCardProps = {
 };
 
 export function HomeworkCard({ homework, onEdit, onDelete, isStudent }: HomeworkCardProps) {
+  const navigate = useNavigate();
+
   const handleDownload = async (fileId: string, fileName: string) => {
     try {
       await fileService.downloadFile(fileId, fileName, homework.id);
@@ -57,11 +60,21 @@ export function HomeworkCard({ homework, onEdit, onDelete, isStudent }: Homework
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => onEdit(homework)}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent navigation
+                    onEdit(homework);
+                  }}
                 >
                   <Edit className="w-4 h-4" />
                 </Button>
               )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate(`/homework/${homework.id}`)}
+              >
+                <Eye className="w-4 h-4" />
+              </Button>
               {onDelete && (
                 <Button
                   variant="ghost"

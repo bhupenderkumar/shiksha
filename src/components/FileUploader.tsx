@@ -94,7 +94,7 @@ export function FileUploader({
           <div className="space-y-2">
             {existingFiles.map((file) => (
               <div
-                key={file.id}
+                key={file.id} // Use file.id as the unique key
                 className="flex items-center justify-between p-2 border rounded-lg"
               >
                 <div className="flex items-center space-x-2">
@@ -144,7 +144,7 @@ export function FileUploader({
           <h3 className="text-sm font-medium">Selected Files:</h3>
           {selectedFiles.map((file, index) => (
             <div
-              key={index}
+              key={file.name} // Use file.name or a unique identifier as key
               className="flex items-center justify-between p-2 border rounded-lg"
             >
               <div className="flex items-center space-x-2">

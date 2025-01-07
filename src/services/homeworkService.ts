@@ -1,6 +1,5 @@
 import { supabase } from '@/lib/api-client';
 import { v4 as uuidv4 } from 'uuid';
-import { HomeworkStatus } from '@prisma/client';
 
 export type HomeworkType = {
   id: string;
@@ -96,9 +95,8 @@ export const homeworkService = {
     return homework;
   },
 
-  async update(id: string, data: UpdateHomeworkData) {
+  async updateHomework(id: string, data: UpdateHomeworkData) {
     const { attachments, ...homeworkData } = data;
-    
     const { error: homeworkError } = await supabase
       .schema('school')
       .from('Homework')
@@ -159,4 +157,21 @@ export const homeworkService = {
 
     if (error) throw error;
   }
+};
+
+// Added a new function to encapsulate the update logic
+export const updateHomework = async (id: string, data: UpdateHomeworkData) => {
+  await homeworkService.updateHomework(id, data);
+};
+
+export const fetchHomeworkDetails = async (id) => {
+  const { data, error } = await supabase
+  .schema('school')
+    .from('Homework')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
 };

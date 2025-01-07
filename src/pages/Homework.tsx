@@ -13,6 +13,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { useProfileAccess } from '@/services/profileService';
 import toast from 'react-hot-toast';
 import { useMediaQuery } from 'react-responsive';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function HomeworkPage() {
   const [homeworks, setHomeworks] = useState<HomeworkType[]>([]);
@@ -24,6 +25,7 @@ export default function HomeworkPage() {
 
   const { profile, loading: profileLoading, isAdminOrTeacher } = useProfileAccess();
   const isMobile = useMediaQuery({ query: '(max-width: 640px)' });
+  const navigate = useNavigate();
 
   const { loading, execute: fetchHomeworks } = useAsync(
     async () => {
@@ -47,7 +49,7 @@ export default function HomeworkPage() {
   const { execute: updateHomework } = useAsync(
     async (data) => {
       if (!selectedHomework) return;
-      await homeworkService.update(selectedHomework.id, data);
+      await homeworkService.updateHomework(selectedHomework.id, data);
       await fetchHomeworks();
       setIsEditDialogOpen(false);
       setSelectedHomework(null);
@@ -73,12 +75,6 @@ export default function HomeworkPage() {
       fetchHomeworks();
     }
   }, [profile]);
-
-  const handleEdit = (homework: HomeworkType) => {
-    setSelectedHomework(homework);
-    setIsEditDialogOpen(true);
-    setFiles(homework.files || []);
-  };
 
   const handleDelete = (homework: HomeworkType) => {
     setSelectedHomework(homework);
@@ -127,13 +123,11 @@ export default function HomeworkPage() {
           isMobile ? 'grid-cols-1' : 'sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
         }`}>
           {homeworks.map((homework) => (
-            <HomeworkCard
-              key={homework.id}
+            <><HomeworkCard
               homework={homework}
-              onEdit={isAdminOrTeacher ? () => handleEdit(homework) : undefined}
+              onEdit={isAdminOrTeacher ? () => { setSelectedHomework(homework); setIsEditDialogOpen(true); } : undefined}
               onDelete={isAdminOrTeacher ? () => handleDelete(homework) : undefined}
-              isStudent={!isAdminOrTeacher}
-            />
+              isStudent={!isAdminOrTeacher} /><Link to={`/homework/${homework.id}`} key={homework.id} /></>
           ))}
         </div>
       )}
@@ -163,13 +157,7 @@ export default function HomeworkPage() {
                 <DialogTitle>Edit Homework</DialogTitle>
               </DialogHeader>
               <div className="py-4">
-                {selectedHomework && (
-                  <HomeworkForm
-                    onSubmit={updateHomework}
-                    initialData={selectedHomework}
-                    files={selectedHomework.attachments}
-                  />
-                )}
+                <HomeworkForm onSubmit={updateHomework} initialData={selectedHomework} />
               </div>
             </DialogContent>
           </Dialog>
