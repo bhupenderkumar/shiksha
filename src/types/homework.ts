@@ -1,4 +1,4 @@
-import { HomeworkStatus } from '@prisma/client';
+export type HomeworkStatus = 'PENDING' | 'SUBMITTED' | 'GRADED' | 'LATE';
 
 export interface Homework {
   id: string;
