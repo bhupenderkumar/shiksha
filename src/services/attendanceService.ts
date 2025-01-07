@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/api-client';
-import { AttendanceStatus } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
+
+export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY';
 
 export type AttendanceType = {
   id: string;
@@ -29,7 +30,6 @@ type CreateAttendanceData = {
 export const attendanceService = {
   async getAll(classId?: string, startDate?: Date, endDate?: Date) {
     let query = supabase
-      .schema('school')
       .from('Attendance')
       .select(`
         *,
@@ -62,7 +62,6 @@ export const attendanceService = {
 
   async getByStudent(studentId: string, month?: Date) {
     let query = supabase
-      .schema('school')
       .from('Attendance')
       .select('*')
       .eq('studentId', studentId)
@@ -99,7 +98,6 @@ export const attendanceService = {
     }));
 
     const { data: createdRecords, error } = await supabase
-      .schema('school')
       .from('Attendance')
       .insert(attendanceRecords)
       .select();
@@ -110,7 +108,6 @@ export const attendanceService = {
 
   async update(id: string, status: AttendanceStatus) {
     const { data, error } = await supabase
-      .schema('school')
       .from('Attendance')
       .update({
         status,
@@ -126,7 +123,6 @@ export const attendanceService = {
 
   async delete(id: string) {
     const { error } = await supabase
-      .schema('school')
       .from('Attendance')
       .delete()
       .eq('id', id);
@@ -136,7 +132,6 @@ export const attendanceService = {
 
   async getStudentStats(studentId: string) {
     const { data, error } = await supabase
-      .schema('school')
       .from('Attendance')
       .select('status')
       .eq('studentId', studentId);

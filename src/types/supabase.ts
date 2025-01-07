@@ -1,307 +1,211 @@
-export type Database = {
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export interface Database {
   public: {
     Tables: {
       Attendance: {
         Row: {
+          id: string
+          date: string
+          status: 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY'
+          studentId: string
           classId: string
           createdAt: string
-          date: string
-          id: string
-          isPresent: boolean
-          studentId: string
-        }
-        Insert: {
-          classId: string
-          createdAt?: string
-          date: string
-          id?: string
-          isPresent: boolean
-          studentId: string
-        }
-        Update: {
-          classId?: string
-          createdAt?: string
-          date?: string
-          id?: string
-          isPresent?: boolean
-          studentId?: string
-        }
-      }
-      Class: {
-        Row: {
-          createdAt: string
-          id: string
-          name: string
           updatedAt: string
         }
         Insert: {
-          createdAt?: string
           id?: string
-          name: string
+          date: string
+          status: 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY'
+          studentId: string
+          classId: string
+          createdAt?: string
           updatedAt?: string
         }
         Update: {
+          id?: string
+          date?: string
+          status?: 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY'
+          studentId?: string
+          classId?: string
           createdAt?: string
+          updatedAt?: string
+        }
+      }
+      Staff: {
+        Row: {
+          id: string
+          role: 'TEACHER' | 'ADMIN' | 'PRINCIPAL' | 'ACCOUNTANT'
+          name: string
+          email: string
+          createdAt: string
+          updatedAt: string
+        }
+        Insert: {
+          id?: string
+          role: 'TEACHER' | 'ADMIN' | 'PRINCIPAL' | 'ACCOUNTANT'
+          name: string
+          email: string
+          createdAt?: string
+          updatedAt?: string
+        }
+        Update: {
+          id?: string
+          role?: 'TEACHER' | 'ADMIN' | 'PRINCIPAL' | 'ACCOUNTANT'
+          name?: string
+          email?: string
+          createdAt?: string
+          updatedAt?: string
+        }
+      }
+      Student: {
+        Row: {
+          id: string
+          name: string
+          email: string
+          classId: string
+          createdAt: string
+          updatedAt: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          email: string
+          classId: string
+          createdAt?: string
+          updatedAt?: string
+        }
+        Update: {
           id?: string
           name?: string
-          updatedAt?: string
-        }
-      }
-      Fee: {
-        Row: {
-          amount: number
-          createdAt: string
-          dueDate: string
-          id: string
-          isPaid: boolean
-          studentId: string
-          updatedAt: string
-        }
-        Insert: {
-          amount: number
-          createdAt?: string
-          dueDate: string
-          id?: string
-          isPaid?: boolean
-          studentId: string
-          updatedAt?: string
-        }
-        Update: {
-          amount?: number
-          createdAt?: string
-          dueDate?: string
-          id?: string
-          isPaid?: boolean
-          studentId?: string
-          updatedAt?: string
-        }
-      }
-      Homework: {
-        Row: {
-          classId: string
-          createdAt: string
-          description: string
-          dueDate: string
-          id: string
-          subjectId: string
-          title: string
-          updatedAt: string
-        }
-        Insert: {
-          classId: string
-          createdAt?: string
-          description: string
-          dueDate: string
-          id?: string
-          subjectId: string
-          title: string
-          updatedAt?: string
-        }
-        Update: {
+          email?: string
           classId?: string
           createdAt?: string
-          description?: string
-          dueDate?: string
-          id?: string
-          subjectId?: string
-          title?: string
-          updatedAt?: string
-        }
-      }
-      HomeworkSubmission: {
-        Row: {
-          createdAt: string
-          homeworkId: string
-          id: string
-          studentId: string
-          submissionDate: string | null
-          submissionText: string | null
-          updatedAt: string
-        }
-        Insert: {
-          createdAt?: string
-          homeworkId: string
-          id?: string
-          studentId: string
-          submissionDate?: string | null
-          submissionText?: string | null
-          updatedAt?: string
-        }
-        Update: {
-          createdAt?: string
-          homeworkId?: string
-          id?: string
-          studentId?: string
-          submissionDate?: string | null
-          submissionText?: string | null
-          updatedAt?: string
-        }
-      }
-      Notification: {
-        Row: {
-          createdAt: string
-          id: string
-          message: string
-          studentId: string
-          title: string
-          type: string
-          updatedAt: string
-        }
-        Insert: {
-          createdAt?: string
-          id?: string
-          message: string
-          studentId: string
-          title: string
-          type: string
-          updatedAt?: string
-        }
-        Update: {
-          createdAt?: string
-          id?: string
-          message?: string
-          studentId?: string
-          title?: string
-          type?: string
           updatedAt?: string
         }
       }
       Profile: {
         Row: {
-          avatar_url: string | null
+          id: string
+          user_id: string
           full_name: string | null
-          id: string
-          updated_at: string | null
-          username: string | null
-          website: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          full_name?: string | null
-          id: string
-          updated_at?: string | null
-          username?: string | null
-          website?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          full_name?: string | null
-          id?: string
-          updated_at?: string | null
-          username?: string | null
-          website?: string | null
-        }
-      }
-      Student: {
-        Row: {
-          address: string
-          admissionNumber: string
-          bloodGroup: string | null
-          classId: string
-          contactNumber: string
-          createdAt: string
-          dateOfBirth: string
-          gender: string
-          id: string
-          name: string
-          parentContact: string
-          parentEmail: string
-          parentName: string
-          updatedAt: string
-        }
-        Insert: {
-          address: string
-          admissionNumber: string
-          bloodGroup?: string | null
-          classId: string
-          contactNumber: string
-          createdAt?: string
-          dateOfBirth: string
-          gender: string
-          id?: string
-          name: string
-          parentContact: string
-          parentEmail: string
-          parentName: string
-          updatedAt?: string
-        }
-        Update: {
-          address?: string
-          admissionNumber?: string
-          bloodGroup?: string | null
-          classId?: string
-          contactNumber?: string
-          createdAt?: string
-          dateOfBirth?: string
-          gender?: string
-          id?: string
-          name?: string
-          parentContact?: string
-          parentEmail?: string
-          parentName?: string
-          updatedAt?: string
-        }
-      }
-      Subject: {
-        Row: {
-          classId: string
-          createdAt: string
-          id: string
-          name: string
-          updatedAt: string
-        }
-        Insert: {
-          classId: string
-          createdAt?: string
-          id?: string
-          name: string
-          updatedAt?: string
-        }
-        Update: {
-          classId?: string
-          createdAt?: string
-          id?: string
-          name?: string
-          updatedAt?: string
-        }
-      }
-      UserClassRole: {
-        Row: {
-          class_id: string
-          created_at: string
-          id: string
+          avatar_url: string | null
           role: string
-          user_id: string
         }
         Insert: {
-          class_id: string
-          created_at?: string
           id?: string
-          role: string
           user_id: string
+          full_name?: string | null
+          avatar_url?: string | null
+          role: string
         }
         Update: {
-          class_id?: string
-          created_at?: string
           id?: string
-          role?: string
           user_id?: string
+          full_name?: string | null
+          avatar_url?: string | null
+          role?: string
         }
       }
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      [_ in never]: never
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
+      Homework: {
+        Row: {
+          id: string
+          title: string
+          description: string
+          dueDate: string
+          status: 'PENDING' | 'SUBMITTED' | 'GRADED' | 'LATE'
+          subjectId: string
+          classId: string
+          createdAt: string
+          updatedAt: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description: string
+          dueDate: string
+          status?: 'PENDING' | 'SUBMITTED' | 'GRADED' | 'LATE'
+          subjectId: string
+          classId: string
+          createdAt?: string
+          updatedAt?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string
+          dueDate?: string
+          status?: 'PENDING' | 'SUBMITTED' | 'GRADED' | 'LATE'
+          subjectId?: string
+          classId?: string
+          createdAt?: string
+          updatedAt?: string
+        }
+      }
+      Fee: {
+        Row: {
+          id: string
+          amount: number
+          status: 'PENDING' | 'PAID' | 'OVERDUE'
+          studentId: string
+          dueDate: string
+          createdAt: string
+          updatedAt: string
+        }
+        Insert: {
+          id?: string
+          amount: number
+          status?: 'PENDING' | 'PAID' | 'OVERDUE'
+          studentId: string
+          dueDate: string
+          createdAt?: string
+          updatedAt?: string
+        }
+        Update: {
+          id?: string
+          amount?: number
+          status?: 'PENDING' | 'PAID' | 'OVERDUE'
+          studentId?: string
+          dueDate?: string
+          createdAt?: string
+          updatedAt?: string
+        }
+      }
+      File: {
+        Row: {
+          id: string
+          fileName: string
+          filePath: string
+          fileType: string
+          uploadedBy: string
+          createdAt: string
+          updatedAt: string
+        }
+        Insert: {
+          id?: string
+          fileName: string
+          filePath: string
+          fileType: string
+          uploadedBy: string
+          createdAt?: string
+          updatedAt?: string
+        }
+        Update: {
+          id?: string
+          fileName?: string
+          filePath?: string
+          fileType?: string
+          uploadedBy?: string
+          createdAt?: string
+          updatedAt?: string
+        }
+      }
     }
   }
 }
-
-export type Student = Database['public']['Tables']['Student']['Row'];
