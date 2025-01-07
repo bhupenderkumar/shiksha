@@ -15,6 +15,7 @@ import Home from './pages/Home';
 import { Toaster } from 'react-hot-toast';
 import ClassworkDetail from './pages/ClassworkDetail';
 import HomeworkDetail from './pages/HomeworkDetail';
+import Register from './pages/Register';
 
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/'];
@@ -33,11 +34,12 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 
   // If not authenticated and trying to access a private route
   if (!user && !PUBLIC_ROUTES.includes(location.pathname)) {
-    return <Navigate to="/" replace state={{ from: location }} />;
+    // Store the attempted URL for redirect after login
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  // If authenticated and trying to access the home page
-  if (user && location.pathname === '/') {
+  // If authenticated and trying to access auth pages
+  if (user && PUBLIC_ROUTES.includes(location.pathname)) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -60,6 +62,7 @@ function AppRoutes() {
       {/* Public Routes */}
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
       {/* Protected Routes */}
       <Route path="/dashboard" element={
