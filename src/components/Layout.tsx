@@ -12,7 +12,8 @@ import {
   CreditCard,
   Bell,
   ChevronRight,
-  LogOut
+  LogOut,
+  MessageSquare
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { useAuth } from '@/lib/auth';
@@ -41,7 +42,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { id: 4, icon: BookOpen, label: 'Classwork', path: ROUTES.CLASSWORK },
     { id: 5, icon: Calendar, label: 'Attendance', path: ROUTES.ATTENDANCE },
     { id: 6, icon: CreditCard, label: 'Fees', path: ROUTES.FEES },
-    { id: 7, icon: Settings, label: 'Settings', path: ROUTES.SETTINGS },
+    { id: 7, icon: MessageSquare, label: 'Feedback', path: ROUTES.FEEDBACK },
+    { id: 8, icon: Settings, label: 'Settings', path: ROUTES.SETTINGS },
   ];
 
   const variants = {

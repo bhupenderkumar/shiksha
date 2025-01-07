@@ -1,15 +1,16 @@
 export const ROUTES = {
-  HOME: '/',
-  DASHBOARD: '/dashboard',
+  LOGIN: '/login',
+  DASHBOARD: '/',
   STUDENTS: '/students',
-  TEACHERS: '/teachers',
-  SUBJECTS: '/subjects',
-  CLASSES: '/classes',
-  FEES: '/fees',
   HOMEWORK: '/homework',
   CLASSWORK: '/classwork',
   ATTENDANCE: '/attendance',
+  FEES: '/fees',
+  FEEDBACK: '/feedback',
   SETTINGS: '/settings',
+  STUDENT_DETAIL: '/students/:id',
+  HOMEWORK_DETAIL: '/homework/:id',
+  CLASSWORK_DETAIL: '/classwork/:id',
 } as const;
 
 export const API_ENDPOINTS = {
@@ -54,4 +55,4 @@ export const FORM_VALIDATION = {
       message: 'Invalid phone number',
     },
   },
-} as const; 
+} as const;
