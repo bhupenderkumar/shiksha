@@ -1,6 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -27,7 +28,7 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem
+    --radius: 0.5rem;
   }
   .dark {
     --background: 0 0% 3.9%;
@@ -53,9 +54,10 @@
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%
+    --chart-5: 340 75% 55%;
   }
 }
+
 @layer base {
   * {
     @apply border-border;
@@ -63,4 +65,84 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Additional styles to fix header text overlap and ensure sidebar toggle is visible on all screens */
+header {
+  z-index: 50;
+}
+
+header .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+}
+
+header .container .flex {
+  align-items: center;
+}
+
+header .container .flex .text-xl {
+  z-index: 10;
+  position: relative;
+}
+
+header .container .flex .text-xl::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: inherit;
+  z-index: -1;
+}
+
+header .container .flex .text-xl::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: inherit;
+  z-index: -1;
+}
+
+header .container .flex .text-xl span {
+  position: relative;
+  z-index: 10;
+}
+
+header .container .flex .text-xl .bg-clip-text {
+  position: relative;
+  z-index: 10;
+}
+
+header .container .flex .text-xl .bg-clip-text::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: inherit;
+  z-index: -1;
+}
+
+header .container .flex .text-xl .bg-clip-text::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: inherit;
+  z-index: -1;
+}
+
+/* Ensure sidebar toggle is visible on all screens */
+button.p-2 {
+  display: block;
 }
