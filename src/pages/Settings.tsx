@@ -39,6 +39,7 @@ export default function SettingsPage() {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [avatar, setAvatar] = useState<File | null>(null);
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
 
   const { loading, execute: fetchSettings } = useAsync(
     async () => {
@@ -55,56 +56,36 @@ export default function SettingsPage() {
       setSettings(schoolData);
 
       // Fetch user settings
-      const { data: userData, error: userError } = await supabase
-        .schema('school')
-        .from('UserSettings')
-        .select('*')
-        .eq('userId', profile.id)
-        .single();
-
-      if (userError && userError.code !== 'PGRST116') throw userError;
-
-      if (userData) {
-        setNotificationSettings(userData.notifications || notificationSettings);
-        setThemeSettings(userData.theme || themeSettings);
-        setSecuritySettings(userData.security || securitySettings);
-      }
+      const userSettings = await settingsService.getUserSettings(profile.id);
+      setNotificationSettings(userSettings.notifications || notificationSettings);
+      setThemeSettings(userSettings.theme || themeSettings);
+      setSecuritySettings(userSettings.security || securitySettings);
     },
     { showErrorToast: true }
   );
 
   const { execute: updateSettings } = useAsync(
     async (data: Partial<SchoolSettings>) => {
-      const { error } = await supabase
-        .schema('school')
-        .from('Settings')
-        .update(data)
-        .eq('id', settings?.id);
-
-      if (error) throw error;
-      await fetchSettings();
-      setIsEditing(false);
-      toast.success('Settings updated successfully');
+      try {
+        await settingsService.updateSchoolSettings(data);
+        toast.success('School settings updated successfully');
+      } catch (error) {
+        console.error("Failed to update settings:", error);
+        toast.error('Failed to update settings');
+      }
     },
     { showErrorToast: true }
   );
 
   const { execute: updateUserSettings } = useAsync(
-    async () => {
+    async (settingsToUpdate: any) => {
       if (!profile) return;
 
-      const { error } = await supabase
-        .schema('school')
-        .from('UserSettings')
-        .upsert({
-          userId: profile.id,
-          notifications: notificationSettings,
-          theme: themeSettings,
-          security: securitySettings
-        });
-
-      if (error) throw error;
-      toast.success('User settings updated successfully');
+      try {
+        await settingsService.updateUserSettings(profile.id, settingsToUpdate);
+      } catch (error) {
+        console.error("Failed to update settings:", error);
+      }
     },
     { showErrorToast: true }
   );
@@ -150,7 +131,7 @@ export default function SettingsPage() {
     const formData = new FormData(form);
 
     await updateSettings({
-      schoolName: formData.get('schoolName') as string,
+      school_name: formData.get('school_name') as string,
       address: formData.get('address') as string,
       phone: formData.get('phone') as string,
       email: formData.get('email') as string,
@@ -158,6 +139,67 @@ export default function SettingsPage() {
       description: formData.get('description') as string
     });
   };
+
+  const handleSettingsUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+
+    const settingsToUpdate = {
+      notifications: {
+        emailNotifications: formData.get('emailNotifications') === 'true',
+        pushNotifications: formData.get('pushNotifications') === 'true',
+        reminderFrequency: formData.get('reminderFrequency') as string,
+      },
+      theme: {
+        theme: formData.get('theme') as string,
+        colorScheme: formData.get('colorScheme') as string,
+        fontSize: formData.get('fontSize') as string,
+      },
+      security: {
+        twoFactorAuth: formData.get('twoFactorAuth') === 'true',
+        sessionTimeout: formData.get('sessionTimeout') as string,
+      },
+    };
+
+    try {
+      // Call the updateUserSettings method from the service
+      await settingsService.updateUserSettings(profile.id, settingsToUpdate);
+    } catch (error) {
+      console.error("Failed to update settings:", error);
+    }
+  };
+
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (unsavedChanges) {
+        const message = 'You have unsaved changes. Are you sure you want to leave?';
+        event.returnValue = message; // For most browsers
+        return message; // For some browsers
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [unsavedChanges]);
+
+  useEffect(() => {
+    const fetchUserSettings = async () => {
+      try {
+        const userSettings = await settingsService.getUserSettings(profile?.id);
+        setNotificationSettings(userSettings.notifications || notificationSettings);
+        setThemeSettings(userSettings.theme || themeSettings);
+        setSecuritySettings(userSettings.security || securitySettings);
+      } catch (error) {
+        console.error("Error fetching user settings:", error);
+      }
+    };
+
+    fetchUserSettings();
+  }, [profile?.id]);
 
   if (loading || profileLoading) {
     return (
@@ -316,11 +358,11 @@ export default function SettingsPage() {
                     <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in">
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor="schoolName">School Name</Label>
+                          <Label htmlFor="school_name">School Name</Label>
                           <Input
-                            id="schoolName"
-                            name="schoolName"
-                            defaultValue={settings?.schoolName}
+                            id="school_name"
+                            name="school_name"
+                            defaultValue={settings?.school_name}
                             required
                           />
                         </div>
@@ -384,7 +426,7 @@ export default function SettingsPage() {
                       <div className="grid grid-cols-2 gap-6">
                         <div>
                           <Label className="text-muted-foreground">School Name</Label>
-                          <p className="text-lg font-medium">{settings?.schoolName}</p>
+                          <p className="text-lg font-medium">{settings?.school_name}</p>
                         </div>
                         <div>
                           <Label className="text-muted-foreground">Phone</Label>
@@ -431,66 +473,77 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Email Notifications</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Receive notifications via email
-                      </p>
+                  <form onSubmit={handleSettingsUpdate}>
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label>Email Notifications</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Receive notifications via email
+                        </p>
+                      </div>
+                      <Switch
+                        checked={notificationSettings.emailNotifications}
+                        onCheckedChange={(checked) => {
+                          setNotificationSettings(prev => ({
+                            ...prev,
+                            emailNotifications: checked
+                          }));
+                          setUnsavedChanges(true);
+                        }}
+                      />
+                      <Input type="hidden" name="emailNotifications" value={notificationSettings.emailNotifications.toString()} />
                     </div>
-                    <Switch
-                      checked={notificationSettings.emailNotifications}
-                      onCheckedChange={(checked) => {
-                        setNotificationSettings(prev => ({
-                          ...prev,
-                          emailNotifications: checked
-                        }));
-                        updateUserSettings();
-                      }}
-                    />
-                  </div>
-                  <Separator />
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Push Notifications</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Receive push notifications on your device
-                      </p>
+                    <Separator />
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label>Push Notifications</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Receive push notifications on your device
+                        </p>
+                      </div>
+                      <Switch
+                        checked={notificationSettings.pushNotifications}
+                        onCheckedChange={(checked) => {
+                          setNotificationSettings(prev => ({
+                            ...prev,
+                            pushNotifications: checked
+                          }));
+                          setUnsavedChanges(true);
+                        }}
+                      />
+                      <Input type="hidden" name="pushNotifications" value={notificationSettings.pushNotifications.toString()} />
                     </div>
-                    <Switch
-                      checked={notificationSettings.pushNotifications}
-                      onCheckedChange={(checked) => {
-                        setNotificationSettings(prev => ({
-                          ...prev,
-                          pushNotifications: checked
-                        }));
-                        updateUserSettings();
-                      }}
-                    />
-                  </div>
-                  <Separator />
-                  <div className="space-y-2">
-                    <Label>Reminder Frequency</Label>
-                    <Select
-                      value={notificationSettings.reminderFrequency}
-                      onValueChange={(value) => {
-                        setNotificationSettings(prev => ({
-                          ...prev,
-                          reminderFrequency: value
-                        }));
-                        updateUserSettings();
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="daily">Daily</SelectItem>
-                        <SelectItem value="weekly">Weekly</SelectItem>
-                        <SelectItem value="monthly">Monthly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    <Separator />
+                    <div className="space-y-2">
+                      <Label>Reminder Frequency</Label>
+                      <Select
+                        value={notificationSettings.reminderFrequency}
+                        onValueChange={(value) => {
+                          setNotificationSettings(prev => ({
+                            ...prev,
+                            reminderFrequency: value
+                          }));
+                          setUnsavedChanges(true);
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="daily">Daily</SelectItem>
+                          <SelectItem value="weekly">Weekly</SelectItem>
+                          <SelectItem value="monthly">Monthly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input type="hidden" name="reminderFrequency" value={notificationSettings.reminderFrequency} />
+                    </div>
+                    <div className="flex justify-end">
+                      <Button type="submit">
+                        <Save className="w-4 h-4 mr-2" />
+                        Save Changes
+                      </Button>
+                    </div>
+                  </form>
                 </CardContent>
               </Card>
             </CardAnimation>
@@ -508,75 +561,86 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="space-y-2">
-                    <Label>Theme</Label>
-                    <Select
-                      value={themeSettings.theme}
-                      onValueChange={(value) => {
-                        setThemeSettings(prev => ({
-                          ...prev,
-                          theme: value
-                        }));
-                        updateUserSettings();
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="light">Light</SelectItem>
-                        <SelectItem value="dark">Dark</SelectItem>
-                        <SelectItem value="system">System</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Separator />
-                  <div className="space-y-2">
-                    <Label>Color Scheme</Label>
-                    <Select
-                      value={themeSettings.colorScheme}
-                      onValueChange={(value) => {
-                        setThemeSettings(prev => ({
-                          ...prev,
-                          colorScheme: value
-                        }));
-                        updateUserSettings();
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="blue">Blue</SelectItem>
-                        <SelectItem value="green">Green</SelectItem>
-                        <SelectItem value="purple">Purple</SelectItem>
-                        <SelectItem value="orange">Orange</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Separator />
-                  <div className="space-y-2">
-                    <Label>Font Size</Label>
-                    <Select
-                      value={themeSettings.fontSize}
-                      onValueChange={(value) => {
-                        setThemeSettings(prev => ({
-                          ...prev,
-                          fontSize: value
-                        }));
-                        updateUserSettings();
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="small">Small</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="large">Large</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <form onSubmit={handleSettingsUpdate}>
+                    <div className="space-y-2">
+                      <Label>Theme</Label>
+                      <Select
+                        value={themeSettings.theme}
+                        onValueChange={(value) => {
+                          setThemeSettings(prev => ({
+                            ...prev,
+                            theme: value
+                          }));
+                          setUnsavedChanges(true);
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="light">Light</SelectItem>
+                          <SelectItem value="dark">Dark</SelectItem>
+                          <SelectItem value="system">System</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input type="hidden" name="theme" value={themeSettings.theme} />
+                    </div>
+                    <Separator />
+                    <div className="space-y-2">
+                      <Label>Color Scheme</Label>
+                      <Select
+                        value={themeSettings.colorScheme}
+                        onValueChange={(value) => {
+                          setThemeSettings(prev => ({
+                            ...prev,
+                            colorScheme: value
+                          }));
+                          setUnsavedChanges(true);
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="blue">Blue</SelectItem>
+                          <SelectItem value="green">Green</SelectItem>
+                          <SelectItem value="purple">Purple</SelectItem>
+                          <SelectItem value="orange">Orange</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input type="hidden" name="colorScheme" value={themeSettings.colorScheme} />
+                    </div>
+                    <Separator />
+                    <div className="space-y-2">
+                      <Label>Font Size</Label>
+                      <Select
+                        value={themeSettings.fontSize}
+                        onValueChange={(value) => {
+                          setThemeSettings(prev => ({
+                            ...prev,
+                            fontSize: value
+                          }));
+                          setUnsavedChanges(true);
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="small">Small</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="large">Large</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input type="hidden" name="fontSize" value={themeSettings.fontSize} />
+                    </div>
+                    <div className="flex justify-end">
+                      <Button type="submit">
+                        <Save className="w-4 h-4 mr-2" />
+                        Save Changes
+                      </Button>
+                    </div>
+                  </form>
                 </CardContent>
               </Card>
             </CardAnimation>
@@ -594,48 +658,58 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Two-Factor Authentication</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Add an extra layer of security to your account
-                      </p>
+                  <form onSubmit={handleSettingsUpdate}>
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label>Two-Factor Authentication</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Add an extra layer of security to your account
+                        </p>
+                      </div>
+                      <Switch
+                        checked={securitySettings.twoFactorAuth}
+                        onCheckedChange={(checked) => {
+                          setSecuritySettings(prev => ({
+                            ...prev,
+                            twoFactorAuth: checked
+                          }));
+                          setUnsavedChanges(true);
+                        }}
+                      />
+                      <Input type="hidden" name="twoFactorAuth" value={securitySettings.twoFactorAuth.toString()} />
                     </div>
-                    <Switch
-                      checked={securitySettings.twoFactorAuth}
-                      onCheckedChange={(checked) => {
-                        setSecuritySettings(prev => ({
-                          ...prev,
-                          twoFactorAuth: checked
-                        }));
-                        updateUserSettings();
-                      }}
-                    />
-                  </div>
-                  <Separator />
-                  <div className="space-y-2">
-                    <Label>Session Timeout</Label>
-                    <Select
-                      value={securitySettings.sessionTimeout}
-                      onValueChange={(value) => {
-                        setSecuritySettings(prev => ({
-                          ...prev,
-                          sessionTimeout: value
-                        }));
-                        updateUserSettings();
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="15">15 minutes</SelectItem>
-                        <SelectItem value="30">30 minutes</SelectItem>
-                        <SelectItem value="60">1 hour</SelectItem>
-                        <SelectItem value="120">2 hours</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    <Separator />
+                    <div className="space-y-2">
+                      <Label>Session Timeout</Label>
+                      <Select
+                        value={securitySettings.sessionTimeout}
+                        onValueChange={(value) => {
+                          setSecuritySettings(prev => ({
+                            ...prev,
+                            sessionTimeout: value
+                          }));
+                          setUnsavedChanges(true);
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="15">15 minutes</SelectItem>
+                          <SelectItem value="30">30 minutes</SelectItem>
+                          <SelectItem value="60">1 hour</SelectItem>
+                          <SelectItem value="120">2 hours</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input type="hidden" name="sessionTimeout" value={securitySettings.sessionTimeout} />
+                    </div>
+                    <div className="flex justify-end">
+                      <Button type="submit">
+                        <Save className="w-4 h-4 mr-2" />
+                        Save Changes
+                      </Button>
+                    </div>
+                  </form>
                 </CardContent>
               </Card>
             </CardAnimation>

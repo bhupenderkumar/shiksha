@@ -20,7 +20,7 @@ export function PageLayout({ children, title }: PageLayoutProps) {
     <div className="min-h-screen bg-background flex">
       <button 
         onClick={toggleSidebar} 
-        className="p-2 md:hidden" // Hide on medium and larger screens
+        className="p-2" // Show on all screen sizes
       >
         {isSidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
       </button>
