@@ -1,36 +1,42 @@
-import { supabase } from '@/lib/api-client';
+import { supabase, handleError } from '@/lib/api-client';
+import type { Student } from '@/types/student';
 
 export class StudentService {
+  // Fetch multiple students
   async findMany(params: { classId?: string } = {}) {
-    let query = supabase
-      .schema('school')
-      .from('Student')
-      .select(`
-        id,
-        name,
-        admissionNumber,
-        dateOfBirth,
-        gender,
-        contactNumber,
-        parentName,
-        class:Class (
+    try {
+      let query = supabase
+        .schema('school')
+        .from('Students')
+        .select(`
           id,
           name,
-          section
-        )
-      `);
+          admissionNumber,
+          dateOfBirth,
+          gender,
+          contactNumber,
+          parentName,
+          class:Class (
+            id,
+            name,
+            section
+          )
+        `);
 
-    if (params.classId) {
-      query = query.eq('classId', params.classId);
+      if (params.classId) {
+        query = query.eq('classId', params.classId);
+      }
+
+      const { data, error } = await query.order('name');
+
+      if (error) throw error;
+      return data.map(student => ({
+        ...student,
+        dateOfBirth: student.dateOfBirth ? new Date(student.dateOfBirth) : null
+      })) as Student[];
+    } catch (error) {
+      handleError(error, 'Error fetching students');
     }
-
-    const { data, error } = await query.order('name');
-    if (error) throw error;
-
-    return data.map(student => ({
-      ...student,
-      dateOfBirth: student.dateOfBirth ? new Date(student.dateOfBirth) : null
-    }));
   }
 
   async getByClass(classId: string) {
@@ -38,59 +44,75 @@ export class StudentService {
   }
 
   async findOne(id: string) {
-    const { data, error } = await supabase
-      .schema('school')
-      .from('Student')
-      .select(`
-        *,
-        class:Class (
-          id,
-          name,
-          section
-        )
-      `)
-      .eq('id', id)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .schema('school')
+        .from('Students')
+        .select(`
+          *,
+          class:Class (
+            id,
+            name,
+            section
+          )
+        `)
+        .eq('id', id)
+        .single();
 
-    if (error) throw error;
-    return data;
+      if (error) throw error;
+      return data as Student;
+    } catch (error) {
+      handleError(error, 'Error fetching student');
+    }
   }
 
   async create(data: any) {
-    const { data: created, error } = await supabase
-      .schema('school')
-      .from('Student')
-      .insert([data])
-      .select()
-      .single();
+    try {
+      const { data: created, error } = await supabase
+        .schema('school')
+        .from('Students')
+        .insert([data])
+        .select()
+        .single();
 
-    if (error) throw error;
-    return created;
+      if (error) throw error;
+      return created as Student;
+    } catch (error) {
+      handleError(error, 'Error creating student');
+    }
   }
 
   async update(id: string, data: any) {
-    const { data: updated, error } = await supabase
-      .schema('school')
-      .from('Student')
-      .update(data)
-      .eq('id', id)
-      .select()
-      .single();
+    try {
+      const { data: updated, error } = await supabase
+        .schema('school')
+        .from('Students')
+        .update(data)
+        .eq('id', id)
+        .select()
+        .single();
 
-    if (error) throw error;
-    return updated;
+      if (error) throw error;
+      return updated as Student;
+    } catch (error) {
+      handleError(error, 'Error updating student');
+    }
   }
 
   async delete(id: string) {
-    const { error } = await supabase
-      .schema('school')
-      .from('Student')
-      .delete()
-      .eq('id', id);
+    try {
+      const { error } = await supabase
+        .schema('school')
+        .from('Students')
+        .delete()
+        .eq('id', id);
 
-    if (error) throw error;
+      if (error) throw error;
+    } catch (error) {
+      handleError(error, 'Error deleting student');
+    }
   }
 }
 
 // Create a singleton instance
-export const studentService = new StudentService(); 
+export const studentService = new StudentService();
