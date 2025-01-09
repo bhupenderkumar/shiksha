@@ -74,7 +74,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-background to-background/95">
       {/* Header */}
       <header className="fixed top-0 w-full z-50 border-b bg-background/80 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="container mx-auto flex items-center justify-between p-4">
           <motion.div 
             key="header-left"
             initial={{ opacity: 0, x: -20 }}
@@ -85,7 +85,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               variant="ghost"
               size="icon"
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="md:hidden"
             >
               <Menu className="h-6 w-6" />
             </Button>
