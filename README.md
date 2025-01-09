@@ -1,4 +1,10 @@
-# Supabase and React Integration Project
+# Shikha 
+
+
+![image](https://github.com/user-attachments/assets/e1f7e7e9-d09f-47f3-84cd-71fc0de16ccb)
+
+![image](https://github.com/user-attachments/assets/1ff5e00f-4c9e-4be3-ae21-f22c67657fc4)
+
 
 ## Overview
 This project is designed to learn about Supabase and integrate it with a React application. It includes a comprehensive set of features for managing attendance, classwork, homework, and more. The project aims to provide a robust and scalable solution for educational institutions to efficiently manage student-related data and activities.
