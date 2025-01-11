@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AttendanceForm } from '@/components/forms/attendance-form';
 import { Calendar as CalendarIcon, Plus, Edit, Trash } from 'lucide-react';
-import { useProfileAccess } from '@/services/profileService';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
