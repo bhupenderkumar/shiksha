@@ -254,3 +254,20 @@
 *::-webkit-scrollbar {
   background-color: transparent;
 }
+
+
+
+  .glowing-border {
+    border: 2px solid transparent;
+    box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.5);
+    animation: glow 1.5s infinite alternate;
+  }
+
+  @keyframes glow {
+    from {
+      box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.5);
+    }
+    to {
+      box-shadow: 0 0 20px 10px rgba(255, 255, 255, 1);
+    }
+  }

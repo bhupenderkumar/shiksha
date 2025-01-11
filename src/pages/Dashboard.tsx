@@ -41,235 +41,185 @@ import { AnimatedText } from '@/components/ui/animated-text';
 import { cn } from '@/lib/utils';
 
 export default function Dashboard() {
-  const { profile, loading: profileLoading, isAdminOrTeacher } = useProfileAccess();
-  const [stats, setStats] = useState<any>({});
-  const [recentClassworks, setRecentClassworks] = useState([]);
-  const [recentHomeworks, setRecentHomeworks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { profile, isAdminOrTeacher } = useProfileAccess();
+  const [stats, setStats] = useState<any>({
+    totalStudents: 0,
+    totalTeachers: 0,
+    totalClasses: 0,
+    pendingHomeworks: 0,
+    averageAttendance: 0,
+    recentActivities: [],
+    upcomingDeadlines: []
+  });
+  const [loading, setLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      if (!profile) return;
+    const loadDashboardData = async () => {
+      if (!profile?.id) return;
       
       try {
         setLoading(true);
+        const dashboardData = isAdminOrTeacher 
+          ? await getDashboardSummary(profile.id)
+          : await getStudentDashboardData(profile.id);
         
-        if (isAdminOrTeacher) {
-          // Admin/Teacher View Data
-          const [classworksData, homeworksData, studentsData, feesData] = await Promise.all([
-            classworkService.getAll(profile.role),
-            homeworkService.getAll(profile.role),
-            studentService.findMany(),
-            loadFees()
-          ]);
-
-          const totalFees = feesData?.reduce((sum: number, fee: any) => sum + fee.amount, 0) || 0;
-          const paidFees = feesData?.filter((fee: any) => fee.status === FeeStatus.PAID)
-            .reduce((sum: number, fee: any) => sum + fee.amount, 0) || 0;
-          const pendingFees = totalFees - paidFees;
-
-          setStats({
-            totalStudents: studentsData?.length || 0,
-            totalClassworks: classworksData?.length || 0,
-            totalHomeworks: homeworksData?.length || 0,
-            pendingHomeworks: homeworksData?.filter((hw: any) => hw.status === 'PENDING')?.length || 0,
-            totalFees,
-            paidFees,
-            pendingFees,
-            feeCollectionRate: totalFees ? ((paidFees / totalFees) * 100).toFixed(1) : 0,
-            averageAttendance: 85.5, // You can calculate this from attendance data
-            activeStudents: studentsData?.filter((s: any) => s.status === 'ACTIVE')?.length || 0,
-          });
-
-          setRecentClassworks(classworksData?.slice(0, 5) || []);
-          setRecentHomeworks(homeworksData?.slice(0, 5) || []);
-        } else {
-          // Student View Data
-          const [classworksData, homeworksData, feesData] = await Promise.all([
-            classworkService.getAll(profile.role, profile.classId),
-            homeworkService.getAll(profile.role, profile.classId),
-            loadFees(profile.id)
-          ]);
-
-          const totalFees = feesData?.reduce((sum: number, fee: any) => sum + fee.amount, 0) || 0;
-          const paidFees = feesData?.filter((fee: any) => fee.status === FeeStatus.PAID)
-            .reduce((sum: number, fee: any) => sum + fee.amount, 0) || 0;
-
-          const attendanceStats = await attendanceService.getStudentStats(profile.id);
-
-          setStats({
-            totalClassworks: classworksData?.length || 0,
-            completedHomeworks: homeworksData?.filter((hw: any) => hw.status === 'COMPLETED')?.length || 0,
-            pendingHomeworks: homeworksData?.filter((hw: any) => hw.status === 'PENDING')?.length || 0,
-            totalHomeworks: homeworksData?.length || 0,
-            attendancePercentage: attendanceStats.attendancePercentage.toFixed(1),
-            totalPresent: attendanceStats.present,
-            totalAbsent: attendanceStats.absent,
-            totalFees,
-            paidFees,
-            pendingFees: totalFees - paidFees,
-            feesPaidPercentage: totalFees ? ((paidFees / totalFees) * 100).toFixed(1) : 0
-          });
-
-          setRecentClassworks(classworksData?.slice(0, 3) || []);
-          setRecentHomeworks(homeworksData?.slice(0, 3) || []);
-        }
+        setStats(dashboardData || {});
       } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+        console.error('Error loading dashboard data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDashboardData();
-  }, [profile, isAdminOrTeacher]);
-
-  if (loading || profileLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
-
-  const dashboardStats = [
-    { icon: Users, label: 'Total Students', value: stats.totalStudents, trend: '+12%' },
-    { icon: BookOpen, label: 'Assignments', value: stats.totalHomeworks, trend: '+5%' },
-    { icon: CalendarIcon, label: 'Attendance Rate', value: stats.averageAttendance, trend: '+3%' },
-    { icon: DollarSign, label: 'Fee Collection', value: stats.totalFees, trend: '+8%' },
-  ];
-
-  const activities = [
-    { title: 'New Student Enrollment', time: '2 hours ago', type: 'success' },
-    { title: 'Assignment Submitted', time: '4 hours ago', type: 'info' },
-    { title: 'Fee Payment Received', time: '6 hours ago', type: 'success' },
-  ];
+    loadDashboardData();
+  }, [profile?.id, isAdminOrTeacher]);
 
   return (
     <PageAnimation>
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
-        {/* Welcome Section */}
-        <div className="flex flex-col gap-2">
-          <AnimatedText
-            text={`Welcome back, ${profile?.name || 'User'}!`}
-            className="text-2xl font-bold"
-            variant="slideUp"
-          />
-          <p className="text-muted-foreground">Here's what's happening today.</p>
-        </div>
+      <div className="flex">
+        <div className="flex-1 p-8">
+          <div className="mb-8">
+            <AnimatedText 
+              text={`Welcome back, ${profile?.full_name || 'User'}!`} 
+              className="text-3xl font-bold" 
+            />
+          </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {dashboardStats.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card className="bg-card/50 backdrop-blur-sm border-border/50 hover:bg-card/60 transition-all">
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      {stat.label}
-                    </CardTitle>
-                    <motion.div
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Icon className="w-4 h-4 text-primary" />
-                    </motion.div>
+          {loading ? (
+            <div className="flex items-center justify-center h-[400px]">
+              <LoadingSpinner size="lg" />
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {isAdminOrTeacher ? (
+                  <>
+                    <StatsCard
+                      title="Total Students"
+                      value={stats.totalStudents || 0}
+                      icon={<Users className="h-4 w-4" />}
+                      description={stats.totalStudents ? `${stats.totalStudents} active students` : 'No students yet'}
+                    />
+                    <StatsCard
+                      title="Total Teachers"
+                      value={stats.totalTeachers || 0}
+                      icon={<GraduationCap className="h-4 w-4" />}
+                      description={stats.totalTeachers ? `${stats.totalTeachers} active teachers` : 'No teachers yet'}
+                    />
+                    <StatsCard
+                      title="Total Classes"
+                      value={stats.totalClasses || 0}
+                      icon={<Book className="h-4 w-4" />}
+                      description={stats.totalClasses ? `${stats.totalClasses} active classes` : 'No classes yet'}
+                    />
+                    <StatsCard
+                      title="Pending Homeworks"
+                      value={stats.pendingHomeworks || 0}
+                      icon={<Clock className="h-4 w-4" />}
+                      description={stats.pendingHomeworks ? `${stats.pendingHomeworks} pending submissions` : 'No pending homeworks'}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <StatsCard
+                      title="Attendance"
+                      value={`${stats.attendancePercentage || 0}%`}
+                      icon={<CheckCircle className="h-4 w-4" />}
+                      description={stats.attendancePercentage ? `Your attendance rate` : 'No attendance records yet'}
+                    />
+                    <StatsCard
+                      title="Pending Tasks"
+                      value={stats.pendingTasks || 0}
+                      icon={<AlertCircle className="h-4 w-4" />}
+                      description={stats.pendingTasks ? `${stats.pendingTasks} tasks to complete` : 'No pending tasks'}
+                    />
+                    <StatsCard
+                      title="Completed Tasks"
+                      value={stats.completedTasks || 0}
+                      icon={<CheckCircle className="h-4 w-4" />}
+                      description={stats.completedTasks ? `${stats.completedTasks} tasks completed` : 'No completed tasks yet'}
+                    />
+                    <StatsCard
+                      title="Average Score"
+                      value={`${stats.averageScore || 0}%`}
+                      icon={<TrendingUp className="h-4 w-4" />}
+                      description={stats.averageScore ? `Your average performance` : 'No scores available yet'}
+                    />
+                  </>
+                )}
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Recent Activities</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{stat.value}</div>
-                    <div className="flex items-center mt-1 text-sm">
-                      <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-                      <span className="text-green-500">{stat.trend}</span>
-                      <span className="text-muted-foreground ml-1">vs last month</span>
-                    </div>
+                    {stats.recentActivities && stats.recentActivities.length > 0 ? (
+                      <div className="space-y-4">
+                        {stats.recentActivities.map((activity: any) => (
+                          <ActivityItem
+                            key={activity.id}
+                            title={activity.title}
+                            date={activity.timestamp}
+                            icon={activity.type === 'homework' ? <Book className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
+                            status={activity.status}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <Bell className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                        <p>No recent activities</p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
-              </motion.div>
-            );
-          })}
-        </div>
 
-        {/* Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Activity */}
-          <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent">
-                Recent Activity
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {activities.map((activity, index) => (
-                  <motion.div
-                    key={activity.title}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="flex items-center gap-4"
-                  >
-                    <div className={cn(
-                      "w-2 h-2 rounded-full",
-                      activity.type === 'success' ? 'bg-green-500' : 'bg-blue-500'
-                    )} />
-                    <div>
-                      <p className="font-medium">{activity.title}</p>
-                      <p className="text-sm text-muted-foreground">{activity.time}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Upcoming Deadlines</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {stats.upcomingDeadlines && stats.upcomingDeadlines.length > 0 ? (
+                      <div className="space-y-4">
+                        {stats.upcomingDeadlines.map((deadline: any) => (
+                          <ActivityItem
+                            key={deadline.id}
+                            title={deadline.title}
+                            date={deadline.dueDate}
+                            icon={<Clock className="h-4 w-4" />}
+                            status="pending"
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <Clock className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                        <p>No upcoming deadlines</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
 
-          {/* Performance Overview */}
-          <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent">
-                Performance Overview
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Attendance Rate</span>
-                    <span className="text-sm text-primary">92%</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-primary/20">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: '92%' }}
-                      transition={{ duration: 1, ease: 'easeOut' }}
-                      className="h-full rounded-full bg-primary"
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Calendar</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={(date) => date && setSelectedDate(date)}
+                      className="rounded-md border"
                     />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Assignment Completion</span>
-                    <span className="text-sm text-primary">85%</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-primary/20">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: '85%' }}
-                      transition={{ duration: 1, ease: 'easeOut' }}
-                      className="h-full rounded-full bg-primary"
-                    />
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          )}
         </div>
       </div>
     </PageAnimation>

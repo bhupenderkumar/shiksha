@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAsync } from '@/hooks/use-async';
 import { settingsService } from '@/services/settings.service';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -44,7 +44,7 @@ export default function SettingsPage() {
   const { loading, execute: fetchSettings } = useAsync(
     async () => {
       if (!profile) return;
-      
+
       // Fetch school settings
       const { data: schoolData, error: schoolError } = await supabase
         .schema('school')
@@ -69,6 +69,7 @@ export default function SettingsPage() {
       try {
         await settingsService.updateSchoolSettings(data);
         toast.success('School settings updated successfully');
+        setUnsavedChanges(false);
       } catch (error) {
         console.error("Failed to update settings:", error);
         toast.error('Failed to update settings');
@@ -83,6 +84,7 @@ export default function SettingsPage() {
 
       try {
         await settingsService.updateUserSettings(profile.id, settingsToUpdate);
+        setUnsavedChanges(false);
       } catch (error) {
         console.error("Failed to update settings:", error);
       }
@@ -115,6 +117,7 @@ export default function SettingsPage() {
 
       toast.success('Profile picture updated successfully');
       setAvatar(null);
+      setUnsavedChanges(false);
     },
     { showErrorToast: true }
   );
@@ -170,21 +173,24 @@ export default function SettingsPage() {
     }
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setUnsavedChanges(true);
+  };
+
+  const handleBeforeUnload = useCallback((event: BeforeUnloadEvent) => {
+    if (unsavedChanges) {
+      const message = 'You have unsaved changes. Are you sure you want to leave without saving?';
+      event.returnValue = message;
+      return message;
+    }
+  }, [unsavedChanges]);
+
   useEffect(() => {
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (unsavedChanges) {
-        const message = 'You have unsaved changes. Are you sure you want to leave?';
-        event.returnValue = message; // For most browsers
-        return message; // For some browsers
-      }
-    };
-
     window.addEventListener('beforeunload', handleBeforeUnload);
-
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [unsavedChanges]);
+  }, [handleBeforeUnload]);
 
   useEffect(() => {
     const fetchUserSettings = async () => {
@@ -200,6 +206,40 @@ export default function SettingsPage() {
 
     fetchUserSettings();
   }, [profile?.id]);
+
+  const handleInputChangeCheckbox = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUnsavedChanges(true);
+    if (e.target.name === 'emailNotifications') {
+      setNotificationSettings(prev => ({ ...prev, emailNotifications: e.target.checked }));
+    } else if (e.target.name === 'pushNotifications') {
+      setNotificationSettings(prev => ({ ...prev, pushNotifications: e.target.checked }));
+    } else if (e.target.name === 'twoFactorAuth') {
+      setSecuritySettings(prev => ({ ...prev, twoFactorAuth: e.target.checked }));
+    }
+  };
+
+  const handleSelectChange = (value: string, name: string) => {
+    setUnsavedChanges(true);
+    if (name === 'reminderFrequency') {
+      setNotificationSettings(prev => ({ ...prev, reminderFrequency: value }));
+    } else if (name === 'theme') {
+      setThemeSettings(prev => ({ ...prev, theme: value }));
+    } else if (name === 'colorScheme') {
+      setThemeSettings(prev => ({ ...prev, colorScheme: value }));
+    } else if (name === 'fontSize') {
+      setThemeSettings(prev => ({ ...prev, fontSize: value }));
+    } else if (name === 'sessionTimeout') {
+      setSecuritySettings(prev => ({ ...prev, sessionTimeout: value }));
+    }
+  };
+
+  const handleFileUpload = (files: File[]) => {
+    if (files.length > 0) {
+      setAvatar(files[0]);
+      setUnsavedChanges(true);
+      updateAvatar(files[0]);
+    }
+  };
 
   if (loading || profileLoading) {
     return (
@@ -272,51 +312,38 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="flex items-center gap-6">
-                    <div className="relative">
-                      <div className="w-24 h-24 rounded-full overflow-hidden bg-muted">
-                        {profile?.avatar_url ? (
-                          <img
-                            src={profile.avatar_url}
-                            alt="Profile"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-primary/10">
-                            <User className="w-12 h-12 text-primary/40" />
-                          </div>
-                        )}
-                      </div>
+                  <form onSubmit={handleSettingsUpdate} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="profile_icon">Profile Icon</Label>
                       <FileUploader
+                        id="profile_icon"
                         accept="image/*"
-                        onUpload={updateAvatar}
+                        onChange={(files) => handleFileUpload(files)}
                         currentFile={profile?.avatar_url}
-                        className="mt-2"
+                        className="border rounded-md p-2"
                       />
                     </div>
-                    <div className="flex-1 space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="name">Name</Label>
-                          <Input
-                            id="name"
-                            value={profile?.name || ''}
-                            readOnly
-                            className="bg-muted"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="email">Email</Label>
-                          <Input
-                            id="email"
-                            value={profile?.email || ''}
-                            readOnly
-                            className="bg-muted"
-                          />
-                        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Name</Label>
+                        <Input
+                          id="name"
+                          value={profile?.name || ''}
+                          readOnly
+                          className="bg-muted"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                          id="email"
+                          value={profile?.email || ''}
+                          readOnly
+                          className="bg-muted"
+                        />
                       </div>
                     </div>
-                  </div>
+                  </form>
                 </CardContent>
               </Card>
             </CardAnimation>
@@ -356,7 +383,7 @@ export default function SettingsPage() {
                 <CardContent>
                   {isEditing ? (
                     <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in">
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="school_name">School Name</Label>
                           <Input
@@ -364,6 +391,9 @@ export default function SettingsPage() {
                             name="school_name"
                             defaultValue={settings?.school_name}
                             required
+                            placeholder="Enter school name"
+                            onChange={handleInputChange}
+                            className="border rounded-md p-2"
                           />
                         </div>
                         <div className="space-y-2">
@@ -373,27 +403,35 @@ export default function SettingsPage() {
                             name="phone"
                             defaultValue={settings?.phone}
                             required
+                            placeholder="Enter phone number"
+                            onChange={handleInputChange}
+                            className="border rounded-md p-2"
                           />
                         </div>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="address">Address</Label>
-                        <Textarea
+                        <Input
                           id="address"
                           name="address"
                           defaultValue={settings?.address}
                           required
+                          placeholder="Enter address"
+                          onChange={handleInputChange}
+                          className="border rounded-md p-2"
                         />
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="email">Email</Label>
                           <Input
                             id="email"
-                            name="email"
                             type="email"
                             defaultValue={settings?.email}
                             required
+                            placeholder="Enter email"
+                            onChange={handleInputChange}
+                            className="border rounded-md p-2"
                           />
                         </div>
                         <div className="space-y-2">
@@ -403,6 +441,9 @@ export default function SettingsPage() {
                             name="website"
                             type="url"
                             defaultValue={settings?.website}
+                            placeholder="Enter website URL"
+                            onChange={handleInputChange}
+                            className="border rounded-md p-2"
                           />
                         </div>
                       </div>
@@ -412,12 +453,14 @@ export default function SettingsPage() {
                           id="description"
                           name="description"
                           defaultValue={settings?.description}
+                          placeholder="Enter description"
+                          onChange={handleInputChange}
+                          className="border rounded-md p-2"
                         />
                       </div>
                       <div className="flex justify-end">
-                        <Button type="submit">
-                          <Save className="w-4 h-4 mr-2" />
-                          Save Changes
+                        <Button type="submit" className="bg-primary text-white hover:bg-primary-dark rounded-md p-2">
+                          Save Settings
                         </Button>
                       </div>
                     </form>
@@ -465,12 +508,6 @@ export default function SettingsPage() {
             <CardAnimation delay={100}>
               <Card className="bg-card/50 backdrop-blur-sm border-border/50">
                 <CardHeader>
-                  <CardTitle className="text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                    Notification Preferences
-                  </CardTitle>
-                  <CardDescription>
-                    Choose how you want to receive notifications
-                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <form onSubmit={handleSettingsUpdate}>
@@ -538,9 +575,8 @@ export default function SettingsPage() {
                       <Input type="hidden" name="reminderFrequency" value={notificationSettings.reminderFrequency} />
                     </div>
                     <div className="flex justify-end">
-                      <Button type="submit">
-                        <Save className="w-4 h-4 mr-2" />
-                        Save Changes
+                      <Button type="submit" className="bg-primary text-white hover:bg-primary-dark rounded-md p-2">
+                        Save Settings
                       </Button>
                     </div>
                   </form>
@@ -635,9 +671,8 @@ export default function SettingsPage() {
                       <Input type="hidden" name="fontSize" value={themeSettings.fontSize} />
                     </div>
                     <div className="flex justify-end">
-                      <Button type="submit">
-                        <Save className="w-4 h-4 mr-2" />
-                        Save Changes
+                      <Button type="submit" className="bg-primary text-white hover:bg-primary-dark rounded-md p-2">
+                        Save Settings
                       </Button>
                     </div>
                   </form>
@@ -704,9 +739,8 @@ export default function SettingsPage() {
                       <Input type="hidden" name="sessionTimeout" value={securitySettings.sessionTimeout} />
                     </div>
                     <div className="flex justify-end">
-                      <Button type="submit">
-                        <Save className="w-4 h-4 mr-2" />
-                        Save Changes
+                      <Button type="submit" className="bg-primary text-white hover:bg-primary-dark rounded-md p-2">
+                        Save Settings
                       </Button>
                     </div>
                   </form>
