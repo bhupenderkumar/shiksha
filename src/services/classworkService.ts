@@ -1,9 +1,6 @@
-import type { Database } from 'lib/database.types';
+import { supabase } from '@/lib/api-client';
 import { v4 as uuidv4 } from 'uuid';
 import { fileTableService } from './fileTableService';
-import { supabase } from '@/lib/api-client';
-import { useContext } from 'react';
-import { useAuth } from '@/lib/auth';
 
 export type ClassworkType = {
   id: string;
@@ -52,31 +49,36 @@ export const classworkService = {
     }));
   },
 
-  async create(data: CreateClassworkData, userId: string) {
-    const { attachments, ...classworkData } = data;
+  async create(data: CreateClassworkData) {
+    const { attachments, uploadedBy, ...classworkData } = data;
 
     // Generate ID for classwork
     const classworkId = uuidv4();
 
-    // Create the classwork
-    const { error: classworkError } = await supabase
+    // First create the classwork without uploadedBy
+    const { data: classwork, error: classworkError } = await supabase
       .schema('school')  
       .from('Classwork')
-      .insert([{ ...classworkData, id: classworkId, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }])
+      .insert([{ 
+        ...classworkData, 
+        id: classworkId, 
+        createdAt: new Date().toISOString(), 
+        updatedAt: new Date().toISOString() 
+      }])
       .select()
       .single();
 
     if (classworkError) throw classworkError;
 
-    // Then create file records if there are any attachments
+    // Then create file records with uploadedBy
     if (attachments && attachments.length > 0) {
       for (const file of attachments) {
         await fileTableService.createFile({
           fileName: file.fileName,
           filePath: file.filePath,
           classworkId: classworkId,
-          fileType: file.fileName.split('.').pop(), // Set fileType based on the file extension
-          uploadedBy: userId // Use the user ID here
+          fileType: file.fileType || file.fileName.split('.').pop() || 'application/octet-stream',
+          uploadedBy // Pass uploadedBy only to the File table
         });
       }
     }
@@ -84,10 +86,10 @@ export const classworkService = {
     return classwork;
   },
 
-  async update(id: string, data: UpdateClassworkData, userId: string) {
-    const { attachments, ...classworkData } = data;
+  async update(id: string, data: UpdateClassworkData) {
+    const { attachments, uploadedBy, ...classworkData } = data;
 
-    // First update the classwork
+    // Update classwork without uploadedBy
     const { data: updatedClasswork, error } = await supabase
       .schema("school")
       .from('Classwork')
@@ -96,49 +98,27 @@ export const classworkService = {
         updatedAt: new Date().toISOString()
       })
       .eq('id', id)
-      .select()
-      .single();
+      .select();
 
-    if (error) {
-      console.error('Error updating classwork:', error);
-      throw new Error(error.message);
-    }
+    if (error) throw error;
 
-    // Handle attachments if they exist
-    if (attachments) {
-      // Get existing files for this classwork
-      const existingFiles = await fileTableService.getFilesByClassworkId(id);
+    // Handle file attachments with uploadedBy
+    if (attachments && attachments.length > 0) {
+      const fileIdsToKeep = attachments.filter(f => f.id).map(f => f.id);
       
-      // Find files to delete (files that exist in DB but not in new attachments)
-      const filesToDelete = existingFiles.filter(
-        existingFile => !attachments.some(newFile => newFile.id === existingFile.id)
-      );
-
-      // Find files to add (files that exist in new attachments but not in DB)
-      const filesToAdd = attachments.filter(
-        newFile => !existingFiles.some(existingFile => existingFile.id === newFile.id)
-      );
-
-      // Delete removed files
-      if (filesToDelete.length > 0) {
-        await Promise.all(
-          filesToDelete.map(file => fileTableService.deleteFile(file.id))
-        );
-      }
+      // Delete files not in fileIdsToKeep
+      await fileTableService.deleteFilesByClassworkId(id, fileIdsToKeep);
 
       // Add new files
-      if (filesToAdd.length > 0) {
-        await Promise.all(
-          filesToAdd.map(file => 
-            fileTableService.createFile({
-              fileName: file.fileName,
-              filePath: file.filePath,
-              classworkId: id,
-              fileType: file.fileName.split('.').pop() || '',
-              uploadedBy: userId // Use the user ID here
-            })
-          )
-        );
+      const newFiles = attachments.filter(f => !f.id);
+      for (const file of newFiles) {
+        await fileTableService.createFile({
+          fileName: file.fileName,
+          filePath: file.filePath,
+          classworkId: id,
+          fileType: file.fileType || file.fileName.split('.').pop() || 'application/octet-stream',
+          uploadedBy // Pass uploadedBy only to the File table
+        });
       }
     }
 

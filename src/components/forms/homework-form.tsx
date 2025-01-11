@@ -19,6 +19,7 @@ import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import { fileService } from '@/services/fileService';
+import { supabase } from '@/lib/api-client'; // Add this import
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -27,11 +28,22 @@ const formSchema = z.object({
     required_error: "Due date is required",
   }),
   classId: z.string().min(1, 'Class is required'),
-  subjectId: z.string().min(1, 'Subject is required'),
-  status: z.enum(['PENDING', 'COMPLETED', 'OVERDUE', 'SUBMITTED']),
+  subjectId: z.string().min(1, 'Subject is required'), // Add this line
+  status: z.enum(['PENDING', 'COMPLETED', 'OVERDUE', 'SUBMITTED']).default('PENDING'),
+  files: z.array(z.any()).optional()
 });
 
 type FormData = z.infer<typeof formSchema>;
+
+type HomeworkFormData = {
+  title: string;
+  description: string;
+  dueDate: Date;
+  subjectId: string;
+  classId: string;
+  teacherId?: string; // Make teacherId optional
+  // ...other fields
+};
 
 interface HomeworkFormProps {
   onSubmit: (data: any) => Promise<void>;
@@ -87,48 +99,42 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
     const fetchSubjects = async () => {
       if (!selectedClassId) return;
       try {
-        // Implement your subject fetching logic here
-        // const data = await subjectService.getByClass(selectedClassId);
-        // setSubjects(data);
+        const { data, error } = await supabase
+          .schema('school')
+          .from('Subject')
+          .select('id, name, code')
+          .eq('classId', selectedClassId);
+        
+        if (error) throw error;
+        setSubjects(data || []);
       } catch (error) {
         console.error('Error fetching subjects:', error);
         toast.error('Failed to load subjects');
       }
     };
-    fetchSubjects();
+
+    if (selectedClassId) {
+      fetchSubjects();
+    }
   }, [selectedClassId]);
 
   const handleFormSubmit = async (data: FormData) => {
     try {
-      const uploadedFiles = attachments.length > 0 ? await Promise.all(
-        files.map(async (file) => {
-          return await fileService.uploadFile(file, `homework/${data.classId}`);
-        })
-      ) : [];
-
-      // Only call delete if there are existing files to remove
-      if (existingFiles.length > 0 || uploadedFiles.length > 0) {
-        const formData = {
-          ...data,
-          attachments: [
-            ...existingFiles,
-            ...uploadedFiles
-          ].filter(file => file.id) // Ensure only files with IDs are included
-        };
-
-        await onSubmit(formData);
-      } else {
-        // If no attachments, just submit the data without calling file service
-        await onSubmit(data);
-      }
+      const formData = {
+        ...data,
+        files: files, // Add the files to the form data
+        attachments: existingFiles // Keep existing files
+      };
+      await onSubmit(formData);
     } catch (error) {
       console.error('Error submitting homework:', error);
       toast.error('Failed to create homework');
     }
   };
 
-  const handleFileChange = (files: File[]) => {
-    setFiles(files);
+  const handleFileChange = (newFiles: File[]) => {
+    setFiles(newFiles);
+    setValue('files', newFiles); // Update form value with new files
   };
 
   const removeExistingFile = (fileId: string) => {
@@ -177,6 +183,28 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
           </Select>
           {errors.classId && (
             <p className="text-sm text-red-500">{errors.classId.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-base font-semibold">Subject</Label>
+          <Select
+            value={getValues('subjectId')}
+            onValueChange={(value) => setValue('subjectId', value)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select a subject" />
+            </SelectTrigger>
+            <SelectContent>
+              {subjects.map((subject) => (
+                <SelectItem key={subject.id} value={subject.id}>
+                  {subject.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.subjectId && (
+            <p className="text-sm text-red-500">{errors.subjectId.message}</p>
           )}
         </div>
 

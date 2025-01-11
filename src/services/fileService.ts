@@ -1,13 +1,26 @@
 import { supabase } from '@/lib/api-client';
 
 export const fileService = {
-  async uploadFile(file: File, path: string) {
-    const { data, error } = await supabase.storage
-      .from('File')
-      .upload(path, file);
+  async uploadFile(file: File, filePath: string) {
+    try {
+      // Remove any leading slashes and clean the path
+      const cleanPath = filePath.replace(/^\/+/, '').trim();
+      const timestamp = new Date().getTime();
+      const uniquePath = `${cleanPath}/${timestamp}_${file.name}`;
 
-    if (error) throw error;
-    return data;
+      const { data, error } = await supabase.storage
+        .from('File')
+        .upload(uniquePath, file, {
+          cacheControl: '3600',
+          upsert: true // Change to true to overwrite if exists
+        });
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw error;
+    }
   },
 
   async downloadFile(filePath: string, fileName: string) {

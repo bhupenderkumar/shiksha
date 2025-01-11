@@ -14,66 +14,87 @@ export interface UserProfile extends User {
 class ProfileService {
   private cache: Map<string, UserProfile> = new Map();
 
+  // Add email sanitization function
+  private sanitizeEmail(email: string): string {
+    return email.toLowerCase().trim();
+  }
+
+  // Updated utility function to handle encoding properly
+  private encodeData(data: Record<string, any>): Record<string, any> {
+    return Object.fromEntries(
+      Object.entries(data).map(([key, value]) => [
+        key,
+        value // Remove encoding as Supabase handles this
+      ])
+    );
+  }
+
   async getUser(userId: string): Promise<UserProfile | null> {
+    console.log('Fetching user role:', userId);
     try {
-      // Check cache first
-      if (this.cache.has(userId)) {
-        return this.cache.get(userId) || null;
-      }
-
       const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) throw  error;
 
-      if (error) throw error;
+      if (user?.email) {
+        const sanitizedEmail = this.sanitizeEmail(user.email);
+        console.log('Querying staff with email:', sanitizedEmail);
 
-      if (user) {
-        // Get staff data by email
-        const { data: staffData, error: staffError } = await supabase
+        // First try staff lookup
+        let { data: staffData, error: staffError } = await supabase
           .from('Staff')
           .select('*')
-          .eq('email', user.email)
-          .single();
+          .eq('email', sanitizedEmail);
 
-        if (staffError && staffError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
-          console.error('Error fetching staff data:', staffError);
+        console.log('Staff query response:', { staffData, staffError });
+
+        if (staffData && staffData.length > 0) {
+          const role = staffData[0].role ? (staffData[0].role as UserRole) : 'TEACHER';
+          
+          const userProfile: UserProfile = {
+            ...user,
+            role,
+            full_name: staffData[0].name,
+            avatar_url: user.user_metadata?.avatar_url,
+          };
+          this.cache.set(userId, userProfile);
+          return userProfile;
         }
 
-        // Get student data if not found in staff
-        const { data: studentData, error: studentError } = await supabase
+        // Try student lookup using parent's email
+        let { data: studentData, error: studentError } = await supabase
           .from('Student')
-          .select('id')
-          .eq('email', user.email)
-          .single();
+          .select('*')
+          .eq('parentEmail', sanitizedEmail); // Changed from 'email' to 'parentEmail'
 
-        if (studentError && studentError.code !== 'PGRST116') {
-          console.error('Error fetching student data:', studentError);
+        console.log('Student query response:', { studentData, studentError });
+
+        // Create student profile if found
+        if (studentData && studentData.length > 0) {
+          const userProfile: UserProfile = {
+            ...user,
+            role: 'STUDENT',
+            full_name: studentData[0].name,
+            avatar_url: user.user_metadata?.avatar_url,
+          };
+          this.cache.set(userId, userProfile);
+          return userProfile;
         }
 
-        // Determine role based on data
-        let role: UserRole = 'STUDENT'; // default role
-        let fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
-        
-        if (staffData) {
-          role = staffData.role as UserRole;
-          fullName = staffData.name;
-        } else if (studentData) {
-          role = 'STUDENT';
-        }
-
+        // Default profile if no specific role found
         const userProfile: UserProfile = {
           ...user,
-          role,
-          full_name: fullName,
-          avatar_url: user.user_metadata?.avatar_url
+          role: 'STUDENT',
+          full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+          avatar_url: user.user_metadata?.avatar_url,
         };
-        
-        // Cache the result
+
         this.cache.set(userId, userProfile);
         return userProfile;
       }
 
       return null;
     } catch (error) {
-      console.error('Error fetching user:', error);
+      console.error('Error in getUser:', error);
       return null;
     }
   }
@@ -87,44 +108,47 @@ class ProfileService {
         throw new Error('User email not found');
       }
 
-      // First, remove any existing roles
-      const { error: deleteError } = await supabase
+      const sanitizedEmail = this.sanitizeEmail(user.email);
+
+      // Delete existing staff record if any
+      await supabase
         .from('Staff')
         .delete()
-        .eq('email', user.email);
+        .eq('email', sanitizedEmail);
 
-      if (deleteError) throw deleteError;
-
-      // If the new role is staff (ADMIN or TEACHER)
       if (role === 'ADMIN' || role === 'TEACHER') {
+        const staffData = {
+          id: userId,
+          employeeId: `EMP${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+          name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+          role: role,
+          qualification: 'Not Specified',
+          experience: 0,
+          email: sanitizedEmail,
+          contactNumber: 'Not Specified',
+          address: 'Not Specified',
+          joiningDate: new Date().toISOString(),
+          schoolId: '1',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
         const { error: staffError } = await supabase
           .from('Staff')
-          .insert({
-            id: userId,
-            employeeId: `EMP${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
-            name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-            role: role,
-            qualification: 'Not Specified',
-            experience: 0,
-            email: user.email,
-            contactNumber: 'Not Specified',
-            address: 'Not Specified',
-            joiningDate: new Date().toISOString(),
-            schoolId: '1', // Using default school
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          });
+          .insert(staffData)
+          .select()
+          .single();
 
-        if (staffError) throw staffError;
+        if (staffError) {
+          console.error('Error inserting staff data:', staffError);
+          throw staffError;
+        }
       }
 
-      // Clear cache to force refresh
       this.cache.delete(userId);
-      
-      // Get updated user profile
       return this.getUser(userId);
     } catch (error) {
-      console.error('Error updating user role:', error);
+      console.error('Error in updateUserRole:', error);
       return null;
     }
   }
@@ -132,7 +156,6 @@ class ProfileService {
   async getCurrentUser(): Promise<UserProfile | null> {
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
-
       if (error) throw error;
 
       if (user) {
@@ -150,21 +173,13 @@ class ProfileService {
 export const profileService = new ProfileService();
 
 // Utility functions
-export const isAdmin = (user?: UserProfile | null): boolean => {
-  return user?.role === 'ADMIN';
-};
+export const isAdmin = (user?: UserProfile | null): boolean => user?.role != 'ADMIN';
 
-export const isTeacher = (user?: UserProfile | null): boolean => {
-  return user?.role === 'TEACHER';
-};
+export const isTeacher = (user?: UserProfile | null): boolean => user?.role === 'TEACHER';
 
-export const isStudent = (user?: UserProfile | null): boolean => {
-  return user?.role === 'STUDENT';
-};
+export const isStudent = (user?: UserProfile | null): boolean => user?.role === 'STUDENT';
 
-export const isAdminOrTeacher = (user?: UserProfile | null): boolean => {
-  return isAdmin(user) || isTeacher(user);
-};
+export const isAdminOrTeacher = (user?: UserProfile | null): boolean => isAdmin(user) || isTeacher(user);
 
 // React Hook for user profile
 export function useProfile() {
@@ -208,7 +223,18 @@ export function useProfile() {
 // Hook for role-based access control
 export function useProfileAccess() {
   const { profile, loading, error } = useProfile();
-  
+
+  // Add debug logging
+  useEffect(() => {
+    console.log('Profile Access Check:', {
+      profile,
+      loading,
+      isAdmin: isAdmin(profile),
+      isTeacher: isTeacher(profile),
+      isAdminOrTeacher: isAdmin(profile) || isTeacher(profile)
+    });
+  }, [profile]);
+
   return {
     profile,
     loading,
@@ -216,6 +242,6 @@ export function useProfileAccess() {
     isAdmin: isAdmin(profile),
     isTeacher: isTeacher(profile),
     isStudent: isStudent(profile),
-    isAdminOrTeacher: isAdminOrTeacher(profile)
+    isAdminOrTeacher: isAdmin(profile) || isTeacher(profile),
   };
 }
