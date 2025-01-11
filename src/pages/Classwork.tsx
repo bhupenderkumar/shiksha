@@ -14,8 +14,12 @@ import { useProfileAccess } from '@/services/profileService';
 import toast from 'react-hot-toast';
 import { useMediaQuery } from 'react-responsive';
 import { Link, useNavigate } from 'react-router-dom';
+import { Attachment } from '@/components/Attachment'; // Import Attachment component
+import { useAuth } from '@/lib/auth';
 
 export default function ClassworkPage() {
+  const { user } = useAuth(); // Retrieve user from Auth context
+
   const [classworks, setClassworks] = useState<ClassworkType[]>([]);
   const [dialogState, setDialogState] = useState<{
     isOpen: boolean;
@@ -45,7 +49,7 @@ export default function ClassworkPage() {
 
   const { execute: createClasswork } = useAsync(
     async (data) => {
-      await classworkService.create(data);
+      await classworkService.create(data, user?.id); // Pass user ID here
       await fetchClassworks();
       handleCloseDialog();
       toast.success('Classwork created successfully!');
@@ -56,7 +60,7 @@ export default function ClassworkPage() {
   const { execute: updateClasswork } = useAsync(
     async (data) => {
       if (!selectedClasswork) return;
-      await classworkService.update(selectedClasswork.id, data);
+      await classworkService.update(selectedClasswork.id, data, user?.id); // Pass user ID here
       await fetchClassworks();
       handleCloseDialog();
       toast.success('Classwork updated successfully!');
@@ -140,10 +144,11 @@ export default function ClassworkPage() {
           <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}> {/* Modified grid classes for responsiveness */}
             {classworks.map((classwork) => (
               <div key={classwork.id} className="relative">
-                  <ClassworkCard
-                    classwork={classwork}
-                    isStudent={!isAdminOrTeacher}
-                  />
+                <ClassworkCard
+                  classwork={classwork}
+                  isStudent={!isAdminOrTeacher}
+                  attachments={classwork.attachments}
+                />
                 {isAdminOrTeacher && (
                   <div className="absolute top-2 right-2 flex space-x-2">
                     <button onClick={() => handleEdit(classwork)}>

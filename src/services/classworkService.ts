@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/api-client';
-import type { Database } from '@/lib/database.types';
 import { v4 as uuidv4 } from 'uuid';
 import { fileTableService } from './fileTableService';
 
@@ -51,29 +50,35 @@ export const classworkService = {
   },
 
   async create(data: CreateClassworkData) {
-    const { attachments, ...classworkData } = data;
+    const { attachments, uploadedBy, ...classworkData } = data;
 
     // Generate ID for classwork
     const classworkId = uuidv4();
 
-    // First create the classwork
+    // First create the classwork without uploadedBy
     const { data: classwork, error: classworkError } = await supabase
-    .schema('school')  
-    .from('Classwork')
-      .insert([{ ...classworkData, id: classworkId, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }])
+      .schema('school')  
+      .from('Classwork')
+      .insert([{ 
+        ...classworkData, 
+        id: classworkId, 
+        createdAt: new Date().toISOString(), 
+        updatedAt: new Date().toISOString() 
+      }])
       .select()
       .single();
 
     if (classworkError) throw classworkError;
 
-    // Then create file records if there are any attachments
+    // Then create file records with uploadedBy
     if (attachments && attachments.length > 0) {
       for (const file of attachments) {
         await fileTableService.createFile({
           fileName: file.fileName,
           filePath: file.filePath,
           classworkId: classworkId,
-          fileType: file.fileName.split('.').pop() // Set fileType based on the file extension
+          fileType: file.fileType || file.fileName.split('.').pop() || 'application/octet-stream',
+          uploadedBy // Pass uploadedBy only to the File table
         });
       }
     }
@@ -82,44 +87,42 @@ export const classworkService = {
   },
 
   async update(id: string, data: UpdateClassworkData) {
-    const { attachments, ...classworkData } = data;
-    console.log(classworkData)
-    const classworkId = id; // Use the passed id as classworkId
+    const { attachments, uploadedBy, ...classworkData } = data;
 
+    // Update classwork without uploadedBy
     const { data: updatedClasswork, error } = await supabase
-    .schema("school")
+      .schema("school")
       .from('Classwork')
       .update({
         ...classworkData,
         updatedAt: new Date().toISOString()
       })
-      .eq('id', classworkId);
+      .eq('id', id)
+      .select();
 
-    if (error) {
-      console.error('Error updating classwork:', error);
-      throw new Error(error.message);
-    }
+    if (error) throw error;
 
+    // Handle file attachments with uploadedBy
     if (attachments && attachments.length > 0) {
-      // Delete existing files not in the new attachments
-      const fileIdsToDelete = attachments.filter(f => !f.id).map(f => f.id);
-      await fileTableService.deleteFilesByClassworkId(classworkId, fileIdsToDelete);
-      alert(fileIdsToDelete)
+      const fileIdsToKeep = attachments.filter(f => f.id).map(f => f.id);
+      
+      // Delete files not in fileIdsToKeep
+      await fileTableService.deleteFilesByClassworkId(id, fileIdsToKeep);
+
       // Add new files
       const newFiles = attachments.filter(f => !f.id);
-      alert(newFiles)
-      console.log(newFiles)
-      if (newFiles.length > 0) {
-        for (const file of newFiles) {
-          await fileTableService.createFile({
-            fileName: file.fileName,
-            filePath: file.filePath,
-            classworkId: classworkId,
-            fileType: file.fileName.split('.').pop() 
-          });
-        }
+      for (const file of newFiles) {
+        await fileTableService.createFile({
+          fileName: file.fileName,
+          filePath: file.filePath,
+          classworkId: id,
+          fileType: file.fileType || file.fileName.split('.').pop() || 'application/octet-stream',
+          uploadedBy // Pass uploadedBy only to the File table
+        });
       }
     }
+
+    return updatedClasswork;
   },
 
   async delete(id: string) {
@@ -148,14 +151,24 @@ export const classworkService = {
   },
 };
 
-export const fetchClassworkDetails = async (id) => {
+export const fetchClassworkDetails = async (id: string) => {
   const { data, error } = await supabase
-  .schema("school")
+    .schema("school")
     .from('Classwork')
-    .select('*')
+    .select(`
+      *,
+      attachments:File(*)
+    `)
     .eq('id', id)
     .single();
 
   if (error) throw new Error(error.message);
-  return data;
+  
+  // Convert date fields to Date objects if necessary
+  return {
+    ...data,
+    date: new Date(data.date),
+    createdAt: new Date(data.createdAt),
+    updatedAt: new Date(data.updatedAt),
+  };
 };

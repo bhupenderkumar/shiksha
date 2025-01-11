@@ -11,6 +11,7 @@ import type { ClassworkType } from '@/services/classworkService';
 import toast from 'react-hot-toast';
 import { fileService } from '@/services/fileService';
 import { fetchClassworkDetails } from '@/services/classworkService';
+import { useAuth } from '@/lib/auth';
 
 type ClassworkFormProps = {
   onSubmit: (data: any) => Promise<void>;
@@ -18,6 +19,7 @@ type ClassworkFormProps = {
 };
 
 export function ClassworkForm({ onSubmit, initialData }: ClassworkFormProps) {
+  const { user } = useAuth();
   const { classes, loading } = useClassSubjects();
   
   const [formData, setFormData] = useState({
@@ -54,25 +56,36 @@ export function ClassworkForm({ onSubmit, initialData }: ClassworkFormProps) {
     }
 
     try {
-      // Handle file uploads first
+      const newFiles = formData.attachments.filter(file => !file.id);
+      const existingFiles = formData.attachments.filter(file => file.id);
+
+      const timestamp = new Date().getTime();
       const uploadedFiles = await Promise.all(
-        formData.attachments
-          .filter(file => !file.id) // Only upload new files
-          .map(async (file: File) => {
-            return await fileService.uploadFile(file, `classwork/${formData.classId}`);
-          })
+        newFiles.map(async (file: File, index: number) => {
+          const uniqueFileName = `${timestamp}_${index}_${file.name}`;
+          const filePath = `classwork/${formData.classId}/${uniqueFileName}`;
+          
+          try {
+            const uploadedFile = await fileService.uploadFile(file, filePath);
+            return {
+              fileName: file.name,
+              filePath: uploadedFile?.path || filePath,
+              fileType: file.type || 'application/octet-stream'
+            };
+          } catch (error) {
+            console.error('Error uploading file:', error);
+            throw error;
+          }
+        })
       );
 
-      // Combine existing and new files
-      const allFiles = [
-        ...formData.attachments.filter(file => file.id), // Keep existing files
-        ...uploadedFiles // Add newly uploaded files
-      ];
-
-      await onSubmit({
+      const submitData = {
         ...formData,
-        attachments: allFiles
-      });
+        attachments: [...existingFiles, ...uploadedFiles],
+        uploadedBy: user?.id // This will only be used for file records
+      };
+
+      await onSubmit(submitData);
     } catch (error) {
       console.error('Error submitting classwork:', error);
       toast.error('Failed to create classwork');
@@ -82,7 +95,10 @@ export function ClassworkForm({ onSubmit, initialData }: ClassworkFormProps) {
   const handleFileUpload = (files: File[]) => {
     setFormData(prev => ({
       ...prev,
-      attachments: [...prev.attachments || [], ...files] // Ensure attachments is always an array
+      attachments: [
+        ...(prev.attachments || []).filter(file => file.id), // Keep existing files
+        ...files.map(file => file) // Add new files
+      ]
     }));
   };
 

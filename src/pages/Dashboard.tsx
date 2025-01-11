@@ -3,380 +3,305 @@ import { useProfileAccess } from '@/services/profileService';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Calendar } from '@/components/ui/calendar';
-import { classworkService } from '@/services/classworkService';
-import { homeworkService } from '@/services/homeworkService';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Book, 
-  Users, 
-  Calendar as CalendarIcon, 
-  BookOpen, 
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  Menu,
-  Home,
-  GraduationCap,
-  UserCircle,
-  FileText,
-  Bell,
-  Settings,
-  DollarSign,
-  BarChart,
-  PieChart,
-  TrendingUp
+  Book, Users, Calendar as CalendarIcon, BookOpen, Clock,
+  CheckCircle, XCircle, AlertCircle, Menu, Home, GraduationCap,
+  UserCircle, FileText, Bell, Settings, DollarSign, BarChart,
+  PieChart, TrendingUp, School, BookCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { attendanceService } from '@/services/attendanceService';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Link } from 'react-router-dom';
 import { Progress } from '@/components/ui/progress';
-import { studentService } from '@/services/student.service';
-import { loadFees, FeeStatus, FeeType } from '@/services/feeService';
 import { motion } from 'framer-motion';
 import { PageAnimation } from '@/components/ui/page-animation';
 import { AnimatedText } from '@/components/ui/animated-text';
 import { cn } from '@/lib/utils';
+import { getDashboardSummary, getStudentDashboardData } from '@/services/dashboardService';
 
 export default function Dashboard() {
-  const { profile, loading: profileLoading, isAdminOrTeacher } = useProfileAccess();
-  const [stats, setStats] = useState<any>({});
-  const [recentClassworks, setRecentClassworks] = useState([]);
-  const [recentHomeworks, setRecentHomeworks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { profile, isAdminOrTeacher } = useProfileAccess();
+  const [stats, setStats] = useState<any>({
+    totalStudents: 0,
+    totalTeachers: 0,
+    totalClasses: 0,
+    pendingHomeworks: 0,
+    averageAttendance: 0,
+    totalFeeCollected: 0,
+    totalPendingFees: 0,
+    moduleStats: {
+      attendance: 0,
+      homework: 0,
+      classwork: 0,
+      fees: 0
+    },
+    recentActivities: [],
+    upcomingDeadlines: []
+  });
+  const [loading, setLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      if (!profile) return;
+    const loadDashboardData = async () => {
+      if (!profile?.id) return;
       
       try {
         setLoading(true);
+        const dashboardData = isAdminOrTeacher 
+          ? await getDashboardSummary(profile.id)
+          : await getStudentDashboardData(profile.id);
         
-        if (isAdminOrTeacher) {
-          // Admin/Teacher View Data
-          const [classworksData, homeworksData, studentsData, feesData] = await Promise.all([
-            classworkService.getAll(profile.role),
-            homeworkService.getAll(profile.role),
-            studentService.findMany(),
-            loadFees()
-          ]);
-
-          const totalFees = feesData?.reduce((sum: number, fee: any) => sum + fee.amount, 0) || 0;
-          const paidFees = feesData?.filter((fee: any) => fee.status === FeeStatus.PAID)
-            .reduce((sum: number, fee: any) => sum + fee.amount, 0) || 0;
-          const pendingFees = totalFees - paidFees;
-
-          setStats({
-            totalStudents: studentsData?.length || 0,
-            totalClassworks: classworksData?.length || 0,
-            totalHomeworks: homeworksData?.length || 0,
-            pendingHomeworks: homeworksData?.filter((hw: any) => hw.status === 'PENDING')?.length || 0,
-            totalFees,
-            paidFees,
-            pendingFees,
-            feeCollectionRate: totalFees ? ((paidFees / totalFees) * 100).toFixed(1) : 0,
-            averageAttendance: 85.5, // You can calculate this from attendance data
-            activeStudents: studentsData?.filter((s: any) => s.status === 'ACTIVE')?.length || 0,
-          });
-
-          setRecentClassworks(classworksData?.slice(0, 5) || []);
-          setRecentHomeworks(homeworksData?.slice(0, 5) || []);
-        } else {
-          // Student View Data
-          const [classworksData, homeworksData, feesData] = await Promise.all([
-            classworkService.getAll(profile.role, profile.classId),
-            homeworkService.getAll(profile.role, profile.classId),
-            loadFees(profile.id)
-          ]);
-
-          const totalFees = feesData?.reduce((sum: number, fee: any) => sum + fee.amount, 0) || 0;
-          const paidFees = feesData?.filter((fee: any) => fee.status === FeeStatus.PAID)
-            .reduce((sum: number, fee: any) => sum + fee.amount, 0) || 0;
-
-          const attendanceStats = await attendanceService.getStudentStats(profile.id);
-
-          setStats({
-            totalClassworks: classworksData?.length || 0,
-            completedHomeworks: homeworksData?.filter((hw: any) => hw.status === 'COMPLETED')?.length || 0,
-            pendingHomeworks: homeworksData?.filter((hw: any) => hw.status === 'PENDING')?.length || 0,
-            totalHomeworks: homeworksData?.length || 0,
-            attendancePercentage: attendanceStats.attendancePercentage.toFixed(1),
-            totalPresent: attendanceStats.present,
-            totalAbsent: attendanceStats.absent,
-            totalFees,
-            paidFees,
-            pendingFees: totalFees - paidFees,
-            feesPaidPercentage: totalFees ? ((paidFees / totalFees) * 100).toFixed(1) : 0
-          });
-
-          setRecentClassworks(classworksData?.slice(0, 3) || []);
-          setRecentHomeworks(homeworksData?.slice(0, 3) || []);
-        }
+        setStats(dashboardData || {});
       } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+        console.error('Error loading dashboard data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDashboardData();
-  }, [profile, isAdminOrTeacher]);
-
-  if (loading || profileLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
-
-  const dashboardStats = [
-    { icon: Users, label: 'Total Students', value: stats.totalStudents, trend: '+12%' },
-    { icon: BookOpen, label: 'Assignments', value: stats.totalHomeworks, trend: '+5%' },
-    { icon: CalendarIcon, label: 'Attendance Rate', value: stats.averageAttendance, trend: '+3%' },
-    { icon: DollarSign, label: 'Fee Collection', value: stats.totalFees, trend: '+8%' },
-  ];
-
-  const activities = [
-    { title: 'New Student Enrollment', time: '2 hours ago', type: 'success' },
-    { title: 'Assignment Submitted', time: '4 hours ago', type: 'info' },
-    { title: 'Fee Payment Received', time: '6 hours ago', type: 'success' },
-  ];
+    loadDashboardData();
+  }, [profile?.id, isAdminOrTeacher]);
 
   return (
     <PageAnimation>
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
-        {/* Welcome Section */}
-        <div className="flex flex-col gap-2">
-          <AnimatedText
-            text={`Welcome back, ${profile?.name || 'User'}!`}
-            className="text-2xl font-bold"
-            variant="slideUp"
-          />
-          <p className="text-muted-foreground">Here's what's happening today.</p>
-        </div>
+      <div className="flex">
+        <div className="flex-1 p-8">
+          <div className="mb-8">
+            <AnimatedText 
+              text={`Welcome back, ${profile?.full_name || 'User'}!`} 
+              className="text-3xl font-bold" 
+            />
+            <p className="text-gray-500 mt-2">
+              Here's what's happening {isAdminOrTeacher ? 'in your school' : 'with your academics'}
+            </p>
+          </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {dashboardStats.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card className="bg-card/50 backdrop-blur-sm border-border/50 hover:bg-card/60 transition-all">
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      {stat.label}
-                    </CardTitle>
-                    <motion.div
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Icon className="w-4 h-4 text-primary" />
-                    </motion.div>
+          {loading ? (
+            <div className="flex items-center justify-center h-[400px]">
+              <LoadingSpinner size="lg" />
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Quick Stats Section */}
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {isAdminOrTeacher ? (
+                  <>
+                    <StatsCard
+                      title="Total Students"
+                      value={stats.totalStudents || 0}
+                      icon={<Users className="h-4 w-4" />}
+                      description={`${stats.totalStudents} active students`}
+                      color="blue"
+                    />
+                    <StatsCard
+                      title="Total Teachers"
+                      value={stats.totalTeachers || 0}
+                      icon={<GraduationCap className="h-4 w-4" />}
+                      description={`${stats.totalTeachers} active teachers`}
+                      color="green"
+                    />
+                    <StatsCard
+                      title="Total Classes"
+                      value={stats.totalClasses || 0}
+                      icon={<School className="h-4 w-4" />}
+                      description={`${stats.totalClasses} active classes`}
+                      color="purple"
+                    />
+                    <StatsCard
+                      title="Average Attendance"
+                      value={`${stats.averageAttendance}%`}
+                      icon={<CheckCircle className="h-4 w-4" />}
+                      description="Overall attendance rate"
+                      color="yellow"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <StatsCard
+                      title="Attendance"
+                      value={`${stats.attendancePercentage}%`}
+                      icon={<CheckCircle className="h-4 w-4" />}
+                      description="Your attendance rate"
+                      color="blue"
+                    />
+                    <StatsCard
+                      title="Pending Tasks"
+                      value={stats.pendingTasks || 0}
+                      icon={<AlertCircle className="h-4 w-4" />}
+                      description={`${stats.pendingTasks} tasks to complete`}
+                      color="yellow"
+                    />
+                    <StatsCard
+                      title="Average Score"
+                      value={`${stats.averageScore}%`}
+                      icon={<TrendingUp className="h-4 w-4" />}
+                      description="Your performance"
+                      color="green"
+                    />
+                    <StatsCard
+                      title="Pending Fees"
+                      value={`₹${stats.pendingFees || 0}`}
+                      icon={<DollarSign className="h-4 w-4" />}
+                      description="Outstanding balance"
+                      color="red"
+                    />
+                  </>
+                )}
+              </div>
+
+              {/* Admin Additional Stats */}
+              {isAdminOrTeacher && (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Fee Collection</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div>
+                          <div className="flex justify-between mb-2">
+                            <span>Total Collected</span>
+                            <span className="font-bold">₹{stats.totalFeeCollected}</span>
+                          </div>
+                          <Progress value={
+                            stats.totalFeeCollected + stats.totalPendingFees > 0
+                              ? (stats.totalFeeCollected / (stats.totalFeeCollected + stats.totalPendingFees)) * 100
+                              : 0
+                          } />
+                        </div>
+                        <div>
+                          <div className="flex justify-between mb-2">
+                            <span>Pending Collection</span>
+                            <span className="font-bold text-red-500">₹{stats.totalPendingFees}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Module Statistics</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <span>Attendance Records</span>
+                          <span className="font-bold">{stats.moduleStats.attendance}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span>Homework Assignments</span>
+                          <span className="font-bold">{stats.moduleStats.homework}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span>Classwork Records</span>
+                          <span className="font-bold">{stats.moduleStats.classwork}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span>Fee Transactions</span>
+                          <span className="font-bold">{stats.moduleStats.fees}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Calendar</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={(date) => date && setSelectedDate(date)}
+                        className="rounded-md border"
+                      />
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Activities and Deadlines */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Recent Activities</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{stat.value}</div>
-                    <div className="flex items-center mt-1 text-sm">
-                      <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-                      <span className="text-green-500">{stat.trend}</span>
-                      <span className="text-muted-foreground ml-1">vs last month</span>
-                    </div>
+                    {stats.recentActivities && stats.recentActivities.length > 0 ? (
+                      <div className="space-y-4">
+                        {stats.recentActivities.map((activity: any) => (
+                          <ActivityItem
+                            key={activity.id}
+                            title={activity.title}
+                            date={activity.timestamp}
+                            icon={getActivityIcon(activity.type)}
+                            status={activity.status}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <EmptyState icon={Bell} message="No recent activities" />
+                    )}
                   </CardContent>
                 </Card>
-              </motion.div>
-            );
-          })}
-        </div>
 
-        {/* Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Activity */}
-          <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent">
-                Recent Activity
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {activities.map((activity, index) => (
-                  <motion.div
-                    key={activity.title}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="flex items-center gap-4"
-                  >
-                    <div className={cn(
-                      "w-2 h-2 rounded-full",
-                      activity.type === 'success' ? 'bg-green-500' : 'bg-blue-500'
-                    )} />
-                    <div>
-                      <p className="font-medium">{activity.title}</p>
-                      <p className="text-sm text-muted-foreground">{activity.time}</p>
-                    </div>
-                  </motion.div>
-                ))}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Upcoming Deadlines</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {stats.upcomingDeadlines && stats.upcomingDeadlines.length > 0 ? (
+                      <div className="space-y-4">
+                        {stats.upcomingDeadlines.map((deadline: any) => (
+                          <ActivityItem
+                            key={deadline.id}
+                            title={deadline.title}
+                            date={deadline.dueDate}
+                            icon={<Clock className="h-4 w-4" />}
+                            status={deadline.status}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <EmptyState icon={Clock} message="No upcoming deadlines" />
+                    )}
+                  </CardContent>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Performance Overview */}
-          <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent">
-                Performance Overview
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Attendance Rate</span>
-                    <span className="text-sm text-primary">92%</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-primary/20">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: '92%' }}
-                      transition={{ duration: 1, ease: 'easeOut' }}
-                      className="h-full rounded-full bg-primary"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Assignment Completion</span>
-                    <span className="text-sm text-primary">85%</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-primary/20">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: '85%' }}
-                      transition={{ duration: 1, ease: 'easeOut' }}
-                      className="h-full rounded-full bg-primary"
-                    />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          )}
         </div>
       </div>
     </PageAnimation>
   );
 }
 
-// Sidebar Component
-function DashboardSidebar({ profile, isAdminOrTeacher }: { profile: any; isAdminOrTeacher: boolean }) {
-  const navigate = useNavigate();
-  
-  return (
-    <div className="h-full border-r bg-card p-4 space-y-4">
-      <div className="flex flex-col items-center space-y-2 border-b pb-4">
-        <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-          <UserCircle className="h-8 w-8 text-primary" />
-        </div>
-        <h2 className="text-lg font-semibold">{profile?.full_name}</h2>
-        <p className="text-sm text-muted-foreground capitalize">{profile?.role.toLowerCase()}</p>
-      </div>
-
-      <nav className="space-y-2">
-        <Button variant="ghost" className="w-full justify-start" asChild>
-          <Link to="/dashboard">
-            <Home className="mr-2 h-4 w-4" />
-            Dashboard
-          </Link>
-        </Button>
-        
-        {isAdminOrTeacher ? (
-          <>
-            <Button variant="ghost" className="w-full justify-start" asChild>
-              <Link to="/students">
-                <Users className="mr-2 h-4 w-4" />
-                Students
-              </Link>
-            </Button>
-            <Button variant="ghost" className="w-full justify-start" asChild>
-              <Link to="/attendance">
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                Attendance
-              </Link>
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button variant="ghost" className="w-full justify-start" asChild>
-              <Link to="/homework">
-                <BookOpen className="mr-2 h-4 w-4" />
-                Homework
-              </Link>
-            </Button>
-            <Button variant="ghost" className="w-full justify-start" asChild>
-              <Link to="/fees">
-                <DollarSign className="mr-2 h-4 w-4" />
-                Fees
-              </Link>
-            </Button>
-          </>
-        )}
-        
-        <Button variant="ghost" className="w-full justify-start" asChild>
-          <Link to="/classwork">
-            <Book className="mr-2 h-4 w-4" />
-            Classwork
-          </Link>
-        </Button>
-        
-        <Button variant="ghost" className="w-full justify-start" asChild>
-          <Link to="/notifications">
-            <Bell className="mr-2 h-4 w-4" />
-            Notifications
-          </Link>
-        </Button>
-        
-        <Button variant="ghost" className="w-full justify-start" asChild>
-          <Link to="/profile">
-            <Settings className="mr-2 h-4 w-4" />
-            Settings
-          </Link>
-        </Button>
-      </nav>
-    </div>
-  );
-}
-
 // Helper Components
 function StatsCard({ title, value, icon, description, color = 'blue' }: any) {
+  const colorVariants = {
+    blue: 'bg-blue-50 text-blue-700',
+    green: 'bg-green-50 text-green-700',
+    yellow: 'bg-yellow-50 text-yellow-700',
+    red: 'bg-red-50 text-red-700',
+    purple: 'bg-purple-50 text-purple-700'
+  };
+
   return (
-    <Card className={`hover:scale-105 transition-all duration-300 hover:shadow-lg hover:shadow-${color}-100/50 bg-gradient-to-br from-white to-${color}-50/30`}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {title}
-        </CardTitle>
-        <div className={`bg-${color}-100/50 p-2 rounded-full`}>
-          {icon}
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        <p className="text-xs text-muted-foreground mt-1">{description}</p>
-        <div className={`h-1 w-full bg-${color}-100 rounded-full mt-3 overflow-hidden`}>
-          <div 
-            className={`h-full bg-${color}-600 rounded-full animate-progress`} 
-            style={{ 
-              width: typeof value === 'string' && value.includes('%') ? value : '100%'
-            }}
-          />
+    <Card>
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between space-x-4">
+          <div>
+            <p className="text-sm font-medium text-gray-500">{title}</p>
+            <p className="text-2xl font-bold">{value}</p>
+            <p className="text-sm text-gray-500">{description}</p>
+          </div>
+          <div className={cn('p-3 rounded-full', colorVariants[color as keyof typeof colorVariants])}>
+            {icon}
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -384,31 +309,61 @@ function StatsCard({ title, value, icon, description, color = 'blue' }: any) {
 }
 
 function ActivityItem({ title, date, icon, status, onClick }: any) {
+  const statusColors = {
+    completed: 'text-green-500',
+    pending: 'text-yellow-500',
+    overdue: 'text-red-500'
+  };
+
   return (
-    <div
-      className="flex items-center space-x-4 rounded-md border p-4 hover:bg-accent cursor-pointer transition-colors"
+    <div 
+      className={cn(
+        'flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors',
+        onClick && 'cursor-pointer'
+      )}
       onClick={onClick}
     >
-      <div className="rounded-full bg-primary/10 p-2">
+      <div className="bg-gray-100 p-2 rounded-full">
         {icon}
       </div>
-      <div className="flex-1 space-y-1">
-        <p className="text-sm font-medium leading-none">{title}</p>
-        <p className="text-sm text-muted-foreground">
-          {date}
-          {status && (
-            <span className={`ml-2 inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-              status === 'COMPLETED' 
-                ? 'bg-green-100 text-green-700'
-                : status === 'PENDING'
-                ? 'bg-yellow-100 text-yellow-700'
-                : 'bg-gray-100 text-gray-700'
-            }`}>
-              {status.charAt(0) + status.slice(1).toLowerCase()}
-            </span>
-          )}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-gray-900 truncate">{title}</p>
+        <p className="text-sm text-gray-500">
+          {new Date(date).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })}
         </p>
       </div>
+      {status && (
+        <span className={cn('text-sm font-medium', statusColors[status as keyof typeof statusColors])}>
+          {status.charAt(0).toUpperCase() + status.slice(1)}
+        </span>
+      )}
     </div>
   );
+}
+
+function EmptyState({ icon: Icon, message }: { icon: any; message: string }) {
+  return (
+    <div className="text-center py-8 text-gray-500">
+      <Icon className="h-12 w-12 mx-auto mb-4 opacity-20" />
+      <p>{message}</p>
+    </div>
+  );
+}
+
+function getActivityIcon(type: string) {
+  switch (type) {
+    case 'homework':
+      return <Book className="h-4 w-4" />;
+    case 'attendance':
+      return <CheckCircle className="h-4 w-4" />;
+    case 'fee':
+      return <DollarSign className="h-4 w-4" />;
+    default:
+      return <Bell className="h-4 w-4" />;
+  }
 }

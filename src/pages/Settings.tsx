@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAsync } from '@/hooks/use-async';
 import { settingsService } from '@/services/settings.service';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -39,11 +39,12 @@ export default function SettingsPage() {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [avatar, setAvatar] = useState<File | null>(null);
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
 
   const { loading, execute: fetchSettings } = useAsync(
     async () => {
       if (!profile) return;
-      
+
       // Fetch school settings
       const { data: schoolData, error: schoolError } = await supabase
         .schema('school')
@@ -55,56 +56,38 @@ export default function SettingsPage() {
       setSettings(schoolData);
 
       // Fetch user settings
-      const { data: userData, error: userError } = await supabase
-        .schema('school')
-        .from('UserSettings')
-        .select('*')
-        .eq('userId', profile.id)
-        .single();
-
-      if (userError && userError.code !== 'PGRST116') throw userError;
-
-      if (userData) {
-        setNotificationSettings(userData.notifications || notificationSettings);
-        setThemeSettings(userData.theme || themeSettings);
-        setSecuritySettings(userData.security || securitySettings);
-      }
+      const userSettings = await settingsService.getUserSettings(profile.id);
+      setNotificationSettings(userSettings.notifications || notificationSettings);
+      setThemeSettings(userSettings.theme || themeSettings);
+      setSecuritySettings(userSettings.security || securitySettings);
     },
     { showErrorToast: true }
   );
 
   const { execute: updateSettings } = useAsync(
     async (data: Partial<SchoolSettings>) => {
-      const { error } = await supabase
-        .schema('school')
-        .from('Settings')
-        .update(data)
-        .eq('id', settings?.id);
-
-      if (error) throw error;
-      await fetchSettings();
-      setIsEditing(false);
-      toast.success('Settings updated successfully');
+      try {
+        await settingsService.updateSchoolSettings(data);
+        toast.success('School settings updated successfully');
+        setUnsavedChanges(false);
+      } catch (error) {
+        console.error("Failed to update settings:", error);
+        toast.error('Failed to update settings');
+      }
     },
     { showErrorToast: true }
   );
 
   const { execute: updateUserSettings } = useAsync(
-    async () => {
+    async (settingsToUpdate: any) => {
       if (!profile) return;
 
-      const { error } = await supabase
-        .schema('school')
-        .from('UserSettings')
-        .upsert({
-          userId: profile.id,
-          notifications: notificationSettings,
-          theme: themeSettings,
-          security: securitySettings
-        });
-
-      if (error) throw error;
-      toast.success('User settings updated successfully');
+      try {
+        await settingsService.updateUserSettings(profile.id, settingsToUpdate);
+        setUnsavedChanges(false);
+      } catch (error) {
+        console.error("Failed to update settings:", error);
+      }
     },
     { showErrorToast: true }
   );
@@ -134,6 +117,7 @@ export default function SettingsPage() {
 
       toast.success('Profile picture updated successfully');
       setAvatar(null);
+      setUnsavedChanges(false);
     },
     { showErrorToast: true }
   );
@@ -150,13 +134,111 @@ export default function SettingsPage() {
     const formData = new FormData(form);
 
     await updateSettings({
-      schoolName: formData.get('schoolName') as string,
+      school_name: formData.get('school_name') as string,
       address: formData.get('address') as string,
       phone: formData.get('phone') as string,
       email: formData.get('email') as string,
       website: formData.get('website') as string,
       description: formData.get('description') as string
     });
+  };
+
+  const handleSettingsUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+
+    const settingsToUpdate = {
+      notifications: {
+        emailNotifications: formData.get('emailNotifications') === 'true',
+        pushNotifications: formData.get('pushNotifications') === 'true',
+        reminderFrequency: formData.get('reminderFrequency') as string,
+      },
+      theme: {
+        theme: formData.get('theme') as string,
+        colorScheme: formData.get('colorScheme') as string,
+        fontSize: formData.get('fontSize') as string,
+      },
+      security: {
+        twoFactorAuth: formData.get('twoFactorAuth') === 'true',
+        sessionTimeout: formData.get('sessionTimeout') as string,
+      },
+    };
+
+    try {
+      // Call the updateUserSettings method from the service
+      await settingsService.updateUserSettings(profile.id, settingsToUpdate);
+    } catch (error) {
+      console.error("Failed to update settings:", error);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setUnsavedChanges(true);
+  };
+
+  const handleBeforeUnload = useCallback((event: BeforeUnloadEvent) => {
+    if (unsavedChanges) {
+      const message = 'You have unsaved changes. Are you sure you want to leave without saving?';
+      event.returnValue = message;
+      return message;
+    }
+  }, [unsavedChanges]);
+
+  useEffect(() => {
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [handleBeforeUnload]);
+
+  useEffect(() => {
+    const fetchUserSettings = async () => {
+      try {
+        const userSettings = await settingsService.getUserSettings(profile?.id);
+        setNotificationSettings(userSettings.notifications || notificationSettings);
+        setThemeSettings(userSettings.theme || themeSettings);
+        setSecuritySettings(userSettings.security || securitySettings);
+      } catch (error) {
+        console.error("Error fetching user settings:", error);
+      }
+    };
+
+    fetchUserSettings();
+  }, [profile?.id]);
+
+  const handleInputChangeCheckbox = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUnsavedChanges(true);
+    if (e.target.name === 'emailNotifications') {
+      setNotificationSettings(prev => ({ ...prev, emailNotifications: e.target.checked }));
+    } else if (e.target.name === 'pushNotifications') {
+      setNotificationSettings(prev => ({ ...prev, pushNotifications: e.target.checked }));
+    } else if (e.target.name === 'twoFactorAuth') {
+      setSecuritySettings(prev => ({ ...prev, twoFactorAuth: e.target.checked }));
+    }
+  };
+
+  const handleSelectChange = (value: string, name: string) => {
+    setUnsavedChanges(true);
+    if (name === 'reminderFrequency') {
+      setNotificationSettings(prev => ({ ...prev, reminderFrequency: value }));
+    } else if (name === 'theme') {
+      setThemeSettings(prev => ({ ...prev, theme: value }));
+    } else if (name === 'colorScheme') {
+      setThemeSettings(prev => ({ ...prev, colorScheme: value }));
+    } else if (name === 'fontSize') {
+      setThemeSettings(prev => ({ ...prev, fontSize: value }));
+    } else if (name === 'sessionTimeout') {
+      setSecuritySettings(prev => ({ ...prev, sessionTimeout: value }));
+    }
+  };
+
+  const handleFileUpload = (files: File[]) => {
+    if (files.length > 0) {
+      setAvatar(files[0]);
+      setUnsavedChanges(true);
+      updateAvatar(files[0]);
+    }
   };
 
   if (loading || profileLoading) {
@@ -230,51 +312,38 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="flex items-center gap-6">
-                    <div className="relative">
-                      <div className="w-24 h-24 rounded-full overflow-hidden bg-muted">
-                        {profile?.avatar_url ? (
-                          <img
-                            src={profile.avatar_url}
-                            alt="Profile"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-primary/10">
-                            <User className="w-12 h-12 text-primary/40" />
-                          </div>
-                        )}
-                      </div>
+                  <form onSubmit={handleSettingsUpdate} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="profile_icon">Profile Icon</Label>
                       <FileUploader
+                        id="profile_icon"
                         accept="image/*"
-                        onUpload={updateAvatar}
+                        onChange={(files) => handleFileUpload(files)}
                         currentFile={profile?.avatar_url}
-                        className="mt-2"
+                        className="border rounded-md p-2"
                       />
                     </div>
-                    <div className="flex-1 space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="name">Name</Label>
-                          <Input
-                            id="name"
-                            value={profile?.name || ''}
-                            readOnly
-                            className="bg-muted"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="email">Email</Label>
-                          <Input
-                            id="email"
-                            value={profile?.email || ''}
-                            readOnly
-                            className="bg-muted"
-                          />
-                        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Name</Label>
+                        <Input
+                          id="name"
+                          value={profile?.name || ''}
+                          readOnly
+                          className="bg-muted"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                          id="email"
+                          value={profile?.email || ''}
+                          readOnly
+                          className="bg-muted"
+                        />
                       </div>
                     </div>
-                  </div>
+                  </form>
                 </CardContent>
               </Card>
             </CardAnimation>
@@ -314,14 +383,17 @@ export default function SettingsPage() {
                 <CardContent>
                   {isEditing ? (
                     <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in">
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor="schoolName">School Name</Label>
+                          <Label htmlFor="school_name">School Name</Label>
                           <Input
-                            id="schoolName"
-                            name="schoolName"
-                            defaultValue={settings?.schoolName}
+                            id="school_name"
+                            name="school_name"
+                            defaultValue={settings?.school_name}
                             required
+                            placeholder="Enter school name"
+                            onChange={handleInputChange}
+                            className="border rounded-md p-2"
                           />
                         </div>
                         <div className="space-y-2">
@@ -331,27 +403,35 @@ export default function SettingsPage() {
                             name="phone"
                             defaultValue={settings?.phone}
                             required
+                            placeholder="Enter phone number"
+                            onChange={handleInputChange}
+                            className="border rounded-md p-2"
                           />
                         </div>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="address">Address</Label>
-                        <Textarea
+                        <Input
                           id="address"
                           name="address"
                           defaultValue={settings?.address}
                           required
+                          placeholder="Enter address"
+                          onChange={handleInputChange}
+                          className="border rounded-md p-2"
                         />
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="email">Email</Label>
                           <Input
                             id="email"
-                            name="email"
                             type="email"
                             defaultValue={settings?.email}
                             required
+                            placeholder="Enter email"
+                            onChange={handleInputChange}
+                            className="border rounded-md p-2"
                           />
                         </div>
                         <div className="space-y-2">
@@ -361,6 +441,9 @@ export default function SettingsPage() {
                             name="website"
                             type="url"
                             defaultValue={settings?.website}
+                            placeholder="Enter website URL"
+                            onChange={handleInputChange}
+                            className="border rounded-md p-2"
                           />
                         </div>
                       </div>
@@ -370,12 +453,14 @@ export default function SettingsPage() {
                           id="description"
                           name="description"
                           defaultValue={settings?.description}
+                          placeholder="Enter description"
+                          onChange={handleInputChange}
+                          className="border rounded-md p-2"
                         />
                       </div>
                       <div className="flex justify-end">
-                        <Button type="submit">
-                          <Save className="w-4 h-4 mr-2" />
-                          Save Changes
+                        <Button type="submit" className="bg-primary text-white hover:bg-primary-dark rounded-md p-2">
+                          Save Settings
                         </Button>
                       </div>
                     </form>
@@ -384,7 +469,7 @@ export default function SettingsPage() {
                       <div className="grid grid-cols-2 gap-6">
                         <div>
                           <Label className="text-muted-foreground">School Name</Label>
-                          <p className="text-lg font-medium">{settings?.schoolName}</p>
+                          <p className="text-lg font-medium">{settings?.school_name}</p>
                         </div>
                         <div>
                           <Label className="text-muted-foreground">Phone</Label>
@@ -423,74 +508,78 @@ export default function SettingsPage() {
             <CardAnimation delay={100}>
               <Card className="bg-card/50 backdrop-blur-sm border-border/50">
                 <CardHeader>
-                  <CardTitle className="text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                    Notification Preferences
-                  </CardTitle>
-                  <CardDescription>
-                    Choose how you want to receive notifications
-                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Email Notifications</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Receive notifications via email
-                      </p>
+                  <form onSubmit={handleSettingsUpdate}>
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label>Email Notifications</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Receive notifications via email
+                        </p>
+                      </div>
+                      <Switch
+                        checked={notificationSettings.emailNotifications}
+                        onCheckedChange={(checked) => {
+                          setNotificationSettings(prev => ({
+                            ...prev,
+                            emailNotifications: checked
+                          }));
+                          setUnsavedChanges(true);
+                        }}
+                      />
+                      <Input type="hidden" name="emailNotifications" value={notificationSettings.emailNotifications.toString()} />
                     </div>
-                    <Switch
-                      checked={notificationSettings.emailNotifications}
-                      onCheckedChange={(checked) => {
-                        setNotificationSettings(prev => ({
-                          ...prev,
-                          emailNotifications: checked
-                        }));
-                        updateUserSettings();
-                      }}
-                    />
-                  </div>
-                  <Separator />
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Push Notifications</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Receive push notifications on your device
-                      </p>
+                    <Separator />
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label>Push Notifications</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Receive push notifications on your device
+                        </p>
+                      </div>
+                      <Switch
+                        checked={notificationSettings.pushNotifications}
+                        onCheckedChange={(checked) => {
+                          setNotificationSettings(prev => ({
+                            ...prev,
+                            pushNotifications: checked
+                          }));
+                          setUnsavedChanges(true);
+                        }}
+                      />
+                      <Input type="hidden" name="pushNotifications" value={notificationSettings.pushNotifications.toString()} />
                     </div>
-                    <Switch
-                      checked={notificationSettings.pushNotifications}
-                      onCheckedChange={(checked) => {
-                        setNotificationSettings(prev => ({
-                          ...prev,
-                          pushNotifications: checked
-                        }));
-                        updateUserSettings();
-                      }}
-                    />
-                  </div>
-                  <Separator />
-                  <div className="space-y-2">
-                    <Label>Reminder Frequency</Label>
-                    <Select
-                      value={notificationSettings.reminderFrequency}
-                      onValueChange={(value) => {
-                        setNotificationSettings(prev => ({
-                          ...prev,
-                          reminderFrequency: value
-                        }));
-                        updateUserSettings();
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="daily">Daily</SelectItem>
-                        <SelectItem value="weekly">Weekly</SelectItem>
-                        <SelectItem value="monthly">Monthly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    <Separator />
+                    <div className="space-y-2">
+                      <Label>Reminder Frequency</Label>
+                      <Select
+                        value={notificationSettings.reminderFrequency}
+                        onValueChange={(value) => {
+                          setNotificationSettings(prev => ({
+                            ...prev,
+                            reminderFrequency: value
+                          }));
+                          setUnsavedChanges(true);
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="daily">Daily</SelectItem>
+                          <SelectItem value="weekly">Weekly</SelectItem>
+                          <SelectItem value="monthly">Monthly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input type="hidden" name="reminderFrequency" value={notificationSettings.reminderFrequency} />
+                    </div>
+                    <div className="flex justify-end">
+                      <Button type="submit" className="bg-primary text-white hover:bg-primary-dark rounded-md p-2">
+                        Save Settings
+                      </Button>
+                    </div>
+                  </form>
                 </CardContent>
               </Card>
             </CardAnimation>
@@ -508,75 +597,85 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="space-y-2">
-                    <Label>Theme</Label>
-                    <Select
-                      value={themeSettings.theme}
-                      onValueChange={(value) => {
-                        setThemeSettings(prev => ({
-                          ...prev,
-                          theme: value
-                        }));
-                        updateUserSettings();
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="light">Light</SelectItem>
-                        <SelectItem value="dark">Dark</SelectItem>
-                        <SelectItem value="system">System</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Separator />
-                  <div className="space-y-2">
-                    <Label>Color Scheme</Label>
-                    <Select
-                      value={themeSettings.colorScheme}
-                      onValueChange={(value) => {
-                        setThemeSettings(prev => ({
-                          ...prev,
-                          colorScheme: value
-                        }));
-                        updateUserSettings();
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="blue">Blue</SelectItem>
-                        <SelectItem value="green">Green</SelectItem>
-                        <SelectItem value="purple">Purple</SelectItem>
-                        <SelectItem value="orange">Orange</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Separator />
-                  <div className="space-y-2">
-                    <Label>Font Size</Label>
-                    <Select
-                      value={themeSettings.fontSize}
-                      onValueChange={(value) => {
-                        setThemeSettings(prev => ({
-                          ...prev,
-                          fontSize: value
-                        }));
-                        updateUserSettings();
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="small">Small</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="large">Large</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <form onSubmit={handleSettingsUpdate}>
+                    <div className="space-y-2">
+                      <Label>Theme</Label>
+                      <Select
+                        value={themeSettings.theme}
+                        onValueChange={(value) => {
+                          setThemeSettings(prev => ({
+                            ...prev,
+                            theme: value
+                          }));
+                          setUnsavedChanges(true);
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="light">Light</SelectItem>
+                          <SelectItem value="dark">Dark</SelectItem>
+                          <SelectItem value="system">System</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input type="hidden" name="theme" value={themeSettings.theme} />
+                    </div>
+                    <Separator />
+                    <div className="space-y-2">
+                      <Label>Color Scheme</Label>
+                      <Select
+                        value={themeSettings.colorScheme}
+                        onValueChange={(value) => {
+                          setThemeSettings(prev => ({
+                            ...prev,
+                            colorScheme: value
+                          }));
+                          setUnsavedChanges(true);
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="blue">Blue</SelectItem>
+                          <SelectItem value="green">Green</SelectItem>
+                          <SelectItem value="purple">Purple</SelectItem>
+                          <SelectItem value="orange">Orange</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input type="hidden" name="colorScheme" value={themeSettings.colorScheme} />
+                    </div>
+                    <Separator />
+                    <div className="space-y-2">
+                      <Label>Font Size</Label>
+                      <Select
+                        value={themeSettings.fontSize}
+                        onValueChange={(value) => {
+                          setThemeSettings(prev => ({
+                            ...prev,
+                            fontSize: value
+                          }));
+                          setUnsavedChanges(true);
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="small">Small</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="large">Large</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input type="hidden" name="fontSize" value={themeSettings.fontSize} />
+                    </div>
+                    <div className="flex justify-end">
+                      <Button type="submit" className="bg-primary text-white hover:bg-primary-dark rounded-md p-2">
+                        Save Settings
+                      </Button>
+                    </div>
+                  </form>
                 </CardContent>
               </Card>
             </CardAnimation>
@@ -594,48 +693,57 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Two-Factor Authentication</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Add an extra layer of security to your account
-                      </p>
+                  <form onSubmit={handleSettingsUpdate}>
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label>Two-Factor Authentication</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Add an extra layer of security to your account
+                        </p>
+                      </div>
+                      <Switch
+                        checked={securitySettings.twoFactorAuth}
+                        onCheckedChange={(checked) => {
+                          setSecuritySettings(prev => ({
+                            ...prev,
+                            twoFactorAuth: checked
+                          }));
+                          setUnsavedChanges(true);
+                        }}
+                      />
+                      <Input type="hidden" name="twoFactorAuth" value={securitySettings.twoFactorAuth.toString()} />
                     </div>
-                    <Switch
-                      checked={securitySettings.twoFactorAuth}
-                      onCheckedChange={(checked) => {
-                        setSecuritySettings(prev => ({
-                          ...prev,
-                          twoFactorAuth: checked
-                        }));
-                        updateUserSettings();
-                      }}
-                    />
-                  </div>
-                  <Separator />
-                  <div className="space-y-2">
-                    <Label>Session Timeout</Label>
-                    <Select
-                      value={securitySettings.sessionTimeout}
-                      onValueChange={(value) => {
-                        setSecuritySettings(prev => ({
-                          ...prev,
-                          sessionTimeout: value
-                        }));
-                        updateUserSettings();
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="15">15 minutes</SelectItem>
-                        <SelectItem value="30">30 minutes</SelectItem>
-                        <SelectItem value="60">1 hour</SelectItem>
-                        <SelectItem value="120">2 hours</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    <Separator />
+                    <div className="space-y-2">
+                      <Label>Session Timeout</Label>
+                      <Select
+                        value={securitySettings.sessionTimeout}
+                        onValueChange={(value) => {
+                          setSecuritySettings(prev => ({
+                            ...prev,
+                            sessionTimeout: value
+                          }));
+                          setUnsavedChanges(true);
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="15">15 minutes</SelectItem>
+                          <SelectItem value="30">30 minutes</SelectItem>
+                          <SelectItem value="60">1 hour</SelectItem>
+                          <SelectItem value="120">2 hours</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input type="hidden" name="sessionTimeout" value={securitySettings.sessionTimeout} />
+                    </div>
+                    <div className="flex justify-end">
+                      <Button type="submit" className="bg-primary text-white hover:bg-primary-dark rounded-md p-2">
+                        Save Settings
+                      </Button>
+                    </div>
+                  </form>
                 </CardContent>
               </Card>
             </CardAnimation>

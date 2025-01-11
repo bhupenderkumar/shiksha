@@ -15,11 +15,14 @@ import Home from './pages/Home';
 import { Toaster } from 'react-hot-toast';
 import ClassworkDetail from './pages/ClassworkDetail';
 import HomeworkDetail from './pages/HomeworkDetail';
+
 import Feedback from './pages/Feedback';
+
+
 
 import Register from './pages/Register';
 // Public routes that don't require authentication
-const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/'];
+const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/', '/homework/view/:id'];
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -64,6 +67,11 @@ function AppRoutes() {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/homework/view/:id" element={
+        <Layout>
+          <HomeworkView />
+        </Layout>
+      } />
 
       {/* Protected Routes */}
       <Route path="/dashboard" element={
