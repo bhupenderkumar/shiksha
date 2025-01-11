@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useProfileAccess } from '@/services/profileService';
 import { toast } from 'react-hot-toast';
 import { FileUploader } from '../components/FileUploader';
 import { ImageCarousel } from '../components/ImageCarousel';
