@@ -18,6 +18,7 @@ import { supabase } from '@/lib/api-client';
 import { PageAnimation, CardAnimation } from '@/components/ui/page-animation';
 import { motion } from "framer-motion";
 import { AnimatedText } from "@/components/ui/animated-text";
+import { useProfileAccess } from '@/services/profileService';
 
 export default function SettingsPage() {
   const { profile, loading: profileLoading } = useProfileAccess();

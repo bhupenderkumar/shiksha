@@ -12,27 +12,42 @@ import {
   CreditCard,
   Bell,
   ChevronRight,
-  LogOut
+  LogOut,
+  X
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { useAuth } from '@/lib/auth';
 import { ROUTES } from '@/constants/app-constants';
 import { AnimatedText } from './ui/animated-text';
+import { NotificationsPopover } from './ui/notifications';
+import { ProfileMenu } from './ui/profile-menu';
+import { useMediaQuery } from '@/hooks/use-media-query';
+import toast from 'react-hot-toast';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   useEffect(() => {
-    const handleResize = () => {
-      setIsSidebarOpen(window.innerWidth >= 768);
-    };
+    // Close sidebar on mobile when route changes
+    if (isMobile) {
+      setIsSidebarOpen(false);
+    }
+  }, [location.pathname, isMobile]);
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success('Signed out successfully');
+      navigate('/login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast.error('Failed to sign out');
+    }
+  };
 
   const menuItems = [
     { id: 1, icon: Home, label: 'Dashboard', path: ROUTES.DASHBOARD },
@@ -57,182 +72,145 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     })
   };
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      navigate('/');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
-
   if (!user) {
     return <Navigate to="/" replace />;
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-background to-background/95 glowing-border">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-background to-background/95">
       {/* Header */}
-      <header className="fixed top-0 w-full z-50 border-b bg-background/80 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60 glowing-border">
-        <div className="container mx-auto flex items-center justify-between p-4">
-          <motion.div 
-            key="header-left"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-2"
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            >
-              <Menu className="h-6 w-6" />
-            </Button>
-            <Link to="/dashboard" className="flex items-center gap-2">
-              <motion.div
-                key="logo-icon"
-                initial={{ rotate: -180, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
-                transition={{ duration: 0.5 }}
+      <header className="fixed top-0 w-full z-50 border-b bg-background/80 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-4 h-16">
+          <div className="flex items-center justify-between h-full">
+            {/* Left side */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="md:hidden"
               >
-                <BookOpen className="h-6 w-6 text-primary" />
-              </motion.div>
-              <AnimatedText
-                text="First Step Public School"
-                className="text-xl font-bold bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent"
-                variant="slideUp"
-              />
-            </Link>
-          </motion.div>
+                {isSidebarOpen ? (
+                  <X className="h-5 w-5" />
+                ) : (
+                  <Menu className="h-5 w-5" />
+                )}
+              </Button>
+              <Link to="/dashboard" className="flex items-center gap-2">
+                <motion.div
+                  key="logo-icon"
+                  initial={{ rotate: -180, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <BookOpen className="h-6 w-6 text-primary" />
+                </motion.div>
+                <AnimatedText
+                  text="First Step Public School"
+                  className="text-xl font-bold bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent hidden sm:block"
+                  variant="slideUp"
+                />
+              </Link>
+            </div>
 
-          <motion.div 
-            key="header-right"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-4"
-          >
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
-            </Button>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-sm font-medium text-primary">
-                    {user.email?.[0].toUpperCase()}
-                  </span>
-                </div>
-              </div>
-              <Button 
-                variant="ghost" 
+            {/* Right side */}
+            <div className="flex items-center gap-2">
+              <NotificationsPopover />
+              <ProfileMenu />
+              <Button
+                variant="ghost"
                 size="icon"
                 onClick={handleSignOut}
-                className="text-muted-foreground hover:text-primary"
+                className="text-red-500 hover:text-red-600 hover:bg-red-100/50"
               >
                 <LogOut className="h-5 w-5" />
               </Button>
             </div>
-          </motion.div>
+          </div>
         </div>
       </header>
 
       {/* Main Layout */}
       <div className="flex flex-1 pt-16">
         {/* Sidebar Overlay */}
-        <AnimatePresence mode="wait">
-          {isSidebarOpen && (
+        <AnimatePresence>
+          {isSidebarOpen && isMobile && (
             <motion.div
-              key="sidebar-overlay"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 z-40 md:hidden"
+              className="fixed inset-0 bg-black/50 z-40"
               onClick={() => setIsSidebarOpen(false)}
             />
           )}
         </AnimatePresence>
 
         {/* Sidebar */}
-        <aside
-          className={cn(
-            "fixed top-0 left-0 z-50 h-screen w-64 bg-background/70 backdrop-blur-sm border-r glowing-border",
-            "transition-transform duration-300 ease-in-out",
-            "md:translate-x-0",
-            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-          )}
-        >
-          <nav className="h-full p-4 space-y-2 overflow-y-auto">
-            {menuItems.map((item) => {
-              const isActive = location.pathname === item.path;
-              const Icon = item.icon;
+        <AnimatePresence mode="wait">
+          {(isSidebarOpen || !isMobile) && (
+            <motion.aside
+              initial={isMobile ? { x: -280 } : false}
+              animate={{ x: 0 }}
+              exit={isMobile ? { x: -280 } : false}
+              transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+              className={cn(
+                "fixed top-0 left-0 z-50 h-screen w-[280px]",
+                "bg-background/70 backdrop-blur-sm border-r",
+                "md:translate-x-0 md:static"
+              )}
+            >
+              <nav className="h-full p-4 space-y-2 overflow-y-auto pt-20">
+                {menuItems.map((item) => {
+                  const isActive = location.pathname === item.path;
+                  const Icon = item.icon;
 
-              return (
-                <motion.div
-                  key={item.id}
-                  custom={item.id}
-                  initial="hidden"
-                  animate="visible"
-                  variants={variants}
-                >
-                  <Link to={item.path} onClick={() => setIsSidebarOpen(false)}>  
-                    <Button
-                      variant={isActive ? "secondary" : "ghost"}
-                      className={cn(
-                        "w-full justify-start gap-2 group",
-                        isActive && "bg-primary/10 text-primary"
-                      )}
+                  return (
+                    <motion.div
+                      key={item.id}
+                      custom={item.id}
+                      initial="hidden"
+                      animate="visible"
+                      variants={variants}
                     >
-                      <motion.div
-                        key={`icon-${item.id}`}
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <Icon className="h-5 w-5" />
-                      </motion.div>
-                      <span>{item.label}</span>
-                      {isActive && (
-                        <ChevronRight className="w-4 h-4 ml-auto text-primary" />
-                      )}
-                    </Button>
-                  </Link>
-                </motion.div>
-              );
-            })}
-          </nav>
-        </aside>
+                      <Link to={item.path} onClick={() => isMobile && setIsSidebarOpen(false)}>  
+                        <Button
+                          variant={isActive ? "secondary" : "ghost"}
+                          className={cn(
+                            "w-full justify-start gap-2 group",
+                            isActive && "bg-primary/10 text-primary"
+                          )}
+                        >
+                          <motion.div
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <Icon className="h-5 w-5" />
+                          </motion.div>
+                          <span>{item.label}</span>
+                          {isActive && (
+                            <ChevronRight className="w-4 h-4 ml-auto text-primary" />
+                          )}
+                        </Button>
+                      </Link>
+                    </motion.div>
+                  );
+                })}
+              </nav>
+            </motion.aside>
+          )}
+        </AnimatePresence>
 
         {/* Main Content */}
-        <main className="flex-1 w-full md:pl-64">
-          <div className="container mx-auto p-6">
-            <motion.div
-              key="main-content"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              {children}
-            </motion.div>
+        <main className={cn(
+          "flex-1 transition-all duration-300 ease-in-out p-6",
+          "md:ml-[280px]",
+          isMobile ? "ml-0" : "ml-[280px]"
+        )}>
+          <div className="container mx-auto">
+            {children}
           </div>
         </main>
       </div>
     </div>
   );
-
-  /* Add CSS for glowing effect */
-  <style>{`
-    .glowing-border {
-      border: 2px solid transparent;
-      box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.5);
-      animation: glow 1.5s infinite alternate;
-    }
-
-    @keyframes glow {
-      from {
-        box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.5);
-      }
-      to {
-        box-shadow: 0 0 20px 10px rgba(255, 255, 255, 1);
-      }
-    }
-  `}</style>
 }

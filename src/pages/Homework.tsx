@@ -16,6 +16,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { fileService } from '@/services/fileService';
 import { supabase } from '@/lib/api-client';
 import { Attachment } from '@/components/Attachment';
+import { useProfileAccess } from '@/services/profileService';
 
 export default function HomeworkPage() {
   const navigate = useNavigate();
