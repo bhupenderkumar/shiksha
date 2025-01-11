@@ -38,6 +38,7 @@ import { PageAnimation } from '@/components/ui/page-animation';
 import { AnimatedText } from '@/components/ui/animated-text';
 import { CardAnimation, CardHoverAnimation } from '@/components/ui/card-animation';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { useProfileAccess } from '@/services/profileService';
 
 const formClasses = {
   select: "w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary",

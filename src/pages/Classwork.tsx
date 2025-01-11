@@ -15,6 +15,7 @@ import { useMediaQuery } from 'react-responsive';
 import { Link, useNavigate } from 'react-router-dom';
 import { Attachment } from '@/components/Attachment'; // Import Attachment component
 import { useAuth } from '@/lib/auth';
+import { useProfileAccess } from '@/services/profileService';
 
 export default function ClassworkPage() {
   const { user } = useAuth(); // Retrieve user from Auth context
