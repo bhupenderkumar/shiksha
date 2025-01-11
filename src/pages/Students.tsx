@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useProfileAccess } from '@/services/profileService';
 import { studentService, type Student, type CreateStudentData } from '@/services/student.service';
 import { ROLES, GENDERS } from '@/lib/constants';
 import { toast } from 'react-hot-toast';
