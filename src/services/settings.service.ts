@@ -70,7 +70,6 @@ export class SettingsService extends BaseService {
 
   // Create user settings if they do not exist
   async createUserSettings(settings: UserSettings) {
-    alert("TEST CREATE")
     try {
       const { data, error } = await supabase
         .schema('school')
@@ -86,8 +85,6 @@ export class SettingsService extends BaseService {
 
   // Update user settings
   async updateUserSettings(userId: string, settings: Partial<UserSettings>) {
-    console.log("UPDATEd");
-    alert("TEST");
     try {
       // Attempt to update existing user settings
       const { data, error } = await supabase
