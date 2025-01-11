@@ -20,7 +20,6 @@ import { PageAnimation } from '@/components/ui/page-animation';
 import { AnimatedText } from '@/components/ui/animated-text';
 import { cn } from '@/lib/utils';
 import { getDashboardSummary, getStudentDashboardData } from '@/services/dashboardService';
-import { useProfileAccess } from '@/services/profileService';
 
 export default function Dashboard() {
   const { profile, isAdminOrTeacher } = useProfileAccess();
