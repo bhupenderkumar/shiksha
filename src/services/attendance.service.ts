@@ -1,3 +1,4 @@
+import { supabase } from '@/lib/api-client';
 import { BaseService } from './base.service';
 import type { AttendanceStatus } from '@/types/attendance';
 
@@ -16,10 +17,32 @@ export interface AttendanceType {
   };
 }
 
-class AttendanceService extends BaseService {
-  constructor() {
-    super('Attendance');
-  }
+export const attendanceService = {
+  async getAll(classId: string, startDate: Date, endDate: Date) {
+    try {
+      const { data, error } = await supabase
+        .schema('school')
+        .from('Attendance')
+        .select(`
+          *,
+          student:Student (
+            id,
+            name,
+            admissionNumber
+          )
+        `)
+        .eq('classId', classId) // Fixed: Changed classid to classId
+        .gte('date', startDate.toISOString())
+        .lte('date', endDate.toISOString())
+        .order('date', { ascending: false });
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error fetching attendance:', error);
+      throw error;
+    }
+  },
 
   async getAttendance(filters: { date: Date; classId?: string; studentId?: string }) {
     try {
@@ -28,37 +51,58 @@ class AttendanceService extends BaseService {
       const endDate = new Date(filters.date);
       endDate.setHours(23, 59, 59, 999);
 
-      let query = this.query
+      let query = supabase
+        .schema('school')
+        .from('Attendance')
         .select(`
           *,
           student:Student (
             id,
             name,
-            admissionNumber,
-            classId
+            admissionNumber
           )
         `)
         .gte('date', startDate.toISOString())
         .lt('date', endDate.toISOString());
 
+      if (filters.classId) {
+        query = query.eq('classId', filters.classId); // Fixed: Changed classid to classId
+      }
+
       if (filters.studentId) {
         query = query.eq('studentId', filters.studentId);
       }
 
-      if (filters.classId) {
-        query = query.eq('classId', filters.classId);
-      }
-
-      const { data, error } = await query;
+      const { data, error } = await query.order('date', { ascending: false });
       if (error) throw error;
       return data;
     } catch (error) {
-      this.handleError(error, 'Error loading attendance');
-      return [];
+      console.error('Error loading attendance:', error);
+      throw error;
+    }
+  },
+
+  async create(records: Array<{
+    id: string;
+    studentId: string;
+    classId: string;
+    date: string;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+  }>) {
+    try {
+      const { data, error } = await supabase
+        .schema('school')
+        .from('Attendance')
+        .insert(records)
+        .select();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error creating attendance records:', error);
+      throw error;
     }
   }
-
-  // ... other methods
-}
-
-export const attendanceService = new AttendanceService();
+};

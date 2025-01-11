@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useProfileAccess } from '@/services/profileService';
-import { Student, loadStudents, createStudent, updateStudent, deleteStudent } from '@/services/studentService';
+import { studentService, type Student, type CreateStudentData } from '@/services/student.service';
 import { ROLES, GENDERS } from '@/lib/constants';
 import { toast } from 'react-hot-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -211,16 +211,22 @@ export default function StudentsPage() {
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
 
   useEffect(() => {
-    loadStudentData();
-  }, [profile?.id]);
+    if (!profileLoading) {
+      if (isAdminOrTeacher) {
+        loadStudentData();
+      } else if (profile) { // Only redirect if we have a profile and it's not admin/teacher
+        navigate('/dashboard');
+      }
+    }
+  }, [profile, profileLoading, isAdminOrTeacher]);
 
   const loadStudentData = async () => {
-    if (!profile?.id || !isAdminOrTeacher) return;
+    if (!profile?.id) return; // Remove the isAdminOrTeacher check here
 
     try {
       setLoading(true);
       const [studentsData, classesData] = await Promise.all([
-        loadStudents(),
+        studentService.findMany(),
         classService.findMany()
       ]);
       setStudents(studentsData || []);
@@ -233,22 +239,17 @@ export default function StudentsPage() {
     }
   };
 
-  useEffect(() => {
-    if (!profileLoading && !isAdminOrTeacher) {
-      navigate('/dashboard');
-    }
-  }, [profileLoading, isAdminOrTeacher, navigate]);
-
   if (profileLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
-  if (!isAdminOrTeacher) {
-    return null; // Will be redirected by the useEffect
+  if (!isAdminOrTeacher && profile) {
+    return (
+      <div className="container mx-auto p-8 text-center">
+        <h1 className="text-2xl font-bold text-red-600">Unauthorized Access</h1>
+        <p className="mt-2">You do not have permission to view this page.</p>
+      </div>
+    );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -256,10 +257,10 @@ export default function StudentsPage() {
     try {
       setLoading(true);
       if (editingStudent) {
-        await updateStudent(editingStudent.id, formData);
+        const updated = await studentService.update(editingStudent.id, formData);
         toast.success('Student updated successfully');
       } else {
-        const result = await createStudent(formData);
+        const result = await studentService.create(formData as CreateStudentData);
         setCredentials(result.credentials);
         toast.success('Student created successfully');
       }
@@ -295,14 +296,15 @@ export default function StudentsPage() {
     if (studentToDelete) {
       try {
         setLoading(true);
-        await deleteStudent(studentToDelete.id);
+        await studentService.delete(studentToDelete.id);
         toast.success('Student deleted successfully');
         loadStudentData();
       } catch (error) {
         console.error('Error deleting student:', error);
         toast.error('Failed to delete student');
       } finally {
-        handleDialogClose();
+        setStudentToDelete(null);
+        setLoading(false);
       }
     }
   };
