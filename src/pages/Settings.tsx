@@ -10,7 +10,6 @@ import { FileUploader } from '@/components/FileUploader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useProfileAccess } from '@/services/profileService';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'react-hot-toast';
 import { Edit2, Save, X, School, Bell, Palette, Shield, User } from 'lucide-react';
