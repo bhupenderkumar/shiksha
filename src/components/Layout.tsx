@@ -71,9 +71,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-background to-background/95">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-background to-background/95 glowing-border">
       {/* Header */}
-      <header className="fixed top-0 w-full z-50 border-b bg-background/80 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60">
+      <header className="fixed top-0 w-full z-50 border-b bg-background/80 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60 glowing-border">
         <div className="container mx-auto flex items-center justify-between p-4">
           <motion.div 
             key="header-left"
@@ -155,7 +155,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {/* Sidebar */}
         <aside
           className={cn(
-            "fixed top-0 left-0 z-50 h-screen w-64 bg-background/70 backdrop-blur-sm border-r",
+            "fixed top-0 left-0 z-50 h-screen w-64 bg-background/70 backdrop-blur-sm border-r glowing-border",
             "transition-transform duration-300 ease-in-out",
             "md:translate-x-0",
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -217,4 +217,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </div>
     </div>
   );
+
+  /* Add CSS for glowing effect */
+  <style>{`
+    .glowing-border {
+      border: 2px solid transparent;
+      box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.5);
+      animation: glow 1.5s infinite alternate;
+    }
+
+    @keyframes glow {
+      from {
+        box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.5);
+      }
+      to {
+        box-shadow: 0 0 20px 10px rgba(255, 255, 255, 1);
+      }
+    }
+  `}</style>
 }

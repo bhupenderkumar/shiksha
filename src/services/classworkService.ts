@@ -1,7 +1,9 @@
-import { supabase } from '@/lib/api-client';
-import type { Database } from '@/lib/database.types';
+import type { Database } from 'lib/database.types';
 import { v4 as uuidv4 } from 'uuid';
 import { fileTableService } from './fileTableService';
+import { supabase } from '@/lib/api-client';
+import { useContext } from 'react';
+import { useAuth } from '@/lib/auth';
 
 export type ClassworkType = {
   id: string;
@@ -50,16 +52,16 @@ export const classworkService = {
     }));
   },
 
-  async create(data: CreateClassworkData) {
+  async create(data: CreateClassworkData, userId: string) {
     const { attachments, ...classworkData } = data;
 
     // Generate ID for classwork
     const classworkId = uuidv4();
 
-    // First create the classwork
-    const { data: classwork, error: classworkError } = await supabase
-    .schema('school')  
-    .from('Classwork')
+    // Create the classwork
+    const { error: classworkError } = await supabase
+      .schema('school')  
+      .from('Classwork')
       .insert([{ ...classworkData, id: classworkId, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }])
       .select()
       .single();
@@ -73,7 +75,8 @@ export const classworkService = {
           fileName: file.fileName,
           filePath: file.filePath,
           classworkId: classworkId,
-          fileType: file.fileName.split('.').pop() // Set fileType based on the file extension
+          fileType: file.fileName.split('.').pop(), // Set fileType based on the file extension
+          uploadedBy: userId // Use the user ID here
         });
       }
     }
@@ -81,45 +84,65 @@ export const classworkService = {
     return classwork;
   },
 
-  async update(id: string, data: UpdateClassworkData) {
+  async update(id: string, data: UpdateClassworkData, userId: string) {
     const { attachments, ...classworkData } = data;
-    console.log(classworkData)
-    const classworkId = id; // Use the passed id as classworkId
 
+    // First update the classwork
     const { data: updatedClasswork, error } = await supabase
-    .schema("school")
+      .schema("school")
       .from('Classwork')
       .update({
         ...classworkData,
         updatedAt: new Date().toISOString()
       })
-      .eq('id', classworkId);
+      .eq('id', id)
+      .select()
+      .single();
 
     if (error) {
       console.error('Error updating classwork:', error);
       throw new Error(error.message);
     }
 
-    if (attachments && attachments.length > 0) {
-      // Delete existing files not in the new attachments
-      const fileIdsToDelete = attachments.filter(f => !f.id).map(f => f.id);
-      await fileTableService.deleteFilesByClassworkId(classworkId, fileIdsToDelete);
-      alert(fileIdsToDelete)
+    // Handle attachments if they exist
+    if (attachments) {
+      // Get existing files for this classwork
+      const existingFiles = await fileTableService.getFilesByClassworkId(id);
+      
+      // Find files to delete (files that exist in DB but not in new attachments)
+      const filesToDelete = existingFiles.filter(
+        existingFile => !attachments.some(newFile => newFile.id === existingFile.id)
+      );
+
+      // Find files to add (files that exist in new attachments but not in DB)
+      const filesToAdd = attachments.filter(
+        newFile => !existingFiles.some(existingFile => existingFile.id === newFile.id)
+      );
+
+      // Delete removed files
+      if (filesToDelete.length > 0) {
+        await Promise.all(
+          filesToDelete.map(file => fileTableService.deleteFile(file.id))
+        );
+      }
+
       // Add new files
-      const newFiles = attachments.filter(f => !f.id);
-      alert(newFiles)
-      console.log(newFiles)
-      if (newFiles.length > 0) {
-        for (const file of newFiles) {
-          await fileTableService.createFile({
-            fileName: file.fileName,
-            filePath: file.filePath,
-            classworkId: classworkId,
-            fileType: file.fileName.split('.').pop() 
-          });
-        }
+      if (filesToAdd.length > 0) {
+        await Promise.all(
+          filesToAdd.map(file => 
+            fileTableService.createFile({
+              fileName: file.fileName,
+              filePath: file.filePath,
+              classworkId: id,
+              fileType: file.fileName.split('.').pop() || '',
+              uploadedBy: userId // Use the user ID here
+            })
+          )
+        );
       }
     }
+
+    return updatedClasswork;
   },
 
   async delete(id: string) {
@@ -148,14 +171,24 @@ export const classworkService = {
   },
 };
 
-export const fetchClassworkDetails = async (id) => {
+export const fetchClassworkDetails = async (id: string) => {
   const { data, error } = await supabase
-  .schema("school")
+    .schema("school")
     .from('Classwork')
-    .select('*')
+    .select(`
+      *,
+      attachments:File(*)
+    `)
     .eq('id', id)
     .single();
 
   if (error) throw new Error(error.message);
-  return data;
+  
+  // Convert date fields to Date objects if necessary
+  return {
+    ...data,
+    date: new Date(data.date),
+    createdAt: new Date(data.createdAt),
+    updatedAt: new Date(data.updatedAt),
+  };
 };

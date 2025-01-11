@@ -2,12 +2,12 @@ import { supabase, handleError } from '@/lib/api-client';
 import type { Student } from '@/types/student';
 
 export class StudentService {
-  // Fetch multiple students
+  // Fetch multiple Student
   async findMany(params: { classId?: string } = {}) {
     try {
       let query = supabase
         .schema('school')
-        .from('Students')
+        .from('Student')
         .select(`
           id,
           name,
@@ -35,7 +35,7 @@ export class StudentService {
         dateOfBirth: student.dateOfBirth ? new Date(student.dateOfBirth) : null
       })) as Student[];
     } catch (error) {
-      handleError(error, 'Error fetching students');
+      handleError(error, 'Error fetching Student');
     }
   }
 
@@ -47,7 +47,7 @@ export class StudentService {
     try {
       const { data, error } = await supabase
         .schema('school')
-        .from('Students')
+        .from('Student')
         .select(`
           *,
           class:Class (
@@ -70,7 +70,7 @@ export class StudentService {
     try {
       const { data: created, error } = await supabase
         .schema('school')
-        .from('Students')
+        .from('Student')
         .insert([data])
         .select()
         .single();
@@ -86,7 +86,7 @@ export class StudentService {
     try {
       const { data: updated, error } = await supabase
         .schema('school')
-        .from('Students')
+        .from('Student')
         .update(data)
         .eq('id', id)
         .select()
@@ -103,7 +103,7 @@ export class StudentService {
     try {
       const { error } = await supabase
         .schema('school')
-        .from('Students')
+        .from('Student')
         .delete()
         .eq('id', id);
 

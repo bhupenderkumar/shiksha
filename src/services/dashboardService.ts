@@ -25,14 +25,14 @@ interface Deadline {
   dueDate: Date;
 }
 
-export const getDashboardSummary = async (userId: string) => {
+export const getDashboardSummary = async (userId: string): Promise<DashboardSummary> => {
   try {
     const [
-      { data: students },
-      { data: teachers },
-      { data: classes },
-      { data: homeworks },
-      { data: attendance }
+      { data: students, error: studentsError },
+      { data: teachers, error: teachersError },
+      { data: classes, error: classesError },
+      { data: homeworks, error: homeworksError },
+      { data: attendance, error: attendanceError }
     ] = await Promise.all([
       supabase.from('Student').select('id'),
       supabase.from('Staff').select('id').eq('role', 'TEACHER'),
@@ -40,6 +40,10 @@ export const getDashboardSummary = async (userId: string) => {
       supabase.from('Homework').select('*').eq('status', 'PENDING'),
       supabase.from('Attendance').select('*')
     ]);
+
+    if (studentsError || teachersError || classesError || homeworksError || attendanceError) {
+      throw new Error('Error fetching dashboard data');
+    }
 
     const totalStudents = students?.length || 0;
     const totalTeachers = teachers?.length || 0;
@@ -49,17 +53,44 @@ export const getDashboardSummary = async (userId: string) => {
     // Calculate average attendance
     const totalAttendance = attendance?.length || 0;
     const presentAttendance = attendance?.filter(a => a.status === 'PRESENT').length || 0;
-    const averageAttendance = totalAttendance ? (presentAttendance / totalAttendance) * 100 : 0;
+    const averageAttendance = totalAttendance > 0 
+      ? (presentAttendance / totalAttendance) * 100 
+      : 0;
+
+    // Get recent activities
+    const { data: activities, error: activitiesError } = await supabase
+      .from('Activity')
+      .select('*')
+      .order('timestamp', { ascending: false })
+      .limit(5);
+
+    if (activitiesError) {
+      console.error('Error fetching activities:', activitiesError);
+    }
+
+    // Get upcoming deadlines
+    const { data: deadlines, error: deadlinesError } = await supabase
+      .from('Homework')
+      .select('*')
+      .eq('status', 'PENDING')
+      .order('due_date', { ascending: true })
+      .limit(5);
+
+    if (deadlinesError) {
+      console.error('Error fetching deadlines:', deadlinesError);
+    }
 
     return {
       totalStudents,
       totalTeachers,
       totalClasses,
       pendingHomeworks,
-      averageAttendance: Math.round(averageAttendance),
+      averageAttendance: Number(averageAttendance.toFixed(1)),
+      recentActivities: activities || [],
+      upcomingDeadlines: deadlines || []
     };
   } catch (error) {
-    console.error('Error fetching dashboard summary:', error);
+    console.error('Error in getDashboardSummary:', error);
     throw error;
   }
 };
@@ -67,37 +98,45 @@ export const getDashboardSummary = async (userId: string) => {
 export const getStudentDashboardData = async (studentId: string) => {
   try {
     const [
-      { data: homeworks },
-      { data: attendance },
-      { data: fees },
-      { data: notifications }
+      { data: homeworks, error: homeworksError },
+      { data: attendance, error: attendanceError },
+      { data: activities, error: activitiesError },
+      { data: deadlines, error: deadlinesError }
     ] = await Promise.all([
-      supabase.from('Homework').select('*').eq('studentId', studentId),
-      supabase.from('Attendance').select('*').eq('studentId', studentId),
-      supabase.from('Fee').select('*').eq('studentId', studentId),
-      supabase.from('Notification').select('*').eq('studentId', studentId).order('createdAt', { ascending: false }).limit(5)
+      supabase.from('Homework').select('*').eq('student_id', studentId),
+      supabase.from('Attendance').select('*').eq('student_id', studentId),
+      supabase.from('Activity').select('*').eq('student_id', studentId).order('timestamp', { ascending: false }).limit(5),
+      supabase.from('Homework').select('*').eq('student_id', studentId).eq('status', 'PENDING').order('due_date', { ascending: true }).limit(5)
     ]);
 
+    if (homeworksError || attendanceError || activitiesError || deadlinesError) {
+      throw new Error('Error fetching student dashboard data');
+    }
+
+    const completedTasks = homeworks?.filter(hw => hw.status === 'COMPLETED').length || 0;
+    const pendingTasks = homeworks?.filter(hw => hw.status === 'PENDING').length || 0;
+    
+    const totalAttendance = attendance?.length || 0;
+    const presentAttendance = attendance?.filter(a => a.status === 'PRESENT').length || 0;
+    const attendancePercentage = totalAttendance > 0 
+      ? (presentAttendance / totalAttendance) * 100 
+      : 0;
+
+    const scores = homeworks?.map(hw => hw.score).filter(score => score != null) || [];
+    const averageScore = scores.length > 0 
+      ? scores.reduce((a, b) => a + b, 0) / scores.length 
+      : 0;
+
     return {
-      homeworks: homeworks || [],
-      attendance: attendance || [],
-      fees: fees || [],
-      notifications: notifications || [],
-      summary: {
-        totalHomeworks: homeworks?.length || 0,
-        completedHomeworks: homeworks?.filter(h => h.status === 'COMPLETED').length || 0,
-        attendancePercentage: calculateAttendancePercentage(attendance || []),
-        pendingFees: fees?.filter(f => f.status === 'PENDING').length || 0,
-      }
+      completedTasks,
+      pendingTasks,
+      attendancePercentage: Number(attendancePercentage.toFixed(1)),
+      averageScore: Number(averageScore.toFixed(1)),
+      recentActivities: activities || [],
+      upcomingDeadlines: deadlines || []
     };
   } catch (error) {
-    console.error('Error fetching student dashboard data:', error);
+    console.error('Error in getStudentDashboardData:', error);
     throw error;
   }
-};
-
-const calculateAttendancePercentage = (attendance: any[]) => {
-  if (!attendance.length) return 0;
-  const present = attendance.filter(a => a.status === 'PRESENT').length;
-  return Math.round((present / attendance.length) * 100);
 };

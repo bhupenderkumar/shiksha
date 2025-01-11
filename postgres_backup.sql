@@ -131,7 +131,7 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE school."Fee" TO authenticated;
     "uploadedAt" timestamp(3) without time zone NOT NULL,
     "schoolId" text,
     "homeworkId" text,
-    "classworkId" text,
+    "classworkId" text, -- Ensure this column exists
     "feeId" text,
     "grievanceId" text,
     "uploadedBy" uuid NOT NULL,
