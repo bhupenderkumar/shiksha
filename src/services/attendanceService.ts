@@ -20,16 +20,15 @@ export type AttendanceType = {
 
 type CreateAttendanceData = {
   date: Date;
-  records: Array<{
-    studentId: string;
-    status: AttendanceStatus;
-  }>;
+  status: AttendanceStatus;
+  studentId: string;
   classId: string;
 };
 
 export const attendanceService = {
   async getAll(classId?: string, startDate?: Date, endDate?: Date) {
     let query = supabase
+      .schema('school')
       .from('Attendance')
       .select(`
         *,
@@ -38,7 +37,7 @@ export const attendanceService = {
       .order('date', { ascending: false });
 
     if (classId) {
-      query = query.eq('classid', classId);
+      query = query.eq('classId', classId);
     }
 
     if (startDate) {
@@ -62,6 +61,7 @@ export const attendanceService = {
 
   async getByStudent(studentId: string, month?: Date) {
     let query = supabase
+      .schema('school')
       .from('Attendance')
       .select('*')
       .eq('studentId', studentId)
@@ -69,7 +69,7 @@ export const attendanceService = {
 
     if (month) {
       const startDate = new Date(month.getFullYear(), month.getMonth(), 1);
-      const endDate = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+      const endDate = new Date(month.getFullYear(), month.getMonth() + 1, 0, 23, 59, 59, 999);
       query = query
         .gte('date', startDate.toISOString())
         .lte('date', endDate.toISOString());
@@ -81,33 +81,41 @@ export const attendanceService = {
     return data.map((attendance: any) => ({
       ...attendance,
       date: new Date(attendance.date),
+      createdAt: new Date(attendance.createdAt),
+      updatedAt: new Date(attendance.updatedAt),
     }));
   },
 
   async create(data: CreateAttendanceData) {
-    const { date, records, classId } = data;
-    const attendanceRecords = records.map(record => ({
-      
-      date,
-      classid: classId,
+    const attendanceRecord = {
       id: uuidv4(),
-      studentId: record.studentId,
-      status: record.status,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }));
+      date: data.date.toISOString(),
+      status: data.status,
+      studentId: data.studentId,
+      classId: data.classId,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
 
-    const { data: createdRecords, error } = await supabase
+    const { data: createdRecord, error } = await supabase
+      .schema('school')
       .from('Attendance')
-      .insert(attendanceRecords)
-      .select();
+      .insert(attendanceRecord)
+      .select()
+      .single();
 
     if (error) throw error;
-    return createdRecords;
+    return {
+      ...createdRecord,
+      date: new Date(createdRecord.date),
+      createdAt: new Date(createdRecord.createdAt),
+      updatedAt: new Date(createdRecord.updatedAt),
+    };
   },
 
   async update(id: string, status: AttendanceStatus) {
     const { data, error } = await supabase
+      .schema('school')
       .from('Attendance')
       .update({
         status,
@@ -123,6 +131,7 @@ export const attendanceService = {
 
   async delete(id: string) {
     const { error } = await supabase
+      .schema('school')
       .from('Attendance')
       .delete()
       .eq('id', id);
@@ -132,6 +141,7 @@ export const attendanceService = {
 
   async getStudentStats(studentId: string) {
     const { data, error } = await supabase
+      .schema('school')
       .from('Attendance')
       .select('status')
       .eq('studentId', studentId);

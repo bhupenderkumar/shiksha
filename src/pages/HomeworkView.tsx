@@ -1,48 +1,80 @@
-import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { fetchHomeworkDetails } from '@/services/homeworkService';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { HomeworkType, homeworkService } from '@/services/homeworkService';
+import { HomeworkForm } from '@/components/forms/homework-form';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { Card } from '@/components/ui/card';
+import toast from 'react-hot-toast';
 
-const HomeworkView = () => {
+export default function HomeworkView() {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const [homeworkDetails, setHomeworkDetails] = React.useState(null);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState(null);
+  const [homework, setHomework] = useState<HomeworkType | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  React.useEffect(() => {
-    const getHomeworkDetails = async () => {
+  useEffect(() => {
+    const fetchHomework = async () => {
       try {
-        const data = await fetchHomeworkDetails(id);
-        setHomeworkDetails(data);
-      } catch (err) {
-        setError(err.message);
+        if (!id) {
+          setError('Invalid homework ID');
+          return;
+        }
+        
+        const data = await homeworkService.getById(id);
+        if (!data) {
+          setError('Homework not found');
+          return;
+        }
+        
+        setHomework(data);
+        setError(null);
+      } catch (error) {
+        console.error('Error fetching homework:', error);
+        setError('Failed to load homework');
+        toast.error('Failed to load homework');
       } finally {
         setLoading(false);
       }
     };
 
-    getHomeworkDetails();
+    fetchHomework();
   }, [id]);
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 flex justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (error || !homework) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold text-red-600">
+            {error || 'Homework not found'}
+          </h2>
+          <p className="text-gray-500 mt-2">
+            {error === 'Homework not found' 
+              ? 'The homework you\'re looking for doesn\'t exist or has been removed.'
+              : 'There was an error loading the homework. Please try again later.'}
+          </p>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4">
-      <button onClick={() => navigate(-1)} className="mb-4 text-blue-500">Back</button>
-      <h1 className="text-2xl font-bold">{homeworkDetails.title}</h1>
-      <p>{homeworkDetails.description}</p>
-      <p><strong>Due Date:</strong> {homeworkDetails.dueDate}</p>
-      <h2 className="text-xl font-semibold">Attachments</h2>
-      <ul>
-        {homeworkDetails.attachments?.map((attachment) => (
-          <li key={attachment.id}>
-            <a href={attachment.filePath} className="text-blue-500 underline">{attachment.fileName}</a>
-          </li>
-        ))}
-      </ul>
+    <div className="container mx-auto px-4 py-8">
+      <Card className="p-6">
+        <h1 className="text-2xl font-bold mb-6">{homework.title}</h1>
+        <HomeworkForm
+          initialData={homework}
+          files={homework.attachments}
+          readOnly={true}
+        />
+      </Card>
     </div>
   );
-};
-
-export default HomeworkView;
+}
