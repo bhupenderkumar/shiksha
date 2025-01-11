@@ -55,7 +55,6 @@ import { supabase } from '@/lib/api-client';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageAnimation, CardAnimation } from '@/components/ui/page-animation';
 import { format } from 'date-fns';
-import { useProfileAccess } from '@/services/profileService';
 
 const formClasses = {
   select: "w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary",
