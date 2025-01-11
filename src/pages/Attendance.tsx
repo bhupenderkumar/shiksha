@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { supabase } from '@/lib/api-client';
 import { studentService } from '@/services/student.service';
+import { useProfileAccess } from '@/services/profileService';
 
 export default function AttendancePage() {
   const { profile, loading: profileLoading, isAdminOrTeacher } = useProfileAccess();
