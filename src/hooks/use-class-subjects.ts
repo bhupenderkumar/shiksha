@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/api-client';
-import { useProfileAccess } from '@/services/profileService';
 
 export function useClassSubjects() {
   const [classes, setClasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const { profile } = useProfileAccess();
 
   useEffect(() => {
     const fetchClasses = async () => {
