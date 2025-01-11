@@ -25,53 +25,64 @@ export type HomeworkType = {
   };
 };
 
-export type HomeworkStatus = 'PENDING' | 'COMPLETED' | 'OVERDUE' | 'SUBMITTED';
+export type HomeworkStatus = 'PENDING' | 'SUBMITTED' | 'GRADED' | 'LATE';
 
 type CreateHomeworkData = Omit<HomeworkType, 'id' | 'createdAt' | 'updatedAt'>;
 type UpdateHomeworkData = Partial<CreateHomeworkData>;
 
 export const homeworkService = {
-  async getAll(role: string, classId?: string) {
-    let query = supabase
-      .schema('school')
-      .from('Homework')
-      .select(`
-        *,
-        class:Class(id, name, section),
-        subject:Subject(id, name),
-        attachments:File(*)
-      `)
-      .order('dueDate', { ascending: false });
+  async getAll(role?: string, classId?: string) {
+    try {
+      let query = supabase
+        .schema('school')
+        .from('Homework')
+        .select(`
+          *,
+          class:Class!classId (
+            id,
+            name,
+            section
+          ),
+          subject:Subject!subjectId (
+            id,
+            name,
+            code
+          ),
+          files:File(*)
+        `);
 
-    if (role === 'STUDENT' && classId) {
-      query = query.eq('classId', classId);
+      if (classId) {
+        query = query.eq('classId', classId);
+      }
+
+      const { data, error } = await query.order('createdAt', { ascending: false });
+      if (error) throw error;
+
+      // Transform the response to include attachments from files
+      return data.map(homework => ({
+        ...homework,
+        attachments: homework.files || []
+      }));
+    } catch (error) {
+      console.error('Error fetching homework:', error);
+      throw error;
     }
-
-    const { data, error } = await query;
-
-    if (error) throw error;
-
-    return (data as HomeworkType[]).map(homework => ({
-      ...homework,
-      dueDate: new Date(homework.dueDate),
-      createdAt: new Date(homework.createdAt),
-      updatedAt: new Date(homework.updatedAt),
-    }));
   },
 
-  async create(data: CreateHomeworkData & { files?: File[] }, userId: string) {
+  async create(data: CreateHomeworkData & { files?: File[] }) {
     const { files, attachments, ...homeworkData } = data;
 
     // Generate ID for homework
     const homeworkId = uuidv4();
 
-    // Create the homework
+    // Create the homework without userId
     const { error: homeworkError } = await supabase
       .schema('school')
       .from('Homework')
       .insert([{
         ...homeworkData,
         id: homeworkId,
+        status: homeworkData.status || 'PENDING',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }])
@@ -84,7 +95,6 @@ export const homeworkService = {
     if (files && files.length > 0) {
       for (const file of files) {
         try {
-          // 1. Upload file to storage
           const timestamp = new Date().getTime();
           const filePath = `homework/${homeworkId}/${timestamp}_${file.name}`;
           const { data: uploadData } = await supabase.storage
@@ -92,13 +102,11 @@ export const homeworkService = {
             .upload(filePath, file);
 
           if (uploadData) {
-            // 2. Create file record in database
             await fileTableService.createFile({
               fileName: file.name,
               filePath: filePath,
               homeworkId: homeworkId,
-              fileType: file.type || file.name.split('.').pop() || '',
-              uploadedBy: userId
+              fileType: file.type || file.name.split('.').pop() || ''
             });
           }
         } catch (error) {
@@ -111,7 +119,7 @@ export const homeworkService = {
     return homeworkId;
   },
 
-  async update(id: string, data: UpdateHomeworkData & { files?: File[] }, userId: string) {
+  async update(id: string, data: UpdateHomeworkData & { files?: File[] }) {
     const { files, attachments, ...homeworkData } = data;
 
     // First update the homework
@@ -151,8 +159,7 @@ export const homeworkService = {
                 fileName: file.name,
                 filePath: filePath,
                 homeworkId: id,
-                fileType: file.type || file.name.split('.').pop() || '',
-                uploadedBy: userId
+                fileType: file.type || file.name.split('.').pop() || ''
               });
             }
           } catch (error) {
@@ -217,9 +224,9 @@ export const homeworkService = {
       .from('Homework')
       .select(`
         *,
+        files:File(*),
         class:Class(id, name, section),
-        subject:Subject(id, name),
-        attachments:File(*)
+        subject:Subject(id, name)
       `)
       .eq('id', id)
       .single();
@@ -228,15 +235,50 @@ export const homeworkService = {
 
     return {
       ...data,
+      attachments: data.files || [],
       dueDate: new Date(data.dueDate),
       createdAt: new Date(data.createdAt),
       updatedAt: new Date(data.updatedAt),
     } as HomeworkType;
+  },
+
+  async getById(id: string) {
+    try {
+      const { data, error } = await supabase
+        .schema('school')
+        .from('Homework')
+        .select(`
+          *,
+          files:File(*),
+          subject:Subject!subjectId (
+            id,
+            name
+          ),
+          class:Class!classId (
+            id,
+            name,
+            section
+          )
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+
+      // Transform the response to include attachments from files
+      return {
+        ...data,
+        attachments: data.files || []
+      };
+    } catch (error) {
+      console.error('Error fetching homework:', error);
+      throw error;
+    }
   }
 };
 
-export const updateHomework = async (id: string, data: UpdateHomeworkData & { files?: File[] }, userId: string) => {
-  return await homeworkService.update(id, data, userId);
+export const updateHomework = async (id: string, data: UpdateHomeworkData & { files?: File[] }, teacherId: string) => {
+  return await homeworkService.update(id, data, teacherId);
 };
 
 export const fetchHomeworkDetails = async (id: string) => {
