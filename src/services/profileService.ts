@@ -1,155 +1,211 @@
 import { User } from '@supabase/supabase-js';
 import { useState, useEffect } from 'react';
-import { BaseService } from './base.service';
+import { supabase } from '@/lib/api-client';
 import { ROLES } from '@/lib/constants';
-import { useAuth } from '@/lib/auth';
 
-export interface Profile {
-  id: string;
-  user_id: string;
-  full_name: string;
-  email: string;
-  role: keyof typeof ROLES;
+export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
+
+export interface UserProfile extends User {
+  role: UserRole;
+  full_name?: string;
+  avatar_url?: string;
 }
 
-class ProfileService extends BaseService {
-  private cache: Map<string, Profile> = new Map();
+class ProfileService {
+  private cache: Map<string, UserProfile> = new Map();
 
-  constructor() {
-    super('Profile');
-  }
-
-  async getProfile(userId: string): Promise<Profile | null> {
+  async getUser(userId: string): Promise<UserProfile | null> {
     try {
       // Check cache first
       if (this.cache.has(userId)) {
         return this.cache.get(userId) || null;
       }
 
-      const { data, error } = await this.query
-        .select('*')
-        .eq('user_id', userId)
-        .single();
+      const { data: { user }, error } = await supabase.auth.getUser();
 
       if (error) throw error;
 
-      // Cache the result
-      if (data) {
-        this.cache.set(userId, data);
+      if (user) {
+        // Get staff data by email
+        const { data: staffData, error: staffError } = await supabase
+          .from('Staff')
+          .select('*')
+          .eq('email', user.email)
+          .single();
+
+        if (staffError && staffError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+          console.error('Error fetching staff data:', staffError);
+        }
+
+        // Get student data if not found in staff
+        const { data: studentData, error: studentError } = await supabase
+          .from('Student')
+          .select('id')
+          .eq('email', user.email)
+          .single();
+
+        if (studentError && studentError.code !== 'PGRST116') {
+          console.error('Error fetching student data:', studentError);
+        }
+
+        // Determine role based on data
+        let role: UserRole = 'STUDENT'; // default role
+        let fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+        
+        if (staffData) {
+          role = staffData.role as UserRole;
+          fullName = staffData.name;
+        } else if (studentData) {
+          role = 'STUDENT';
+        }
+
+        const userProfile: UserProfile = {
+          ...user,
+          role,
+          full_name: fullName,
+          avatar_url: user.user_metadata?.avatar_url
+        };
+        
+        // Cache the result
+        this.cache.set(userId, userProfile);
+        return userProfile;
       }
 
-      return data;
+      return null;
     } catch (error) {
-      this.handleError(error, 'Error fetching profile');
+      console.error('Error fetching user:', error);
       return null;
     }
   }
 
-  async getOrCreateProfile(user: User): Promise<Profile> {
+  async updateUserRole(userId: string, role: UserRole): Promise<UserProfile | null> {
     try {
-      const existingProfile = await this.getProfile(user.id);
-      if (existingProfile) return existingProfile;
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
 
-      const { data, error } = await this.query
-        .insert({
-          user_id: user.id,
-          email: user.email,
-          role: ROLES.STUDENT,
-        })
-        .select()
-        .single();
+      if (!user?.email) {
+        throw new Error('User email not found');
+      }
 
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      this.handleError(error, 'Error creating profile');
-      throw error;
-    }
-  }
+      // First, remove any existing roles
+      const { error: deleteError } = await supabase
+        .from('Staff')
+        .delete()
+        .eq('email', user.email);
 
-  async getAllProfiles(): Promise<Profile[]> {
-    try {
-      const { data, error } = await this.query
-        .select('*')
-        .order('full_name');
+      if (deleteError) throw deleteError;
 
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      this.handleError(error, 'Error fetching all profiles');
-      throw error;
-    }
-  }
+      // If the new role is staff (ADMIN or TEACHER)
+      if (role === 'ADMIN' || role === 'TEACHER') {
+        const { error: staffError } = await supabase
+          .from('Staff')
+          .insert({
+            id: userId,
+            employeeId: `EMP${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+            name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+            role: role,
+            qualification: 'Not Specified',
+            experience: 0,
+            email: user.email,
+            contactNumber: 'Not Specified',
+            address: 'Not Specified',
+            joiningDate: new Date().toISOString(),
+            schoolId: '1', // Using default school
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          });
 
-  clearCache(userId?: string) {
-    if (userId) {
+        if (staffError) throw staffError;
+      }
+
+      // Clear cache to force refresh
       this.cache.delete(userId);
-    } else {
-      this.cache.clear();
+      
+      // Get updated user profile
+      return this.getUser(userId);
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      return null;
+    }
+  }
+
+  async getCurrentUser(): Promise<UserProfile | null> {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+
+      if (error) throw error;
+
+      if (user) {
+        return this.getUser(user.id);
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error getting current user:', error);
+      return null;
     }
   }
 }
 
 export const profileService = new ProfileService();
 
-// Export utility functions
-export const isAdmin = (profile?: Profile | null) => profile?.role === ROLES.ADMIN;
-export const isTeacher = (profile?: Profile | null) => profile?.role === ROLES.TEACHER;
-export const isAdminOrTeacher = (profile?: Profile | null) => 
-  isAdmin(profile) || isTeacher(profile);
+// Utility functions
+export const isAdmin = (user?: UserProfile | null): boolean => {
+  return user?.role === 'ADMIN';
+};
 
-// Add the useProfile hook
+export const isTeacher = (user?: UserProfile | null): boolean => {
+  return user?.role === 'TEACHER';
+};
+
+export const isStudent = (user?: UserProfile | null): boolean => {
+  return user?.role === 'STUDENT';
+};
+
+export const isAdminOrTeacher = (user?: UserProfile | null): boolean => {
+  return isAdmin(user) || isTeacher(user);
+};
+
+// React Hook for user profile
 export function useProfile() {
-  const { user } = useAuth();
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    async function loadProfile() {
-      if (!user) {
-        setProfile(null);
-        setLoading(false);
-        return;
-      }
+    let mounted = true;
 
+    const loadProfile = async () => {
       try {
-        const data = await profileService.getOrCreateProfile(user);
-        setProfile(data);
+        setLoading(true);
+        const user = await profileService.getCurrentUser();
+        if (mounted) {
+          setProfile(user);
+          setError(null);
+        }
       } catch (err) {
-        setError(err instanceof Error ? err : new Error('Failed to load profile'));
+        if (mounted) {
+          setError(err as Error);
+          setProfile(null);
+        }
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
-    }
+    };
 
     loadProfile();
-  }, [user]);
 
-  const refetch = async () => {
-    setLoading(true);
-    profileService.clearCache(user?.id);
-    try {
-      if (user) {
-        const data = await profileService.getOrCreateProfile(user);
-        setProfile(data);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to reload profile'));
-    } finally {
-      setLoading(false);
-    }
-  };
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-  return {
-    profile,
-    loading,
-    error,
-    refetch
-  };
+  return { profile, loading, error };
 }
 
-// Add useProfileAccess hook for role-based access control
+// Hook for role-based access control
 export function useProfileAccess() {
   const { profile, loading, error } = useProfile();
   
@@ -159,6 +215,7 @@ export function useProfileAccess() {
     error,
     isAdmin: isAdmin(profile),
     isTeacher: isTeacher(profile),
+    isStudent: isStudent(profile),
     isAdminOrTeacher: isAdminOrTeacher(profile)
   };
 }

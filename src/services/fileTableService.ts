@@ -1,12 +1,21 @@
 import { supabase } from '@/lib/api-client';
 import { v4 as uuidv4 } from 'uuid';
 
+interface FileData {
+  fileName: string;
+  filePath: string;
+  fileType: string;
+  uploadedBy: string;
+  classworkId?: string;
+  homeworkId?: string;
+}
+
 export const fileTableService = {
-  async createFile(fileData: { fileName: string; filePath: string; classworkId: string; fileType: string; }) {
+  async createFile(fileData: FileData) {
     const { error } = await supabase
       .schema('school')
       .from('File')
-      .insert([{ ...fileData, id: uuidv4() }]);
+      .insert([{ ...fileData, id: uuidv4(), uploadedAt: new Date().toISOString() }]);
 
     if (error) throw error;
   },
@@ -43,6 +52,17 @@ export const fileTableService = {
     return data;
   },
 
+  async getFilesByHomeworkId(homeworkId: string) {
+    const { data, error } = await supabase
+      .schema('school')
+      .from('File')
+      .select('*')
+      .eq('homeworkId', homeworkId);
+
+    if (error) throw error;
+    return data;
+  },
+
   async deleteFilesByClassworkId(classworkId: string, fileIdsToDelete: string[]) {
     const { error } = await supabase
       .schema('school')
@@ -53,4 +73,41 @@ export const fileTableService = {
 
     if (error) throw error;
   },
+
+  async deleteFilesByHomeworkId(homeworkId: string, fileIdsToDelete: string[]) {
+    const { error } = await supabase
+      .schema('school')
+      .from('File')
+      .delete()
+      .eq('homeworkId', homeworkId)
+      .in('id', fileIdsToDelete);
+
+    if (error) throw error;
+  },
+
+  async updateFiles(columnName: string, id: string, filesToKeep: string[]) {
+    // First, get all existing files
+    const { data: existingFiles, error: fetchError } = await supabase
+      .schema('school')
+      .from('File')
+      .select('id')
+      .eq(columnName, id);
+
+    if (fetchError) throw fetchError;
+
+    // Find files to delete (files that exist but are not in filesToKeep)
+    const existingFileIds = existingFiles.map(f => f.id);
+    const fileIdsToDelete = existingFileIds.filter(id => !filesToKeep.includes(id));
+
+    if (fileIdsToDelete.length > 0) {
+      const { error: deleteError } = await supabase
+        .schema('school')
+        .from('File')
+        .delete()
+        .eq(columnName, id)
+        .in('id', fileIdsToDelete);
+
+      if (deleteError) throw deleteError;
+    }
+  }
 };
