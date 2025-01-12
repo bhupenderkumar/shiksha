@@ -16,7 +16,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageAnimation } from "@/components/ui/page-animation";
 import { AnimatedText } from "@/components/ui/animated-text";
 import { Link } from "react-router-dom";
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { fetchLatestVideos } from '@/services/youtubeService';
+import { fetchPlaceDetails, fetchPlacePhotos, getSchoolLocation } from '@/services/googleMapsService';
 
 const features = [
   {
@@ -64,7 +66,53 @@ const testimonials = [
 ];
 
 export default function Home() {
+  const [videos, setVideos] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [photos, setPhotos] = useState([]);
+
   useEffect(() => {
+    const getVideos = async () => {
+      const latestVideos = await fetchLatestVideos();
+      setVideos(latestVideos);
+    };
+
+    const loadGoogleMapsScript = () => {
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY`;
+      script.async = true;
+      script.onload = initMap;
+      document.body.appendChild(script);
+    };
+
+    const initMap = () => {
+      const location = getSchoolLocation();
+      const map = new google.maps.Map(document.getElementById('map'), {
+        center: location,
+        zoom: 15,
+      });
+      new google.maps.Marker({
+        position: location,
+        map: map,
+        title: SCHOOL_INFO.name,
+      });
+    };
+
+    const fetchPlaceData = async () => {
+      const placeData = await fetchPlaceDetails();
+      if (placeData) {
+        setReviews(placeData.reviews || []);
+        const photoUrls = await Promise.all(
+          (placeData.photos || []).slice(0, 8).map(photo => 
+            fetchPlacePhotos(photo.photo_reference)
+          )
+        );
+        setPhotos(photoUrls.filter(url => url !== null));
+      }
+    };
+
+    loadGoogleMapsScript();
+    fetchPlaceData();
+    getVideos();
     window.scrollTo(0, 0); // Scroll to top on load
   }, []);
 
@@ -83,22 +131,19 @@ export default function Home() {
             >
               <Rocket className="w-12 h-12 text-primary" />
             </motion.div>
-            
             <AnimatedText
               text={SCHOOL_INFO.name}
               className="text-4xl sm:text-5xl md:text-6xl font-bold bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent"
               variant="slideUp"
             />
-            
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-xl text-muted-foreground max-w-2xl mx-auto"
+              className="text-xl text-gray-600 max-w-2xl mx-auto"
             >
-              Nurturing minds, building futures, and creating leaders of tomorrow through excellence in education.
+              Nurturing young minds, building bright futures. Join us in our journey of excellence in education.
             </motion.p>
-            
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -130,7 +175,6 @@ export default function Home() {
             />
             <p className="text-muted-foreground">Discover what makes us stand out</p>
           </div>
-
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => {
               const Icon = feature.icon;
@@ -157,6 +201,35 @@ export default function Home() {
                 </motion.div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* Latest Videos Section */}
+      <section className="py-12 px-4">
+        <div className="container mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-8">Latest School Activities</h2>
+          <div className="flex overflow-x-auto space-x-6 pb-4">
+            {videos.map((video) => (
+              <motion.div
+                key={video.id.videoId}
+                whileHover={{ scale: 1.02 }}
+                className="video-item min-w-[300px] bg-white rounded-xl shadow-lg overflow-hidden"
+              >
+                <iframe
+                  width="100%"
+                  height="200"
+                  src={`https://www.youtube.com/embed/${video.id.videoId}`}
+                  title={video.snippet.title}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+                <div className="p-4">
+                  <h3 className="text-lg font-semibold line-clamp-2">{video.snippet.title}</h3>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
@@ -197,7 +270,7 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
+            {reviews.map((review, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
@@ -205,16 +278,49 @@ export default function Home() {
                 transition={{ delay: index * 0.1 }}
                 viewport={{ once: true }}
               >
-                <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+                <Card className="h-full">
                   <CardContent className="p-6">
-                    <Star className="w-8 h-8 text-yellow-500 mb-4" />
-                    <p className="text-lg mb-4">{testimonial.quote}</p>
-                    <p className="text-sm text-muted-foreground">- {testimonial.author}</p>
+                    <div className="flex items-center mb-4">
+                      <img
+                        src={review.profile_photo_url}
+                        alt={review.author_name}
+                        className="w-10 h-10 rounded-full mr-3"
+                      />
+                      <div>
+                        <p className="font-semibold">{review.author_name}</p>
+                        <div className="flex text-yellow-500">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-4 h-4 ${
+                                i < review.rating ? 'fill-current' : 'fill-none'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-muted-foreground">{review.text}</p>
                   </CardContent>
                 </Card>
               </motion.div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Map Section */}
+      <section className="py-24 bg-primary/5">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <AnimatedText
+              text="Our Location"
+              className="text-3xl font-bold mb-4"
+              variant="slideUp"
+            />
+            <p className="text-muted-foreground">Find us on the map</p>
+          </div>
+          <div id="map" className="h-96 w-full rounded-lg"></div>
         </div>
       </section>
 
@@ -280,7 +386,7 @@ export default function Home() {
             </div>
           </div>
           <div className="mt-8 pt-8 border-t text-center text-muted-foreground">
-            <p> {new Date().getFullYear()} {SCHOOL_INFO.name}. All rights reserved.</p>
+            &copy; {new Date().getFullYear()} {SCHOOL_INFO.name}. All rights reserved.
           </div>
         </div>
       </footer>
