@@ -118,7 +118,7 @@ export default function Feedback() {
                     )}
 
                     <div className="space-y-4">
-                        {feedbacks.map((feedback) => (
+                        {feedbacks?.map((feedback) => (
                             <Card
                                 key={feedback.id}
                                 className="p-4 cursor-pointer hover:shadow-lg transition-shadow"

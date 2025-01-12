@@ -357,14 +357,36 @@ CREATE TABLE school."Grievance" (
 );
 
 CREATE TABLE school."Notification" (
-    id text NOT NULL PRIMARY KEY,
-    title text NOT NULL,
-    message text NOT NULL,
-    type school."NotificationType" NOT NULL,
-    "studentId" text NOT NULL REFERENCES school."Student"(id),
-    "isRead" boolean NOT NULL,
-    "createdAt" timestamp(3) NOT NULL,
-    "updatedAt" timestamp(3) NOT NULL
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  type school."NotificationType" NOT NULL,
+  "studentId" TEXT REFERENCES school."Student"(id),
+  "classId" TEXT REFERENCES school."Class"(id),
+  "isRead" BOOLEAN NOT NULL DEFAULT FALSE,
+  "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Alter Notification table to make studentId optional
+ALTER TABLE school."Notification"
+ALTER COLUMN "studentId" DROP NOT NULL;
+
+
+
+
+GRANT SELECT ON TABLE school."Notification" TO anon;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE school."Notification" TO authenticated;
+
+-- Insert sample notifications
+INSERT INTO school."Notification" (title, message, type, "studentId", "classId", "isRead") VALUES ('Welcome to the platform!', 'This is a welcome message.', 'GENERAL', '1', NULL, FALSE);
+INSERT INTO school."Notification" (title, message, type, "studentId", "classId", "isRead") VALUES ('Profile Updated', 'Your profile has been updated.', 'GENERAL', '1', NULL, FALSE);
+
+-- Create NotificationStudents table to link notifications with students
+CREATE TABLE school."NotificationStudents" (
+    notificationId UUID NOT NULL REFERENCES school."Notification"(id),
+    studentId TEXT NOT NULL REFERENCES school."Student"(id),
+    PRIMARY KEY (notificationId, studentId)
 );
 
 CREATE TABLE school."TimeTable" (
