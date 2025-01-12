@@ -22,7 +22,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const { error } = await signIn( email, password);
+      const { error } = await signIn(email, password);
       if (error) throw error;
 
       toast.success('Successfully signed in!');
@@ -114,27 +114,21 @@ const Login = () => {
             </div>
           </form>
 
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600">
+              Don’t have an account? 
+              <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
+                Register here
+              </Link>
+            </p>
+          </div>
+
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-200"></div>
               </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
-              </div>
-            </div>
-
-
-          </div>
-
-          <div className="mt-6">
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">
-                Don't have an account?{' '}
-                <Link to="/register" className="font-semibold text-indigo-600 hover:text-indigo-500 transition-colors duration-200">
-                  Register now
-                </Link>
-              </span>
+             
             </div>
           </div>
         </div>
