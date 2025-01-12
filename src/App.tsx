@@ -15,15 +15,14 @@ import Home from './pages/Home';
 import { Toaster } from 'react-hot-toast';
 import ClassworkDetail from './pages/ClassworkDetail';
 import HomeworkDetail from './pages/HomeworkDetail';
-
 import Feedback from './pages/Feedback';
-
-
-
 import Register from './pages/Register';
 import HomeworkView from './pages/HomeworkView';
+import NotificationsPage from './pages/notifications';
+import ProfilePage from './pages/profile';
+
 // Public routes that don't require authentication
-const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/', '/homework/view/:id'];
+const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/', '/homework/view/:id']
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -146,7 +145,7 @@ function AppRoutes() {
         </PrivateRoute>
       } />
 
-    <Route path="/classwork/:id" element={
+      <Route path="/classwork/:id" element={
         <PrivateRoute>
           <Layout>
             <ClassworkDetail />
@@ -161,17 +160,31 @@ function AppRoutes() {
         </PrivateRoute>
       } />
 
-<Route path="/feedback" element={
+      <Route path="/feedback" element={
         <PrivateRoute>
           <Layout>
             <Feedback />
           </Layout>
         </PrivateRoute>
       } />
-       <Route path="/homework/:id" element={
+      <Route path="/homework/:id" element={
         <PrivateRoute>
           <Layout>
             <HomeworkDetail />
+          </Layout>
+        </PrivateRoute>
+      } />
+      <Route path="/notifications" element={
+        <PrivateRoute>
+          <Layout>
+            <NotificationsPage />
+          </Layout>
+        </PrivateRoute>
+      } />
+      <Route path="/profile" element={
+        <PrivateRoute>
+          <Layout>
+            <ProfilePage />
           </Layout>
         </PrivateRoute>
       } />
@@ -187,7 +200,9 @@ function App() {
     <>
       <Toaster position="top-right" />
       <Router>
-        <AppRoutes />
+        <div className="flex flex-col min-h-screen bg-background mt-4">
+          <AppRoutes />
+        </div>
       </Router>
     </>
   );

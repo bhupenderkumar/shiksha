@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@300;400;700&family=Bubblegum+Sans&family=Patrick+Hand&display=swap');
+/* Import child-friendly fonts */
+@import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@300;400;700&family=Bubblegum+Sans&family=Patrick+Hand&family=Nunito:wght@400;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,83 +7,181 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
+    /* Playful color palette */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
- 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
- 
-    --primary: 222.2 47.4% 11.2%;
+    --card-foreground: 222 47% 11%;
+    
+    /* Bright, child-friendly primary colors */
+    --primary: 200 85% 45%;
     --primary-foreground: 210 40% 98%;
- 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
- 
+    
+    /* Soft secondary colors */
+    --secondary: 280 84% 60%;
+    --secondary-foreground: 210 40% 98%;
+    
+    /* Gentle muted colors */
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
- 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
- 
-    --destructive: 0 84.2% 60.2%;
+    
+    /* Playful accent colors */
+    --accent: 130 55% 45%;
+    --accent-foreground: 210 40% 98%;
+    
+    /* Softer destructive color */
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
- 
-    --radius: 0.5rem;
+    /* Rounded borders */
+    --radius: 1rem;
   }
- 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
- 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
- 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
- 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
- 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
- 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
- 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
- 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
- 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-  }
-}
- 
-@layer base {
-  * {
-    @apply border-border;
-  }
+
+  /* Default font settings */
   body {
     @apply bg-background text-foreground;
+    font-family: 'Nunito', sans-serif;
+  }
+
+  /* Headings with playful font */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Bubblegum Sans', cursive;
+    letter-spacing: 0.02em;
   }
 }
 
-.bg-grid-pattern {
-  background-size: 100px 100px;
-  background-image:
-    linear-gradient(to right, theme(colors.primary.DEFAULT / 0.1) 1px, transparent 1px),
-    linear-gradient(to bottom, theme(colors.primary.DEFAULT / 0.1) 1px, transparent 1px);
-  mask-image: radial-gradient(circle at center, black, transparent 80%);
+/* Enhanced card animations */
+.card-shadow {
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-shadow:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 25px -3px rgba(0, 0, 0, 0.15);
+}
+
+/* Playful button styles */
+.btn-primary {
+  @apply bg-primary text-white rounded-full px-6 py-3 font-bold
+         transition-all duration-300 hover:bg-primary/90
+         hover:scale-105 active:scale-95;
+  box-shadow: 0 4px 15px -3px rgba(var(--primary), 0.4);
+}
+
+/* Fun hover effects */
+.hover-lift {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px) scale(1.02);
+}
+
+/* Playful animations */
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 2s infinite;
+}
+
+/* Custom scrollbar for better UX */
+::-webkit-scrollbar {
+  width: 14px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #6b7280;
+  border-radius: 20px;
+  border: 4px solid #f3f4f6;
+}
+
+::-webkit-scrollbar-track {
+  background-color: #f3f4f6;
+}
+
+/* Enhanced focus states for accessibility */
+*:focus {
+  outline: 3px solid rgba(var(--primary), 0.5);
+  outline-offset: 2px;
+}
+
+/* Card layout improvements */
+.card {
+  @apply rounded-2xl overflow-hidden;
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+}
+
+/* Enhanced typography */
+.text-display {
+  font-family: 'Bubblegum Sans', cursive;
+  @apply tracking-wide;
+}
+
+.text-body {
+  font-family: 'Comic Neue', cursive;
+  @apply leading-relaxed;
+}
+
+/* Loading states */
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Responsive design improvements */
+@media (max-width: 640px) {
+  :root {
+    --radius: 0.75rem;
+  }
+
+  .container {
+    @apply px-4;
+  }
+}
+
+/* Custom components */
+.notification-badge {
+  @apply absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 
+         flex items-center justify-center text-white text-xs font-bold;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Input styles */
+input, textarea, select {
+  @apply rounded-xl border-2 border-gray-200 focus:border-primary 
+         transition-all duration-200 focus:ring-2 focus:ring-primary/20;
+}
+
+/* Toast notifications */
+.toast {
+  @apply rounded-xl shadow-lg border-2 border-primary/20;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes shimmer {

@@ -51,9 +51,10 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ attachments }) => {
     try {
       const viewUrl = await fileService.getViewUrl(filePath);
       setSelectedImage(viewUrl);
+      toast.success('Image loaded successfully!');
     } catch (error) {
       console.error('Error getting view URL:', error);
-      toast.error('Failed to load image preview');
+      toast.error('Failed to load image preview. Please try again later.');
     }
   };
 

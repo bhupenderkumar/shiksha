@@ -37,6 +37,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const menuItems = [
     { id: 1, icon: Home, label: 'Dashboard', path: ROUTES.DASHBOARD },
+    { id: 9, icon: Bell, label: 'Notifications', path: '/notifications' },
     { id: 2, icon: Users, label: 'Students', path: ROUTES.STUDENTS },
     { id: 3, icon: BookOpen, label: 'Homework', path: ROUTES.HOMEWORK },
     { id: 4, icon: BookOpen, label: 'Classwork', path: ROUTES.CLASSWORK },
@@ -44,6 +45,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { id: 6, icon: CreditCard, label: 'Fees', path: ROUTES.FEES },
     { id: 7, icon: MessageSquare, label: 'Feedback', path: ROUTES.FEEDBACK },
     { id: 8, icon: Settings, label: 'Settings', path: ROUTES.SETTINGS },
+    { id: 10, icon: Users, label: 'Profile', path: '/profile' },
   ];
 
   const variants = {
@@ -73,9 +75,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-background to-background/95 glowing-border">
+    <div className="flex flex-col min-h-screen bg-background mt-4">
       {/* Header */}
-      <header className="fixed top-0 w-full z-50 border-b bg-background/80 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60 glowing-border">
+      <header className="fixed top-0 w-full z-50 border-b bg-background/80 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex items-center justify-between p-4">
           <motion.div 
             key="header-left"
@@ -101,7 +103,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </motion.div>
               <AnimatedText
                 text="First Step Public School"
-                className="text-xl font-bold bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent"
+                className="text-xl font-bold text-foreground"
                 variant="slideUp"
               />
             </Link>
@@ -113,7 +115,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             animate={{ opacity: 1, y: 0 }}
             className="flex items-center gap-4"
           >
-            <Button variant="ghost" size="icon" className="relative">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="relative" 
+              onClick={() => navigate('/notifications')}
+            >
               <Bell className="h-5 w-5" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
             </Button>
@@ -157,7 +164,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {/* Sidebar */}
         <aside
           className={cn(
-            "fixed top-0 left-0 z-50 h-screen w-64 bg-background/70 backdrop-blur-sm border-r glowing-border",
+            "fixed top-16 left-0 z-40 h-[calc(100vh-4rem)] w-64 bg-background border-r overflow-y-auto",
             "transition-transform duration-300 ease-in-out",
             "md:translate-x-0",
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -219,22 +226,4 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </div>
     </div>
   );
-
-  /* Add CSS for glowing effect */
-  <style>{`
-    .glowing-border {
-      border: 2px solid transparent;
-      box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.5);
-      animation: glow 1.5s infinite alternate;
-    }
-
-    @keyframes glow {
-      from {
-        box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.5);
-      }
-      to {
-        box-shadow: 0 0 20px 10px rgba(255, 255, 255, 1);
-      }
-    }
-  `}</style>
 }
