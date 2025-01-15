@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/api-client";
+import { CLASS_TABLE } from '../lib/constants';
 
 export interface ClassType {
   id: string;
@@ -21,7 +22,7 @@ class ClassService {
     try {
       let query = supabase
         .schema('school')
-        .from('Class')
+        .from(CLASS_TABLE)
         .select(`
           id,
           name,
@@ -56,7 +57,7 @@ class ClassService {
     try {
       const { data, error } = await supabase
         .schema('school')
-        .from('Class')
+        .from(CLASS_TABLE)
         .select(`
           id,
           name,

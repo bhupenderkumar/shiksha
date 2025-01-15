@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash, Eye, Paperclip } from 'lucide-react';
+import { Edit, Eye } from 'lucide-react';
 import { Attachment } from '@/components/Attachment';
 import type { HomeworkType } from '@/services/homeworkService';
 import { fileService } from '@/services/fileService';
@@ -95,111 +95,77 @@ export function HomeworkCard({ homework, onEdit, onDelete, onView, isStudent }: 
   };
 
   return (
-    <Card className="hover:shadow-lg transition-shadow duration-200">
+    <Card onClick={() => onView?.(homework)} className="hover:shadow-lg transition-shadow duration-200 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-100">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-xl font-semibold line-clamp-2">
+          <CardTitle className="text-xl font-semibold line-clamp-2 text-indigo-900">
             {homework.title}
           </CardTitle>
-          <Badge className={getStatusColor(homework.status)}>
-            {homework.status}
-          </Badge>
+         
+        </div>
+        <div className="text-sm text-gray-500 mt-1">
+          Due: {format(new Date(homework.dueDate), 'MMM dd, yyyy')}
         </div>
       </CardHeader>
-      <CardContent className="pb-3">
-        <div className="space-y-3">
-          <p className="text-gray-600 line-clamp-2">{homework.description}</p>
-          <div className="flex flex-col gap-2 text-sm text-gray-500">
-            <div className="flex items-center justify-between">
-              <span>Due Date:</span>
-              <span className="font-medium">
-                {format(new Date(homework.dueDate), 'PPP')}
-              </span>
-            </div>
-            {homework.class && (
-              <div className="flex items-center justify-between">
-                <span>Class:</span>
-                <span className="font-medium">
-                  {homework.class.name} - {homework.class.section}
-                </span>
-              </div>
+      <CardContent className="pb-4">
+        <div className="space-y-4">
+          <div>
+            <p className={`text-gray-700 ${!showFullDescription ? 'line-clamp-3' : ''}`}>
+              {homework.description}
+            </p>
+            {homework.description.split('\n').length > descriptionLineLimit && (
+              <button
+                onClick={toggleDescription}
+                className="text-indigo-600 hover:text-indigo-800 text-sm mt-1 focus:outline-none"
+              >
+                {showFullDescription ? 'Show less' : 'Show more'}
+              </button>
             )}
           </div>
-          
+
           {homework.attachments && homework.attachments.length > 0 && (
-            <div className="mt-4">
-              <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                <Paperclip className="w-4 h-4" />
-                <span>Attachments ({homework.attachments.length})</span>
-              </div>
-              <div className="space-y-2">
-                {homework.attachments.map((file) => (
-                  <Attachment
-                    key={file.id}
-                    file={file}
-                    compact
-                  />
+            <div className="mt-4 space-y-2">
+              <h4 className="text-sm font-medium text-indigo-900 flex items-center gap-2">
+                Attachments ({homework.attachments.length})
+              </h4>
+              <div className="grid grid-cols-1 gap-2">
+                {homework.attachments.map((attachment, index) => (
+                  <div key={index} className="flex items-center justify-between bg-white p-2 rounded-lg shadow-sm">
+                    <Attachment
+                      fileName={attachment.fileName}
+                      fileType={attachment.fileType}
+                      onDownload={() => handleDownload(attachment.filePath, attachment.fileName)}
+                      className="flex-1"
+                    />
+                  </div>
                 ))}
               </div>
             </div>
           )}
+
+          {homework.class && (
+            <div className="text-sm text-gray-600">
+              Class: {homework.class.name} {homework.class.section}
+            </div>
+          )}
+          {homework.subject && (
+            <div className="text-sm text-gray-600">
+              Subject: {homework.subject.name}
+            </div>
+          )}
         </div>
       </CardContent>
+
       <CardFooter className="pt-3 flex justify-end gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onView?.(homework)}
-          className="text-blue-600 hover:text-blue-700"
-        >
-          <Eye className="w-4 h-4 mr-1" />
-          View
-        </Button>
-        {!isStudent && (
-          <>
-            {onEdit && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onEdit(homework)}
-                className="text-amber-600 hover:text-amber-700"
-              >
-                <Edit className="w-4 h-4 mr-1" />
-                Edit
-              </Button>
-            )}
-            {onDelete && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(homework)}
-                className="text-red-600 hover:text-red-700"
-              >
-                <Trash className="w-4 h-4 mr-1" />
-                Delete
-              </Button>
-            )}
-          </>
-        )}
+        <Badge className={`${getStatusColor(homework.status)} px-2 py-1 rounded-full text-xs font-medium`}>
+          {homework.status}
+        </Badge>
       </CardFooter>
 
       <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
-        <DialogContent className="max-w-4xl p-0">
+        <DialogContent className="max-w-3xl">
           {previewImage && (
-            <div className="relative w-full h-full flex items-center justify-center bg-black/5">
-              <img
-                src={previewImage}
-                alt="Preview"
-                className="max-w-full max-h-[80vh] object-contain"
-                onError={(e) => {
-                  console.error('Preview load error, falling back to public URL');
-                  const img = e.target as HTMLImageElement;
-                  if (previewImage) {
-                    img.src = fileService.getPublicUrl(previewImage);
-                  }
-                }}
-              />
-            </div>
+            <img src={previewImage} alt="Preview" className="w-full h-auto" />
           )}
         </DialogContent>
       </Dialog>

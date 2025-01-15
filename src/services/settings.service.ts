@@ -1,6 +1,7 @@
 import { BaseService } from './base.service';
 import { supabase, handleError } from '@/lib/api-client';
 import type { SchoolSettings, UserSettings } from '@/types/settings';
+import { SETTINGS_TABLE } from '../lib/constants';
 
 export class SettingsService extends BaseService {
   constructor() {
@@ -12,7 +13,7 @@ export class SettingsService extends BaseService {
     try {
       const { data, error } = await supabase
         .schema('school')
-        .from('Settings')
+        .from(SETTINGS_TABLE)
         .select('*')
         .single();
 
@@ -28,7 +29,7 @@ export class SettingsService extends BaseService {
     try {
       const { error } = await supabase
         .schema('school')
-        .from('Settings')
+        .from(SETTINGS_TABLE)
         .update(data)
         .eq('id', 'school-settings'); // Assuming 'school-settings' is the ID for the school settings
 

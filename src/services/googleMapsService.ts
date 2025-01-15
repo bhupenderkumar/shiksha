@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const API_KEY = 'AIzaSyC1eS7zgQrBrIUC6CiRJ3K4RXG2JQJeaDw';
 const PLACE_ID = 'ChIJQZ8W_lnmDDkRKKD9jMgstPA'; // First Step Public School's Place ID
-
+// 
 export const fetchPlaceDetails = async () => {
   try {
     const response = await axios.get(
