@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/api-client';
+import { ATTENDANCE_TABLE } from '@/lib/constants';
 import { v4 as uuidv4 } from 'uuid';
 
 export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY';
@@ -29,7 +30,7 @@ export const attendanceService = {
   async getAll(classId?: string, startDate?: Date, endDate?: Date) {
     let query = supabase
       .schema('school')
-      .from('Attendance')
+      .from(ATTENDANCE_TABLE)
       .select(`
         *,
         student:Student(id, name, admissionNumber)
@@ -62,7 +63,7 @@ export const attendanceService = {
   async getByStudent(studentId: string, month?: Date) {
     let query = supabase
       .schema('school')
-      .from('Attendance')
+      .from(ATTENDANCE_TABLE)
       .select('*')
       .eq('studentId', studentId)
       .order('date', { ascending: false });
@@ -99,7 +100,7 @@ export const attendanceService = {
 
     const { data: createdRecord, error } = await supabase
       .schema('school')
-      .from('Attendance')
+      .from(ATTENDANCE_TABLE)
       .insert(attendanceRecord)
       .select()
       .single();
@@ -116,7 +117,7 @@ export const attendanceService = {
   async update(id: string, status: AttendanceStatus) {
     const { data, error } = await supabase
       .schema('school')
-      .from('Attendance')
+      .from(ATTENDANCE_TABLE)
       .update({
         status,
         updatedAt: new Date(),
@@ -132,7 +133,7 @@ export const attendanceService = {
   async delete(id: string) {
     const { error } = await supabase
       .schema('school')
-      .from('Attendance')
+      .from(ATTENDANCE_TABLE)
       .delete()
       .eq('id', id);
 
@@ -142,7 +143,7 @@ export const attendanceService = {
   async getStudentStats(studentId: string) {
     const { data, error } = await supabase
       .schema('school')
-      .from('Attendance')
+      .from(ATTENDANCE_TABLE)
       .select('status')
       .eq('studentId', studentId);
 

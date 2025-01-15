@@ -1,4 +1,15 @@
 import { supabase } from "@/lib/api-client";
+import { FEEDBACK_TABLE } from '../lib/constants';
+import { profileService, type UserProfile } from "@/services/profileService";
+
+export interface FeedbackReply {
+    id: number;
+    feedback_id: number;
+    user_id: number;
+    reply: string;
+    created_at: string;
+    user?: UserProfile;
+}
 
 export interface Feedback {
     id: number;
@@ -7,75 +18,259 @@ export interface Feedback {
     description: string;
     note?: string;
     status: 'RAISED' | 'RESOLVED';
-    created_at: Date;
-    updated_at: Date;
-}
-
-export interface FeedbackReply {
-    id: number;
-    feedback_id: number;
-    user_id: number;
-    reply: string;
-    created_at: Date;
+    created_at: string;
+    updated_at: string;
+    user?: UserProfile;
+    replies?: FeedbackReply[];
 }
 
 export const feedbackService = {
-    // Create new feedback
     async create(userId: number, title: string, description: string, note?: string) {
-        return await supabase.schema('school').from('feedback').insert([{ user_id: userId, title, description, note }])
-        .select();
+        const { data, error } = await supabase.schema('school')
+            .from(FEEDBACK_TABLE)
+            .insert([{ 
+                user_id: userId, 
+                title, 
+                description, 
+                note,
+                status: 'RAISED'
+            }])
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        // Get user profile
+        const userProfile = await profileService.getUser(userId.toString());
+
+        return { ...data, user: userProfile } as Feedback;
     },
 
-    // Get all feedback (for admin/teacher)
     async getAll() {
-        return await supabase.schema('school').from('feedback').select(`*`);
+        const { data: feedbacks, error } = await supabase.schema('school')
+            .from(FEEDBACK_TABLE)
+            .select()
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Get all unique user IDs
+        const userIds = [...new Set(feedbacks.map(f => f.user_id))];
+
+        // Fetch all user profiles
+        const userProfiles = await Promise.all(
+            userIds.map(id => profileService.getUser(id.toString()))
+        );
+
+        // Create a map of user profiles
+        const userMap = new Map(
+            userProfiles
+                .filter((profile): profile is UserProfile => profile !== null)
+                .map(profile => [profile.id, profile])
+        );
+
+        // Get all feedback IDs
+        const feedbackIds = feedbacks.map(f => f.id);
+
+        // Fetch all replies
+        const { data: replies, error: repliesError } = await supabase.schema('school')
+            .from('feedback_replies')
+            .select()
+            .in('feedback_id', feedbackIds)
+            .order('created_at', { ascending: true });
+
+        if (repliesError) throw repliesError;
+
+        // Get user IDs from replies
+        const replyUserIds = [...new Set(replies.map(r => r.user_id))];
+
+        // Fetch user profiles for replies
+        const replyUserProfiles = await Promise.all(
+            replyUserIds.map(id => profileService.getUser(id.toString()))
+        );
+
+        // Create a map of reply user profiles
+        const replyUserMap = new Map(
+            replyUserProfiles
+                .filter((profile): profile is UserProfile => profile !== null)
+                .map(profile => [profile.id, profile])
+        );
+
+        // Group replies by feedback_id
+        const repliesMap = new Map();
+        replies.forEach(reply => {
+            const feedbackId = reply.feedback_id;
+            if (!repliesMap.has(feedbackId)) {
+                repliesMap.set(feedbackId, []);
+            }
+            repliesMap.get(feedbackId).push({
+                ...reply,
+                user: replyUserMap.get(reply.user_id)
+            });
+        });
+
+        // Combine all data
+        const enrichedFeedbacks = feedbacks.map(feedback => ({
+            ...feedback,
+            user: userMap.get(feedback.user_id),
+            replies: repliesMap.get(feedback.id) || []
+        }));
+
+        return enrichedFeedbacks as Feedback[];
     },
 
-    // Get feedback by user ID (for parents)
     async getByUserId(userId: number) {
-        return await supabase.schema('school').from('feedback').select(`*`)
+        const { data: feedbacks, error } = await supabase.schema('school')
+            .from(FEEDBACK_TABLE)
+            .select()
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Get user profile
+        const userProfile = await profileService.getUser(userId.toString());
+
+        // Get all feedback IDs
+        const feedbackIds = feedbacks.map(f => f.id);
+
+        // Fetch all replies
+        const { data: replies, error: repliesError } = await supabase.schema('school')
+            .from('feedback_replies')
+            .select()
+            .in('feedback_id', feedbackIds)
+            .order('created_at', { ascending: true });
+
+        if (repliesError) throw repliesError;
+
+        // Get user IDs from replies
+        const replyUserIds = [...new Set(replies.map(r => r.user_id))];
+
+        // Fetch user profiles for replies
+        const replyUserProfiles = await Promise.all(
+            replyUserIds.map(id => profileService.getUser(id.toString()))
+        );
+
+        // Create a map of reply user profiles
+        const replyUserMap = new Map(
+            replyUserProfiles
+                .filter((profile): profile is UserProfile => profile !== null)
+                .map(profile => [profile.id, profile])
+        );
+
+        // Group replies by feedback_id
+        const repliesMap = new Map();
+        replies.forEach(reply => {
+            const feedbackId = reply.feedback_id;
+            if (!repliesMap.has(feedbackId)) {
+                repliesMap.set(feedbackId, []);
+            }
+            repliesMap.get(feedbackId).push({
+                ...reply,
+                user: replyUserMap.get(reply.user_id)
+            });
+        });
+
+        // Combine all data
+        const enrichedFeedbacks = feedbacks.map(feedback => ({
+            ...feedback,
+            user: userProfile,
+            replies: repliesMap.get(feedback.id) || []
+        }));
+
+        return enrichedFeedbacks as Feedback[];
     },
 
-    // Get feedback by ID with replies
     async getById(id: number) {
-        const feedback = await db.one('SELECT * FROM school.feedback WHERE id = $1', [id]);
-        const replies = await db.manyOrNone(`
-            SELECT r.*, u.name as user_name, u.role as user_role 
-            FROM school.feedback_replies r
-            JOIN school.users u ON r.user_id = u.id
-            WHERE feedback_id = $1 
-            ORDER BY created_at ASC
-        `, [id]);
-        return { ...feedback, replies };
+        const { data: feedback, error } = await supabase.schema('school')
+            .from(FEEDBACK_TABLE)
+            .select()
+            .eq('id', id)
+            .single();
+
+        if (error) throw error;
+
+        // Get user profile
+        const userProfile = await profileService.getUser(feedback.user_id.toString());
+
+        // Fetch replies
+        const { data: replies, error: repliesError } = await supabase.schema('school')
+            .from('feedback_replies')
+            .select()
+            .eq('feedback_id', id)
+            .order('created_at', { ascending: true });
+
+        if (repliesError) throw repliesError;
+
+        // Get user IDs from replies
+        const replyUserIds = [...new Set(replies.map(r => r.user_id))];
+
+        // Fetch user profiles for replies
+        const replyUserProfiles = await Promise.all(
+            replyUserIds.map(id => profileService.getUser(id.toString()))
+        );
+
+        // Create a map of reply user profiles
+        const replyUserMap = new Map(
+            replyUserProfiles
+                .filter((profile): profile is UserProfile => profile !== null)
+                .map(profile => [profile.id, profile])
+        );
+
+        // Add user data to replies
+        const enrichedReplies = replies.map(reply => ({
+            ...reply,
+            user: replyUserMap.get(reply.user_id)
+        }));
+
+        return {
+            ...feedback,
+            user: userProfile,
+            replies: enrichedReplies
+        } as Feedback;
     },
 
-    // Update feedback status
     async updateStatus(id: number, status: 'RAISED' | 'RESOLVED') {
-        return await db.one(
-            'UPDATE school.feedback SET status = $1 WHERE id = $2 RETURNING *',
-            [status, id]
-        );
+        const { data, error } = await supabase.schema('school')
+            .from(FEEDBACK_TABLE)
+            .update({ status })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        return this.getById(id);
     },
 
-    // Add reply
     async addReply(feedbackId: number, userId: number, reply: string) {
-        const feedbackReply = await db.one(
-            'INSERT INTO school.feedback_replies (feedback_id, user_id, reply) VALUES ($1, $2, $3) RETURNING *',
-            [feedbackId, userId, reply]
-        );
-        // Update feedback status to RESOLVED when reply is added
-        await db.none(
-            'UPDATE school.feedback SET status = $1 WHERE id = $2',
-            ['RESOLVED', feedbackId]
-        );
-        return feedbackReply;
-    },
+        // First add the reply
+        const { data: replyData, error: replyError } = await supabase.schema('school')
+            .from('feedback_replies')
+            .insert([{
+                feedback_id: feedbackId,
+                user_id: userId,
+                reply
+            }])
+            .select()
+            .single();
 
-    // Get replies for a feedback
-    async getReplies(feedbackId: number) {
-        return await db.manyOrNone(
-            'SELECT * FROM school.feedback_replies WHERE feedback_id = $1 ORDER BY created_at ASC',
-            [feedbackId]
-        );
+        if (replyError) throw replyError;
+
+        // Update feedback status to RESOLVED
+        const { error: statusError } = await supabase.schema('school')
+            .from(FEEDBACK_TABLE)
+            .update({ status: 'RESOLVED' })
+            .eq('id', feedbackId);
+
+        if (statusError) throw statusError;
+
+        // Get user profile for the reply
+        const userProfile = await profileService.getUser(userId.toString());
+
+        return {
+            ...replyData,
+            user: userProfile
+        } as FeedbackReply;
     }
 };

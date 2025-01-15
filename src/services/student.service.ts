@@ -1,4 +1,5 @@
 import { supabase, supabaseAdmin } from '@/lib/api-client';
+import { STUDENT_TABLE } from '../lib/constants';
 
 export interface StudentCredentials {
   email: string;
@@ -36,7 +37,7 @@ class StudentService {
     try {
       let query = supabase
         .schema('school')
-        .from('Student')
+        .from(STUDENT_TABLE)
         .select(`
           *,
           class:Class (
@@ -64,7 +65,7 @@ class StudentService {
     try {
       const { data, error } = await supabase
         .schema('school')
-        .from('Student')
+        .from(STUDENT_TABLE)
         .select(`
           *,
           class:Class (
@@ -119,7 +120,7 @@ class StudentService {
       // Create student record
       const { data: student, error: studentError } = await supabase
         .schema('school')
-        .from('Student')
+        .from(STUDENT_TABLE)
         .insert([{
           id: authData.user.id,
           ...studentData,
@@ -173,7 +174,7 @@ class StudentService {
 
       const { data: updated, error } = await supabase
         .schema('school')
-        .from('Student')
+        .from(STUDENT_TABLE)
         .update({
           ...data,
           updatedAt: new Date()
@@ -199,7 +200,7 @@ class StudentService {
 
   async delete(id: string) {
     try {
-      await supabase.schema('school').from('Student').delete().eq('id', id);
+      await supabase.schema('school').from(STUDENT_TABLE).delete().eq('id', id);
       await supabase.schema('school').from('Profile').delete().eq('user_id', id);
       await supabaseAdmin.auth.admin.deleteUser(id);
     } catch (error) {

@@ -16,7 +16,7 @@ export const Attachment: React.FC<AttachmentProps> = ({ attachment }) => {
 
   return (
     <div className="flex items-center justify-between p-2 border rounded-md">
-      <span>{attachment.fileName}</span>
+      <span>{attachment?.fileName}</span>
       <button onClick={handleDownload} className="text-blue-500 hover:text-blue-700">
         <Download className="w-4 h-4" />
       </button>

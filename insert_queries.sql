@@ -34,3 +34,6 @@ INSERT INTO school."Attendance" (id, date, status, "studentId", "createdAt", "up
 -- Insert data into the Fee table
 INSERT INTO school."Fee" (id, "studentId", amount, "dueDate", "feeType", status, "paymentDate", "paymentMethod", "receiptNumber", "createdAt", "updatedAt") VALUES
 ('1', '1', 1000.00, '2025-01-30 00:00:00', 'Tuition', 'UNPAID', NULL, NULL, NULL, NOW(), NOW());
+
+
+

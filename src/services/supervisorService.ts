@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/api-client';
+import { STAFF_TABLE } from '../lib/constants';
 
 export type StaffRole = 'TEACHER' | 'ADMIN' | 'PRINCIPAL' | 'ACCOUNTANT';
 
@@ -6,7 +7,7 @@ export const supervisorService = {
   async getStaffByRole(role: StaffRole) {
     try {
       const { data, error } = await supabase
-        .from('Staff')
+        .from(STAFF_TABLE)
         .select('*')
         .eq('role', role);
 

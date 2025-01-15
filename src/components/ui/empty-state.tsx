@@ -1,34 +1,80 @@
-import { ReactNode } from 'react';
+import React from 'react';
+import { cn } from '@/lib/utils';
 import { FrownIcon } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface EmptyStateProps {
   title: string;
-  description?: string | null;
-  icon?: ReactNode;
-  action?: ReactNode;
+  description: string;
+  icon?: React.ReactNode;
+  action?: React.ReactNode;
+  className?: string;
 }
 
-export function EmptyState({ title, description, icon, action }: EmptyStateProps) {
+export const EmptyState: React.FC<EmptyStateProps> = ({
+  title,
+  description,
+  icon,
+  action,
+  className,
+}) => {
   if (!title) return null;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[300px] p-8 text-center bg-gray-50 rounded-lg border border-dashed border-gray-200">
-      <div className="w-20 h-20 mb-6 text-gray-400">
-        {icon || <FrownIcon className="w-full h-full" />}
-      </div>
-      <h3 className="text-2xl font-semibold text-gray-800 mb-3">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className={cn(
+        'flex flex-col items-center justify-center p-8 text-center rounded-lg',
+        'bg-gradient-to-b from-white to-gray-50',
+        'border-2 border-dashed border-gray-200',
+        'dark:from-gray-900 dark:to-gray-800 dark:border-gray-700',
+        className
+      )}
+    >
+      <motion.div
+        initial={{ scale: 0.8 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 0.1, duration: 0.2 }}
+        className="relative"
+      >
+        {icon || (
+          <div className="w-16 h-16 mb-4 text-gray-400 flex items-center justify-center">
+            <FrownIcon className="w-full h-full" />
+          </div>
+        )}
+        <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full opacity-20 blur-lg animate-pulse" />
+      </motion.div>
+      
+      <motion.h3
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.2 }}
+        className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2"
+      >
         {title}
-      </h3>
-      {description && (
-        <p className="text-gray-600 mb-6 max-w-md leading-relaxed">
-          {description}
-        </p>
-      )}
+      </motion.h3>
+      
+      <motion.p
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3, duration: 0.2 }}
+        className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mb-4"
+      >
+        {description}
+      </motion.p>
+      
       {action && (
-        <div className="mt-2 animate-bounce">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.2 }}
+          className="mt-2"
+        >
           {action}
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
-}
+};
