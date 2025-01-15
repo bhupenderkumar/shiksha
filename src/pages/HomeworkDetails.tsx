@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { fetchClassworkDetails } from '@/services/classworkService';
-import { fileTableService } from '@/services/fileTableService';
+import { homeworkService } from '@/services/homeworkService';
 import { fileService } from '@/services/fileService';
-import ImageGallery from '@/components/ui/ImageGallery';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,17 +18,21 @@ import {
   Paperclip, 
   Eye,
   AlertCircle,
-  FileText 
+  FileText,
+  CheckCircle,
+  Clock4,
+  XCircle,
+  SendHorizonal
 } from 'lucide-react';
 import { format, isValid, parseISO } from 'date-fns';
 import toast from 'react-hot-toast';
 
-interface ClassworkDetails {
+interface HomeworkDetails {
   id: string;
   title: string;
   description: string;
-  date: string;
-  status?: string;
+  dueDate: string;
+  status: string;
   attachments?: Array<{
     id: string;
     fileName: string;
@@ -51,45 +53,35 @@ interface ClassworkDetails {
   updatedAt?: string;
 }
 
-const ClassworkDetail = () => {
+const HomeworkDetails = () => {
   const { id } = useParams() as { id: string };
   const navigate = useNavigate();
-  const [classworkDetails, setClassworkDetails] = useState<ClassworkDetails | null>(null);
+  const [homeworkDetails, setHomeworkDetails] = useState<HomeworkDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   useEffect(() => {
-    const getClassworkDetails = async () => {
+    const getHomeworkDetails = async () => {
       try {
-        const data = await fetchClassworkDetails(id);
-        const files = await fileTableService.getFilesByClassworkId(id);
-        
-        // Map files to include proper URLs
-        const attachments = files.map(file => ({
-          id: file.id,
-          fileName: file.fileName,
-          filePath: file.filePath,
-          fileType: file.fileType || file.fileName.split('.').pop() || ''
-        }));
-
-        setClassworkDetails({ ...data, attachments });
+        const data = await homeworkService.getHomeworkDetails(id);
+        setHomeworkDetails(data);
       } catch (err: any) {
-        setError(err.message || 'Failed to load classwork details');
-        toast.error('Failed to load classwork details');
+        setError(err.message || 'Failed to load homework details');
+        toast.error('Failed to load homework details');
       } finally {
         setLoading(false);
       }
     };
 
-    getClassworkDetails();
+    getHomeworkDetails();
   }, [id]);
 
   useEffect(() => {
-    if (classworkDetails) {
-      document.title = `Classwork | ${classworkDetails.class?.name || 'N/A'} | ${classworkDetails.subject?.name || 'N/A'} | ${format(new Date(classworkDetails.date), 'dd MMMM yyyy')} | First Step Public School | Saurabh Vihar`;
+    if (homeworkDetails) {
+      document.title = `Homework | ${homeworkDetails.class?.name || 'N/A'} | ${homeworkDetails.subject?.name || 'N/A'} | ${format(new Date(homeworkDetails.dueDate), 'dd MMMM yyyy')} | First Step Public School | Saurabh Vihar`;
     }
-  }, [classworkDetails]);
+  }, [homeworkDetails]);
 
   const handleDownload = async (filePath: string, fileName: string) => {
     try {
@@ -139,6 +131,36 @@ const ClassworkDetail = () => {
     }
   };
 
+  const getStatusIcon = (status: string) => {
+    switch (status.toUpperCase()) {
+      case 'COMPLETED':
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'PENDING':
+        return <Clock4 className="w-4 h-4 text-yellow-500" />;
+      case 'OVERDUE':
+        return <XCircle className="w-4 h-4 text-red-500" />;
+      case 'SUBMITTED':
+        return <SendHorizonal className="w-4 h-4 text-blue-500" />;
+      default:
+        return null;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status.toUpperCase()) {
+      case 'COMPLETED':
+        return 'bg-green-100 text-green-800 border-green-300';
+      case 'PENDING':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+      case 'OVERDUE':
+        return 'bg-red-100 text-red-800 border-red-300';
+      case 'SUBMITTED':
+        return 'bg-blue-100 text-blue-800 border-blue-300';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-300';
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -147,16 +169,16 @@ const ClassworkDetail = () => {
     );
   }
 
-  if (error || !classworkDetails) {
+  if (error || !homeworkDetails) {
     return (
       <div className="container mx-auto px-4 py-8">
         <EmptyState
-          title="Error Loading Classwork"
-          description={error || 'Failed to load classwork details. Please try again.'}
+          title="Error Loading Homework"
+          description={error || 'Failed to load homework details. Please try again.'}
           icon={<AlertCircle className="w-full h-full" />}
           action={
-            <Button onClick={() => navigate('/classwork')} variant="outline">
-              Go back to Classwork
+            <Button onClick={() => navigate('/homework')} variant="outline">
+              Go back to Homework
             </Button>
           }
         />
@@ -168,22 +190,26 @@ const ClassworkDetail = () => {
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <Button
         variant="ghost"
-        onClick={() => navigate('/classwork')}
+        onClick={() => navigate('/homework')}
         className="mb-6 hover:bg-blue-50"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
-        Back to Classwork
+        Back to Homework
       </Button>
 
       <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-100">
         <CardHeader className="pb-6">
           <div className="flex justify-between items-start flex-wrap gap-4">
             <CardTitle className="text-2xl font-bold text-indigo-900">
-              {classworkDetails.title || 'Untitled Classwork'}
+              {homeworkDetails.title || 'Untitled Homework'}
             </CardTitle>
-            {classworkDetails.status && (
-              <Badge className="px-3 py-1 rounded-full bg-blue-100 text-blue-800">
-                {classworkDetails.status}
+            {homeworkDetails.status && (
+              <Badge 
+                variant="outline" 
+                className={`px-3 py-1 flex items-center gap-2 ${getStatusColor(homeworkDetails.status)}`}
+              >
+                {getStatusIcon(homeworkDetails.status)}
+                <span className="capitalize">{homeworkDetails.status.toLowerCase()}</span>
               </Badge>
             )}
           </div>
@@ -194,27 +220,27 @@ const ClassworkDetail = () => {
             <div className="space-y-4">
               <div className="flex items-center text-gray-700">
                 <Calendar className="w-5 h-5 mr-2 text-indigo-600" />
-                <span>Due: {formatDate(classworkDetails.date)}</span>
+                <span>Due: {formatDate(homeworkDetails.dueDate)}</span>
               </div>
               
-              {classworkDetails.class && (
+              {homeworkDetails.class && (
                 <div className="flex items-center text-gray-700">
                   <Users className="w-5 h-5 mr-2 text-indigo-600" />
-                  <span>Class: {classworkDetails.class.name} {classworkDetails.class.section}</span>
+                  <span>Class: {homeworkDetails.class.name} {homeworkDetails.class.section}</span>
                 </div>
               )}
               
-              {classworkDetails.subject && (
+              {homeworkDetails.subject && (
                 <div className="flex items-center text-gray-700">
                   <Book className="w-5 h-5 mr-2 text-indigo-600" />
-                  <span>Subject: {classworkDetails.subject.name} ({classworkDetails.subject.code})</span>
+                  <span>Subject: {homeworkDetails.subject.name} ({homeworkDetails.subject.code})</span>
                 </div>
               )}
 
-              {classworkDetails.createdAt && (
+              {homeworkDetails.createdAt && (
                 <div className="flex items-center text-gray-700">
                   <Clock className="w-5 h-5 mr-2 text-indigo-600" />
-                  <span>Created: {formatDateTime(classworkDetails.createdAt)}</span>
+                  <span>Created: {formatDateTime(homeworkDetails.createdAt)}</span>
                 </div>
               )}
             </div>
@@ -226,22 +252,22 @@ const ClassworkDetail = () => {
               Description
             </h3>
             <div className="bg-white rounded-lg p-4 shadow-sm">
-              {classworkDetails.description ? (
-                <p className="text-gray-700 whitespace-pre-wrap">{classworkDetails.description}</p>
+              {homeworkDetails.description ? (
+                <p className="text-gray-700 whitespace-pre-wrap">{homeworkDetails.description}</p>
               ) : (
                 <p className="text-gray-500 italic">No description provided</p>
               )}
             </div>
           </div>
 
-          {classworkDetails.attachments && classworkDetails.attachments.length > 0 ? (
+          {homeworkDetails.attachments && homeworkDetails.attachments.length > 0 ? (
             <div>
               <h3 className="text-lg font-semibold text-indigo-900 mb-4 flex items-center">
                 <Paperclip className="w-5 h-5 mr-2" />
-                Attachments ({classworkDetails.attachments.length})
+                Attachments ({homeworkDetails.attachments.length})
               </h3>
               <div className="grid gap-3">
-                {classworkDetails.attachments.map((attachment, index) => (
+                {homeworkDetails.attachments.map((attachment, index) => (
                   <div
                     key={attachment.id || index}
                     className="flex items-center justify-between bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow"
@@ -269,8 +295,9 @@ const ClassworkDetail = () => {
           ) : (
             <EmptyState
               title="No Attachments"
-              description="This classwork has no attached files."
+              description="This homework has no attached files."
               icon={<Paperclip className="w-full h-full" />}
+              className="bg-white/50"
             />
           )}
         </CardContent>
@@ -287,4 +314,4 @@ const ClassworkDetail = () => {
   );
 };
 
-export default ClassworkDetail;
+export default HomeworkDetails;

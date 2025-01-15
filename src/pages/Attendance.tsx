@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Popover, PopoverContent } from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Label } from '@/components/ui/label';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -20,6 +20,7 @@ import toast from 'react-hot-toast';
 import { supabase } from '@/lib/api-client';
 import { studentService } from '@/services/student.service';
 import { useProfileAccess } from '@/services/profileService';
+import React from 'react';
 
 export default function AttendancePage() {
   const { profile, loading: profileLoading, isAdminOrTeacher } = useProfileAccess();
@@ -29,12 +30,16 @@ export default function AttendancePage() {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [selectedClassId, setSelectedClassId] = useState<string>('');
   const [attendanceData, setAttendanceData] = useState<any[]>([]);
+  const [groupedAttendance, setGroupedAttendance] = useState<Record<string, any[]>>({});
   const [students, setStudents] = useState<any[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
   const [attendanceSummary, setAttendanceSummary] = useState<any>({});
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  const [selectedDateDetails, setSelectedDateDetails] = useState<any[]>([]);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
 
   // Fetch classes
   const { loading: classesLoading, execute: fetchClasses } = useAsync(
@@ -70,21 +75,30 @@ export default function AttendancePage() {
   // Fetch attendance data
   const { loading: attendanceLoading, execute: fetchAttendance } = useAsync(
     async () => {
-      if (!selectedClassId) return;
+      if (!selectedClassId && !profile?.id) return;
 
       try {
-        const startOfDay = new Date(selectedDate);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(selectedDate);
-        endOfDay.setHours(23, 59, 59, 999);
-
-        const data = await attendanceService.getAll(
-          selectedClassId,
-          startOfDay,
-          endOfDay
-        );
+        let data;
+        if (isAdminOrTeacher) {
+          // For admin/teacher, fetch all attendance for the selected class and month
+          const startOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1);
+          const endOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0, 23, 59, 59);
+          data = await attendanceService.getAll(selectedClassId, startOfMonth, endOfMonth);
+        } else {
+          // For students, fetch their own attendance
+          data = await attendanceService.getByStudent(profile!.id, selectedMonth);
+        }
 
         setAttendanceData(Array.isArray(data) ? data : []);
+
+        // Group attendance by date
+        const grouped = data.reduce((acc: Record<string, any[]>, curr: any) => {
+          const dateKey = format(new Date(curr.date), 'yyyy-MM-dd');
+          if (!acc[dateKey]) acc[dateKey] = [];
+          acc[dateKey].push(curr);
+          return acc;
+        }, {});
+        setGroupedAttendance(grouped);
 
         // Calculate summary
         const summary = data.reduce((acc: any, curr: any) => {
@@ -113,7 +127,7 @@ export default function AttendancePage() {
       fetchStudents();
       fetchAttendance();
     }
-  }, [selectedClassId, selectedDate]);
+  }, [selectedClassId, selectedMonth]);
 
   const { execute: createAttendance, loading: isSubmitting } = useAsync(
     async (data) => {
@@ -144,7 +158,7 @@ export default function AttendancePage() {
     { showErrorToast: true }
   );
 
-  const { execute: updateAttendance } = useAsync(
+  const { execute: updateAttendance, loading: isUpdating } = useAsync(
     async (data: any) => {
       if (!selectedRecord) return;
       try {
@@ -189,7 +203,10 @@ export default function AttendancePage() {
   };
 
   const handleEdit = (record: any) => {
-    setSelectedRecord(record);
+    setSelectedRecord({
+      ...record,
+      date: new Date(record.date)
+    });
     setIsEditDialogOpen(true);
   };
 
@@ -203,321 +220,383 @@ export default function AttendancePage() {
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Attendance Management</h1>
-          <p className="text-muted-foreground mt-1">
-            Track and manage student attendance records
-          </p>
-        </div>
+    <div className="container mx-auto px-4 py-6 space-y-6">
+      <PageHeader
+        title="Attendance Management"
+        description={isAdminOrTeacher ? "Manage student attendance records" : "View your attendance records"}
+      />
+
+      {/* Top Controls */}
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
         {isAdminOrTeacher && (
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Take Attendance
-          </Button>
-        )}
-      </div>
-
-      <div className="grid gap-6">
-        {/* Date and Class Selection */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Select Date</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-col space-y-2">
-                <div className="grid gap-2">
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !selectedDate && "text-muted-foreground"
-                    )}
-                    onClick={() => setIsDatePickerOpen(true)}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
-                  </Button>
-                </div>
-                <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={(date) => {
-                        setSelectedDate(date || new Date());
-                        setIsDatePickerOpen(false);
-                      }}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </CardContent>
-          </Card>
-
-          {isAdminOrTeacher && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Select Class</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Select
-                  value={selectedClassId}
-                  onValueChange={setSelectedClassId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a class to view attendance" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {classes.map((cls) => (
-                      <SelectItem key={cls.id} value={cls.id}>
-                        {cls.name} - {cls.section}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        {selectedClassId && (
-          <div className="grid gap-6 md:grid-cols-12">
-            {/* Calendar and Summary */}
-            <div className="md:col-span-4 space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Monthly View</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={(date) => setSelectedDate(date || new Date())}
-                    className="rounded-md border"
-                  />
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Attendance Summary</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {Object.entries(attendanceSummary).map(([status, count]) => (
-                    <div key={status} className="flex justify-between items-center p-2 rounded-lg hover:bg-muted/50">
-                      {getStatusBadge(status)}
-                      <span className="font-bold">{count}</span>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Attendance List */}
-            <Card className="md:col-span-8">
-              <CardHeader>
-                <CardTitle>Attendance Records</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Student</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        {isAdminOrTeacher && <TableHead>Actions</TableHead>}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {attendanceData.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={isAdminOrTeacher ? 4 : 3} className="text-center py-8 text-muted-foreground">
-                            No attendance records found for the selected date
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        attendanceData.map((record) => (
-                          <TableRow key={record.id}>
-                            <TableCell>
-                              {record.student?.name}
-                              <div className="text-sm text-muted-foreground">
-                                {record.student?.admissionNumber}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {new Date(record.date).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell>
-                              {getStatusBadge(record.status)}
-                            </TableCell>
-                            {isAdminOrTeacher && (
-                              <TableCell className="text-right">
-                                <div className="flex justify-end gap-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleEdit(record)}
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleDelete(record)}
-                                  >
-                                    <Trash className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            )}
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="w-full md:w-64">
+            <Select
+              value={selectedClassId}
+              onValueChange={setSelectedClassId}
+              disabled={classesLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select Class" />
+              </SelectTrigger>
+              <SelectContent>
+                {classes.map((cls) => (
+                  <SelectItem key={cls.id} value={cls.id}>
+                    {cls.name} - {cls.section}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         )}
+
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
+            <Button
+              variant="outline"
+              className="w-full sm:w-[240px] justify-start text-left font-normal"
+              onClick={() => setIsDatePickerOpen(true)}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {format(selectedMonth, 'MMMM yyyy')}
+            </Button>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedMonth}
+                onSelect={(date) => {
+                  setSelectedMonth(date || new Date());
+                  setIsDatePickerOpen(false);
+                }}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+
+          {isAdminOrTeacher && selectedClassId && (
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Mark Attendance
+            </Button>
+          )}
+
+          <div className="flex gap-2">
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+              className="hidden md:flex"
+            >
+              List View
+            </Button>
+            <Button
+              variant={viewMode === 'calendar' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('calendar')}
+              className="hidden md:flex"
+            >
+              Calendar View
+            </Button>
+          </div>
+        </div>
       </div>
 
-      {/* Attendance Dialog */}
-      {isAdminOrTeacher && (
-        <Dialog 
-          open={isCreateDialogOpen} 
-          onOpenChange={(open) => {
-            if (!open) setIsCreateDialogOpen(false);
-          }}
-        >
-          <DialogContent className="max-w-4xl">
-            <DialogHeader>
-              <DialogTitle>Mark Attendance</DialogTitle>
-            </DialogHeader>
-            {!selectedClassId ? (
-              <div className="p-4">
-                <p className="text-muted-foreground mb-4">Please select a class first</p>
-                <Select
-                  value={selectedClassId}
-                  onValueChange={setSelectedClassId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a class" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {classes.map((cls) => (
-                      <SelectItem key={cls.id} value={cls.id}>
-                        {cls.name} - {cls.section}
-                      </SelectItem>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {Object.entries(attendanceSummary).map(([status, count]) => (
+          <Card key={status}>
+            <CardHeader className="py-4">
+              <CardTitle className="text-sm font-medium">
+                {status}
+                <span className="float-right text-2xl">{count as number}</span>
+              </CardTitle>
+            </CardHeader>
+          </Card>
+        ))}
+      </div>
+
+      {/* Main Content */}
+      {!selectedClassId && isAdminOrTeacher ? (
+        <div className="flex justify-center items-center min-h-[200px]">
+          <p className="text-muted-foreground">Please select a class to view attendance records</p>
+        </div>
+      ) : attendanceLoading ? (
+        <div className="flex justify-center items-center min-h-[200px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+        </div>
+      ) : attendanceData.length === 0 ? (
+        <div className="flex justify-center items-center min-h-[200px]">
+          <p className="text-muted-foreground">{isAdminOrTeacher ? "Start by marking attendance for this class" : "No attendance records found for this month"}</p>
+          {isAdminOrTeacher && (
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Mark Attendance
+            </Button>
+          )}
+        </div>
+      ) : viewMode === 'list' ? (
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  {isAdminOrTeacher && <TableHead>Student</TableHead>}
+                  <TableHead>Status</TableHead>
+                  {isAdminOrTeacher && <TableHead className="text-right">Actions</TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {Object.entries(groupedAttendance).map(([date, records]) => (
+                  <React.Fragment key={date}>
+                    {records.map((record: any, index: number) => (
+                      <TableRow key={record.id} className="group">
+                        <TableCell>
+                          {index === 0 && (
+                            <span className="font-medium">
+                              {format(new Date(date), 'dd MMM yyyy')}
+                            </span>
+                          )}
+                        </TableCell>
+                        {isAdminOrTeacher && (
+                          <TableCell>{record.student?.name}</TableCell>
+                        )}
+                        <TableCell>{getStatusBadge(record.status)}</TableCell>
+                        {isAdminOrTeacher && (
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEdit(record)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDelete(record)}
+                              >
+                                <Trash className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        )}
+                      </TableRow>
                     ))}
+                  </React.Fragment>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+          {Object.entries(groupedAttendance).map(([date, records]) => (
+            <Card
+              key={date}
+              className="cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => {
+                setSelectedDateDetails(records);
+                setIsDetailsDialogOpen(true);
+              }}
+            >
+              <CardHeader className="p-4">
+                <CardTitle className="text-sm font-medium">
+                  {format(new Date(date), 'dd MMM')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <div className="flex flex-wrap gap-1">
+                  {records.map((record: any) => (
+                    <div key={record.id} className="w-2 h-2 rounded-full" style={{
+                      backgroundColor: record.status === 'PRESENT' ? '#22c55e' :
+                        record.status === 'ABSENT' ? '#ef4444' :
+                        record.status === 'LATE' ? '#f59e0b' : '#6b7280'
+                    }} />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Create Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="w-[95vw] max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Mark Attendance</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 p-1">
+            <AttendanceForm
+              students={students}
+              onSubmit={createAttendance}
+              isSubmitting={isSubmitting}
+              defaultDate={selectedDate}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="w-[95vw] max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Attendance</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 p-1">
+            <div className="flex flex-col gap-4">
+              <div>
+                <Label>Student</Label>
+                <p className="text-sm text-gray-500">{selectedRecord?.student?.name}</p>
+              </div>
+              <div>
+                <Label>Date</Label>
+                <p className="text-sm text-gray-500">
+                  {selectedRecord?.date && format(new Date(selectedRecord.date), "PPP")}
+                </p>
+              </div>
+              <div>
+                <Label>Status</Label>
+                <Select
+                  value={selectedRecord?.status}
+                  onValueChange={(value) => {
+                    updateAttendance({ status: value });
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent position="popper" className="w-[200px]">
+                    <SelectItem value="PRESENT">Present</SelectItem>
+                    <SelectItem value="ABSENT">Absent</SelectItem>
+                    <SelectItem value="LATE">Late</SelectItem>
+                    <SelectItem value="HALF_DAY">Half Day</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="p-4 border rounded-lg">
-                  <Label>Select Date</Label>
-                  <div className="mt-2">
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !selectedDate && "text-muted-foreground"
-                      )}
-                      onClick={() => setIsDatePickerOpen(true)}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
-                    </Button>
-                  </div>
-                  <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={(date) => {
-                          setSelectedDate(date || new Date());
-                          setIsDatePickerOpen(false);
-                        }}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                {students.length === 0 ? (
-                  <div className="p-4 text-center">
-                    <p className="text-muted-foreground">No students found in this class</p>
-                  </div>
-                ) : (
-                  <AttendanceForm
-                    students={students}
-                    onSubmit={createAttendance}
-                    date={selectedDate}
-                    classId={selectedClassId}
-                    isLoading={isSubmitting}
-                  />
-                )}
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {/* Edit Dialog */}
-      {isAdminOrTeacher && (
-        <Dialog 
-          open={isEditDialogOpen} 
-          onOpenChange={setIsEditDialogOpen}
-        >
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Edit Attendance</DialogTitle>
-            </DialogHeader>
-            <div className="p-4">
-              <Select
-                value={selectedRecord?.status}
-                onValueChange={(value) => updateAttendance({ status: value })}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PRESENT">Present</SelectItem>
-                  <SelectItem value="ABSENT">Absent</SelectItem>
-                  <SelectItem value="LATE">Late</SelectItem>
-                  <SelectItem value="HALF_DAY">Half Day</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
-          </DialogContent>
-        </Dialog>
-      )}
+            <div className="flex justify-end gap-2 mt-4">
+              <Button
+                variant="outline"
+                onClick={() => setIsEditDialogOpen(false)}
+                disabled={isUpdating}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => updateAttendance({ status: selectedRecord?.status })}
+                disabled={isUpdating}
+              >
+                {isUpdating ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update'
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Dialog */}
-      {isAdminOrTeacher && (
-        <AlertDialog
-          open={isDeleteDialogOpen}
-          onOpenChange={setIsDeleteDialogOpen}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Attendance Record</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to delete this attendance record? This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={deleteAttendance}>Delete</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent className="w-[95vw] max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Attendance Record</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this attendance record? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => deleteAttendance()}
+              className="w-full sm:w-auto"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Details Dialog */}
+      <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
+        <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Attendance Details - {selectedDateDetails[0] && format(new Date(selectedDateDetails[0].date), 'dd MMM yyyy')}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {['PRESENT', 'ABSENT', 'LATE', 'HALF_DAY'].map((status) => {
+                const count = selectedDateDetails.filter(r => r.status === status).length;
+                return (
+                  <Card key={status}>
+                    <CardHeader className="py-2">
+                      <CardTitle className="text-sm font-medium">
+                        {status}
+                        <span className="float-right">{count}</span>
+                      </CardTitle>
+                    </CardHeader>
+                  </Card>
+                );
+              })}
+            </div>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Student</TableHead>
+                    <TableHead>Status</TableHead>
+                    {isAdminOrTeacher && <TableHead className="text-right">Actions</TableHead>}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {selectedDateDetails.map((record: any) => (
+                    <TableRow key={record.id}>
+                      <TableCell>{record.student?.name}</TableCell>
+                      <TableCell>{getStatusBadge(record.status)}</TableCell>
+                      {isAdminOrTeacher && (
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedRecord(record);
+                                setIsEditDialogOpen(true);
+                                setIsDetailsDialogOpen(false);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedRecord(record);
+                                setIsDeleteDialogOpen(true);
+                                setIsDetailsDialogOpen(false);
+                              }}
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

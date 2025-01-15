@@ -1,17 +1,10 @@
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import { SCHOOL_INFO, FEE_RECEIPT_TERMS } from '@/constants/schoolInfo';
-import { Fee, FeeType, FeeStatus } from './feeService';
 import { format } from 'date-fns';
+import { Fee, FeeStatus } from '@/types/fee';
 
-// Add custom fonts
-const addFonts = (doc: jsPDF) => {
-  doc.addFont('helvetica', 'normal');
-  doc.addFont('helvetica-bold', 'bold');
-  doc.addFont('helvetica-oblique', 'italic');
-};
-
-// Format currency
+// Format currency with Indian Rupee symbol
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -20,223 +13,259 @@ const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
-// Format date
+// Format date in a readable format
 const formatDate = (date: Date | string) => {
-  return format(new Date(date), 'dd MMM yyyy');
+  return format(new Date(date), 'dd MMMM yyyy');
+};
+
+// Generate unique receipt number
+const generateReceiptNumber = (fee: Fee) => {
+  const date = new Date();
+  return `FEE/${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(fee.id).padStart(4, '0')}`;
 };
 
 export const generateFeePDF = async (fee: Fee, studentDetails: any) => {
-  // Initialize PDF with better quality
+  // Initialize PDF
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
     format: 'a4',
-    compress: true
+    compress: true,
+    putOnlyUsedFonts: true
   });
-
-  // Add custom fonts
-  addFonts(doc);
 
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 20;
+  const margin = 15;
   let yPosition = margin;
 
   // Helper functions
   const addCenteredText = (text: string, y: number, size = 12, style = 'normal') => {
-    doc.setFont('helvetica', style);
     doc.setFontSize(size);
     const textWidth = doc.getTextWidth(text);
     doc.text(text, (pageWidth - textWidth) / 2, y);
   };
 
   const addText = (text: string, x: number, y: number, size = 12, style = 'normal') => {
-    doc.setFont('helvetica', style);
     doc.setFontSize(size);
     doc.text(text, x, y);
   };
 
-  // Add watermark
-  doc.setFont('helvetica', 'italic');
-  doc.setFontSize(60);
-  doc.setTextColor(230, 230, 230);
-  const watermarkText = SCHOOL_INFO.name;
-  const watermarkWidth = doc.getTextWidth(watermarkText);
-  doc.text(watermarkText, (pageWidth - watermarkWidth) / 2, pageHeight / 2, {
-    angle: 45
-  });
+  const checkAndAddNewPage = () => {
+    if (yPosition > pageHeight - 30) {
+      doc.addPage();
+      yPosition = margin;
+      return true;
+    }
+    return false;
+  };
 
-  // Reset text color
-  doc.setTextColor(0, 0, 0);
-
-  // Add school logo if available
+  // Receipt Header
+  const headerHeight = 60;
+  doc.setFillColor(240, 247, 255);
+  doc.rect(0, 0, pageWidth, headerHeight, 'F');
+  
+  // School Logo
   if (SCHOOL_INFO.logoUrl) {
     try {
-      const logoSize = 20;
-      doc.addImage(SCHOOL_INFO.logoUrl, 'PNG', margin, yPosition, logoSize, logoSize);
-      yPosition += logoSize + 5;
+      const logoSize = 25;
+      doc.addImage(SCHOOL_INFO.logoUrl, 'PNG', margin, margin, logoSize, logoSize);
     } catch (error) {
       console.error('Error adding logo:', error);
     }
   }
 
-  // Add school header with professional styling
-  addCenteredText(SCHOOL_INFO.name, yPosition, 24, 'bold');
-  yPosition += 10;
-
+  // School Information
+  doc.setTextColor(0, 48, 87);
+  doc.setFontSize(24);
+  doc.setFont('helvetica', 'bold');
+  addCenteredText(SCHOOL_INFO.name, margin + 15, 24, 'bold');
+  
+  doc.setTextColor(70, 70, 70);
   doc.setFontSize(12);
-  addCenteredText(SCHOOL_INFO.address, yPosition);
-  yPosition += 8;
-  addCenteredText(`Phone: ${SCHOOL_INFO.phone} | Email: ${SCHOOL_INFO.email}`, yPosition);
-  yPosition += 15;
+  doc.setFont('helvetica', 'normal');
+  addCenteredText(SCHOOL_INFO.address, margin + 25);
+  addCenteredText(`Tel: ${SCHOOL_INFO.phone} | Email: ${SCHOOL_INFO.email}`, margin + 32);
 
-  // Add decorative line
-  doc.setDrawColor(0, 0, 150);
-  doc.setLineWidth(0.5);
-  doc.line(margin, yPosition, pageWidth - margin, yPosition);
-  yPosition += 10;
+  yPosition = headerHeight + margin;
 
-  // Receipt header with professional styling
-  addCenteredText('FEE RECEIPT', yPosition, 20, 'bold');
-  yPosition += 15;
+  // Receipt Title
+  doc.setFillColor(0, 48, 87);
+  doc.rect(0, yPosition - 5, pageWidth, 12, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  addCenteredText('FEE RECEIPT', yPosition + 3);
+  yPosition += 20;
 
-  // Receipt details with improved layout
-  const receiptDetailsY = yPosition;
-  addText(`Receipt No: ${fee.receiptNumber || 'N/A'}`, margin, yPosition, 12, 'bold');
-  addText(`Date: ${formatDate(fee.createdAt)}`, pageWidth - margin - 60, yPosition);
-  yPosition += 15;
-
-  // Add QR code if available
-  const qrData = `Receipt:${fee.receiptNumber},Amount:${fee.amount},Date:${fee.createdAt}`;
-  try {
-    const qrImage = await generateQRCode(qrData);
-    const qrSize = 20;
-    doc.addImage(qrImage, 'PNG', pageWidth - margin - qrSize, receiptDetailsY - qrSize, qrSize, qrSize);
-  } catch (error) {
-    console.error('Error adding QR code:', error);
-  }
-
-  // Student details with improved styling
-  doc.setFillColor(240, 240, 250);
-  doc.rect(margin, yPosition, pageWidth - 2 * margin, 25, 'F');
-  yPosition += 8;
+  // Receipt Details
+  const receiptNo = generateReceiptNumber(fee);
+  doc.setTextColor(70, 70, 70);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
   
-  addText('Student Details:', margin + 5, yPosition, 14, 'bold');
-  yPosition += 8;
+  // Create a details box
+  doc.setFillColor(250, 250, 250);
+  doc.roundedRect(margin, yPosition, pageWidth - 2 * margin, 50, 3, 3, 'F');
   
-  const detailsX = margin + 10;
-  addText(`Name: ${studentDetails.name}`, detailsX, yPosition, 12);
-  addText(`Class: ${studentDetails.class || 'N/A'}`, pageWidth - margin - 80, yPosition);
-  yPosition += 8;
-  addText(`Admission No: ${studentDetails.admissionNumber}`, detailsX, yPosition);
-  yPosition += 15;
+  addText(`Receipt No: ${receiptNo}`, margin + 5, yPosition + 12);
+  addText(`Date: ${formatDate(fee.createdAt)}`, margin + 5, yPosition + 24);
+  addText(`Academic Year: ${new Date().getFullYear()}`, pageWidth - margin - 80, yPosition + 12);
+  addText(`Payment Mode: ${fee.paymentMethod || 'N/A'}`, pageWidth - margin - 80, yPosition + 24);
 
-  // Fee details table with improved styling
-  const tableHeaders = [
-    ['Description', 'Amount', 'Status', 'Payment Date']
-  ];
+  yPosition += 60;
+
+  // Student Information
+  doc.setFillColor(245, 247, 250);
+  doc.roundedRect(margin, yPosition, pageWidth - 2 * margin, 45, 3, 3, 'F');
   
-  const tableData = [[
-    fee.feeType,
-    formatCurrency(fee.amount),
-    fee.status,
-    fee.paymentDate ? formatDate(fee.paymentDate) : 'N/A'
-  ]];
+  doc.setTextColor(0, 48, 87);
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  addText('STUDENT DETAILS', margin + 5, yPosition + 12);
+  
+  doc.setTextColor(70, 70, 70);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
+  addText(`Name: ${studentDetails.name}`, margin + 5, yPosition + 24);
+  addText(`Class: ${studentDetails.class}`, pageWidth - margin - 80, yPosition + 24);
+  addText(`Admission No: ${studentDetails.admissionNumber}`, margin + 5, yPosition + 36);
 
+  yPosition += 55;
+
+  // Fee Details Table
   doc.autoTable({
     startY: yPosition,
-    head: tableHeaders,
-    body: tableData,
-    margin: { left: margin, right: margin },
+    head: [['Description', 'Due Date', 'Amount', 'Status']],
+    body: [[
+      fee.feeType,
+      formatDate(fee.dueDate),
+      formatCurrency(fee.amount),
+      fee.status
+    ]],
     styles: {
-      fontSize: 12,
-      cellPadding: 5,
-      overflow: 'linebreak',
-      halign: 'center'
+      fontSize: 11,
+      cellPadding: 8,
     },
     headStyles: {
-      fillColor: [0, 0, 150],
+      fillColor: [0, 48, 87],
       textColor: [255, 255, 255],
       fontStyle: 'bold'
     },
-    alternateRowStyles: {
-      fillColor: [240, 240, 250]
-    },
     columnStyles: {
-      0: { cellWidth: 60 },
-      1: { cellWidth: 40, halign: 'right' },
-      2: { cellWidth: 40 },
-      3: { cellWidth: 40 }
-    }
+      0: { cellWidth: 'auto' },
+      1: { cellWidth: 'auto' },
+      2: { cellWidth: 40, halign: 'right' },
+      3: { cellWidth: 35, halign: 'center' }
+    },
+    margin: { left: margin, right: margin },
   });
 
-  yPosition = (doc as any).lastAutoTable.finalY + 20;
+  // Start new page for payment summary and terms
+  doc.addPage();
+  yPosition = margin + 20;
 
-  // Payment summary with styled box
-  doc.setFillColor(245, 245, 250);
-  doc.rect(margin, yPosition, pageWidth - 2 * margin, 25, 'F');
-  yPosition += 8;
+  // Payment Summary
+  doc.setFillColor(245, 247, 250);
+  doc.roundedRect(margin, yPosition, pageWidth - 2 * margin, 40, 3, 3, 'F');
   
-  addText('Payment Summary:', margin + 5, yPosition, 14, 'bold');
-  yPosition += 8;
+  doc.setTextColor(0, 48, 87);
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  addText('PAYMENT SUMMARY', margin + 5, yPosition + 12);
   
-  if (fee.status === 'PAID') {
-    addText(`Paid via ${fee.paymentMethod || 'N/A'}`, margin + 10, yPosition);
-    addText(`Total Paid: ${formatCurrency(fee.amount)}`, pageWidth - margin - 80, yPosition, 12, 'bold');
-  } else {
-    addText('Payment Pending', margin + 10, yPosition);
-    addText(`Due Amount: ${formatCurrency(fee.amount)}`, pageWidth - margin - 80, yPosition, 12, 'bold');
+  doc.setTextColor(70, 70, 70);
+  doc.setFontSize(11);
+  addText('Total Amount:', margin + 5, yPosition + 28);
+  doc.setFont('helvetica', 'bold');
+  addText(formatCurrency(fee.amount), pageWidth - margin - 10, yPosition + 28, 11, 'right');
+
+  if (fee.status === FeeStatus.PAID) {
+    addText('Payment Date:', margin + 5, yPosition + 40);
+    addText(formatDate(fee.paymentDate!), pageWidth - margin - 10, yPosition + 40, 11, 'right');
   }
-  yPosition += 20;
 
-  // Terms and conditions with better formatting
-  doc.setDrawColor(200, 200, 200);
-  doc.setLineWidth(0.2);
-  doc.line(margin, yPosition, pageWidth - margin, yPosition);
-  yPosition += 10;
+  yPosition += 50;
 
-  addText('Terms & Conditions:', margin, yPosition, 10, 'bold');
-  yPosition += 5;
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  FEE_RECEIPT_TERMS.forEach(term => {
-    doc.text('• ' + term, margin + 5, yPosition);
-    yPosition += 4;
-  });
+  // Check if we need a new page for terms
+  if (yPosition > pageHeight - 100) {
+    doc.addPage();
+    yPosition = margin;
+  }
 
-  // Footer with signatures
-  yPosition = pageHeight - 40;
-  
-  // Signature lines with improved styling
-  doc.setDrawColor(0, 0, 0);
-  doc.setLineWidth(0.5);
-  
-  // Left signature
-  doc.line(margin, yPosition, margin + 50, yPosition);
-  addText('Accountant', margin, yPosition + 5, 10);
-  
-  // Center text
-  addCenteredText('This is a computer-generated document', yPosition + 5, 8, 'italic');
-  
-  // Right signature
-  doc.line(pageWidth - margin - 50, yPosition, pageWidth - margin, yPosition);
-  addText('Principal', pageWidth - margin - 50, yPosition + 5, 10);
+  // Terms and Conditions
+  if (FEE_RECEIPT_TERMS && FEE_RECEIPT_TERMS.length > 0) {
+    doc.setFillColor(250, 250, 250);
+    doc.roundedRect(margin, yPosition, pageWidth - 2 * margin, 80, 3, 3, 'F');
+    
+    doc.setTextColor(0, 48, 87);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    addText('TERMS & CONDITIONS', margin + 5, yPosition + 15);
+    
+    doc.setTextColor(70, 70, 70);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    
+    let termsY = yPosition + 30;
+    FEE_RECEIPT_TERMS.forEach((term, index) => {
+      const lines = doc.splitTextToSize(term, pageWidth - 2 * margin - 20);
+      lines.forEach((line: string, lineIndex: number) => {
+        if (termsY > pageHeight - 40) {
+          doc.addPage();
+          termsY = margin + 10;
+        }
+        addText(`${lineIndex === 0 ? `${index + 1}. ` : '   '}${line}`, margin + 5, termsY);
+        termsY += 12;
+      });
+    });
+    
+    yPosition = termsY + 10;
+  }
 
-  // Add page number
-  const pageNumber = `Page ${doc.getCurrentPageInfo().pageNumber}`;
-  doc.setFontSize(8);
-  doc.text(pageNumber, pageWidth - margin - doc.getTextWidth(pageNumber), pageHeight - 10);
+  // Footer
+  const addFooter = () => {
+    const footerY = pageHeight - 25;
+    
+    // Signature line
+    doc.setDrawColor(0, 48, 87);
+    doc.setLineWidth(0.5);
+    doc.line(pageWidth - margin - 50, footerY, pageWidth - margin, footerY);
+    
+    doc.setTextColor(70, 70, 70);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    addText('Authorized Signatory', pageWidth - margin - 45, footerY + 6);
+    
+    // Digital Stamp
+    if (SCHOOL_INFO.stampUrl) {
+      try {
+        const stampSize = 30;
+        doc.addImage(
+          SCHOOL_INFO.stampUrl,
+          'PNG',
+          pageWidth - margin - stampSize - 10,
+          footerY - stampSize,
+          stampSize,
+          stampSize
+        );
+      } catch (error) {
+        console.error('Error adding stamp:', error);
+      }
+    }
+    
+    // Page number
+    doc.setFontSize(8);
+    addText(`Page ${doc.getCurrentPageInfo().pageNumber}`, margin, pageHeight - 10);
+  };
 
-  // Save with improved file naming
-  const timestamp = format(new Date(), 'yyyyMMdd_HHmmss');
-  const fileName = `Fee_Receipt_${studentDetails.admissionNumber}_${timestamp}.pdf`;
-  doc.save(fileName);
+  // Add footer to all pages
+  const totalPages = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    addFooter();
+  }
+
+  // Save the document
+  doc.save(`Fee_Receipt_${receiptNo}.pdf`);
 };
-
-// Helper function to generate QR code (you'll need to implement this)
-async function generateQRCode(data: string): Promise<string> {
-  // Implement QR code generation here
-  // You can use libraries like qrcode or similar
-  // Return the QR code as a data URL
-  return '';
-}
