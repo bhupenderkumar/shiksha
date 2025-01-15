@@ -1,12 +1,13 @@
 import { supabase } from '@/lib/api-client';
 import { Notification } from '@/types';
 import { profileService } from '@/services/profileService';
+import { NOTIFICATION_TABLE } from '../lib/constants';
 
 class NotificationService {
   async getNotifications(): Promise<Notification[]> {
     const { data, error } = await supabase
       .schema('school')
-      .from('Notification')
+      .from(NOTIFICATION_TABLE)
       .select('*')
       .order('createdAt', { ascending: false });
 
@@ -26,7 +27,7 @@ class NotificationService {
 
     const { data, error } = await supabase
       .schema('school')
-      .from('Notification')
+      .from(NOTIFICATION_TABLE)
       .select('*')
       .or(`studentId.eq.${userProfile.id},classId.eq.${userProfile.classId}`)
       .order('createdAt', { ascending: false });
@@ -42,7 +43,7 @@ class NotificationService {
   async createNotification(notification: Omit<Notification, 'id' | 'createdAt' | 'updatedAt'>): Promise<Notification | null> {
     const { data, error } = await supabase
       .schema('school')
-      .from('Notification')
+      .from(NOTIFICATION_TABLE)
       .insert(notification)
       .select()
       .single();
@@ -58,7 +59,7 @@ class NotificationService {
   async updateNotification(id: string, notification: Partial<Notification>): Promise<Notification | null> {
     const { data, error } = await supabase
       .schema('school')
-      .from('Notification')
+      .from(NOTIFICATION_TABLE)
       .update(notification)
       .eq('id', id)
       .select()
@@ -75,7 +76,7 @@ class NotificationService {
   async deleteNotification(id: string): Promise<boolean> {
     const { error } = await supabase
       .schema('school')
-      .from('Notification')
+      .from(NOTIFICATION_TABLE)
       .delete()
       .eq('id', id);
 

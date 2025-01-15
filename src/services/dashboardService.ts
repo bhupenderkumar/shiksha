@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/api-client';
+import { DASHBOARD_TABLE } from '../lib/constants';
 
 export interface DashboardSummary {
   totalStudents: number;
@@ -45,7 +46,7 @@ export const getDashboardSummary = async (userId: string): Promise<DashboardSumm
       { data: attendance, error: attendanceError },
       { data: fees, error: feesError }
     ] = await Promise.all([
-      supabase.from('Student').select('*'),
+      supabase.from(DASHBOARD_TABLE).select('*'),
       supabase.from('Staff').select('*').eq('role', 'TEACHER'),
       supabase.from('Class').select('*'),
       supabase.from('Homework').select('*'),

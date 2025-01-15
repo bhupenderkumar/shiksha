@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { toast } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import { Edit2, Save, X, School, Bell, Palette, Shield, User } from 'lucide-react';
 import type { SchoolSettings, NotificationSettings, ThemeSettings, SecuritySettings } from '@/types/settings';
 import { supabase } from '@/lib/api-client';
@@ -45,17 +45,18 @@ export default function SettingsPage() {
     async () => {
       if (!profile) return;
 
-      // Fetch school settings
       const { data: schoolData, error: schoolError } = await supabase
         .schema('school')
         .from('Settings')
         .select('*')
         .single();
 
-      if (schoolError) throw schoolError;
+      if (schoolError) {
+        toast.error('Failed to fetch school settings');
+        throw schoolError;
+      }
       setSettings(schoolData);
 
-      // Fetch user settings
       const userSettings = await settingsService.getUserSettings(profile.id);
       setNotificationSettings(userSettings.notifications || notificationSettings);
       setThemeSettings(userSettings.theme || themeSettings);
@@ -84,9 +85,11 @@ export default function SettingsPage() {
 
       try {
         await settingsService.updateUserSettings(profile.id, settingsToUpdate);
+        toast.success('User settings updated successfully');
         setUnsavedChanges(false);
       } catch (error) {
         console.error("Failed to update settings:", error);
+        toast.error('Failed to update user settings');
       }
     },
     { showErrorToast: true }
@@ -99,25 +102,27 @@ export default function SettingsPage() {
       const fileExt = file.name.split('.').pop();
       const filePath = `avatars/${profile.id}.${fileExt}`;
 
-      // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from('profiles')
         .upload(filePath, file, { upsert: true });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        toast.error('Failed to upload avatar');
+        throw uploadError;
+      }
 
-      // Update profile
       const { error: updateError } = await supabase
         .schema('school')
         .from('Profile')
         .update({ avatar_url: filePath })
         .eq('id', profile.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        toast.error('Failed to update avatar');
+        throw updateError;
+      }
 
-      toast.success('Profile picture updated successfully');
-      setAvatar(null);
-      setUnsavedChanges(false);
+      toast.success('Avatar updated successfully');
     },
     { showErrorToast: true }
   );
@@ -142,12 +147,11 @@ export default function SettingsPage() {
       description: formData.get('description') as string
     });
   };
-
   const handleSettingsUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
-
+  
     const settingsToUpdate = {
       notifications: {
         emailNotifications: formData.get('emailNotifications') === 'true',
@@ -164,12 +168,16 @@ export default function SettingsPage() {
         sessionTimeout: formData.get('sessionTimeout') as string,
       },
     };
-
+  
     try {
+      // Ensure userId is a string
+      const userId = String(profile.id);
       // Call the updateUserSettings method from the service
-      await settingsService.updateUserSettings(profile.id, settingsToUpdate);
+      await settingsService.updateUserSettings(userId, settingsToUpdate);
+      toast.success('User settings updated successfully');
     } catch (error) {
       console.error("Failed to update settings:", error);
+      toast.error('Failed to update user settings');
     }
   };
 

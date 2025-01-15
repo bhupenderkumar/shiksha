@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/api-client';
 import { v4 as uuidv4 } from 'uuid';
+import { SUBJECT_TABLE } from '../lib/constants';
 
 export interface SubjectType {
   id: string;
@@ -15,7 +16,7 @@ export const loadSubjects = async (classId?: string) => {
   try {
     let query = supabase
       .schema('school')
-      .from('Subject')
+      .from(SUBJECT_TABLE)
       .select(`
         *,
         class:classId(*),
@@ -39,7 +40,7 @@ export const createSubject = async (subject: Omit<SubjectType, 'id' | 'createdAt
   try {
     const { data, error } = await supabase
       .schema('school')
-      .from('Subject')
+      .from(SUBJECT_TABLE)
       .insert([{
         ...subject,
         id: uuidv4(),
@@ -61,7 +62,7 @@ export const updateSubject = async (id: string, subject: Partial<SubjectType>) =
   try {
     const { data, error } = await supabase
       .schema('school')
-      .from('Subject')
+      .from(SUBJECT_TABLE)
       .update({
         ...subject,
         updatedAt: new Date()
@@ -82,7 +83,7 @@ export const deleteSubject = async (id: string) => {
   try {
     const { error } = await supabase
       .schema('school')
-      .from('Subject')
+      .from(SUBJECT_TABLE)
       .delete()
       .eq('id', id);
 
