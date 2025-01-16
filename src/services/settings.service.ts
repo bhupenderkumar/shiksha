@@ -1,7 +1,8 @@
 import { BaseService } from './base.service';
 import { supabase, handleError } from '@/lib/api-client';
 import type { SchoolSettings, UserSettings } from '@/types/settings';
-import { SETTINGS_TABLE } from '../lib/constants';
+import { SETTINGS_TABLE, STORAGE_BUCKET, USER_SETTINGS_TABLE } from '../lib/constants';
+import { toast } from 'react-hot-toast'; // Import toast
 
 export class SettingsService extends BaseService {
   constructor() {
@@ -9,7 +10,7 @@ export class SettingsService extends BaseService {
   }
 
   // Fetch school settings
-  async getSchoolSettings() {
+  async getSchoolSettings(userId: string) {
     try {
       const { data, error } = await supabase
         .schema('school')
@@ -17,7 +18,37 @@ export class SettingsService extends BaseService {
         .select('*')
         .single();
 
-      if (error) throw error;
+      // If no settings found, create a new record
+      if (!data) {
+        const defaultSettings = {
+          school_name: 'Default School',
+          address: 'Default Address',
+          phone: '000-000-0000',
+          email: 'default@school.com',
+          website: 'http://defaultschool.com',
+          description: 'Default Description',
+          logo_url: ''
+        };
+
+        const { error: insertError } = await supabase
+          .schema('school')
+          .from(SETTINGS_TABLE)
+          .insert([defaultSettings]);
+
+        if (insertError) {
+          toast.error('Failed to create default settings'); // Show error toast
+          throw insertError;
+        } else {
+          toast.success('Default settings created successfully!'); // Show success toast
+        }
+        return defaultSettings;
+      }
+
+      if (error) {
+        toast.error('Failed to fetch school settings'); // Show error toast
+        throw error;
+      }
+      toast.success('School settings fetched successfully'); // Show success toast
       return data as SchoolSettings;
     } catch (error) {
       handleError(error, 'Error fetching school settings');
@@ -33,10 +64,15 @@ export class SettingsService extends BaseService {
         .update(data)
         .eq('id', 'school-settings'); // Assuming 'school-settings' is the ID for the school settings
 
-      if (error) throw error;
-    } catch (error) {
+     
+        if (error) {
+          toast.error('Failed to update school settings'); // Show error toast
+          throw error;
+      }
+      toast.success('School settings updated successfully'); // Show success toast
+  } catch (error) {
       handleError(error, 'Error updating school settings');
-    }
+  }
   }
 
   // Fetch user settings
@@ -44,7 +80,7 @@ export class SettingsService extends BaseService {
     try {
       const { data, error } = await supabase
         .schema('school')
-        .from('UserSettings')
+        .from(USER_SETTINGS_TABLE)
         .select('*')
         .eq('user_id', userId)
         .single();
@@ -90,7 +126,7 @@ export class SettingsService extends BaseService {
       // Attempt to update existing user settings
       const { data, error } = await supabase
         .schema('school')
-        .from('UserSettings')
+        .from(USER_SETTINGS_TABLE)
         .update(settings)
         .eq('user_id', userId) // Update by user_id
         .select()
@@ -107,15 +143,17 @@ export class SettingsService extends BaseService {
           };
           const { data: newData, error: createError } = await supabase
             .schema('school')
-            .from('UserSettings')
+            .from(USER_SETTINGS_TABLE)
             .insert(newSettings);
 
           if (createError) throw createError;
           return newData as UserSettings;
         }
+        toast.error('Failed to update user settings'); // Show error toast
         throw error; // Re-throw if it's a different error
       }
 
+      toast.success('User settings updated successfully'); // Show success toast
       return data as UserSettings;
     } catch (error) {
       handleError(error, 'Error updating user settings');
@@ -127,7 +165,7 @@ export class SettingsService extends BaseService {
     try {
       const filePath = `school/logo.${file.name.split('.').pop()}`;
       const { error: uploadError } = await supabase.storage
-        .from('settings')
+        .from(STORAGE_BUCKET)
         .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
@@ -137,6 +175,28 @@ export class SettingsService extends BaseService {
     } catch (error) {
       handleError(error, 'Error updating school logo');
     }
+  }
+
+  // Add a new method to create settings
+  async createSettings(userId: string) {
+    const defaultSettings = {
+      school_name: 'Default School',
+      address: 'Default Address',
+      phone: '000-000-0000',
+      email: 'default@school.com',
+      website: 'http://defaultschool.com',
+      description: 'Default Description',
+      logo_url: '',
+      user_id: userId
+    };
+
+    const { error } = await supabase
+      .schema('school')
+      .from(SETTINGS_TABLE)
+      .insert([defaultSettings]);
+
+    if (error) throw error;
+    return defaultSettings;
   }
 } 
 

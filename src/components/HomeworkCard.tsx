@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, Eye } from 'lucide-react';
+import { Edit, Eye, Trash } from 'lucide-react';
 import { Attachment } from '@/components/Attachment';
 import type { HomeworkType } from '@/services/homeworkService';
 import { fileService } from '@/services/fileService';
@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
+import { useProfileAccess } from '@/services/profileService';
 
 export type AttachmentType = {
   id: string;
@@ -33,6 +34,7 @@ export function HomeworkCard({ homework, onEdit, onDelete, onView, isStudent }: 
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
   const descriptionLineLimit = 3;
+  const { isAdminOrTeacher } = useProfileAccess();
 
   useEffect(() => {
     const loadViewUrls = async () => {
@@ -101,7 +103,6 @@ export function HomeworkCard({ homework, onEdit, onDelete, onView, isStudent }: 
           <CardTitle className="text-xl font-semibold line-clamp-2 text-indigo-900">
             {homework.title}
           </CardTitle>
-         
         </div>
         <div className="text-sm text-gray-500 mt-1">
           Due: {format(new Date(homework.dueDate), 'MMM dd, yyyy')}
@@ -160,6 +161,16 @@ export function HomeworkCard({ homework, onEdit, onDelete, onView, isStudent }: 
         <Badge className={`${getStatusColor(homework.status)} px-2 py-1 rounded-full text-xs font-medium`}>
           {homework.status}
         </Badge>
+        {isAdminOrTeacher && (
+          <>
+            <Button onClick={() => onEdit?.(homework)} variant="ghost" size="icon">
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button onClick={() => onDelete?.(homework)} variant="ghost" size="icon" className="text-destructive">
+              <Trash className="h-4 w-4" />
+            </Button>
+          </>
+        )}
       </CardFooter>
 
       <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>

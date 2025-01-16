@@ -27,6 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { BellIcon } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 import  MultiSelect  from '@/components/ui/multi-select';
+import { UserProfile } from '@/services/profileService';
 
 const NotificationCard = ({ notification, onUpdate, onDelete }) => {
   const typeColors = {
@@ -107,35 +108,33 @@ const NotificationsPage = () => {
   });
   const [activeTab, setActiveTab] = useState('view');
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
-  const { isAdminOrTeacher } = useProfileAccess();
+  const { isAdminOrTeacher, profile } = useProfileAccess();
   const { user } = useAuth();
   const [deleteDialog, setDeleteDialog] = useState({ open: false, notificationId: null });
 
   const fetchNotifications = async () => {
-    try {
-      setLoading(true);
-      if (user) {
-        const userProfile = await profileService.getUser(user.id);
-        let data;
-        if (userProfile?.role === 'ADMIN' || userProfile?.role === 'TEACHER') {
-          data = await notificationService.getNotifications();
-        } else {
-          data = await notificationService.getNotificationsForUser(user.id);
-        }
+    if (user) {
+      try {
+        setLoading(true);
+        const data = isAdminOrTeacher
+          ? await notificationService.getNotifications()
+          : await notificationService.getNotificationsForUser(user.id);
         setNotifications(data || []);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-      toast.error('Failed to load notifications');
-      setNotifications([]);
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchNotifications();
-  }, [user]); // Only re-fetch when user changes
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [user]);
 
   useEffect(() => {
     const fetchClassesAndStudents = async () => {
@@ -217,13 +216,7 @@ const NotificationsPage = () => {
 
   const renderNotificationsList = () => {
     if (loading) {
-      return (
-        <div className="space-y-4 py-4">
-          {[1, 2, 3].map((i) => (
-            <NotificationSkeleton key={i} />
-          ))}
-        </div>
-      );
+      return <div>Loading...</div>;
     }
 
     if (!notifications || notifications.length === 0) {
@@ -237,7 +230,7 @@ const NotificationsPage = () => {
               : "You don't have any notifications at the moment"
           }
           action={
-            isAdminOrTeacher && (
+            isAdminOrTeacher  && (
               <Button onClick={() => setActiveTab('create')} size="lg">
                 Create First Notification
               </Button>
@@ -259,7 +252,7 @@ const NotificationsPage = () => {
         ))}
       </div>
     );
-  };
+};
 
   return (
     <div className="container mx-auto p-6">
@@ -274,45 +267,40 @@ const NotificationsPage = () => {
         <TabsContent value="view">
           {renderNotificationsList()}
         </TabsContent>
-        <TabsContent value="create">
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-2">Create Notification</h2>
-            <div className="grid grid-cols-1 gap-4 mb-4">
+        {isAdminOrTeacher && (
+          <TabsContent value="create">
+            <div>
+              <h2>Create Notification</h2>
               <Input
-                placeholder="Title"
                 value={newNotification.title}
                 onChange={(e) => setNewNotification({ ...newNotification, title: e.target.value })}
+                placeholder="Title"
               />
               <Textarea
-                placeholder="Message"
                 value={newNotification.message}
                 onChange={(e) => setNewNotification({ ...newNotification, message: e.target.value })}
-              />
-              <MultiSelect
-                options={students.map(student => ({ value: student.id, label: student.name }))}
-                selectedValues={selectedStudents}
-                onChange={setSelectedStudents}
-                placeholder="Select Students"
+                placeholder="Message"
               />
               <Select
-                value={newNotification.classId}
-                onValueChange={(value) => setNewNotification({ ...newNotification, classId: value })}
+                value={newNotification.type}
+                onValueChange={(value) => setNewNotification({ ...newNotification, type: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select Class (optional)" />
+                  <SelectValue placeholder="Select Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {classes.map((classItem) => (
-                    <SelectItem key={classItem.id} value={classItem.id}>
-                      {classItem.name} - {classItem.section}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="GENERAL">General</SelectItem>
+                  <SelectItem value="HOMEWORK">Homework</SelectItem>
+                  <SelectItem value="ATTENDANCE">Attendance</SelectItem>
+                  <SelectItem value="FEE">Fee</SelectItem>
+                  <SelectItem value="EXAM">Exam</SelectItem>
+                  <SelectItem value="EMERGENCY">Emergency</SelectItem>
                 </SelectContent>
               </Select>
+              <Button onClick={handleCreate}>Create Notification</Button>
             </div>
-            <Button onClick={handleCreate}>Create Notification</Button>
-          </div>
-        </TabsContent>
+          </TabsContent>
+        )}
       </Tabs>
       <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, notificationId: null })}>
         <AlertDialogContent>

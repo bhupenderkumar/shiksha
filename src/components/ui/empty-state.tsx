@@ -53,7 +53,14 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         transition={{ delay: 0.2, duration: 0.2 }}
         className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2"
       >
-        {title}
+        {title === 'No Students Available' ? (
+          <div className="empty-state">
+            <h2>No Students Available</h2>
+            <p>Please check back later.</p>
+          </div>
+        ) : (
+          title
+        )}
       </motion.h3>
       
       <motion.p

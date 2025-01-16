@@ -209,6 +209,23 @@ class StudentService {
     }
   }
 
+  async findByEmail(email: string): Promise<Student | null> {
+    try {
+      const { data, error } = await supabase
+        .schema('school')
+        .from(STUDENT_TABLE)
+        .select(`*, class:Class (id, name, section)`)
+        .eq('parentEmail', email)
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error fetching student by email:', error);
+      throw error;
+    }
+  }
+
   getByClass(classId: string) {
     return this.findMany({ classId });
   }

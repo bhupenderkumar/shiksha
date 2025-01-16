@@ -24,7 +24,7 @@ import HomeworkDetails from './pages/HomeworkDetails';
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/', '/homework/view/:id']
 
-function PrivateRoute({ children }: { children: React.ReactNode }) {
+function PrivateRoute({ children, role }: { children: React.ReactNode, role?: string }) {
   const { user, loading } = useAuth();
   const location = useLocation();
 
@@ -44,6 +44,11 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 
   // If authenticated and trying to access auth pages
   if (user && PUBLIC_ROUTES.includes(location.pathname)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // If role is specified and user does not have that role
+  if (role && !['admin', 'teacher'].includes(user.role)) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -81,13 +86,14 @@ function AppRoutes() {
           </Layout>
         </PrivateRoute>
       } />
-      <Route path="/students" element={
-        <PrivateRoute>
-          <Layout>
-            <Students />
-          </Layout>
-        </PrivateRoute>
-      } />
+
+     <Route path="/students" element={
+  <PrivateRoute role="admin">
+    <Layout>
+      <Students />
+    </Layout>
+  </PrivateRoute>
+} />
       <Route path="/subjects" element={
         <PrivateRoute>
           <Layout>

@@ -39,6 +39,7 @@ import { AnimatedText } from '@/components/ui/animated-text';
 import { CardAnimation, CardHoverAnimation } from '@/components/ui/card-animation';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useProfileAccess } from '@/services/profileService';
+import { Navigate } from 'react-router-dom';
 
 const formClasses = {
   select: "w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary",
@@ -184,6 +185,15 @@ const StudentForm = ({ handleSubmit, formData, setFormData, loading, editingStud
 
 export default function StudentsPage() {
   const { profile, isAdminOrTeacher, loading: profileLoading } = useProfileAccess();
+
+  if (profileLoading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!isAdminOrTeacher) {
+    return null;
+  }
+
   const navigate = useNavigate();
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(false);
@@ -211,46 +221,20 @@ export default function StudentsPage() {
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
 
   useEffect(() => {
-    if (!profileLoading) {
-      if (isAdminOrTeacher) {
-        loadStudentData();
-      } else if (profile) { // Only redirect if we have a profile and it's not admin/teacher
-        navigate('/dashboard');
-      }
-    }
-  }, [profile, profileLoading, isAdminOrTeacher]);
-
-  const loadStudentData = async () => {
-    if (!profile?.id) return; // Remove the isAdminOrTeacher check here
-
-    try {
+    const fetchStudents = async () => {
       setLoading(true);
-      const [studentsData, classesData] = await Promise.all([
-        studentService.findMany(),
-        classService.findMany()
-      ]);
-      setStudents(studentsData || []);
-      setClasses(classesData || []);
-    } catch (error) {
-      console.error('Error loading data:', error);
-      toast.error('Failed to load data');
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        const data = await studentService.getAllStudents();
+        setStudents(data);
+      } catch (error) {
+        console.error('Error fetching students:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (profileLoading) {
-    return <LoadingSpinner />;
-  }
-
-  if (!isAdminOrTeacher && profile) {
-    return (
-      <div className="container mx-auto p-8 text-center">
-        <h1 className="text-2xl font-bold text-red-600">Unauthorized Access</h1>
-        <p className="mt-2">You do not have permission to view this page.</p>
-      </div>
-    );
-  }
+    fetchStudents();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -264,7 +248,7 @@ export default function StudentsPage() {
         setCredentials(result.credentials);
         toast.success('Student created successfully');
       }
-      loadStudentData();
+      fetchStudents();
       handleDialogClose();
     } catch (error) {
       console.error('Error:', error);
@@ -277,17 +261,17 @@ export default function StudentsPage() {
   const handleEdit = (student: Student) => {
     setEditingStudent(student);
     setFormData({
-      admissionNumber: student.admissionNumber,
-      name: student.name,
-      dateOfBirth: new Date(student.dateOfBirth).toISOString().split('T')[0],
-      gender: student.gender,
-      address: student.address,
-      contactNumber: student.contactNumber,
-      parentName: student.parentName,
-      parentContact: student.parentContact,
-      parentEmail: student.parentEmail,
+      admissionNumber: student.admissionNumber || '',
+      name: student.name || '',
+      dateOfBirth: student.dateOfBirth ? new Date(student.dateOfBirth).toISOString().split('T')[0] : '',
+      gender: student.gender || '',
+      address: student.address || '',
+      contactNumber: student.contactNumber || '',
+      parentName: student.parentName || '',
+      parentContact: student.parentContact || '',
+      parentEmail: student.parentEmail || '',
       bloodGroup: student.bloodGroup || '',
-      classId: student.classId
+      classId: student.classId || ''
     });
     setIsDialogOpen(true);
   };
@@ -298,7 +282,7 @@ export default function StudentsPage() {
         setLoading(true);
         await studentService.delete(studentToDelete.id);
         toast.success('Student deleted successfully');
-        loadStudentData();
+        fetchStudents();
       } catch (error) {
         console.error('Error deleting student:', error);
         toast.error('Failed to delete student');
@@ -335,31 +319,16 @@ export default function StudentsPage() {
             text="Students"
             className="text-3xl font-bold"
           />
-          {isAdminOrTeacher && (
-            <Button
-              onClick={() => {
-                setEditingStudent(null);
-                setFormData({
-                  admissionNumber: '',
-                  name: '',
-                  dateOfBirth: '',
-                  gender: '',
-                  address: '',
-                  contactNumber: '',
-                  parentName: '',
-                  parentContact: '',
-                  parentEmail: '',
-                  bloodGroup: '',
-                  classId: ''
-                });
-                setIsDialogOpen(true);
-              }}
-              className="flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add Student
-            </Button>
-          )}
+          <Button
+            onClick={() => {
+              setIsDialogOpen(true);
+              setEditingStudent(null);
+            }}
+            className="flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Student
+          </Button>
         </div>
 
         {loading ? (
@@ -380,23 +349,7 @@ export default function StudentsPage() {
               <StudentCard
                 key={student.id}
                 student={student}
-                onEdit={() => {
-                  setEditingStudent(student);
-                  setFormData({
-                    admissionNumber: student.admissionNumber || '',
-                    name: student.name || '',
-                    dateOfBirth: student.dateOfBirth ? new Date(student.dateOfBirth).toISOString().split('T')[0] : '',
-                    gender: student.gender || '',
-                    address: student.address || '',
-                    contactNumber: student.contactNumber || '',
-                    parentName: student.parentName || '',
-                    parentContact: student.parentContact || '',
-                    parentEmail: student.parentEmail || '',
-                    bloodGroup: student.bloodGroup || '',
-                    classId: student.classId || ''
-                  });
-                  setIsDialogOpen(true);
-                }}
+                onEdit={() => handleEdit(student)}
                 onDelete={() => setStudentToDelete(student)}
               />
             ))}

@@ -3,98 +3,162 @@ import { useProfile } from '@/services/profileService';
 import { feesService, Fee } from '@/services/feesService';
 import { Card } from '@/components/ui/card';
 import { format } from 'date-fns';
+import { studentService } from '@/services/student.service';
+import { Fade } from 'react-reveal';
+import { CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Download, User, Calendar, Droplet, School, Mail } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { generateProfilePDF } from '@/services/pdfService';
 
 const ProfilePage = () => {
   const { profile, loading, error } = useProfile();
-  const [fees, setFees] = useState<Fee[]>([]);
-  const [loadingFees, setLoadingFees] = useState(false);
+  const [student, setStudent] = useState<any>(null);
+  const [loadingStudent, setLoadingStudent] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     if (profile && profile.role === 'STUDENT') {
-      fetchStudentFees();
+      fetchStudentDetails();
     }
   }, [profile]);
 
-  const fetchStudentFees = async () => {
+  const fetchStudentDetails = async () => {
     try {
-      setLoadingFees(true);
-      const data = await feesService.getFeesByStudent(profile!.id);
-      setFees(data);
+      setLoadingStudent(true);
+      const data = await studentService.findByEmail(profile?.email || '');
+      setStudent(data);
     } catch (error) {
-      console.error('Error fetching fees:', error);
+      console.error('Error fetching student details:', error);
     } finally {
-      setLoadingFees(false);
+      setLoadingStudent(false);
     }
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
+  const handleDownloadProfile = async () => {
+    if (student && profile) {
+      try {
+        setDownloading(true);
+        await generateProfilePDF(student, profile);
+      } catch (error) {
+        console.error('Error generating profile PDF:', error);
+      } finally {
+        setDownloading(false);
+      }
+    }
+  };
+
+  if (loading || loadingStudent) {
+    return (
+      <div className="container mx-auto px-4 py-8 space-y-6">
+        <Skeleton className="h-12 w-3/4 md:w-1/2" />
+        <Skeleton className="h-[200px] w-full" />
+        <Skeleton className="h-[300px] w-full" />
+      </div>
+    );
   }
 
   if (error) {
-    return <div>Error loading profile: {error.message}</div>;
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          Error loading profile: {error.message}
+        </div>
+      </div>
+    );
   }
 
   if (!profile) {
-    return <div>No profile found</div>;
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded">
+          No profile found
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="p-4">
-      <Card className="p-6 mb-6">
-        <div className="flex items-start gap-6">
-          <img 
-            src={profile.avatar_url || '/default-avatar.png'} 
-            alt="Avatar" 
-            className="w-24 h-24 rounded-full"
-          />
-          <div>
-            <h1 className="text-2xl font-bold mb-2">{profile.full_name}</h1>
-            <p className="text-gray-600 mb-1">Role: {profile.role}</p>
-            <p className="text-gray-600">Email: {profile.email}</p>
-          </div>
-        </div>
-      </Card>
+    <div className="container mx-auto px-4 py-8 space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <h1 className="text-3xl font-bold text-gray-900">{profile.full_name}</h1>
+        <Button
+          onClick={handleDownloadProfile}
+          disabled={downloading || !student}
+          className="bg-primary hover:bg-primary/90 text-white"
+        >
+          <Download className="mr-2 h-4 w-4" />
+          {downloading ? 'Downloading...' : 'Download Profile'}
+        </Button>
+      </div>
 
-      {profile.role === 'STUDENT' && (
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Fee History</h2>
-          {loadingFees ? (
-            <div>Loading fees...</div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {fees.map((fee) => (
-                <Card key={fee.id} className="p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-semibold">{fee.feeType}</h3>
-                      <p className="text-lg font-semibold mt-1">₹{fee.amount}</p>
-                    </div>
-                    <div className={`px-2 py-1 rounded text-sm ${
-                      fee.status === FeeStatus.PAID ? 'bg-green-100 text-green-800' :
-                      fee.status === FeeStatus.PENDING ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {fee.status}
-                    </div>
-                  </div>
-                  <div className="mt-2">
-                    <p className="text-sm text-gray-600">
-                      Due: {format(new Date(fee.dueDate), 'PP')}
-                    </p>
-                    {fee.description && (
-                      <p className="text-sm text-gray-600 mt-1">{fee.description}</p>
-                    )}
-                  </div>
-                </Card>
-              ))}
-              {fees.length === 0 && (
-                <p className="text-gray-600">No fee records found.</p>
-              )}
+      <Fade>
+        <Card className="overflow-hidden bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+          <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5 text-primary" />
+              Personal Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">Full Name</p>
+                <p className="font-medium">{profile.full_name}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">Role</p>
+                <p className="font-medium capitalize">{profile.role.toLowerCase()}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">Email</p>
+                <p className="font-medium">{profile.email}</p>
+              </div>
             </div>
-          )}
-        </div>
-      )}
+          </CardContent>
+        </Card>
+      </Fade>
+
+      
+        <Fade>
+          <Card className="overflow-hidden bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+              <CardTitle className="flex items-center gap-2">
+                <School className="h-5 w-5 text-primary" />
+                Student Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-500">Admission Number</p>
+                  <p className="font-medium">{student?.admissionNumber}</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-500">Class & Section</p>
+                  <p className="font-medium">{student?.class?.name} {student?.class?.section}</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-500">Date of Birth</p>
+                  <p className="font-medium">{student && student.dateOfBirth && format(new Date(student?.dateOfBirth), 'dd MMMM yyyy')}</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-500">Blood Group</p>
+                  <p className="font-medium">{student?.bloodGroup || 'Not specified'}</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-500">Created At</p>
+                  <p className="font-medium">{student && student.createdAt && format(new Date(student?.createdAt), 'dd MMMM yyyy')}</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-500">Last Updated</p>
+                  <p className="font-medium">{student && student.updatedAt && format(new Date(student?.updatedAt), 'dd MMMM yyyy')}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Fade>
+      
     </div>
   );
 };
