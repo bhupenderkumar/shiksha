@@ -1,6 +1,9 @@
 import { supabase } from '@/lib/api-client';
 import { FeeStatus, FeeType } from '@/types/fee';
 import { v4 as uuidv4 } from 'uuid';
+import { studentService } from './student.service';
+import { profile } from 'console';
+import { profileService } from './profileService';
 
 export interface Fee {
   id: string;
@@ -66,6 +69,26 @@ export const feesService = {
     return data;
   },
 
+  async getMyFees(email : string) {
+    const student = await studentService.findByEmail(email);
+    const { data, error } = await supabase
+      .schema('school')
+      .from('Fee')
+      .select(`
+        *,
+        student:Student (
+         *
+          ,
+          class:Class (*
+          )
+        )
+      `)
+      .eq('studentId', student?.id)
+      .order('dueDate', { ascending: false });
+
+    if (error) throw error;
+    return data;
+  },
   async getFeesByStudent(studentId: string) {
     const { data, error } = await supabase
       .schema('school')
@@ -151,5 +174,31 @@ export const feesService = {
 
     if (error) throw error;
     return data;
+  },
+
+  async getFeeDetails(feeId: string) {
+    const { data: fee, error: feeError } = await supabase
+      .schema('school')
+      .from('Fee')
+      .select(`
+        *,
+        student:Student (
+          id,
+          name,
+          admissionNumber,
+          parentName,
+          parentContact,
+          parentEmail,
+          class:Class (
+            name,
+            section
+          )
+        )
+      `)
+      .eq('id', feeId)
+      .single();
+
+    if (feeError) throw feeError;
+    return fee;
   }
 };
