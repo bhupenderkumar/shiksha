@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { HomeworkCard } from '@/components/HomeworkCard';
-import { Plus, Book, Eye, Share2, Trash, Edit } from 'lucide-react';
+import { Plus, Book, Eye, Trash, Edit } from 'lucide-react';
 import { homeworkService, HomeworkType } from '@/services/homeworkService';
 import { useAsync } from '@/hooks/use-async';
 import { useAuth } from '@/lib/auth';
@@ -13,27 +13,16 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { PageHeader } from '@/components/ui/page-header';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
-import { fileService } from '@/services/fileService';
-import { supabase } from '@/lib/api-client';
-import { Attachment } from '@/components/Attachment';
 import { useProfileAccess } from '@/services/profileService';
 
 export default function HomeworkPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [homeworks, setHomeworks] = useState<HomeworkType[]>([]);
-  const [dialogState, setDialogState] = useState<{
-    isOpen: boolean;
-    mode: 'create' | 'edit' | 'view';
-  }>({
-    isOpen: false,
-    mode: 'create'
-  });
+  const [dialogState, setDialogState] = useState<{ isOpen: boolean; mode: 'create' | 'edit' | 'view' }>({ isOpen: false, mode: 'create' });
   const [selectedHomework, setSelectedHomework] = useState<HomeworkType | null>(null);
   const [homeworkToDelete, setHomeworkToDelete] = useState<HomeworkType | null>(null);
   const { profile, loading: profileLoading, isAdminOrTeacher } = useProfileAccess();
-  const [shareUrl, setShareUrl] = useState<string>('');
-
   const { loading, execute: fetchHomeworks } = useAsync(
     async () => {
       if (!profile) return;
@@ -70,39 +59,26 @@ export default function HomeworkPage() {
   const handleFormSubmit = async (data: any) => {
     try {
       const { files, ...homeworkData } = data;
-      
       let uploadedFiles = [];
       if (files && files.length > 0) {
         uploadedFiles = await Promise.all(
           files.map(async (file: File) => {
             const filePath = await fileService.uploadFile(file, 'homework');
-            return {
-              fileName: file.name,
-              filePath,
-              fileType: file.type
-            };
+            return { fileName: file.name, filePath, fileType: file.type };
           })
         );
       }
 
-      const homeworkPayload = {
-        ...homeworkData,
-        attachments: uploadedFiles,
-        userId: user?.id,
-        status: 'PENDING'
-      };
+      const homeworkPayload = { ...homeworkData, attachments: uploadedFiles, userId: user?.id, status: 'PENDING' };
 
       if (selectedHomework) {
-        await homeworkService.update(selectedHomework.id, {
-          ...homeworkPayload,
-          attachments: uploadedFiles
-        });
+        await homeworkService.update(selectedHomework.id, { ...homeworkPayload, attachments: uploadedFiles });
         toast.success('Homework updated successfully');
       } else {
         await homeworkService.create(homeworkPayload);
         toast.success('Homework created successfully');
       }
-      
+
       setDialogState({ isOpen: false, mode: 'create' });
       fetchHomeworks();
     } catch (error) {
@@ -165,10 +141,9 @@ export default function HomeworkPage() {
           {homeworks.map((homework) => (
             <div key={homework.id} className="relative">
               <HomeworkCard 
-                key={homework.id} 
                 homework={homework} 
-                onEdit={(hw) => handleEditClick(hw)} 
-                onView={(hw) => handleViewClick(hw)} 
+                onEdit={isAdminOrTeacher ? handleEditClick : undefined} 
+                onView={handleViewClick} 
                 isStudent={!isAdminOrTeacher}
                 attachments={homework.attachments || []}
               />

@@ -154,7 +154,7 @@ class ProfileService {
 }
 export const profileService = new ProfileService();
 // Utility functions
-export const isAdmin = (user?: UserProfile | null): boolean => user?.role != 'ADMIN';
+export const isAdmin = (user?: UserProfile | null): boolean => user?.role === 'ADMIN';
 export const isTeacher = (user?: UserProfile | null): boolean => user?.role === 'TEACHER';
 export const isStudent = (user?: UserProfile | null): boolean => user?.role === 'STUDENT';
 export const isAdminOrTeacher = (user?: UserProfile | null): boolean => isAdmin(user) || isTeacher(user);

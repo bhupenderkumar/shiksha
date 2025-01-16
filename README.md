@@ -29,6 +29,123 @@ The project addresses the following problems:
 - **User Authentication**: Secure user authentication and authorization.
 - **Responsive Design**: Ensure the application is accessible on various devices.
 
+## Database Structure
+
+### Schema: `school`
+
+#### Tables
+
+1. **users (auth.users)**
+   - `id`: UUID (Primary Key)
+   - `email`: String (Unique)
+   - `encrypted_password`: String
+   - `role`: String
+   - `created_at`: Timestamp
+   - `updated_at`: Timestamp
+   - Additional fields for user management and authentication.
+
+2. **School**
+   - `id`: Text (Primary Key)
+   - `schoolName`: Text
+   - `schoolAddress`: Text
+
+3. **Class**
+   - `id`: Text (Primary Key)
+   - `name`: Text
+   - `section`: Text
+   - `roomNumber`: Text
+   - `capacity`: Integer
+   - `schoolId`: Text (Foreign Key referencing School)
+   - `createdAt`: Timestamp
+   - `updatedAt`: Timestamp
+
+4. **Student**
+   - `id`: Text (Primary Key)
+   - `admissionNumber`: Text (Unique)
+   - `name`: Text
+   - `dateOfBirth`: Timestamp
+   - `gender`: Text
+   - `address`: Text
+   - `contactNumber`: Text
+   - `parentName`: Text
+   - `parentContact`: Text
+   - `parentEmail`: Text
+   - `bloodGroup`: Text
+   - `classId`: Text (Foreign Key referencing Class)
+   - `createdAt`: Timestamp
+   - `updatedAt`: Timestamp
+
+5. **Staff**
+   - `id`: Text (Primary Key)
+   - `employeeId`: Text (Unique)
+   - `name`: Text
+   - `role`: Enum (StaffRole)
+   - `qualification`: Text
+   - `experience`: Integer
+   - `email`: Text (Unique)
+   - `contactNumber`: Text
+   - `address`: Text
+   - `joiningDate`: Timestamp
+   - `schoolId`: Text (Foreign Key referencing School)
+   - `createdAt`: Timestamp
+   - `updatedAt`: Timestamp
+
+6. **Classwork**
+   - `id`: Text (Primary Key)
+   - `title`: Text
+   - `description`: Text
+   - `date`: Timestamp
+   - `classId`: Text (Foreign Key referencing Class)
+   - `createdAt`: Timestamp
+   - `updatedAt`: Timestamp
+
+7. **Homework**
+   - `id`: Text (Primary Key)
+   - `title`: Text
+   - `description`: Text
+   - `dueDate`: Timestamp
+   - `subjectId`: Text (Foreign Key referencing Subject)
+   - `status`: Enum (HomeworkStatus)
+   - `createdAt`: Timestamp
+   - `updatedAt`: Timestamp
+   - `classId`: Text (Foreign Key referencing Class)
+
+8. **Attendance**
+   - `id`: Text (Primary Key)
+   - `date`: Timestamp
+   - `status`: Enum (AttendanceStatus)
+   - `studentId`: Text (Foreign Key referencing Student)
+   - `createdAt`: Timestamp
+   - `updatedAt`: Timestamp
+   - `classId`: Text (Foreign Key referencing Class)
+
+9. **Notification**
+   - `id`: UUID (Primary Key)
+   - `title`: Text
+   - `message`: Text
+   - `type`: Enum (NotificationType)
+   - `studentId`: Text (Foreign Key referencing Student, optional)
+   - `classId`: Text (Foreign Key referencing Class, optional)
+   - `isRead`: Boolean
+   - `createdAt`: Timestamp
+   - `updatedAt`: Timestamp
+
+10. **UserSettings**
+    - `id`: Serial (Primary Key)
+    - `user_id`: UUID (Foreign Key referencing auth.users)
+    - `notifications`: JSONB
+    - `theme`: JSONB
+    - `security`: JSONB
+    - `created_at`: Timestamp
+    - `updated_at`: Timestamp
+
+### Custom Types
+- **StaffRole**: Enum for staff roles (TEACHER, ADMIN, PRINCIPAL, ACCOUNTANT).
+- **HomeworkStatus**: Enum for homework status (PENDING, COMPLETED, OVERDUE, SUBMITTED).
+- **FeeType**: Enum for fee types (TUITION, EXAMINATION, TRANSPORT, LIBRARY, LABORATORY, MISCELLANEOUS).
+- **FeeStatus**: Enum for fee status (PENDING, PAID, OVERDUE, PARTIAL).
+- **NotificationType**: Enum for notification types (HOMEWORK, ATTENDANCE, FEE, GENERAL).
+
 ## Getting Started
 
 ### Prerequisites
