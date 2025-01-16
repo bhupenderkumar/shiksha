@@ -27,7 +27,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({ options, selectedValues, onCh
 
   return (
     <div className="relative">
-      <div className="border rounded-md p-2 cursor-pointer" onClick={toggleDropdown}>
+      <div className="border rounded-md p-2 cursor-pointer bg-blue-100 text-blue-700" onClick={toggleDropdown}>
         {selectedValues.length > 0 ? selectedValues.join(', ') : placeholder}
       </div>
       {isOpen && (

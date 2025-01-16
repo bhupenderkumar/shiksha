@@ -38,7 +38,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const menuItems = [
     { id: 1, icon: Home, label: 'Dashboard', path: ROUTES.DASHBOARD },
     { id: 9, icon: Bell, label: 'Notifications', path: '/notifications' },
-    { id: 2, icon: Users, label: 'Students', path: ROUTES.STUDENTS },
+    { id: 2, icon: Users, label: 'Students', path: ROUTES.STUDENTS, role: 'admin' },
     { id: 3, icon: BookOpen, label: 'Homework', path: ROUTES.HOMEWORK },
     { id: 4, icon: BookOpen, label: 'Classwork', path: ROUTES.CLASSWORK },
     { id: 5, icon: Calendar, label: 'Attendance', path: ROUTES.ATTENDANCE },
@@ -171,7 +171,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           )}
         >
           <nav className="h-full p-4 space-y-2 overflow-y-auto">
-            {menuItems.map((item) => {
+            {menuItems.filter(item => !item.role || (item.role === 'admin' && user.role === 'admin') || (item.role === 'teacher' && user.role === 'teacher')).map((item) => {
               const isActive = location.pathname === item.path;
               const Icon = item.icon;
 

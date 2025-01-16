@@ -25,6 +25,224 @@ const generateReceiptNumber = (fee: Fee) => {
 };
 
 export const generateFeePDF = async (fee: Fee, studentDetails: any) => {
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4',
+    compress: true,
+    putOnlyUsedFonts: true
+  });
+
+  // Set default font
+  doc.setFont("helvetica", "normal");
+
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 20;
+  let yPosition = margin;
+
+  // Helper functions
+  const formatValue = (value: any): string => {
+    if (value === null || value === undefined) return 'N/A';
+    return String(value);
+  };
+
+  const addCenteredText = (text: string, y: number, size = 12, style = 'normal', color = [0, 0, 0]) => {
+    doc.setFontSize(size);
+    doc.setFont('helvetica', style);
+    doc.setTextColor(...color);
+    const textWidth = doc.getTextWidth(text);
+    doc.text(formatValue(text), (pageWidth - textWidth) / 2, y);
+  };
+
+  const addText = (text: string, x: number, y: number, size = 12, style = 'normal', color = [60, 60, 60]) => {
+    doc.setFontSize(size);
+    doc.setFont('helvetica', style);
+    doc.setTextColor(...color);
+    doc.text(formatValue(text), x, y);
+  };
+
+  // School Header with white background
+  doc.setFillColor(255, 255, 255); // White
+  doc.rect(0, 0, pageWidth, 60, 'F'); // Increased height for better spacing
+  doc.setTextColor(0, 0, 0); // Set text color to black
+
+  // Add the logo to the header
+  if (SCHOOL_INFO.logo) {
+    try {
+      doc.addImage(SCHOOL_INFO.logo, 'PNG', margin, 10, 40, 30); // Adjust size as needed
+    } catch (error) {
+      console.warn('Could not add logo:', error);
+    }
+  }
+
+  // School Header Text
+  yPosition = 40; // Starting position for header text
+  addCenteredText(SCHOOL_INFO.name.toUpperCase(), yPosition, 24, 'bold', [0, 0, 0]);
+  yPosition += 10; // Increased spacing
+  addCenteredText(SCHOOL_INFO.address, yPosition, 12, 'normal', [0, 0, 0]);
+  yPosition += 8; // Increased spacing
+  addCenteredText(`Tel: ${SCHOOL_INFO.phone} | Email: ${SCHOOL_INFO.email}`, yPosition, 10, 'normal', [0, 0, 0]);
+  yPosition += 8; // Increased spacing
+  addCenteredText(SCHOOL_INFO.website, yPosition, 10, 'normal', [0, 0, 0]);
+  yPosition += 25; // Space before the next section
+
+  // Fee Receipt Header
+  doc.setFillColor(255, 255, 255); // White
+  doc.rect(margin, yPosition, pageWidth - 2 * margin, 12, 'F');
+  doc.setTextColor(0, 0, 0); // Black text
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  const headerText = 'FEE RECEIPT';
+  const headerWidth = doc.getTextWidth(headerText);
+  doc.text(headerText, (pageWidth - headerWidth) / 2, yPosition + 8);
+  yPosition += 25;
+
+  // Receipt Details Section
+  doc.setFillColor(255, 218, 185);
+  doc.rect(margin, yPosition, pageWidth - 2 * margin, 10, 'F');
+  doc.setTextColor(60, 60, 60);
+  doc.setFontSize(12);
+  doc.text('Receipt Details', margin + 5, yPosition + 7);
+  yPosition += 15;
+
+  // Receipt Details Content
+  const receiptNumber = generateReceiptNumber(fee);
+  const addDetailRow = (label: string, value: any) => {
+    doc.setFillColor(255, 240, 245);
+    doc.rect(margin, yPosition - 5, pageWidth - 2 * margin, 10, 'F');
+    addText(label, margin + 5, yPosition, 11, 'normal');
+    addText(formatValue(value), margin + 50, yPosition, 11, 'normal');
+    yPosition += 12;
+  };
+
+  addDetailRow('Receipt No:', receiptNumber);
+  addDetailRow('Date:', formatDate(new Date()));
+
+  // Student Information Section
+  yPosition += 5;
+  doc.setFillColor(221, 160, 221);
+  doc.rect(margin, yPosition, pageWidth - 2 * margin, 10, 'F');
+  doc.setTextColor(60, 60, 60);
+  doc.setFontSize(12);
+  doc.text('Student Information', margin + 5, yPosition + 7);
+  yPosition += 15;
+
+  const studentName = studentDetails?.student?.name || studentDetails?.name || 'N/A';
+  const admissionNumber = studentDetails?.student?.admissionNumber || studentDetails?.admissionNumber || 'N/A';
+  const className = studentDetails?.student?.class?.name || studentDetails?.class?.name || studentDetails?.class || 'N/A';
+  const parentName = studentDetails?.student?.parentName || studentDetails?.parentName || 'N/A';
+  const parentContact = studentDetails?.student?.parentContact || studentDetails?.parentContact || 'N/A';
+  const parentEmail = studentDetails?.student?.parentEmail || studentDetails?.parentEmail || 'N/A';
+
+  addDetailRow('Name:', studentName);
+  addDetailRow('Admission No:', admissionNumber);
+  addDetailRow('Class:', className);
+  addDetailRow('Parent Name:', parentName);
+  addDetailRow('Parent Contact:', parentContact);
+  addDetailRow('Parent Email:', parentEmail);
+
+  // Fee Details Section
+  yPosition += 5;
+  doc.setFillColor(152, 251, 152);
+  doc.rect(margin, yPosition, pageWidth - 2 * margin, 10, 'F');
+  doc.setTextColor(60, 60, 60);
+  doc.text('Fee Details', margin + 5, yPosition + 7);
+  yPosition += 15;
+
+  addDetailRow('Fee Type:', fee.type || fee.feeType || 'N/A');
+  addDetailRow('Amount:', formatCurrency(fee.amount));
+  addDetailRow('Due Date:', fee.dueDate ? formatDate(fee.dueDate) : 'N/A');
+  addDetailRow('Status:', fee.status || 'N/A');
+
+  if (fee.paidDate) {
+    addDetailRow('Paid Date:', formatDate(fee.paidDate));
+  }
+  if (fee.description) {
+    addDetailRow('Description:', fee.description);
+  }
+
+  // Start new page for Payment Details, Bank Details and Terms
+  doc.addPage();
+  yPosition = margin + 10;
+
+  // Principal and Accountant Section
+  doc.setFillColor(255, 218, 185);
+  doc.rect(margin, yPosition, pageWidth - 2 * margin, 10, 'F');
+  doc.text('Principal:', margin + 5, yPosition + 7);
+  doc.text(SCHOOL_INFO.principalName, margin + 50, yPosition + 7);
+  yPosition += 15;
+
+  doc.setFillColor(255, 218, 185);
+  doc.rect(margin, yPosition, pageWidth - 2 * margin, 10, 'F');
+  doc.text('Accountant:', margin + 5, yPosition + 7);
+  doc.text(SCHOOL_INFO.accountantName, margin + 50, yPosition + 7);
+  yPosition += 15;
+
+  // Payment Details Section (if paid)
+  if (fee.status === FeeStatus.PAID) {
+    doc.setFillColor(173, 216, 230);
+    doc.rect(margin, yPosition, pageWidth - 2 * margin, 10, 'F');
+    doc.setTextColor(60, 60, 60);
+    doc.text('Payment Details', margin + 5, yPosition + 7);
+    yPosition += 15;
+
+    addDetailRow('Payment Mode:', fee?.paymentMode || fee.paymentMethod || 'Not specified');
+    addDetailRow('Transaction ID:', fee.transactionId || 'Not specified');
+    yPosition += 10;
+  }
+
+  // Bank Details Section
+  doc.setFillColor(255, 218, 185);
+  doc.rect(margin, yPosition, pageWidth - 2 * margin, 10, 'F');
+  doc.text('Bank Details', margin + 5, yPosition + 7);
+  yPosition += 15;
+
+  addDetailRow('Bank Name:', SCHOOL_INFO.bankDetails.bankName);
+  addDetailRow('Account Name:', SCHOOL_INFO.bankDetails.accountName);
+  addDetailRow('Account Number:', SCHOOL_INFO.bankDetails.accountNumber);
+  addDetailRow('IFSC Code:', SCHOOL_INFO.bankDetails.ifscCode);
+  addDetailRow('Branch:', SCHOOL_INFO.bankDetails.branch);
+
+  // Terms and Conditions
+  yPosition += 10;
+  doc.setFillColor(221, 160, 221);
+  doc.rect(margin, yPosition, pageWidth - 2 * margin, 10, 'F');
+  doc.text('Terms & Conditions', margin + 5, yPosition + 7);
+  yPosition += 15;
+
+  FEE_RECEIPT_TERMS.forEach(term => {
+    doc.setTextColor(60, 60, 60);
+    doc.setFontSize(9);
+    doc.text(formatValue(term), margin, yPosition);
+    yPosition += 7;
+  });
+
+  // Footer on both pages
+  const addFooter = (pageNum: number) => {
+    doc.setPage(pageNum);
+    const footerY = pageHeight - 25;
+    
+    // Bottom line with website and page number
+    const bottomY = pageHeight - 10;
+    doc.setTextColor(100, 100, 100);
+    doc.setFontSize(8);
+    const pageText = `Page ${pageNum} of 2`;
+    doc.text(pageText, margin, bottomY);
+    const websiteWidth = doc.getTextWidth(SCHOOL_INFO.website);
+    doc.text(SCHOOL_INFO.website, (pageWidth - websiteWidth) / 2, bottomY);
+  };
+
+  // Add footer to both pages
+  addFooter(1);
+  addFooter(2);
+
+  // Save the PDF
+  const fileName = `Fee_Receipt_${receiptNumber}.pdf`;
+  doc.save(fileName);
+};
+
+export const generateProfilePDF = async (student: any, profile: any) => {
   // Initialize PDF
   const doc = new jsPDF({
     orientation: 'portrait',
@@ -34,6 +252,9 @@ export const generateFeePDF = async (fee: Fee, studentDetails: any) => {
     putOnlyUsedFonts: true
   });
 
+  // Set default font to Calibri
+  doc.setFont("calibri", "normal");
+
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 15;
@@ -42,230 +263,114 @@ export const generateFeePDF = async (fee: Fee, studentDetails: any) => {
   // Helper functions
   const addCenteredText = (text: string, y: number, size = 12, style = 'normal') => {
     doc.setFontSize(size);
+    doc.setFont('calibri', style);
     const textWidth = doc.getTextWidth(text);
     doc.text(text, (pageWidth - textWidth) / 2, y);
   };
 
   const addText = (text: string, x: number, y: number, size = 12, style = 'normal') => {
     doc.setFontSize(size);
+    doc.setFont('calibri', style);
     doc.text(text, x, y);
   };
 
-  const checkAndAddNewPage = () => {
-    if (yPosition > pageHeight - 30) {
-      doc.addPage();
-      yPosition = margin;
-      return true;
-    }
-    return false;
-  };
-
-  // Receipt Header
-  const headerHeight = 60;
-  doc.setFillColor(240, 247, 255);
-  doc.rect(0, 0, pageWidth, headerHeight, 'F');
+  // Add school header - skip logo if not available
+  yPosition += 5;
   
-  // School Logo
-  if (SCHOOL_INFO.logoUrl) {
-    try {
-      const logoSize = 25;
-      doc.addImage(SCHOOL_INFO.logoUrl, 'PNG', margin, margin, logoSize, logoSize);
-    } catch (error) {
-      console.error('Error adding logo:', error);
-    }
-  }
+  // School Name with larger font
+  doc.setFillColor(255, 255, 255); // Set header background color to white
+  doc.rect(0, 0, pageWidth, 40, 'F'); // Header rectangle
 
-  // School Information
-  doc.setTextColor(0, 48, 87);
-  doc.setFontSize(24);
-  doc.setFont('helvetica', 'bold');
-  addCenteredText(SCHOOL_INFO.name, margin + 15, 24, 'bold');
+  // Set text color to black
+  doc.setTextColor(0, 0, 0);
+  addCenteredText(SCHOOL_INFO.name.toUpperCase(), yPosition, 22, 'bold');
+  yPosition += 8;
   
-  doc.setTextColor(70, 70, 70);
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'normal');
-  addCenteredText(SCHOOL_INFO.address, margin + 25);
-  addCenteredText(`Tel: ${SCHOOL_INFO.phone} | Email: ${SCHOOL_INFO.email}`, margin + 32);
+  // School contact details
+  doc.setTextColor(60, 60, 60);
+  addCenteredText(SCHOOL_INFO.address, yPosition, 11);
+  yPosition += 6;
+  
+  addCenteredText(`Tel: ${SCHOOL_INFO.phone} | Email: ${SCHOOL_INFO.email}`, yPosition, 10);
+  yPosition += 6;
+  
+  addCenteredText(`Website: ${SCHOOL_INFO.website}`, yPosition, 10);
+  yPosition += 15;
 
-  yPosition = headerHeight + margin;
+  // Reset text color
+  doc.setTextColor(0, 0, 0);
 
-  // Receipt Title
-  doc.setFillColor(0, 48, 87);
-  doc.rect(0, yPosition - 5, pageWidth, 12, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  addCenteredText('FEE RECEIPT', yPosition + 3);
+  // Title
+  doc.setDrawColor(0);
+  doc.setFillColor(240, 240, 255);
+  doc.rect(margin, yPosition, pageWidth - 2 * margin, 10, 'F');
+  addCenteredText('STUDENT PROFILE', yPosition + 7, 14, 'bold');
   yPosition += 20;
 
-  // Receipt Details
-  const receiptNo = generateReceiptNumber(fee);
-  doc.setTextColor(70, 70, 70);
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'normal');
+  // Student Details
+  const detailsStartX = margin + 5;
+  const labelWidth = 50;
   
-  // Create a details box
-  doc.setFillColor(250, 250, 250);
-  doc.roundedRect(margin, yPosition, pageWidth - 2 * margin, 50, 3, 3, 'F');
-  
-  addText(`Receipt No: ${receiptNo}`, margin + 5, yPosition + 12);
-  addText(`Date: ${formatDate(fee.createdAt)}`, margin + 5, yPosition + 24);
-  addText(`Academic Year: ${new Date().getFullYear()}`, pageWidth - margin - 80, yPosition + 12);
-  addText(`Payment Mode: ${fee.paymentMethod || 'N/A'}`, pageWidth - margin - 80, yPosition + 24);
+  // Personal Information Section
+  addText('Personal Information', margin, yPosition, 12, 'bold');
+  yPosition += 8;
+  doc.line(margin, yPosition, pageWidth - margin, yPosition);
+  yPosition += 10;
 
-  yPosition += 60;
+  const personalInfo = [
+    { label: 'Name', value: profile.full_name },
+    { label: 'Email', value: profile.email },
+    { label: 'Role', value: profile.role },
+    { label: 'Admission No', value: student.admissionNumber },
+    { label: 'Date of Birth', value: formatDate(student.dateOfBirth) },
+    { label: 'Blood Group', value: student.bloodGroup || 'Not specified' },
+  ];
 
-  // Student Information
-  doc.setFillColor(245, 247, 250);
-  doc.roundedRect(margin, yPosition, pageWidth - 2 * margin, 45, 3, 3, 'F');
-  
-  doc.setTextColor(0, 48, 87);
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  addText('STUDENT DETAILS', margin + 5, yPosition + 12);
-  
-  doc.setTextColor(70, 70, 70);
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'normal');
-  addText(`Name: ${studentDetails.name}`, margin + 5, yPosition + 24);
-  addText(`Class: ${studentDetails.class}`, pageWidth - margin - 80, yPosition + 24);
-  addText(`Admission No: ${studentDetails.admissionNumber}`, margin + 5, yPosition + 36);
-
-  yPosition += 55;
-
-  // Fee Details Table
-  doc.autoTable({
-    startY: yPosition,
-    head: [['Description', 'Due Date', 'Amount', 'Status']],
-    body: [[
-      fee.feeType,
-      formatDate(fee.dueDate),
-      formatCurrency(fee.amount),
-      fee.status
-    ]],
-    styles: {
-      fontSize: 11,
-      cellPadding: 8,
-    },
-    headStyles: {
-      fillColor: [0, 48, 87],
-      textColor: [255, 255, 255],
-      fontStyle: 'bold'
-    },
-    columnStyles: {
-      0: { cellWidth: 'auto' },
-      1: { cellWidth: 'auto' },
-      2: { cellWidth: 40, halign: 'right' },
-      3: { cellWidth: 35, halign: 'center' }
-    },
-    margin: { left: margin, right: margin },
+  personalInfo.forEach(info => {
+    addText(info.label + ':', detailsStartX, yPosition, 10, 'bold');
+    addText(info.value, detailsStartX + labelWidth, yPosition, 10);
+    yPosition += 8;
   });
 
-  // Start new page for payment summary and terms
-  doc.addPage();
-  yPosition = margin + 20;
+  yPosition += 10;
 
-  // Payment Summary
-  doc.setFillColor(245, 247, 250);
-  doc.roundedRect(margin, yPosition, pageWidth - 2 * margin, 40, 3, 3, 'F');
-  
-  doc.setTextColor(0, 48, 87);
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  addText('PAYMENT SUMMARY', margin + 5, yPosition + 12);
-  
-  doc.setTextColor(70, 70, 70);
-  doc.setFontSize(11);
-  addText('Total Amount:', margin + 5, yPosition + 28);
-  doc.setFont('helvetica', 'bold');
-  addText(formatCurrency(fee.amount), pageWidth - margin - 10, yPosition + 28, 11, 'right');
+  // Academic Information Section
+  addText('Academic Information', margin, yPosition, 12, 'bold');
+  yPosition += 8;
+  doc.line(margin, yPosition, pageWidth - margin, yPosition);
+  yPosition += 10;
 
-  if (fee.status === FeeStatus.PAID) {
-    addText('Payment Date:', margin + 5, yPosition + 40);
-    addText(formatDate(fee.paymentDate!), pageWidth - margin - 10, yPosition + 40, 11, 'right');
-  }
+  const academicInfo = [
+    { label: 'Class', value: student.class?.name || 'Not assigned' },
+    { label: 'Section', value: student.class?.section || 'Not assigned' },
+    { label: 'Roll No', value: student.rollNumber || 'Not assigned' },
+  ];
 
-  yPosition += 50;
+  academicInfo.forEach(info => {
+    addText(info.label + ':', detailsStartX, yPosition, 10, 'bold');
+    addText(info.value, detailsStartX + labelWidth, yPosition, 10);
+    yPosition += 8;
+  });
 
-  // Check if we need a new page for terms
-  if (yPosition > pageHeight - 100) {
-    doc.addPage();
-    yPosition = margin;
-  }
-
-  // Terms and Conditions
-  if (FEE_RECEIPT_TERMS && FEE_RECEIPT_TERMS.length > 0) {
-    doc.setFillColor(250, 250, 250);
-    doc.roundedRect(margin, yPosition, pageWidth - 2 * margin, 80, 3, 3, 'F');
-    
-    doc.setTextColor(0, 48, 87);
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    addText('TERMS & CONDITIONS', margin + 5, yPosition + 15);
-    
-    doc.setTextColor(70, 70, 70);
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    
-    let termsY = yPosition + 30;
-    FEE_RECEIPT_TERMS.forEach((term, index) => {
-      const lines = doc.splitTextToSize(term, pageWidth - 2 * margin - 20);
-      lines.forEach((line: string, lineIndex: number) => {
-        if (termsY > pageHeight - 40) {
-          doc.addPage();
-          termsY = margin + 10;
-        }
-        addText(`${lineIndex === 0 ? `${index + 1}. ` : '   '}${line}`, margin + 5, termsY);
-        termsY += 12;
-      });
-    });
-    
-    yPosition = termsY + 10;
-  }
+  yPosition += 20;
 
   // Footer
-  const addFooter = () => {
-    const footerY = pageHeight - 25;
-    
-    // Signature line
-    doc.setDrawColor(0, 48, 87);
-    doc.setLineWidth(0.5);
-    doc.line(pageWidth - margin - 50, footerY, pageWidth - margin, footerY);
-    
-    doc.setTextColor(70, 70, 70);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    addText('Authorized Signatory', pageWidth - margin - 45, footerY + 6);
-    
-    // Digital Stamp
-    if (SCHOOL_INFO.stampUrl) {
-      try {
-        const stampSize = 30;
-        doc.addImage(
-          SCHOOL_INFO.stampUrl,
-          'PNG',
-          pageWidth - margin - stampSize - 10,
-          footerY - stampSize,
-          stampSize,
-          stampSize
-        );
-      } catch (error) {
-        console.error('Error adding stamp:', error);
-      }
-    }
-    
-    // Page number
-    doc.setFontSize(8);
-    addText(`Page ${doc.getCurrentPageInfo().pageNumber}`, margin, pageHeight - 10);
-  };
+  const footerY = pageHeight - 25;
+  doc.line(margin, footerY, pageWidth - margin, footerY);
+  
+  addText('Principal:', margin, footerY + 10, 10);
+  addText(SCHOOL_INFO.principalName, margin + 20, footerY + 10, 10);
+  
+  addText('Generated on:', pageWidth - margin - 80, footerY + 10, 8);
+  addText(formatDate(new Date()), pageWidth - margin - 40, footerY + 10, 8);
 
-  // Add footer to all pages
-  const totalPages = doc.getNumberOfPages();
-  for (let i = 1; i <= totalPages; i++) {
-    doc.setPage(i);
-    addFooter();
-  }
+  // Bottom line with website
+  const bottomY = pageHeight - 10;
+  doc.setFontSize(8);
+  doc.setTextColor(100, 100, 100);
+  addCenteredText(SCHOOL_INFO.website, bottomY);
 
-  // Save the document
-  doc.save(`Fee_Receipt_${receiptNo}.pdf`);
+  // Save the PDF
+  const fileName = `${student.admissionNumber}_profile_${format(new Date(), 'yyyyMMdd')}.pdf`;
+  doc.save(fileName);
 };

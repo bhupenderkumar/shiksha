@@ -5,6 +5,7 @@ CREATE SCHEMA school;
 -- Drop and Grant Schema Permissions
 
 
+-- finish here 
 GRANT USAGE ON SCHEMA school TO authenticated;
 GRANT USAGE ON SCHEMA school TO anon;
 
@@ -561,168 +562,6 @@ INSERT INTO school."Staff" (
 ('STF209', 'EMP209', 'Shalini Kapoor', 'ADMIN', 'MBA', 7, 'shalini.kapoor@school.com', '+91-9811111119', 'Delhi', '2024-01-01', '1', NOW(), NOW()),
 ('STF210', 'EMP210', 'Mohit Agarwal', 'TEACHER', 'M.Sc Computer Science', 6, 'mohit.agarwal@school.com', '+91-9811111120', 'Delhi', '2024-01-01', '1', NOW(), NOW());
 
--- Additional Classes for existing school
-INSERT INTO school."Class" (
-    id, name, section, "roomNumber", capacity, "schoolId", 
-    "createdAt", "updatedAt"
-) VALUES
-('CLS201', 'Class XI', 'A', 'R301', 35, '1', NOW(), NOW()),
-('CLS202', 'Class XI', 'B', 'R302', 35, '1', NOW(), NOW()),
-('CLS203', 'Class XII', 'A', 'R303', 30, '1', NOW(), NOW()),
-('CLS204', 'Class XII', 'B', 'R304', 30, '1', NOW(), NOW()),
-('CLS205', 'Class VIII', 'A', 'R305', 40, '1', NOW(), NOW()),
-('CLS206', 'Class VIII', 'B', 'R306', 40, '1', NOW(), NOW()),
-('CLS207', 'Class VII', 'A', 'R307', 38, '1', NOW(), NOW()),
-('CLS208', 'Class VII', 'B', 'R308', 38, '1', NOW(), NOW()),
-('CLS209', 'Class VI', 'A', 'R309', 42, '1', NOW(), NOW()),
-('CLS210', 'Class VI', 'B', 'R310', 42, '1', NOW(), NOW());
-
--- Additional Students
-INSERT INTO school."Student" (
-    id, "admissionNumber", name, "dateOfBirth", gender, address,
-    "contactNumber", "parentName", "parentContact", "parentEmail",
-    "bloodGroup", "classId", "createdAt", "updatedAt"
-) VALUES
-('STU201', 'ADM2024101', 'Aarav Kumar', '2009-03-15', 'Male', 'Delhi', '+91-9822222221', 'Rajesh Kumar', '+91-9822222222', 'rajesh.k@email.com', 'B+', 'CLS201', NOW(), NOW()),
-('STU202', 'ADM2024102', 'Diya Sharma', '2009-04-20', 'Female', 'Delhi', '+91-9822222223', 'Amit Sharma', '+91-9822222224', 'amit.s@email.com', 'O+', 'CLS201', NOW(), NOW()),
-('STU203', 'ADM2024103', 'Arjun Singh', '2009-05-25', 'Male', 'Delhi', '+91-9822222225', 'Manish Singh', '+91-9822222226', 'manish.s@email.com', 'A+', 'CLS202', NOW(), NOW()),
-('STU204', 'ADM2024104', 'Zara Patel', '2009-06-30', 'Female', 'Delhi', '+91-9822222227', 'Rajiv Patel', '+91-9822222228', 'rajiv.p@email.com', 'AB+', 'CLS202', NOW(), NOW()),
-('STU205', 'ADM2024105', 'Vihan Gupta', '2009-07-05', 'Male', 'Delhi', '+91-9822222229', 'Anil Gupta', '+91-9822222230', 'anil.g@email.com', 'O-', 'CLS203', NOW(), NOW()),
-('STU206', 'ADM2024106', 'Anaya Reddy', '2009-08-10', 'Female', 'Delhi', '+91-9822222231', 'Suresh Reddy', '+91-9822222232', 'suresh.r@email.com', 'B-', 'CLS203', NOW(), NOW()),
-('STU207', 'ADM2024107', 'Reyansh Shah', '2009-09-15', 'Male', 'Delhi', '+91-9822222233', 'Mehul Shah', '+91-9822222234', 'mehul.s@email.com', 'A-', 'CLS204', NOW(), NOW()),
-('STU208', 'ADM2024108', 'Myra Kapoor', '2009-10-20', 'Female', 'Delhi', '+91-9822222235', 'Rohit Kapoor', '+91-9822222236', 'rohit.k@email.com', 'AB-', 'CLS204', NOW(), NOW()),
-('STU209', 'ADM2024109', 'Vivaan Malhotra', '2009-11-25', 'Male', 'Delhi', '+91-9822222237', 'Sanjay Malhotra', '+91-9822222238', 'sanjay.m@email.com', 'O+', 'CLS205', NOW(), NOW()),
-('STU210', 'ADM2024110', 'Aisha Khan', '2009-12-30', 'Female', 'Delhi', '+91-9822222239', 'Imran Khan', '+91-9822222240', 'imran.k@email.com', 'B+', 'CLS205', NOW(), NOW());
-
--- Additional Subjects
-INSERT INTO school."Subject" (
-    id, name, code, "classId", "teacherId",
-    "createdAt", "updatedAt"
-) VALUES
-('SUB201', 'Physics', 'PHY201', 'CLS201', 'STF201', NOW(), NOW()),
-('SUB202', 'Chemistry', 'CHEM201', 'CLS201', 'STF204', NOW(), NOW()),
-('SUB203', 'Biology', 'BIO201', 'CLS202', 'STF206', NOW(), NOW()),
-('SUB204', 'Computer Science', 'CS201', 'CLS202', 'STF210', NOW(), NOW()),
-('SUB205', 'Hindi', 'HIN201', 'CLS203', 'STF202', NOW(), NOW()),
-('SUB206', 'Social Science', 'SOC201', 'CLS203', 'STF208', NOW(), NOW()),
-('SUB207', 'Sanskrit', 'SAN201', 'CLS204', 'STF202', NOW(), NOW()),
-('SUB208', 'Environmental Science', 'EVS201', 'CLS204', 'STF206', NOW(), NOW()),
-('SUB209', 'Physical Education', 'PE201', 'CLS205', 'STF201', NOW(), NOW()),
-('SUB210', 'Art Education', 'ART201', 'CLS205', 'STF204', NOW(), NOW());
-
--- Additional Homework
-INSERT INTO school."Homework" (
-    id, title, description, "dueDate", "subjectId",
-    status, "createdAt", "updatedAt", "classId"
-) VALUES
-('HW201', 'Physics Numericals', 'Solve Chapter 5 numericals', '2025-01-25', 'SUB201', 'PENDING', NOW(), NOW(), 'CLS201'),
-('HW202', 'Chemistry Practical', 'Complete practical record', '2025-01-26', 'SUB202', 'PENDING', NOW(), NOW(), 'CLS201'),
-('HW203', 'Biology Diagram', 'Draw and label cell structure', '2025-01-27', 'SUB203', 'PENDING', NOW(), NOW(), 'CLS202'),
-('HW204', 'Programming Exercise', 'Complete Python exercises', '2025-01-28', 'SUB204', 'PENDING', NOW(), NOW(), 'CLS202'),
-('HW205', 'Hindi Essay', 'Write essay on environment', '2025-01-29', 'SUB205', 'PENDING', NOW(), NOW(), 'CLS203'),
-('HW206', 'History Project', 'Complete medieval India project', '2025-01-30', 'SUB206', 'PENDING', NOW(), NOW(), 'CLS203'),
-('HW207', 'Sanskrit Translation', 'Translate passage to Hindi', '2025-01-31', 'SUB207', 'PENDING', NOW(), NOW(), 'CLS204'),
-('HW208', 'EVS Project', 'Make project on renewable energy', '2025-02-01', 'SUB208', 'PENDING', NOW(), NOW(), 'CLS204'),
-('HW209', 'Sports Report', 'Write report on school sports day', '2025-02-02', 'SUB209', 'PENDING', NOW(), NOW(), 'CLS205'),
-('HW210', 'Art Portfolio', 'Complete art portfolio', '2025-02-03', 'SUB210', 'PENDING', NOW(), NOW(), 'CLS205');
-
--- Additional Homework Submissions
-INSERT INTO school."HomeworkSubmission" (
-    id, "homeworkId", "studentId", status, "submittedAt"
-) VALUES
-('HS201', 'HW201', 'STU201', 'SUBMITTED', NOW()),
-('HS202', 'HW201', 'STU202', 'PENDING', NOW()),
-('HS203', 'HW202', 'STU203', 'COMPLETED', NOW()),
-('HS204', 'HW202', 'STU204', 'OVERDUE', NOW()),
-('HS205', 'HW203', 'STU205', 'SUBMITTED', NOW()),
-('HS206', 'HW203', 'STU206', 'PENDING', NOW()),
-('HS207', 'HW204', 'STU207', 'COMPLETED', NOW()),
-('HS208', 'HW204', 'STU208', 'SUBMITTED', NOW()),
-('HS209', 'HW205', 'STU209', 'PENDING', NOW()),
-('HS210', 'HW205', 'STU210', 'OVERDUE', NOW());
-
--- Additional Attendance Records
-INSERT INTO school."Attendance" (
-    id, date, status, "studentId", "classId",
-    "createdAt", "updatedAt"
-) VALUES
-('ATT201', '2025-01-12', 'PRESENT', 'STU201', 'CLS201', NOW(), NOW()),
-('ATT202', '2025-01-12', 'ABSENT', 'STU202', 'CLS201', NOW(), NOW()),
-('ATT203', '2025-01-12', 'PRESENT', 'STU203', 'CLS202', NOW(), NOW()),
-('ATT204', '2025-01-12', 'LATE', 'STU204', 'CLS202', NOW(), NOW()),
-('ATT205', '2025-01-12', 'PRESENT', 'STU205', 'CLS203', NOW(), NOW()),
-('ATT206', '2025-01-12', 'HALF_DAY', 'STU206', 'CLS203', NOW(), NOW()),
-('ATT207', '2025-01-12', 'PRESENT', 'STU207', 'CLS204', NOW(), NOW()),
-('ATT208', '2025-01-12', 'PRESENT', 'STU208', 'CLS204', NOW(), NOW()),
-('ATT209', '2025-01-12', 'ABSENT', 'STU209', 'CLS205', NOW(), NOW()),
-('ATT210', '2025-01-12', 'PRESENT', 'STU210', 'CLS205', NOW(), NOW());
-
--- Additional Fee Records
-INSERT INTO school."Fee" (
-    id, "studentId", amount, "dueDate", "feeType",
-    status, "createdAt", "updatedAt"
-) VALUES
-('FEE201', 'STU201', 15000.00, '2025-02-01', 'TUITION', 'PENDING', NOW(), NOW()),
-('FEE202', 'STU202', 15000.00, '2025-02-01', 'TUITION', 'PAID', NOW(), NOW()),
-('FEE203', 'STU203', 5000.00, '2025-02-01', 'LABORATORY', 'PENDING', NOW(), NOW()),
-('FEE204', 'STU204', 5000.00, '2025-02-01', 'LABORATORY', 'PAID', NOW(), NOW()),
-('FEE205', 'STU205', 2000.00, '2025-02-01', 'LIBRARY', 'PENDING', NOW(), NOW()),
-('FEE206', 'STU206', 2000.00, '2025-02-01', 'LIBRARY', 'PAID', NOW(), NOW()),
-('FEE207', 'STU207', 3000.00, '2025-02-01', 'TRANSPORT', 'PENDING', NOW(), NOW()),
-('FEE208', 'STU208', 3000.00, '2025-02-01', 'TRANSPORT', 'PARTIAL', NOW(), NOW()),
-('FEE209', 'STU209', 1000.00, '2025-02-01', 'EXAMINATION', 'PENDING', NOW(), NOW()),
-('FEE210', 'STU210', 1000.00, '2025-02-01', 'EXAMINATION', 'PAID', NOW(), NOW());
-
--- Additional Notifications
-INSERT INTO school."Notification" (
-    id, title, message, type, "studentId", "isRead",
-    "createdAt", "updatedAt"
-) VALUES
-('NOT201', 'Physics Test Tomorrow', 'Prepare chapters 1-3', 'EXAM', 'STU201', false, NOW(), NOW()),
-('NOT202', 'Fee Due Reminder', 'Please clear pending fees', 'FEE', 'STU202', false, NOW(), NOW()),
-('NOT203', 'Sports Day', 'Annual sports day next week', 'GENERAL', 'STU203', false, NOW(), NOW()),
-('NOT204', 'Parent Meeting', 'Schedule for next Thursday', 'GENERAL', 'STU204', false, NOW(), NOW()),
-('NOT205', 'Lab Submission Due', 'Complete all pending records', 'HOMEWORK', 'STU205', false, NOW(), NOW()),
-('NOT206', 'Attendance Warning', 'Low attendance this month', 'ATTENDANCE', 'STU206', false, NOW(), NOW()),
-('NOT207', 'Library Books Due', 'Return books by Friday', 'GENERAL', 'STU207', false, NOW(), NOW()),
-('NOT208', 'Competition Alert', 'Science quiz next week', 'GENERAL', 'STU208', false, NOW(), NOW()),
-('NOT209', 'Holiday Notice', 'School closed for Diwali', 'GENERAL', 'STU209', false, NOW(), NOW()),
-('NOT210', 'Bus Route Change', 'New pickup point from Monday', 'GENERAL', 'STU210', false, NOW(), NOW());
-
--- Additional Timetable Entries
-INSERT INTO school."TimeTable" (
-    id, day, "startTime", "endTime", "classId",
-    "subjectId", "createdAt", "updatedAt"
-) VALUES
-('TT201', 1, '2025-01-11 08:00:00', '2025-01-11 09:00:00', 'CLS201', 'SUB201', NOW(), NOW()),
-('TT202', 1, '2025-01-11 09:00:00', '2025-01-11 10:00:00', 'CLS201', 'SUB202', NOW(), NOW()),
-('TT203', 2, '2025-01-11 08:00:00', '2025-01-11 09:00:00', 'CLS202', 'SUB203', NOW(), NOW()),
-('TT204', 2, '2025-01-11 09:00:00', '2025-01-11 10:00:00', 'CLS202', 'SUB204', NOW(), NOW()),
-('TT205', 3, '2025-01-11 08:00:00', '2025-01-11 09:00:00', 'CLS203', 'SUB205', NOW(), NOW()),
-('TT206', 3, '2025-01-11 09:00:00', '2025-01-11 10:00:00', 'CLS203', 'SUB206', NOW(), NOW()),
-('TT207', 4, '2025-01-11 08:00:00', '2025-01-11 09:00:00', 'CLS204', 'SUB207', NOW(), NOW()),
-('TT208', 4, '2025-01-11 09:00:00', '2025-01-11 10:00:00', 'CLS204', 'SUB208', NOW(), NOW()),
-('TT209', 5, '2025-01-11 08:00:00', '2025-01-11 09:00:00', 'CLS205', 'SUB209', NOW(), NOW()),
-('TT210', 5, '2025-01-11 09:00:00', '2025-01-11 10:00:00', 'CLS205', 'SUB210', NOW(), NOW());
-
--- Additional Grievances
-INSERT INTO school."Grievance" (
-    id, title, description, "studentId", status,
-    resolution, "createdAt", "updatedAt"
-) VALUES
-('GR201', 'Transport Issue', 'Bus arriving late', 'STU201', 'OPEN', NULL, NOW(), NOW()),
-('GR202', 'Canteen Food Quality', 'Food quality needs improvement', 'STU202', 'IN_PROGRESS', 'Under investigation', NOW(), NOW()),
-('GR203', 'Library Access', 'Need extended library hours', 'STU203', 'RESOLVED', 'Library hours extended', NOW(), NOW()),
-('GR204', 'Sports Equipment', 'Need new basketball', 'STU204', 'CLOSED', 'New equipment ordered', NOW(), NOW()),
-('GR205', 'Classroom Ventilation', 'Poor air circulation', 'STU205', 'OPEN', NULL, NOW(), NOW()),
-('GR206', 'Lab Equipment', 'Microscope not working', 'STU206', 'IN_PROGRESS', 'Under repair', NOW(), NOW()),
-('GR207', 'Washroom Cleanliness', 'Regular cleaning needed', 'STU207', 'RESOLVED', 'Cleaning schedule updated', NOW(), NOW()),
-('GR208', 'Internet Connectivity', 'Weak WiFi in class', 'STU208', 'OPEN', NULL, NOW(), NOW()),
-('GR209', 'Drinking Water', 'Water cooler not working', 'STU209', 'IN_PROGRESS', 'Technician assigned', NOW(), NOW()),
-('GR210', 'Parking Area', 'Insufficient bicycle stands', 'STU210', 'CLOSED', 'New stands installed', NOW(), NOW());
-
-
-
 
 -- Delete existing records from the tables
 DELETE FROM school."File";
@@ -907,10 +746,11 @@ INSERT INTO school."Student" (
 ('STU413', 'ADM2024213', 'Dharvi(Pragya)', '2024-09-04', 'Female', 'Address 113', '+91-1234567814', 'Parent 113', '+91-1234567815', 'parent113@email.com', 'O+', 'CLS201', NOW(), NOW()),
 ('STU414', 'ADM2024214', 'Farhaan', '2024-08-28', 'Male', 'Address 114', '+91-1234567816', 'Parent 114', '+91-1234567817', 'parent114@email.com', 'A+', 'CLS201', NOW(), NOW()),
 ('STU415', 'ADM2024215', 'Myra Jindal', '2024-01-01', 'Female', 'Address 115', '+91-1234567818', 'Parent 115', '+91-1234567819', 'parent115@email.com', 'B-', 'CLS202', NOW(), NOW()),
-('STU416', 'ADM2024216', 'Kanha', '2024-0   1-01', 'Male', 'Address 116', '+91-1234567820', 'Parent 116', '+91-1234567821', 'parent116@email.com', 'O+', 'CLS201', NOW(), NOW()),
+('STU416', 'ADM2024216', 'Kanha', '2024-01-01', 'Male', 'Address 116', '+91-1234567820', 'Parent 116', '+91-1234567821', 'parent116@email.com', 'O+', 'CLS201', NOW(), NOW()),
 ('STU417', 'ADM2024217', 'Aaliya', '2024-01-01', 'Female', 'Address 117', '+91-1234567822', 'Parent 117', '+91-1234567823', 'parent117@email.com', 'A+', 'CLS204', NOW(), NOW());
 
-
+INSERT INTO school."Student" ("createdAt","updatedAt","parentName","contactNumber",id,"admissionNumber", "address","name", "parentEmail", "dateOfBirth", gender,  "classId", "parentContact") 
+VALUES (NOW(),NOW(),'BHUPENDER','+91-971727473','S10', 'ADM212','SAURABH VIHAR','Nitya', 'sharmakbhupender@gmail.com', '2010-05-15', 'Female', 'CLS203', '9999999999');
 
 
 -- Recreate the UserSettings table with a UNIQUE constraint on user_id
@@ -926,6 +766,32 @@ UNIQUE(user_id) -- Ensure each user has only one settings entry
 );
 
 
+
+create table
+  school."Settings" (
+    id serial not null,
+    school_name character varying(255) not null,
+    address character varying(255) null,
+    phone character varying(50) null,
+    email character varying(100) null,
+    website character varying(255) null,
+    description text null,
+    logo_url character varying(255) null,
+    created_at timestamp without time zone null default current_timestamp,
+    updated_at timestamp without time zone null default current_timestamp,
+    constraint Settings_pkey primary key (id)
+  ) tablespace pg_default;
+
+-- Grant permissions on the Settings sequence
+GRANT USAGE, SELECT ON SEQUENCE school."Settings_id_seq" TO authenticated;
+GRANT USAGE, SELECT ON SEQUENCE school."UserSettings_id_seq" TO authenticated;
+
+
+grant select on school."Settings" to anon;
+grant select, insert on school."Settings" to authenticated;
+
+-- Grant permissions on the Settings sequence
+GRANT USAGE, SELECT ON SEQUENCE school."Settings_id_seq" TO authenticated;
+
 grant select on school."UserSettings" to anon;
 grant select, insert on school."UserSettings" to authenticated;
-
