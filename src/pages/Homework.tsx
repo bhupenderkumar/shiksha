@@ -14,20 +14,93 @@ import { PageHeader } from '@/components/ui/page-header';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useProfileAccess } from '@/services/profileService';
+import { fileService } from '@/services/fileService';
+import { useMediaQuery } from 'react-responsive';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function HomeworkPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [homeworks, setHomeworks] = useState<HomeworkType[]>([]);
-  const [dialogState, setDialogState] = useState<{ isOpen: boolean; mode: 'create' | 'edit' | 'view' }>({ isOpen: false, mode: 'create' });
+  const [dialogState, setDialogState] = useState<{
+    isOpen: boolean;
+    mode: 'create' | 'edit';
+  }>({
+    isOpen: false,
+    mode: 'create'
+  });
   const [selectedHomework, setSelectedHomework] = useState<HomeworkType | null>(null);
-  const [homeworkToDelete, setHomeworkToDelete] = useState<HomeworkType | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { profile, loading: profileLoading, isAdminOrTeacher } = useProfileAccess();
+  const isMobile = useMediaQuery({ query: '(max-width: 640px)' });
+
   const { loading, execute: fetchHomeworks } = useAsync(
     async () => {
       if (!profile) return;
       const data = await homeworkService.getAll(profile.role, profile.classId);
       setHomeworks(data);
+    },
+    { showErrorToast: true }
+  );
+
+  const { execute: createHomework } = useAsync(
+    async (data: any) => {
+      const { files, existingFiles, ...homeworkData } = data;
+      let uploadedFiles = [];
+      
+      if (files && files.length > 0) {
+        uploadedFiles = await Promise.all(
+          files.map(async (file: File) => {
+            const filePath = await fileService.uploadFile(file, 'homework');
+            return {
+              name: file.name,
+              filePath,
+              type: file.type || file.name.split('.').pop() || 'application/octet-stream'
+            };
+          })
+        );
+      }
+
+      const homeworkPayload = { 
+        ...homeworkData, 
+        attachments: [...(existingFiles || []), ...uploadedFiles],
+        status: 'PENDING' 
+      };
+
+      await homeworkService.create(homeworkPayload);
+      await fetchHomeworks();
+      handleCloseDialog();
+      toast.success('Homework created successfully!');
+    },
+    { showErrorToast: true }
+  );
+
+  const { execute: updateHomework } = useAsync(
+    async (data: any) => {
+      if (!selectedHomework) return;
+      const { files, existingFiles, ...homeworkData } = data;
+      let uploadedFiles = [];
+      
+      if (files && files.length > 0) {
+        uploadedFiles = await Promise.all(
+          files.map(async (file: File) => {
+            const filePath = await fileService.uploadFile(file, 'homework');
+            return {
+              name: file.name,
+              filePath,
+              type: file.type || file.name.split('.').pop() || 'application/octet-stream'
+            };
+          })
+        );
+      }
+
+      await homeworkService.update(selectedHomework.id, {
+        ...homeworkData,
+        attachments: [...(existingFiles || []), ...uploadedFiles]
+      });
+      await fetchHomeworks();
+      handleCloseDialog();
+      toast.success('Homework updated successfully!');
     },
     { showErrorToast: true }
   );
@@ -38,63 +111,19 @@ export default function HomeworkPage() {
     }
   }, [profile]);
 
-  const handleCreateClick = () => {
-    setSelectedHomework(null);
-    setDialogState({ isOpen: true, mode: 'create' });
-  };
-
-  const handleEditClick = (homework: HomeworkType) => {
+  const handleEdit = (homework: HomeworkType) => {
     setSelectedHomework(homework);
     setDialogState({ isOpen: true, mode: 'edit' });
   };
 
-  const handleViewClick = (homework: HomeworkType) => {
-    navigate(`/homework/${homework.id}`);
-  };
-
-  const handleDeleteClick = (homework: HomeworkType) => {
-    setHomeworkToDelete(homework);
-  };
-
-  const handleFormSubmit = async (data: any) => {
-    try {
-      const { files, ...homeworkData } = data;
-      let uploadedFiles = [];
-      if (files && files.length > 0) {
-        uploadedFiles = await Promise.all(
-          files.map(async (file: File) => {
-            const filePath = await fileService.uploadFile(file, 'homework');
-            return { fileName: file.name, filePath, fileType: file.type };
-          })
-        );
-      }
-
-      const homeworkPayload = { ...homeworkData, attachments: uploadedFiles, userId: user?.id, status: 'PENDING' };
-
-      if (selectedHomework) {
-        await homeworkService.update(selectedHomework.id, { ...homeworkPayload, attachments: uploadedFiles });
-        toast.success('Homework updated successfully');
-      } else {
-        await homeworkService.create(homeworkPayload);
-        toast.success('Homework created successfully');
-      }
-
-      setDialogState({ isOpen: false, mode: 'create' });
-      fetchHomeworks();
-    } catch (error) {
-      console.error('Error submitting homework:', error);
-      toast.error('Failed to save homework');
-    }
-  };
-
   const handleDelete = async () => {
-    if (!homeworkToDelete) return;
-
+    if (!selectedHomework) return;
     try {
-      await homeworkService.delete(homeworkToDelete.id);
-      toast.success('Homework deleted successfully');
-      setHomeworkToDelete(null);
-      fetchHomeworks();
+      await homeworkService.delete(selectedHomework.id);
+      await fetchHomeworks();
+      setIsDeleteDialogOpen(false);
+      setSelectedHomework(null);
+      toast.success('Homework deleted successfully!');
     } catch (error) {
       console.error('Error deleting homework:', error);
       toast.error('Failed to delete homework');
@@ -106,117 +135,125 @@ export default function HomeworkPage() {
     setSelectedHomework(null);
   };
 
+  if (loading || profileLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto px-4 py-4 sm:py-8 min-h-screen">
-      <PageHeader 
+    <div className="container mx-auto py-8">
+      <PageHeader
         title="Homework"
         subtitle="Manage and track homework assignments"
-        icon={<Book className="w-6 h-6" />}
-        action={isAdminOrTeacher ? (
-          <Button onClick={handleCreateClick} className="flex items-center gap-2 whitespace-nowrap">
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Create Homework</span>
-            <span className="sm:hidden">New</span>
-          </Button>
-        ) : undefined}
-        className="mb-6"
+        icon={<Book className="text-primary-500" />}
+        action={
+          isAdminOrTeacher ? (
+            <Button className="text-sm" onClick={() => setDialogState({ isOpen: true, mode: 'create' })}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Homework
+            </Button>
+          ) : null
+        }
       />
 
-      {loading || profileLoading ? (
-        <LoadingSpinner />
-      ) : homeworks.length === 0 ? (
+      {homeworks.length === 0 ? (
         <EmptyState
-          title="No homework found"
-          description="Create your first homework assignment to get started"
-          icon={<Book className="w-16 h-16 sm:w-24 sm:h-24" />}
-          action={isAdminOrTeacher ? (
-            <Button onClick={handleCreateClick}>
-              <Plus className="w-4 h-4 mr-2" />
-              Create Homework
-            </Button>
-          ) : undefined}
+          title="No homework yet!"
+          description={isAdminOrTeacher ? "Start by creating a new homework" : "No homework has been assigned yet"}
+          icon={<Book className="w-full h-full" />}
+          action={
+            isAdminOrTeacher ? (
+              <Button className="text-sm" onClick={() => setDialogState({ isOpen: true, mode: 'create' })}>
+                Create Homework
+              </Button>
+            ) : null
+          }
         />
       ) : (
-        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {homeworks.map((homework) => (
-            <div key={homework.id} className="relative">
-              <HomeworkCard 
-                homework={homework} 
-                onEdit={isAdminOrTeacher ? handleEditClick : undefined} 
-                onView={handleViewClick} 
-                isStudent={!isAdminOrTeacher}
-                attachments={homework.attachments || []}
-              />
-              <div className="absolute top-2 right-2 flex space-x-2">
+        <div className="overflow-auto">
+          <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
+            {homeworks.map((homework) => (
+              <div key={homework.id} className="relative">
+                <HomeworkCard
+                  key={homework.id}
+                  homework={homework}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onView={() => {}}
+                  isStudent={profile?.role === 'STUDENT'}
+                  attachments={homework.attachments}
+                />
                 {isAdminOrTeacher && (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleEditClick(homework)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteClick(homework)}
-                      className="h-8 w-8 p-0 text-destructive"
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  </>
+                  <div className="absolute top-2 right-2 flex space-x-2">
+                    <button onClick={() => handleEdit(homework)}>
+                      <Edit className="text-blue-500" />
+                    </button>
+                    <button onClick={() => {
+                      setSelectedHomework(homework);
+                      setIsDeleteDialogOpen(true);
+                    }}>
+                      <Trash className="text-red-500" />
+                    </button>
+                    <button onClick={() => navigate(`/homework/${homework.id}`)}>
+                      <Eye className="text-gray-500" />
+                    </button>
+                  </div>
                 )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleViewClick(homework)}
-                  className="h-8 w-8 p-0"
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
-      {/* Edit Dialog */}
-      <Dialog open={dialogState.isOpen} onOpenChange={handleCloseDialog}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-          <DialogHeader className="sticky top-0 bg-background z-10 py-2">
-            <DialogTitle>
-              {dialogState.mode === 'create' ? 'Create Homework' : 'Edit Homework'}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="px-1 py-4">
-            <HomeworkForm
-              onSubmit={handleFormSubmit}
-              initialData={selectedHomework}
-              files={selectedHomework?.attachments}
-              onCancel={handleCloseDialog}
-              readOnly={false}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
+      {isAdminOrTeacher && (
+        <>
+          <Dialog open={dialogState.isOpen} onOpenChange={(open) => {
+            if (!open) handleCloseDialog();
+          }}>
+            <DialogContent className="max-w-4xl w-[95%] h-[90vh] overflow-y-auto">
+              <DialogHeader className="sticky top-0 bg-background z-10 pb-4 border-b">
+                <DialogTitle>
+                  {dialogState.mode === 'create' ? 'Create Homework' : 'Edit Homework'}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="py-4">
+                <HomeworkForm
+                  onSubmit={dialogState.mode === 'create' ? createHomework : updateHomework}
+                  initialData={dialogState.mode === 'edit' ? selectedHomework : undefined}
+                  files={selectedHomework?.attachments}
+                  onCancel={handleCloseDialog}
+                  readOnly={false}
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
 
-      <AlertDialog open={!!homeworkToDelete} onOpenChange={() => setHomeworkToDelete(null)}>
-        <AlertDialogContent className="max-w-md mx-auto">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the homework
-              and remove it from our servers.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="sm:space-x-2">
-            <AlertDialogCancel className="mb-2 sm:mb-0">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          <AlertDialog
+            open={isDeleteDialogOpen}
+            onOpenChange={setIsDeleteDialogOpen}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Homework</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this homework? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete}>
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
+      )}
     </div>
   );
 }

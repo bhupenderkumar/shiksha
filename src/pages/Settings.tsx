@@ -39,11 +39,17 @@ import { AnimatedText } from "@/components/ui/animated-text";
 
 import { useProfileAccess } from '@/services/profileService';
 
-
+import React from 'react';
+import { useAuth } from '@/lib/auth';
+import { useTheme } from '@/contexts/ThemeContext';
+import { SCHEMA } from '@/lib/constants';
 
 export default function SettingsPage() {
 
   const { profile, loading: profileLoading } = useProfileAccess();
+
+  const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const [settings, setSettings] = useState<SchoolSettings | null>(null);
 
@@ -75,28 +81,23 @@ export default function SettingsPage() {
 
   });
 
-
-
-  
-
   const [isEditing, setIsEditing] = useState(false);
 
   const [avatar, setAvatar] = useState<File | null>(null);
 
   const [unsavedChanges, setUnsavedChanges] = useState(false);
 
+  const [loading, setLoading] = React.useState(false);
 
-
-  const { loading, execute: fetchSettings } = useAsync(
+  const { loading: fetchSettingsLoading, execute: fetchSettings } = useAsync(
 
     async () => {
 
       if (!profile) return;
 
-
       const { data: schoolData, error: schoolError } = await settingsService.getSchoolSettings(profile.id);
 
-      if(schoolData) {
+      if (schoolData) {
 
         setSettings(schoolData);
 
@@ -124,8 +125,6 @@ export default function SettingsPage() {
 
   );
 
-
-
   const { execute: updateSettings } = useAsync(
 
     async (data: Partial<SchoolSettings>) => {
@@ -152,15 +151,11 @@ export default function SettingsPage() {
 
   );
 
-
-
   const { execute: updateUserSettings } = useAsync(
 
     async (settingsToUpdate: any) => {
 
       if (!profile) return;
-
-
 
       try {
 
@@ -184,29 +179,21 @@ export default function SettingsPage() {
 
   );
 
-
-
   const { execute: updateAvatar } = useAsync(
 
     async (file: File) => {
 
       if (!profile) return;
 
-
-
       const fileExt = file.name.split('.').pop();
 
       const filePath = `avatars/${profile.id}.${fileExt}`;
-
-
 
       const { error: uploadError } = await supabase.storage
 
         .from('profiles')
 
         .upload(filePath, file, { upsert: true });
-
-
 
       if (uploadError) {
 
@@ -216,19 +203,15 @@ export default function SettingsPage() {
 
       }
 
-
-
       const { error: updateError } = await supabase
 
-        .schema('school')
+        .schema(SCHEMA)
 
         .from('Profile')
 
         .update({ avatar_url: filePath })
 
         .eq('id', profile.id);
-
-
 
       if (updateError) {
 
@@ -238,8 +221,6 @@ export default function SettingsPage() {
 
       }
 
-
-
       toast.success('Avatar updated successfully');
 
     },
@@ -247,8 +228,6 @@ export default function SettingsPage() {
     { showErrorToast: true }
 
   );
-
-
 
   useEffect(() => {
 
@@ -260,8 +239,6 @@ export default function SettingsPage() {
 
   }, [profileLoading]);
 
-
-
   const handleSubmit = async (e: React.FormEvent) => {
 
     e.preventDefault();
@@ -269,8 +246,6 @@ export default function SettingsPage() {
     const form = e.target as HTMLFormElement;
 
     const formData = new FormData(form);
-
-
 
     await updateSettings({
 
@@ -297,8 +272,6 @@ export default function SettingsPage() {
     const form = e.target as HTMLFormElement;
 
     const formData = new FormData(form);
-
-  
 
     const settingsToUpdate = {
 
@@ -332,15 +305,9 @@ export default function SettingsPage() {
 
     };
 
-  
-
     try {
 
-      // Ensure userId is a string
-
       const userId = String(profile.id);
-
-      // Call the updateUserSettings method from the service
 
       await settingsService.updateUserSettings(userId, settingsToUpdate);
 
@@ -352,15 +319,11 @@ export default function SettingsPage() {
 
   };
 
-
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
 
     setUnsavedChanges(true);
 
   };
-
-
 
   const handleBeforeUnload = useCallback((event: BeforeUnloadEvent) => {
 
@@ -376,8 +339,6 @@ export default function SettingsPage() {
 
   }, [unsavedChanges]);
 
-
-
   useEffect(() => {
 
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -389,8 +350,6 @@ export default function SettingsPage() {
     };
 
   }, [handleBeforeUnload]);
-
-
 
   useEffect(() => {
 
@@ -416,13 +375,9 @@ export default function SettingsPage() {
 
     };
 
-
-
     fetchUserSettings();
 
   }, [profile?.id]);
-
-
 
   const handleInputChangeCheckbox = (e: React.ChangeEvent<HTMLInputElement>) => {
 
@@ -443,8 +398,6 @@ export default function SettingsPage() {
     }
 
   };
-
-
 
   const handleSelectChange = (value: string, name: string) => {
 
@@ -474,8 +427,6 @@ export default function SettingsPage() {
 
   };
 
-
-
   const handleFileUpload = (files: File[]) => {
 
     if (files.length > 0) {
@@ -490,9 +441,47 @@ export default function SettingsPage() {
 
   };
 
+  const handleSettingChange = async (key: keyof typeof settings, value: boolean | string) => {
 
+    if (!user?.id) return;
 
-  if (loading || profileLoading) {
+    setLoading(true);
+
+    try {
+
+      await settingsService.updateUserSettings(user.id, {
+
+        [key]: value,
+
+        updated_at: new Date().toISOString()
+
+      });
+
+      setSettings(prev => ({ ...prev, [key]: value }));
+
+      if (key === 'theme') {
+
+        toggleTheme();
+
+      }
+
+      toast.success('Settings updated successfully');
+
+    } catch (error) {
+
+      console.error('Error updating settings:', error);
+
+      toast.error('Failed to update settings');
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
+  };
+
+  if (loading || profileLoading || fetchSettingsLoading) {
 
     return (
 
@@ -506,8 +495,6 @@ export default function SettingsPage() {
 
   }
 
-
-
   const settingsSections = [
 
     { icon: User, title: "Account", description: "Manage your account settings and preferences" },
@@ -519,8 +506,6 @@ export default function SettingsPage() {
     { icon: Palette, title: "Appearance", description: "Customize the look and feel" },
 
   ];
-
-
 
   return (
 
@@ -556,11 +541,7 @@ export default function SettingsPage() {
 
         </div>
 
-
-
         <Separator className="my-6" />
-
-
 
         <Tabs defaultValue="profile" className="space-y-6">
 
@@ -599,8 +580,6 @@ export default function SettingsPage() {
             </TabsTrigger>
 
           </TabsList>
-
-
 
           <TabsContent value="profile" className="space-y-6">
 
@@ -697,8 +676,6 @@ export default function SettingsPage() {
             </CardAnimation>
 
           </TabsContent>
-
-
 
           <TabsContent value="school" className="space-y-6">
 
@@ -1008,8 +985,6 @@ export default function SettingsPage() {
 
           </TabsContent>
 
-
-
           <TabsContent value="notifications" className="space-y-6">
 
             <CardAnimation delay={100}>
@@ -1169,8 +1144,6 @@ export default function SettingsPage() {
             </CardAnimation>
 
           </TabsContent>
-
-
 
           <TabsContent value="appearance" className="space-y-6">
 
@@ -1362,8 +1335,6 @@ export default function SettingsPage() {
 
           </TabsContent>
 
-
-
           <TabsContent value="security" className="space-y-6">
 
             <CardAnimation delay={100}>
@@ -1498,6 +1469,64 @@ export default function SettingsPage() {
 
           </TabsContent>
 
+          <TabsContent value="theme" className="space-y-6">
+
+            <CardAnimation delay={100}>
+
+              <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+
+                <CardHeader>
+
+                  <CardTitle className="text-xl font-semibold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+
+                    Theme Settings
+
+                  </CardTitle>
+
+                  <CardDescription>
+
+                    Customize the theme of the application
+
+                  </CardDescription>
+
+                </CardHeader>
+
+                <CardContent className="space-y-6">
+
+                  <div className="flex items-center justify-between">
+
+                    <div className="space-y-0.5">
+
+                      <Label>Dark Mode</Label>
+
+                      <p className="text-sm text-muted-foreground">
+
+                        Toggle between light and dark themes
+
+                      </p>
+
+                    </div>
+
+                    <Switch
+
+                      checked={theme === 'dark'}
+
+                      onCheckedChange={(checked) => handleSettingChange('theme', checked ? 'dark' : 'light')}
+
+                      disabled={loading}
+
+                    />
+
+                  </div>
+
+                </CardContent>
+
+              </Card>
+
+            </CardAnimation>
+
+          </TabsContent>
+
         </Tabs>
 
       </div>
@@ -1507,4 +1536,3 @@ export default function SettingsPage() {
   );
 
 }
-

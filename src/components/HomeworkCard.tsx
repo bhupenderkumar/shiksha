@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, Eye, Trash } from 'lucide-react';
-import { Attachment } from '@/components/Attachment';
+import { Edit, Eye, Trash, Paperclip, Download, File } from 'lucide-react';
 import type { HomeworkType } from '@/services/homeworkService';
 import { fileService } from '@/services/fileService';
 import { Badge } from '@/components/ui/badge';
@@ -26,9 +25,10 @@ type HomeworkCardProps = {
   onDelete?: (homework: HomeworkType) => void;
   onView?: (homework: HomeworkType) => void;
   isStudent?: boolean;
+  attachments?: AttachmentType[];
 };
 
-export function HomeworkCard({ homework, onEdit, onDelete, onView, isStudent }: HomeworkCardProps) {
+export function HomeworkCard({ homework, onEdit, onDelete, onView, isStudent, attachments }: HomeworkCardProps) {
   const navigate = useNavigate();
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -38,13 +38,18 @@ export function HomeworkCard({ homework, onEdit, onDelete, onView, isStudent }: 
 
   useEffect(() => {
     const loadViewUrls = async () => {
-      if (!homework.attachments) return;
+      if (!attachments) return;
       
-      const urlPromises = homework.attachments
+      const urlPromises = attachments
         .filter(att => isImage(att.fileName))
         .map(async (att) => {
-          const viewUrl = await fileService.getViewUrl(att.filePath);
-          return [att.filePath, viewUrl] as [string, string];
+          try {
+            const viewUrl = await fileService.getSignedUrl(att.filePath);
+            return [att.filePath, viewUrl] as [string, string];
+          } catch (error) {
+            console.error('Error getting view URL:', error);
+            return [att.filePath, ''] as [string, string];
+          }
         });
 
       const urls = Object.fromEntries(await Promise.all(urlPromises));
@@ -52,7 +57,7 @@ export function HomeworkCard({ homework, onEdit, onDelete, onView, isStudent }: 
     };
 
     loadViewUrls();
-  }, [homework.attachments]);
+  }, [attachments]);
 
   const handleDownload = async (filePath: string, fileName: string) => {
     try {
@@ -63,18 +68,18 @@ export function HomeworkCard({ homework, onEdit, onDelete, onView, isStudent }: 
     }
   };
 
-  const isImage = (fileName: string): boolean => {
-    return /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName);
-  };
-
   const handleImageClick = async (filePath: string) => {
     try {
-      const viewUrl = await fileService.getViewUrl(filePath);
+      const viewUrl = await fileService.getSignedUrl(filePath);
       setPreviewImage(viewUrl);
     } catch (error) {
       console.error('Error getting view URL:', error);
       toast.error('Failed to load image preview');
     }
+  };
+
+  const isImage = (fileName: string): boolean => {
+    return /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName);
   };
 
   const toggleDescription = () => {
@@ -97,86 +102,125 @@ export function HomeworkCard({ homework, onEdit, onDelete, onView, isStudent }: 
   };
 
   return (
-    <Card onClick={() => onView?.(homework)} className="hover:shadow-lg transition-shadow duration-200 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-100">
-      <CardHeader className="pb-3">
+    <Card className="overflow-hidden">
+      <CardHeader>
         <div className="flex justify-between items-start">
-          <CardTitle className="text-xl font-semibold line-clamp-2 text-indigo-900">
-            {homework.title}
-          </CardTitle>
-        </div>
-        <div className="text-sm text-gray-500 mt-1">
-          Due: {format(new Date(homework.dueDate), 'MMM dd, yyyy')}
+          <div>
+            <h3 className="text-lg font-semibold truncate" title={homework.title}>
+              {homework.title}
+            </h3>
+            <p className="text-sm text-gray-500 truncate" title={`${homework.class?.name} - ${homework.class?.section}`}>
+              {homework.class?.name} - {homework.class?.section}
+            </p>
+            <p className="text-sm text-gray-500">
+              Due: {format(new Date(homework.dueDate), 'PPP')}
+            </p>
+            <Badge className={getStatusColor(homework.status)}>{homework.status}</Badge>
+          </div>
+          {!isStudent && (
+            <div className="flex space-x-2">
+              {onEdit && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onEdit(homework)}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              )}
+              {onDelete && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onDelete(homework)}
+                >
+                  <Trash className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </CardHeader>
-      <CardContent className="pb-4">
+      <CardContent>
         <div className="space-y-4">
           <div>
-            <p className={`text-gray-700 ${!showFullDescription ? 'line-clamp-3' : ''}`}>
+            <div
+              className={`prose max-w-none text-sm ${
+                !showFullDescription && 'line-clamp-3'
+              }`}
+            >
               {homework.description}
-            </p>
+            </div>
             {homework.description.split('\n').length > descriptionLineLimit && (
-              <button
+              <Button
+                variant="link"
+                size="sm"
                 onClick={toggleDescription}
-                className="text-indigo-600 hover:text-indigo-800 text-sm mt-1 focus:outline-none"
+                className="mt-1 h-auto p-0"
               >
                 {showFullDescription ? 'Show less' : 'Show more'}
-              </button>
+              </Button>
             )}
           </div>
 
-          {homework.attachments && homework.attachments.length > 0 && (
-            <div className="mt-4 space-y-2">
-              <h4 className="text-sm font-medium text-indigo-900 flex items-center gap-2">
-                Attachments ({homework.attachments.length})
+          {attachments && attachments.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold flex items-center gap-1">
+                <Paperclip className="h-4 w-4" />
+                Attachments
               </h4>
-              <div className="grid grid-cols-1 gap-2">
-                {homework.attachments.map((attachment, index) => (
-                  <div key={index} className="flex items-center justify-between bg-white p-2 rounded-lg shadow-sm">
-                    <Attachment
-                      fileName={attachment.fileName}
-                      fileType={attachment.fileType}
-                      onDownload={() => handleDownload(attachment.filePath, attachment.fileName)}
-                      className="flex-1"
-                    />
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {attachments.map((attachment) => (
+                  <div
+                    key={attachment.id}
+                    className="relative group border rounded-lg p-2 hover:bg-gray-50"
+                  >
+                    {isImage(attachment.fileName) ? (
+                      <div
+                        className="cursor-pointer"
+                        onClick={() => handleImageClick(attachment.filePath)}
+                      >
+                        <img
+                          src={imageUrls[attachment.filePath]}
+                          alt={attachment.fileName}
+                          className="w-full h-24 object-cover rounded"
+                        />
+                        <p className="text-xs mt-1 truncate">{attachment.fileName}</p>
+                      </div>
+                    ) : (
+                      <div className="flex items-start space-x-2">
+                        <File className="h-5 w-5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs truncate">{attachment.fileName}</p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs p-0 h-6"
+                            onClick={() =>
+                              handleDownload(attachment.filePath, attachment.fileName)
+                            }
+                          >
+                            <Download className="h-3 w-3 mr-1" />
+                            Download
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
             </div>
           )}
-
-          {homework.class && (
-            <div className="text-sm text-gray-600">
-              Class: {homework.class.name} {homework.class.section}
-            </div>
-          )}
-          {homework.subject && (
-            <div className="text-sm text-gray-600">
-              Subject: {homework.subject.name}
-            </div>
-          )}
         </div>
       </CardContent>
-
-      <CardFooter className="pt-3 flex justify-end gap-2">
-        <Badge className={`${getStatusColor(homework.status)} px-2 py-1 rounded-full text-xs font-medium`}>
-          {homework.status}
-        </Badge>
-        {isAdminOrTeacher && (
-          <>
-            <Button onClick={() => onEdit?.(homework)} variant="ghost" size="icon">
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button onClick={() => onDelete?.(homework)} variant="ghost" size="icon" className="text-destructive">
-              <Trash className="h-4 w-4" />
-            </Button>
-          </>
-        )}
-      </CardFooter>
-
       <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
         <DialogContent className="max-w-3xl">
           {previewImage && (
-            <img src={previewImage} alt="Preview" className="w-full h-auto" />
+            <img
+              src={previewImage}
+              alt="Preview"
+              className="w-full h-auto"
+            />
           )}
         </DialogContent>
       </Dialog>

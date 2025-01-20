@@ -3,6 +3,7 @@
 
 import { supabase } from '@/lib/api-client';
 import { AuthResponse, User } from '@supabase/supabase-js';
+import { SCHEMA } from '@/lib/constants'; // Import SCHEMA
 
 // Function to sign in a user with email and password
 export const signIn = async (email: string, password: string): Promise<AuthResponse> => {
@@ -30,7 +31,7 @@ export const signUp = async (
 
     // Additional logic for creating a user profile in the database
     const { error: profileError } = await supabase
-      .schema('school')
+      .schema(SCHEMA) // Use SCHEMA constant
       .from('Profile')
       .insert([
         {

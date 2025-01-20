@@ -1,5 +1,29 @@
 import { supabase } from "@/lib/api-client";
-import { CLASS_TABLE } from '../lib/constants';
+import { CLASS_TABLE, SCHEMA } from '../lib/constants'; // Import SCHEMA
+
+// String Constants
+const ERROR_MESSAGES = {
+  FETCH_CLASSES: 'Error fetching classes:',
+  FETCH_CLASS: 'Error fetching class:',
+  CREATE_CLASS: 'Error creating class:',
+  UPDATE_CLASS: 'Error updating class:',
+  DELETE_CLASS: 'Error deleting class:'
+};
+
+const SORT_ORDER = {
+  NAME_ASC: { ascending: true }
+};
+
+const TABLE_COLUMNS = `
+  id,
+  name,
+  section,
+  roomNumber,
+  capacity,
+  schoolId,
+  createdAt,
+  updatedAt
+`;
 
 export interface ClassType {
   id: string;
@@ -21,29 +45,23 @@ class ClassService {
   async findMany(params: { schoolId?: string } = {}) {
     try {
       let query = supabase
-        .schema('school')
+        .schema(SCHEMA) // Use SCHEMA constant
         .from(CLASS_TABLE)
-        .select(`
-          id,
-          name,
-          section,
-          roomNumber,
-          capacity,
-          schoolId,
-          createdAt,
-          updatedAt
-        `);
+        .select(TABLE_COLUMNS);
 
       if (params.schoolId) {
         query = query.eq('schoolId', params.schoolId);
       }
 
-      const { data, error } = await query.order('name');
-      if (error) throw error;
+      const { data, error } = await query.order('name', SORT_ORDER.NAME_ASC);
+      if (error) {
+        console.error(ERROR_MESSAGES.FETCH_CLASSES, error);
+        throw error;
+      }
 
       return data as ClassType[];
     } catch (error) {
-      console.error('Error fetching classes:', error);
+      console.error(ERROR_MESSAGES.FETCH_CLASSES, error);
       throw error;
     }
   }
@@ -56,25 +74,19 @@ class ClassService {
   async getById(id: string) {
     try {
       const { data, error } = await supabase
-        .schema('school')
+        .schema(SCHEMA) // Use SCHEMA constant
         .from(CLASS_TABLE)
-        .select(`
-          id,
-          name,
-          section,
-          roomNumber,
-          capacity,
-          schoolId,
-          createdAt,
-          updatedAt
-        `)
+        .select(TABLE_COLUMNS)
         .eq('id', id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error(ERROR_MESSAGES.FETCH_CLASS, error);
+        throw error;
+      }
       return data as ClassType;
     } catch (error) {
-      console.error('Error fetching class:', error);
+      console.error(ERROR_MESSAGES.FETCH_CLASS, error);
       throw error;
     }
   }
@@ -88,4 +100,3 @@ class ClassService {
 }
 
 export const classService = new ClassService();
-

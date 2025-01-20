@@ -755,17 +755,19 @@ VALUES (NOW(),NOW(),'BHUPENDER','+91-971727473','S10', 'ADM212','SAURABH VIHAR',
 
 -- Recreate the UserSettings table with a UNIQUE constraint on user_id
 CREATE TABLE IF NOT EXISTS school."UserSettings" (
-id SERIAL PRIMARY KEY,
-user_id UUID NOT NULL, -- This will be the UID from Supabase authentication
-notifications JSONB NOT NULL,
-theme JSONB NOT NULL,
-security JSONB NOT NULL,
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+user_id UUID NOT NULL REFERENCES auth.users(id),
+theme VARCHAR(10) DEFAULT 'light' CHECK (theme IN ('light', 'dark')),
+notifications_enabled BOOLEAN DEFAULT true,
+email_notifications BOOLEAN DEFAULT true,
+created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 UNIQUE(user_id) -- Ensure each user has only one settings entry
 );
 
-
+-- Grant permissions for UserSettings
+GRANT ALL ON TABLE school."UserSettings" TO authenticated;
+GRANT SELECT ON TABLE school."UserSettings" TO anon;
 
 create table
   school."Settings" (
