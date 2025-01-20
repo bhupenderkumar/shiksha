@@ -16,6 +16,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Attachment } from '@/components/Attachment'; // Import Attachment component
 import { useAuth } from '@/lib/auth';
 import { useProfileAccess } from '@/services/profileService';
+import NepSyllabus from '@/components/NepSyllabus';
 
 export default function ClassworkPage() {
   const { user } = useAuth(); // Retrieve user from Auth context
@@ -41,7 +42,7 @@ export default function ClassworkPage() {
   const { loading, execute: fetchClassworks } = useAsync(
     async () => {
       if (!profile) return;
-      const data = await classworkService.getAll(profile.role, profile.classId);
+      const data = await classworkService.getAll(profile.role);
       setClassworks(data);
     },
     { showErrorToast: true }
@@ -201,7 +202,7 @@ export default function ClassworkPage() {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction 
+                <AlertDialogAction
                   onClick={() => handleDeleteClasswork(selectedClasswork?.id || '')}
                   className="bg-red-500 hover:bg-red-600 text-white"
                 >

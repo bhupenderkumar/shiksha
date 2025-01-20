@@ -190,9 +190,9 @@ export default function StudentsPage() {
     return <LoadingSpinner />;
   }
 
-  if (!isAdminOrTeacher) {
-    return null;
-  }
+  // if (isAdminOrTeacher) {
+  //   return null;
+  // }
 
   const navigate = useNavigate();
   const [students, setStudents] = useState<Student[]>([]);

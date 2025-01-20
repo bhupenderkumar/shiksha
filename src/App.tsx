@@ -22,9 +22,9 @@ import ProfilePage from './pages/profile';
 import HomeworkDetails from './pages/HomeworkDetails';
 
 // Public routes that don't require authentication
-const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/', '/homework/view/:id']
+const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/', '/homework/view/:id', '/homework/:id', '/classwork/:id']
 
-function PrivateRoute({ children, role }: { children: React.ReactNode, role?: string }) {
+function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const location = useLocation();
 
@@ -44,11 +44,6 @@ function PrivateRoute({ children, role }: { children: React.ReactNode, role?: st
 
   // If authenticated and trying to access auth pages
   if (user && PUBLIC_ROUTES.includes(location.pathname)) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  // If role is specified and user does not have that role
-  if (role && !['admin', 'teacher'].includes(user.role)) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -77,6 +72,8 @@ function AppRoutes() {
           <HomeworkView />
         </Layout>
       } />
+      <Route path="/homework/:id" element={<HomeworkDetails />} />
+      <Route path="/classwork/:id" element={<ClassworkDetail />} />
 
       {/* Protected Routes */}
       <Route path="/dashboard" element={
@@ -86,14 +83,13 @@ function AppRoutes() {
           </Layout>
         </PrivateRoute>
       } />
-
-     <Route path="/students" element={
-  <PrivateRoute role="admin">
-    <Layout>
-      <Students />
-    </Layout>
-  </PrivateRoute>
-} />
+      <Route path="/students" element={
+        <PrivateRoute>
+          <Layout>
+            <Students />
+          </Layout>
+        </PrivateRoute>
+      } />
       <Route path="/subjects" element={
         <PrivateRoute>
           <Layout>
@@ -151,13 +147,6 @@ function AppRoutes() {
         </PrivateRoute>
       } />
 
-      <Route path="/classwork/:id" element={
-        <PrivateRoute>
-          <Layout>
-            <ClassworkDetail />
-          </Layout>
-        </PrivateRoute>
-      } />
       <Route path="/homework/:id/edit" element={
         <PrivateRoute>
           <Layout>
@@ -170,13 +159,6 @@ function AppRoutes() {
         <PrivateRoute>
           <Layout>
             <Feedback />
-          </Layout>
-        </PrivateRoute>
-      } />
-      <Route path="/homework/:id" element={
-        <PrivateRoute>
-          <Layout>
-            <HomeworkDetails />
           </Layout>
         </PrivateRoute>
       } />

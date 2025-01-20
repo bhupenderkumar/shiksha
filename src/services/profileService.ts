@@ -1,9 +1,44 @@
+// String Constants
+const USER_ROLES = {
+  ADMIN: 'ADMIN',
+  TEACHER: 'TEACHER',
+  STUDENT: 'STUDENT'
+} as const;
+
+// Role hierarchy and permissions
+const ROLE_HIERARCHY = {
+  [USER_ROLES.ADMIN]: ['ADMIN', 'TEACHER', 'STUDENT'],
+  [USER_ROLES.TEACHER]: ['TEACHER', 'STUDENT'],
+  [USER_ROLES.STUDENT]: ['STUDENT']
+} as const;
+
+const ERROR_MESSAGES = {
+  USER_NOT_FOUND: 'User not found',
+  EMAIL_NOT_FOUND: 'User email not found',
+  UPDATE_ROLE: 'Error updating user role:',
+  FETCH_USER: 'Error in getUser:',
+  UPDATE_PROFILE: 'Error updating user profile:',
+  INSUFFICIENT_PERMISSIONS: 'Insufficient permissions for this operation'
+};
+
+const LOG_MESSAGES = {
+  FETCH_ROLE: 'Fetching user role:',
+  QUERY_STAFF: 'Querying staff with email:',
+  STAFF_RESPONSE: 'Staff query response:',
+  STUDENT_RESPONSE: 'Student query response:'
+};
+
+const DEFAULT_VALUES = {
+  USER_NAME: 'User',
+  ROLE: USER_ROLES.STUDENT
+};
+
 import { User } from '@supabase/supabase-js';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/api-client';
-import { ROLES } from '@/lib/constants';
+import { SCHEMA, STAFF_TABLE, STUDENT_TABLE } from '@/lib/constants';
 
-export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
+export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES];
 export interface UserProfile extends User {
   role: UserRole;
   full_name?: string;
@@ -12,35 +47,41 @@ export interface UserProfile extends User {
 
 class ProfileService {
   private cache: Map<string, UserProfile> = new Map();
-  // Add email sanitization function
+
+  // Check if a role has permission to perform an action
+  private hasPermission(userRole: UserRole, requiredRole: UserRole): boolean {
+    return ROLE_HIERARCHY[userRole]?.includes(requiredRole) || false;
+  }
+
   private sanitizeEmail(email: string): string {
     return email.toLowerCase().trim();
   }
-  // Updated utility function to handle encoding properly
+
   private encodeData(data: Record<string, any>): Record<string, any> {
     return Object.fromEntries(
-      Object.entries(data).map(([key, value]) => [
-        key,
-        value // Remove encoding as Supabase handles this
-      ])
+      Object.entries(data).map(([key, value]) => [key, typeof value === 'string' ? value.trim() : value])
     );
   }
+
   async getUser(userId: string): Promise<UserProfile | null> {
-    console.log('Fetching user role:', userId);
+    console.log(LOG_MESSAGES.FETCH_ROLE, userId);
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
-      if (error) throw  error;
+      if (error) throw error;
       if (user?.email) {
         const sanitizedEmail = this.sanitizeEmail(user.email);
-        console.log('Querying staff with email:', sanitizedEmail);
+        console.log(LOG_MESSAGES.QUERY_STAFF, sanitizedEmail);
+        
         // First try staff lookup
         let { data: staffData, error: staffError } = await supabase
-          .from('Staff')
+        .schema(SCHEMA)
+          .from(STAFF_TABLE)
           .select('*')
           .eq('email', sanitizedEmail);
-        console.log('Staff query response:', { staffData, staffError });
+        console.log(LOG_MESSAGES.STAFF_RESPONSE, { staffData, staffError });
+        
         if (staffData && staffData.length > 0) {
-          const role = staffData[0].role ? (staffData[0].role as UserRole) : 'TEACHER';
+          const role = staffData[0].role ? (staffData[0].role as UserRole) : USER_ROLES.TEACHER;
           
           const userProfile: UserProfile = {
             ...user,
@@ -51,28 +92,32 @@ class ProfileService {
           this.cache.set(userId, userProfile);
           return userProfile;
         }
+
         // Try student lookup using parent's email
         let { data: studentData, error: studentError } = await supabase
-          .from('Student')
+        .schema(SCHEMA)
+          .from(STUDENT_TABLE)
           .select('*')
-          .eq('parentEmail', sanitizedEmail); // Changed from 'email' to 'parentEmail'
-        console.log('Student query response:', { studentData, studentError });
+          .eq('parentEmail', sanitizedEmail);
+        console.log(LOG_MESSAGES.STUDENT_RESPONSE, { studentData, studentError });
+
         // Create student profile if found
         if (studentData && studentData.length > 0) {
           const userProfile: UserProfile = {
             ...user,
-            role: 'STUDENT',
+            role: USER_ROLES.STUDENT,
             full_name: studentData[0].name,
             avatar_url: user.user_metadata?.avatar_url,
           };
           this.cache.set(userId, userProfile);
           return userProfile;
         }
+
         // Default profile if no specific role found
         const userProfile: UserProfile = {
           ...user,
-          role: 'STUDENT',
-          full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+          role: DEFAULT_VALUES.ROLE,
+          full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || DEFAULT_VALUES.USER_NAME,
           avatar_url: user.user_metadata?.avatar_url,
         };
         this.cache.set(userId, userProfile);
@@ -80,59 +125,26 @@ class ProfileService {
       }
       return null;
     } catch (error) {
-      console.error('Error in getUser:', error);
+      console.error(ERROR_MESSAGES.FETCH_USER, error);
       return null;
     }
   }
-  async updateUserRole(userId: string, role: UserRole): Promise<UserProfile | null> {
+
+  async updateUserRole(userId: string, newRole: UserRole, currentUser: UserProfile): Promise<void> {
+    if (!this.hasPermission(currentUser.role, USER_ROLES.ADMIN)) {
+      throw new Error(ERROR_MESSAGES.INSUFFICIENT_PERMISSIONS);
+    }
+
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
-      if (!user?.email) {
-        throw new Error('User email not found');
-      }
-      const sanitizedEmail = this.sanitizeEmail(user.email);
-
-      // Delete existing staff record if any
-      await supabase
+      const { error } = await supabase
         .from('Staff')
-        .delete()
-        .eq('email', sanitizedEmail);
+        .update({ role: newRole })
+        .eq('id', userId);
 
-      if (role === 'ADMIN' || role === 'TEACHER') {
-        const staffData = {
-          id: userId,
-          employeeId: `EMP${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
-          name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-          role: role,
-          qualification: 'Not Specified',
-          experience: 0,
-          email: sanitizedEmail,
-          contactNumber: 'Not Specified',
-          address: 'Not Specified',
-          joiningDate: new Date().toISOString(),
-          schoolId: '1',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-
-        const { error: staffError } = await supabase
-          .from('Staff')
-          .insert(staffData)
-          .select()
-          .single();
-
-        if (staffError) {
-          console.error('Error inserting staff data:', staffError);
-          throw staffError;
-        }
-      }
-
-      this.cache.delete(userId);
-      return this.getUser(userId);
+      if (error) throw error;
+      this.cache.delete(userId); // Invalidate cache
     } catch (error) {
-      console.error('Error in updateUserRole:', error);
-      return null;
+      throw new Error(`${ERROR_MESSAGES.UPDATE_ROLE} ${error.message}`);
     }
   }
 
@@ -147,17 +159,28 @@ class ProfileService {
 
       return null;
     } catch (error) {
-      console.error('Error getting current user:', error);
+      console.error(ERROR_MESSAGES.FETCH_USER, error);
       return null;
     }
   }
 }
+
 export const profileService = new ProfileService();
+
 // Utility functions
-export const isAdmin = (user?: UserProfile | null): boolean => user?.role === 'ADMIN';
-export const isTeacher = (user?: UserProfile | null): boolean => user?.role === 'TEACHER';
-export const isStudent = (user?: UserProfile | null): boolean => user?.role === 'STUDENT';
-export const isAdminOrTeacher = (user?: UserProfile | null): boolean => isAdmin(user) || isTeacher(user);
+export const isAdmin = (user?: UserProfile | null): boolean => 
+  Boolean(user?.role && ROLE_HIERARCHY[user.role]?.includes(USER_ROLES.ADMIN));
+
+export const isTeacher = (user?: UserProfile | null): boolean => 
+  Boolean(user?.role && ROLE_HIERARCHY[user.role]?.includes(USER_ROLES.TEACHER));
+
+export const isStudent = (user?: UserProfile | null): boolean => 
+  Boolean(user?.role && ROLE_HIERARCHY[user.role]?.includes(USER_ROLES.STUDENT));
+
+export const isAdminOrTeacher = (user?: UserProfile | null): boolean => 
+  Boolean(user?.role && (ROLE_HIERARCHY[user.role]?.includes(USER_ROLES.ADMIN) || 
+                        ROLE_HIERARCHY[user.role]?.includes(USER_ROLES.TEACHER)));
+
 // React Hook for user profile
 export function useProfile() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -191,6 +214,7 @@ export function useProfile() {
   }, []);
   return { profile, loading, error };
 }
+
 // Hook for role-based access control
 export function useProfileAccess() {
   const { profile, loading, error } = useProfile();

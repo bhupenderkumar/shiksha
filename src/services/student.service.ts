@@ -1,3 +1,14 @@
+// String Constants
+const DEFAULT_PASSWORD_PREFIX = 'Welcome@';
+const STUDENT_ROLE = 'STUDENT';
+const ERROR_MESSAGES = {
+  FETCH_STUDENTS: 'Error fetching students:',
+  FETCH_STUDENT: 'Error fetching student:',
+  CREATE_STUDENT: 'Error creating student:',
+  UPDATE_STUDENT: 'Error updating student:',
+  DELETE_STUDENT: 'Error deleting student:'
+};
+
 import { supabase, supabaseAdmin } from '@/lib/api-client';
 import { STUDENT_TABLE } from '../lib/constants';
 
@@ -56,7 +67,7 @@ class StudentService {
 
       return data as Student[];
     } catch (error) {
-      console.error('Error fetching students:', error);
+      console.error(ERROR_MESSAGES.FETCH_STUDENTS, error);
       throw error;
     }
   }
@@ -80,7 +91,7 @@ class StudentService {
       if (error) throw error;
       return data as Student;
     } catch (error) {
-      console.error('Error fetching student:', error);
+      console.error(ERROR_MESSAGES.FETCH_STUDENT, error);
       throw error;
     }
   }
@@ -90,11 +101,11 @@ class StudentService {
       // Create auth user for parent
       const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
         email: studentData.parentEmail,
-        password: `Welcome@${studentData.admissionNumber}`,
+        password: `${DEFAULT_PASSWORD_PREFIX}${studentData.admissionNumber}`,
         email_confirm: true,
         user_metadata: {
           full_name: studentData.parentName,
-          role: 'STUDENT',
+          role: STUDENT_ROLE,
           admission_number: studentData.admissionNumber
         }
       });
@@ -108,7 +119,7 @@ class StudentService {
         .insert([{
           id: authData.user.id,
           user_id: authData.user.id,
-          role: 'STUDENT',
+          role: STUDENT_ROLE,
           full_name: studentData.name
         }]);
 
@@ -146,12 +157,12 @@ class StudentService {
         student,
         credentials: {
           email: studentData.parentEmail,
-          password: `Welcome@${studentData.admissionNumber}`,
+          password: `${DEFAULT_PASSWORD_PREFIX}${studentData.admissionNumber}`,
           username: studentData.name.toLowerCase().replace(/\s+/g, '.')
         }
       };
     } catch (error) {
-      console.error('Error creating student:', error);
+      console.error(ERROR_MESSAGES.CREATE_STUDENT, error);
       throw error;
     }
   }
@@ -193,7 +204,7 @@ class StudentService {
       if (error) throw error;
       return updated as Student;
     } catch (error) {
-      console.error('Error updating student:', error);
+      console.error(ERROR_MESSAGES.UPDATE_STUDENT, error);
       throw error;
     }
   }
@@ -204,7 +215,7 @@ class StudentService {
       await supabase.schema('school').from('Profile').delete().eq('user_id', id);
       await supabaseAdmin.auth.admin.deleteUser(id);
     } catch (error) {
-      console.error('Error deleting student:', error);
+      console.error(ERROR_MESSAGES.DELETE_STUDENT, error);
       throw error;
     }
   }

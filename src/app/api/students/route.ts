@@ -1,3 +1,4 @@
+import { SCHEMA, PROFILE_TABLE, STUDENT_TABLE } from '@/lib/constants'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
@@ -14,7 +15,8 @@ export async function GET() {
 
     // Get user's profile to check role
     const { data: profile, error: profileError } = await supabase
-      .from('profiles')
+    .schema(SCHEMA)
+      .from(PROFILE_TABLE)
       .select('role')
       .eq('user_id', user.id)
       .single()
@@ -25,10 +27,11 @@ export async function GET() {
 
     // Fetch students based on role
     const { data: students, error } = await supabase
-      .from('students')
+    .schema(SCHEMA)
+      .from(STUDENT_TABLE)
       .select(`
         *,
-        profile:profiles(*)
+        Profile:Profile(*)
       `)
 
     if (error) {

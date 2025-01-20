@@ -10,16 +10,18 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FileUploader } from '@/components/FileUploader';
 import { classService } from '@/services/classService';
-import { HomeworkStatus } from '@prisma/client';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import { fileService } from '@/services/fileService';
-import { supabase } from '@/lib/api-client'; // Add this import
+import { supabase } from '@/lib/api-client';
+import { HomeworkType } from '@/services/homeworkService';
+import { SCHEMA } from '@/lib/constants';
+import { v4 as uuidv4 } from 'uuid';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -28,9 +30,14 @@ const formSchema = z.object({
     required_error: "Due date is required",
   }),
   classId: z.string().min(1, 'Class is required'),
-  subjectId: z.string().min(1, 'Subject is required'), // Add this line
-  status: z.enum(['PENDING', 'COMPLETED', 'OVERDUE', 'SUBMITTED']).default('PENDING'),
-  files: z.array(z.any()).optional()
+  subjectId: z.string().min(1, 'Subject is required'), 
+  status: z.enum(['PENDING', 'COMPLETED', 'OVERDUE', 'SUBMITTED'] as const).default('PENDING'),
+  files: z.array(z.custom<File>()).optional(),
+  existingFiles: z.array(z.object({
+    id: z.string(),
+    fileName: z.string(),
+    filePath: z.string()
+  })).optional()
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -41,7 +48,7 @@ type HomeworkFormData = {
   dueDate: Date;
   subjectId: string;
   classId: string;
-  teacherId?: string; // Make teacherId optional
+  teacherId?: string; 
   // ...other fields
 };
 
@@ -78,7 +85,6 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
 
   const selectedDate = watch('dueDate');
   const selectedClassId = watch('classId');
-  const attachments = watch('attachments');
 
   // Load classes
   useEffect(() => {
@@ -100,7 +106,7 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
       if (!selectedClassId) return;
       try {
         const { data, error } = await supabase
-          .schema('school')
+          .schema(SCHEMA as any)
           .from('Subject')
           .select('id, name, code')
           .eq('classId', selectedClassId);
@@ -118,27 +124,79 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
     }
   }, [selectedClassId]);
 
-  const handleFormSubmit = async (data: FormData) => {
+  const onFormSubmit = async (formData: FormData) => {
     try {
-      const formData = {
-        ...data,
-        files: files, // Add the files to the form data
-        attachments: existingFiles // Keep existing files
+      const fileUploads = files.map(async (file) => {
+        const path = `homework/${formData.classId}/${Date.now()}_${file.name}`;
+        const fullPath = `File/${path}`;
+        
+        const { data, error } = await supabase.storage
+          .from('File')
+          .upload(path, file, {
+            cacheControl: '3600',
+            upsert: true
+          });
+
+        if (error) throw error;
+
+        // Ensure all required fields are present
+        if (!file.name) {
+          throw new Error('File name is required');
+        }
+
+        return {
+          id: uuidv4(),
+          fileName: file.name,
+          filePath: fullPath,
+          fileType: file.type || 'application/octet-stream',
+          uploadedAt: new Date().toISOString(),
+          homeworkId: null // This will be set by the service
+        };
+      });
+
+      const uploadedFiles = await Promise.all(fileUploads);
+
+      // Get session for uploadedBy
+      const session = await supabase.auth.getSession();
+      const userId = session.data.session?.user.id;
+
+      if (!userId) {
+        throw new Error('User must be logged in to submit homework');
+      }
+
+      // Prepare the submission data
+      const submissionData = {
+        ...formData,
+        attachments: [
+          ...uploadedFiles,
+          ...(formData.existingFiles || []).map(file => ({
+            id: file.id,
+            fileName: file.fileName || file.name, // Ensure fileName is present
+            filePath: file.filePath,
+            fileType: file.fileType || file.type || 'application/octet-stream',
+            uploadedAt: file.uploadedAt || new Date().toISOString()
+          }))
+        ],
+        uploadedBy: userId
       };
-      await onSubmit(formData);
+
+      await onSubmit(submissionData);
+      setFiles([]); // Clear the files state after successful submission
     } catch (error) {
-      console.error('Error submitting homework:', error);
-      toast.error('Failed to create homework');
+      console.error('Error submitting form:', error);
+      toast.error('Failed to submit homework');
     }
   };
 
   const handleFileChange = (newFiles: File[]) => {
     setFiles(newFiles);
-    setValue('files', newFiles); // Update form value with new files
+    setValue('files', newFiles); 
   };
 
   const removeExistingFile = (fileId: string) => {
-    setExistingFiles(prev => prev.filter(f => f.id !== fileId));
+    const updatedFiles = existingFiles.filter(f => f.id !== fileId);
+    setExistingFiles(updatedFiles);
+    setValue('existingFiles', updatedFiles);
   };
 
   const STATUS_OPTIONS = [
@@ -149,7 +207,7 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
   ];
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
       <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2">
         <div className="space-y-2 col-span-full md:col-span-2">
           <Label htmlFor="title" className="text-base font-semibold">Title</Label>
@@ -255,7 +313,7 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
           <Label className="text-base font-semibold">Status</Label>
           <Select
             value={getValues('status')}
-            onValueChange={(value) => setValue('status', value)}
+            onValueChange={(value: 'PENDING' | 'COMPLETED' | 'OVERDUE' | 'SUBMITTED') => setValue('status', value)}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select status" />

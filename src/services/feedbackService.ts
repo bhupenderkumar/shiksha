@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/api-client";
-import { FEEDBACK_TABLE } from '../lib/constants';
+import { FEEDBACK_TABLE, SCHEMA } from '../lib/constants'; // Import constants
 import { profileService, type UserProfile } from "@/services/profileService";
 
 export interface FeedbackReply {
@@ -26,7 +26,7 @@ export interface Feedback {
 
 export const feedbackService = {
     async create(userId: number, title: string, description: string, note?: string) {
-        const { data, error } = await supabase.schema('school')
+        const { data, error } = await supabase.schema(SCHEMA)
             .from(FEEDBACK_TABLE)
             .insert([{ 
                 user_id: userId, 
@@ -47,7 +47,7 @@ export const feedbackService = {
     },
 
     async getAll() {
-        const { data: feedbacks, error } = await supabase.schema('school')
+        const { data: feedbacks, error } = await supabase.schema(SCHEMA)
             .from(FEEDBACK_TABLE)
             .select()
             .order('created_at', { ascending: false });
@@ -73,7 +73,7 @@ export const feedbackService = {
         const feedbackIds = feedbacks.map(f => f.id);
 
         // Fetch all replies
-        const { data: replies, error: repliesError } = await supabase.schema('school')
+        const { data: replies, error: repliesError } = await supabase.schema(SCHEMA)
             .from('feedback_replies')
             .select()
             .in('feedback_id', feedbackIds)
@@ -120,7 +120,7 @@ export const feedbackService = {
     },
 
     async getByUserId(userId: number) {
-        const { data: feedbacks, error } = await supabase.schema('school')
+        const { data: feedbacks, error } = await supabase.schema(SCHEMA)
             .from(FEEDBACK_TABLE)
             .select()
             .eq('user_id', userId)
@@ -135,7 +135,7 @@ export const feedbackService = {
         const feedbackIds = feedbacks.map(f => f.id);
 
         // Fetch all replies
-        const { data: replies, error: repliesError } = await supabase.schema('school')
+        const { data: replies, error: repliesError } = await supabase.schema(SCHEMA)
             .from('feedback_replies')
             .select()
             .in('feedback_id', feedbackIds)
@@ -182,7 +182,7 @@ export const feedbackService = {
     },
 
     async getById(id: number) {
-        const { data: feedback, error } = await supabase.schema('school')
+        const { data: feedback, error } = await supabase.schema(SCHEMA)
             .from(FEEDBACK_TABLE)
             .select()
             .eq('id', id)
@@ -194,7 +194,7 @@ export const feedbackService = {
         const userProfile = await profileService.getUser(feedback.user_id.toString());
 
         // Fetch replies
-        const { data: replies, error: repliesError } = await supabase.schema('school')
+        const { data: replies, error: repliesError } = await supabase.schema(SCHEMA)
             .from('feedback_replies')
             .select()
             .eq('feedback_id', id)
@@ -231,7 +231,7 @@ export const feedbackService = {
     },
 
     async updateStatus(id: number, status: 'RAISED' | 'RESOLVED') {
-        const { data, error } = await supabase.schema('school')
+        const { data, error } = await supabase.schema(SCHEMA)
             .from(FEEDBACK_TABLE)
             .update({ status })
             .eq('id', id)
@@ -245,7 +245,7 @@ export const feedbackService = {
 
     async addReply(feedbackId: number, userId: number, reply: string) {
         // First add the reply
-        const { data: replyData, error: replyError } = await supabase.schema('school')
+        const { data: replyData, error: replyError } = await supabase.schema(SCHEMA)
             .from('feedback_replies')
             .insert([{
                 feedback_id: feedbackId,
@@ -258,7 +258,7 @@ export const feedbackService = {
         if (replyError) throw replyError;
 
         // Update feedback status to RESOLVED
-        const { error: statusError } = await supabase.schema('school')
+        const { error: statusError } = await supabase.schema(SCHEMA)
             .from(FEEDBACK_TABLE)
             .update({ status: 'RESOLVED' })
             .eq('id', feedbackId);

@@ -1,30 +1,39 @@
-// This service handles all operations related to homework management.
-// It includes functions for creating, updating, and fetching homework details.
-// Each function is designed to interact with the Supabase backend.
-
 import { supabase } from '@/lib/api-client';
 import { v4 as uuidv4 } from 'uuid';
 import { fileTableService } from './fileTableService';
-import { profileService } from '@/services/profileService';
-import { HOMEWORK_TABLE } from '../lib/constants';
+import type { Database } from '../types/supabase';
+import { HOMEWORK_TABLE, SCHEMA } from '@/lib/constants';
+import { de } from 'date-fns/locale';
+import { profileService } from './profileService';
 
-// Define the structure of a homework entry
-export type HomeworkType = {
+// Define the structure of a file attachment from API response
+interface FileAttachment {
+  id: string;
+  fileName: string;
+  filePath: string;
+  fileType: string;
+  feeId: string | null;
+  schoolId: string | null;
+  homeworkId: string | null;
+  uploadedAt: string;
+  uploadedBy: string;
+  classworkId: string | null;
+  grievanceId: string | null;
+  homeworkSubmissionId: string | null;
+}
+
+// Define the structure of a homework object
+export interface HomeworkType {
   id: string;
   title: string;
   description: string;
-  dueDate: string;
+  dueDate: Date;
   subjectId: string;
   classId: string;
   status: HomeworkStatus;
-  createdAt: string;
-  updatedAt: string;
-  attachments?: Array<{
-    id: string;
-    fileName: string;
-    filePath: string;
-    fileType?: string;
-  }>;
+  createdAt: Date;
+  updatedAt: Date;
+  attachments?: FileAttachment[];
   class?: {
     id: string;
     name: string;
@@ -35,217 +44,304 @@ export type HomeworkType = {
     name: string;
     code: string;
   };
-};
+}
 
-// Define the possible statuses of a homework entry
+// Define homework status types
 export type HomeworkStatus = 'PENDING' | 'COMPLETED' | 'OVERDUE' | 'SUBMITTED';
 
 // Define the structure of data required to create a new homework entry
-type CreateHomeworkData = Omit<HomeworkType, 'id' | 'createdAt' | 'updatedAt' | 'uploadedBy'> & {
-};
+interface FileData {
+  name: string;
+  filePath: {
+    fullPath: string;
+    path: string;
+    id?: string;
+  };
+  type: string;
+}
+
+interface CreateHomeworkData {
+  title: string;
+  description: string;
+  dueDate: Date | string;
+  subjectId: string;
+  classId: string;
+  attachments?: FileAttachment[];
+  uploadedBy: string;
+}
+
+interface UpdateFileData extends FileData {
+  id?: string;
+}
 
 // Define the structure of data required to update an existing homework entry
-type UpdateHomeworkData = Partial<Omit<HomeworkType, 'id' | 'createdAt' | 'updatedAt'>> & {
-  attachments?: Array<{
-    id?: string;
-    fileName: string;
-    filePath: string;
-    fileType?: string;
-  }>;
+interface UpdateHomeworkData extends Partial<Omit<CreateHomeworkData, 'uploadedBy' | 'attachments'>> {
+  uploadedBy?: string;
+  attachments?: UpdateFileData[];
+}
+
+// Helper function to validate ISO date string
+const isValidISOString = (str: string) => {
+  try {
+    return new Date(str).toISOString() === str;
+  } catch {
+    return false;
+  }
 };
 
-// Homework service object
+// Homework service to manage homework-related operations
 export const homeworkService = {
-  /**
-   * Retrieves all homework entries, optionally filtered by role or class ID.
-   * @param role Optional role to filter by
-   * @param classId Optional class ID to filter by
-   * @returns An array of homework entries
-   */
-  async getAll(role?: string, classId?: string) {
-    try {
-      let query = supabase
-        .schema('school')
-        .from(HOMEWORK_TABLE)
-        .select(`
-          *,
-          class:Class (
-            id,
-            name,
-            section
-          ),
-          subject:Subject (
-            id,
-            name,
-            code
-          ),
-          attachments:File(*)
-        `);
+  async getAll(role: string, classId?: string) {
+    let query = supabase
+      .schema(SCHEMA as any)
+      .from(HOMEWORK_TABLE)
+      .select(`
+        *,
+        class:Class(id, name, section),
+        subject:Subject(id, name, code),
+        attachments:File(*)
+      `)
+      .order('dueDate', { ascending: false });
 
-      if (classId) {
-        query = query.eq('classId', classId);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-
-      return data;
-    } catch (error) {
-      console.error('Error fetching homework:', error);
-      throw error;
+    if (role === 'STUDENT' && classId) {
+      query = query.eq('classId', classId);
     }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    return (data as any[]).map(homework => {
+      const transformedHomework = {
+        ...homework,
+        dueDate: new Date(homework.dueDate),
+        createdAt: new Date(homework.createdAt),
+        updatedAt: new Date(homework.updatedAt),
+      };
+      
+      // Ensure attachments are preserved
+      if (homework.attachments) {
+        transformedHomework.attachments = homework.attachments;
+      }
+    
+      return transformedHomework;
+    }) as HomeworkType[];
   },
 
-  /**
-   * Creates a new homework entry in the database.
-   * Retrieves the current user and prepares the data for insertion.
-   * Handles attachments if any are provided.
-   * @param data Data required to create a new homework entry
-   * @returns The ID of the newly created homework entry
-   */
-  async create(data: CreateHomeworkData) {
-    // Function to create a new homework entry in the database.
-    // Retrieves the current user and prepares the data for insertion.
-    // Handles attachments if any are provided.
+  async create(data: CreateHomeworkData, userId: string) {
     try {
-      const user = await profileService.getCurrentUser();
-      const uploadedBy = user?.id;
-
-      const { attachments, ...homeworkData } = data;
-      const localHomeworkData = { ...homeworkData };
-      delete localHomeworkData?.userId;
-
-      const id = uuidv4();
+      const { attachments, uploadedBy, ...homeworkData } = data;
+      const homeworkId = uuidv4();
       const now = new Date().toISOString();
 
-      const { error: homeworkError } = await supabase
-        .schema('school')
+      // Use the dueDate as is if it's already an ISO string, otherwise convert it
+      const dueDate = typeof homeworkData.dueDate === 'string' && isValidISOString(homeworkData.dueDate)
+        ? homeworkData.dueDate
+        : new Date(homeworkData.dueDate).toISOString();
+
+      const { data: homework, error: homeworkError } = await supabase
+        .schema(SCHEMA as any)
         .from(HOMEWORK_TABLE)
-        .insert({
-          id,
-          ...localHomeworkData,
+        .insert([{
+          ...homeworkData,
+          id: homeworkId,
+          status: 'PENDING',
           createdAt: now,
-          updatedAt: now
-        });
-
-      if (homeworkError) throw homeworkError;
-
-      // Handle attachments if any
-      if (attachments && attachments.length > 0) {
-        for (const file of attachments) {
-          const fileId = uuidv4(); // Generate UUID for file
-          await fileTableService.createFile({
-            id: fileId,
-            fileName: file.fileName,
-            filePath: file.filePath,
-            fileType: file.fileType || file.fileName.split('.').pop() || 'application/octet-stream',
-            uploadedBy,
-            homeworkId: id
-          });
-        }
-      }
-
-      return id;
-    } catch (error) {
-      console.error('Error creating homework:', error);
-      throw error;
-    }
-  },
-
-  /**
-   * Updates an existing homework entry in the database.
-   * Retrieves the current user and prepares the data for update.
-   * Handles attachments if any are provided.
-   * @param id ID of the homework entry to update
-   * @param data Data required to update the homework entry
-   * @returns The ID of the updated homework entry
-   */
-  async update(id: string, data: UpdateHomeworkData) {
-    try {
-      const user = await profileService.getCurrentUser();
-      const uploadedBy = user?.id;
-      const { attachments, ...homeworkData } = data;
-      const localHomeworkData = { ...homeworkData };
-      delete localHomeworkData?.userId;
-      const now = new Date().toISOString();
-
-      // Update homework
-      const { error: homeworkError } = await supabase
-        .schema('school')
-        .from(HOMEWORK_TABLE)
-        .update({
-          ...localHomeworkData,
           updatedAt: now,
-        })
-        .eq('id', id);
-
-      if (homeworkError) throw homeworkError;
-
-      // Handle attachments if provided
-      if (attachments !== undefined) {
-        // Get existing files
-        const existingFiles = await fileTableService.getFilesByHomeworkId(id);
-        const fileIdsToKeep = attachments.filter(f => f.id).map(f => f.id);
-
-        // Delete files not in fileIdsToKeep
-        if (existingFiles.length > 0) {
-          await fileTableService.deleteFilesNotInList('homeworkId', id, fileIdsToKeep);
-        }
-
-        // Add new files
-        const newFiles = attachments.filter(f => !f.id);
-        for (const file of newFiles) {
-          const fileId = uuidv4(); // Generate UUID for file
-          await fileTableService.createFile({
-            id: fileId,
-            fileName: file.fileName,
-            filePath: typeof file.filePath === 'string' ? file.filePath : file.filePath.path,
-            fileType: file.fileType || file.fileName.split('.').pop() || 'application/octet-stream',
-            uploadedBy: uploadedBy,
-            homeworkId: id      
-              });
-        }
-      }
-
-      return id;
-    } catch (error) {
-      console.error('Error updating homework:', error);
-      throw error;
-    }
-  },
-
-  /**
-   * Retrieves the details of a homework entry by ID.
-   * @param id ID of the homework entry to retrieve
-   * @returns The homework entry details
-   */
-  async getHomeworkDetails(id: string) {
-    try {
-      const { data, error } = await supabase
-        .schema('school')
-        .from(HOMEWORK_TABLE)
+          dueDate
+        }])
         .select(`
           *,
-          class:Class (
+          class:Class(
             id,
             name,
             section
           ),
-          subject:Subject (
+          subject:Subject(
             id,
             name,
             code
           ),
           attachments:File(*)
         `)
+        .single();
+
+      if (homeworkError) throw homeworkError;
+      if (!homework) throw new Error('Failed to create homework');
+
+      // Handle file uploads if present
+      if (attachments && attachments.length > 0) {
+        // Validate required fields
+        const validAttachments = attachments.filter(file => {
+          if (!file.fileName || !file.filePath) {
+            console.warn('Skipping invalid file attachment:', file);
+            return false;
+          }
+          return true;
+        });
+
+        if (validAttachments.length > 0) {
+          const fileInserts = validAttachments.map(file => ({
+            id: file.id || uuidv4(),
+            fileName: file.fileName,
+            filePath: file.filePath,
+            fileType: file.fileType || 'application/octet-stream',
+            homeworkId: homeworkId,
+            uploadedBy: uploadedBy || userId,
+            uploadedAt: file.uploadedAt || now
+          }));
+
+          const { error: fileError } = await supabase
+            .schema(SCHEMA as any)
+            .from('File')
+            .insert(fileInserts);
+
+          if (fileError) throw fileError;
+        }
+      }
+
+      return {
+        ...homework,
+        dueDate: new Date(homework.dueDate),
+        createdAt: new Date(homework.createdAt),
+        updatedAt: new Date(homework.updatedAt)
+      } as HomeworkType;
+    } catch (error) {
+      console.error('Error creating homework:', error);
+      throw error;
+    }
+  },
+
+  async update(id: string, data: UpdateHomeworkData, userId: string) {
+    try {
+      const { attachments, uploadedBy, ...homeworkData } = data;
+      const now = new Date().toISOString();
+
+      if (homeworkData.dueDate) {
+        homeworkData.dueDate = typeof homeworkData.dueDate === 'string' && isValidISOString(homeworkData.dueDate)
+          ? homeworkData.dueDate
+          : new Date(homeworkData.dueDate).toISOString();
+      }
+
+      const { data: updatedHomework, error } = await supabase
+        .schema(SCHEMA as any)
+        .from(HOMEWORK_TABLE)
+        .update({
+          ...homeworkData,
+          updatedAt: now
+        })
         .eq('id', id)
+        .select()
         .single();
 
       if (error) throw error;
-      return data;
+      if (!updatedHomework) throw new Error('Failed to update homework');
+
+      // Handle new file attachments
+      if (attachments && attachments.length > 0) {
+        // Validate required fields
+        const validAttachments = attachments.filter(file => {
+          if (!file.fileName || !file.filePath) {
+            console.warn('Skipping invalid file attachment:', file);
+            return false;
+          }
+          return true;
+        });
+
+        if (validAttachments.length > 0) {
+          const fileInserts = validAttachments.map(file => ({
+            id: file.id || uuidv4(),
+            fileName: file.fileName,
+            filePath: file.filePath,
+            fileType: file.fileType || 'application/octet-stream',
+            homeworkId: id,
+            uploadedBy: uploadedBy || userId,
+            uploadedAt: file.uploadedAt || now
+          }));
+
+          const { error: fileError } = await supabase
+            .schema(SCHEMA as any)
+            .from('File')
+            .insert(fileInserts);
+
+          if (fileError) throw fileError;
+        }
+      }
+
+      // Fetch and return the updated homework with attachments
+      return await homeworkService.getHomeworkDetails(id);
     } catch (error) {
-      console.error('Error fetching homework details:', error);
+      console.error('Error updating homework:', error);
       throw error;
     }
+  },
+
+  async delete(id: string) {
+    try {
+      const files = await fileTableService.getFilesByHomeworkId(id);
+      const fileIdsToDelete = files.map(file => file.id);
+
+      await Promise.all(fileIdsToDelete.map(fileId => {
+        return fileTableService.deleteFile(fileId);
+      }));
+
+      const { error } = await supabase
+        .schema(SCHEMA as any)
+        .from(HOMEWORK_TABLE)
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error(`Error deleting homework ID ${id}:`, error);
+        throw error;
+      }
+    } catch (error) {
+      console.error('Error in delete:', error);
+      throw error;
+    }
+  },
+
+  async getHomeworkDetails(id: string) {
+    const { data: homework, error: homeworkError } = await supabase
+      .schema(SCHEMA as any)
+      .from(HOMEWORK_TABLE)
+      .select(`
+        *,
+        class:Class(
+          id,
+          name,
+          section
+        ),
+        subject:Subject(
+          id,
+          name,
+          code
+        )
+      `)
+      .eq('id', id)
+      .single();
+
+    if (homeworkError) throw new Error(homeworkError.message);
+    if (!homework) throw new Error('Homework not found');
+
+    // Fetch files separately
+    const { data: files, error: filesError } = await supabase
+      .schema(SCHEMA as any)
+      .from('File')
+      .select('*')
+      .eq('homeworkId', id);
+
+    if (filesError) throw new Error(filesError.message);
+
+    return {
+      ...homework,
+      dueDate: new Date(homework.dueDate),
+      createdAt: new Date(homework.createdAt),
+      updatedAt: new Date(homework.updatedAt),
+      attachments: files || []
+    } as HomeworkType;
   }
 };
+
+// Keep the fetchHomeworkDetails export for backward compatibility
+export const fetchHomeworkDetails = homeworkService.getHomeworkDetails;
