@@ -1,5 +1,21 @@
+// String Constants
+const ERROR_MESSAGES = {
+  ACCESS_DENIED: 'Access denied: User must be an admin or teacher.',
+  FETCH_DASHBOARD: 'Error fetching dashboard data',
+  FETCH_STUDENT_DATA: 'Error fetching student dashboard data'
+};
+
+const STATUS = {
+  PENDING: 'PENDING',
+  PRESENT: 'PRESENT',
+  PAID: 'PAID',
+  COMPLETED: 'COMPLETED'
+};
+
+const TEACHER_ROLE = 'TEACHER';
+
 import { supabase } from '@/lib/api-client';
-import { DASHBOARD_TABLE } from '../lib/constants';
+import { DASHBOARD_TABLE, SCHEMA, STUDENT_TABLE, STAFF_TABLE, CLASS_TABLE, HOMEWORK_TABLE, ATTENDANCE_TABLE, FEE_TABLE, CLASSWORK_TABLE } from '../lib/constants'; // Import constants
 import { isAdmin, isTeacher, profileService } from './profileService'; // Import profile service
 import { studentService } from './student.service';
 
@@ -44,15 +60,22 @@ interface QuickLink {
   role: 'all' | 'admin' | 'teacher' | 'student';
 }
 
-export const getDashboardSummary = async (userId: string): Promise<DashboardSummary> => {
+export async function getDashboardSummary(userId: string): Promise<DashboardSummary> {
+  console.log('📊 Getting dashboard summary for user:', userId);
   try {
+    // Check user role and permissions
+    console.log('🔍 Checking user role and permissions');
     const userProfile = await profileService.getUser(userId);
 
-    // Check if user is admin or teacher
     if (!isAdmin(userProfile) && !isTeacher(userProfile)) {
-      throw new Error('Access denied: User must be an admin or teacher.');
+      console.error('❌ User does not have required role:', userProfile);
+      throw new Error(ERROR_MESSAGES.ACCESS_DENIED);
     }
 
+    console.log('✅ User has required permissions');
+
+    // Fetch all required data in parallel
+    console.log('🔄 Fetching dashboard data in parallel');
     const [
       { data: students, error: studentsError },
       { data: teachers, error: teachersError },
@@ -62,35 +85,38 @@ export const getDashboardSummary = async (userId: string): Promise<DashboardSumm
       { data: fees, error: feesError },
       { data: classwork, error: classworkError }
     ] = await Promise.all([
-      supabase.schema('school').from('Student').select('*'),
-      supabase.schema('school').from('Staff').select('*').eq('role', 'TEACHER'),
-      supabase.schema('school').from('Class').select('*'),
-      supabase.schema('school').from('Homework').select('*'),
-      supabase.schema('school').from('Attendance').select('*'),
-      supabase.schema('school').from('Fee').select('*'),
-      supabase.schema('school').from('Classwork').select('*')
+      supabase.schema(SCHEMA).from(STUDENT_TABLE).select('*'),
+      supabase.schema(SCHEMA).from(STAFF_TABLE).select('*').eq('role', TEACHER_ROLE),
+      supabase.schema(SCHEMA).from(CLASS_TABLE).select('*'),
+      supabase.schema(SCHEMA).from(HOMEWORK_TABLE).select('*'),
+      supabase.schema(SCHEMA).from(ATTENDANCE_TABLE).select('*'),
+      supabase.schema(SCHEMA).from(FEE_TABLE).select('*'),
+      supabase.schema(SCHEMA).from(CLASSWORK_TABLE).select('*')
     ]);
 
     if (studentsError || teachersError || classesError || homeworksError || attendanceError || feesError || classworkError) {
-      throw new Error('Error fetching dashboard data');
+      console.error('❌ Error fetching dashboard data:', studentsError || teachersError || classesError || homeworksError || attendanceError || feesError || classworkError);
+      throw new Error(ERROR_MESSAGES.FETCH_DASHBOARD);
     }
+
+    console.log('📈 Processing dashboard metrics');
 
     // Basic Stats
     const totalStudents = students?.length || 0;
     const totalTeachers = teachers?.length || 0;
     const totalClasses = classes?.length || 0;
-    const pendingHomeworks = homeworks?.filter(hw => hw.status === 'PENDING')?.length || 0;
+    const pendingHomeworks = homeworks?.filter(hw => hw.status === STATUS.PENDING)?.length || 0;
 
     // Attendance Stats
     const totalAttendance = attendance?.length || 0;
-    const presentAttendance = attendance?.filter(a => a.status === 'PRESENT')?.length || 0;
+    const presentAttendance = attendance?.filter(a => a.status === STATUS.PRESENT)?.length || 0;
     const averageAttendance = totalAttendance > 0 
-      ? (presentAttendance / totalAttendance) * 100 
+      ? Math.round((presentAttendance / totalAttendance) * 100) 
       : 0;
 
     // Fee Stats
-    const totalFeeCollected = fees?.reduce((acc, fee) => acc + (fee.status === 'PAID' ? fee.amount : 0), 0) || 0;
-    const totalPendingFees = fees?.reduce((acc, fee) => acc + (fee.status === 'PENDING' ? fee.amount : 0), 0) || 0;
+    const totalFeeCollected = fees?.reduce((acc, fee) => acc + (fee.status === STATUS.PAID ? fee.amount : 0), 0) || 0;
+    const totalPendingFees = fees?.reduce((acc, fee) => acc + (fee.status === STATUS.PENDING ? fee.amount : 0), 0) || 0;
 
     // Module Stats
     const moduleStats = {
@@ -102,14 +128,15 @@ export const getDashboardSummary = async (userId: string): Promise<DashboardSumm
 
     // Get upcoming deadlines
     const { data: deadlines, error: deadlinesError } = await supabase
+      .schema(SCHEMA)
       .from('Homework')
       .select('*')
-      .eq('status', 'PENDING')
+      .eq('status', STATUS.PENDING)
       .order('dueDate', { ascending: true })
       .limit(5);
 
     if (deadlinesError) {
-      console.error('Error fetching deadlines:', deadlinesError);
+      console.error('❌ Error fetching deadlines:', deadlinesError);
     }
 
     // Get performance metrics
@@ -120,14 +147,16 @@ export const getDashboardSummary = async (userId: string): Promise<DashboardSumm
     };
 
     // Define quick links based on role
+    console.log('🎯 Fetching quick links');
     const quickLinks = getQuickLinks();
 
-    return {
+    // Compile all metrics
+    const dashboardSummary: DashboardSummary = {
       totalStudents,
       totalTeachers,
       totalClasses,
       pendingHomeworks,
-      averageAttendance: Number(averageAttendance.toFixed(1)),
+      averageAttendance,
       totalFeeCollected,
       totalPendingFees,
       moduleStats,
@@ -135,19 +164,23 @@ export const getDashboardSummary = async (userId: string): Promise<DashboardSumm
       quickLinks,
       performanceMetrics
     };
+
+    console.log('✅ Dashboard summary compiled successfully:', dashboardSummary);
+    return dashboardSummary;
   } catch (error) {
-    console.error('Error in getDashboardSummary:', error);
+    console.error('❌ Error in getDashboardSummary:', error);
     throw error;
   }
 };
 
 // Fetch students and handle user role
 async function fetchStudents(userId: string) {
-  const profile = await profileService.getProfile(userId);
-  const { role } = profile;
+  const profile = await profileService.getUser(userId);
+  const role = profile?.role || {};
   // Fetch students based on role
   const students = await supabase
-    .from('students')
+  .schema(SCHEMA)
+    .from(STUDENT_TABLE)
     .select('*')
     .eq('role', role);
   return students;
@@ -185,7 +218,7 @@ const calculateAttendanceTrend = (attendance: any[]) => {
       new Date(a.date).getFullYear() === month.getFullYear()
     ) || [];
     
-    const present = monthAttendance.filter(a => a.status === 'PRESENT').length;
+    const present = monthAttendance.filter(a => a.status === STATUS.PRESENT).length;
     return (present / (monthAttendance.length || 1)) * 100;
   });
 };
@@ -253,57 +286,75 @@ const getQuickLinks = () => {
   ];
 };
 
-export const getStudentDashboardData = async (email: string) => {
+export async function getStudentDashboardData(email: string) {
+  console.log('📚 Getting student dashboard data for:', email);
   try {
     const student = await studentService.findByEmail(email);
-    if (!student) throw new Error('Student not found');
-    const studentId = student.id;
+    if (!student) {
+      console.error('❌ Student not found for email:', email);
+      throw new Error('Student not found');
+    }
 
+    console.log('👤 Found student:', student);
+
+    // Fetch all required data in parallel
+    console.log('🔄 Fetching student data in parallel');
     const [
       { data: homeworks, error: homeworksError },
       { data: attendance, error: attendanceError },
-      { data: deadlines, error: deadlinesError },
-      { data: fees, error: feesError }
+      { data: fees, error: feesError },
+      { data: classwork, error: classworkError }
     ] = await Promise.all([
-      supabase.schema('school').from('Homework').select('*').eq('classId', student.classId),
-      supabase.schema('school').from('Attendance').select('*').eq('studentId', studentId),
-      supabase.schema('school').from('Homework').select('*').eq('classId', student.classId).eq('status', 'PENDING').order('dueDate', { ascending: true }).limit(5),
-      supabase.schema('school').from('Fee').select('*').eq('studentId', studentId)
+      supabase.schema(SCHEMA).from(HOMEWORK_TABLE).select('*').eq('studentId', student.id),
+      supabase.schema(SCHEMA).from(ATTENDANCE_TABLE).select('*').eq('studentId', student.id),
+      supabase.schema(SCHEMA).from(FEE_TABLE).select('*').eq('studentId', student.id),
+      supabase.schema(SCHEMA).from(CLASSWORK_TABLE).select('*').eq('studentId', student.id)
     ]);
 
-    if (homeworksError || attendanceError || deadlinesError || feesError) {
-      throw new Error('Error fetching student dashboard data');
+    if (homeworksError || attendanceError || feesError || classworkError) {
+      console.error('❌ Error fetching student data:', homeworksError || attendanceError || feesError || classworkError);
+      throw new Error(ERROR_MESSAGES.FETCH_STUDENT_DATA);
     }
 
-    // Task Stats
-    const completedTasks = homeworks?.filter(hw => hw.status === 'COMPLETED')?.length || 0;
-    const pendingTasks = homeworks?.filter(hw => hw.status === 'PENDING')?.length || 0;
+    console.log('📊 Processing student metrics');
 
-    // Attendance Stats
-    const totalAttendance = attendance?.length || 0;
-    const presentAttendance = attendance?.filter(a => a.status === 'PRESENT')?.length || 0;
-    const attendancePercentage = totalAttendance > 0 ? (presentAttendance / totalAttendance) * 100 : 0;
+    // Calculate metrics
+    const attendancePercentage = Math.round(
+      ((attendance?.filter(a => a.status === STATUS.PRESENT).length || 0) / 
+      (attendance?.length || 1)) * 100
+    );
 
-    // Performance Stats
-    const scores = homeworks?.map(hw => hw.score).filter(score => score != null) || [];
-    const averageScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+    const pendingTasks = (homeworks?.filter(h => h.status === STATUS.PENDING).length || 0) +
+      (classwork?.filter(c => c.status === STATUS.PENDING).length || 0);
 
-    // Fee Stats
-    const totalFees = fees?.reduce((acc, fee) => acc + fee.amount, 0) || 0;
-    const paidFees = fees?.reduce((acc, fee) => acc + (fee.status === 'PAID' ? fee.amount : 0), 0) || 0;
-    const pendingFees = totalFees - paidFees;
+    const averageScore = Math.round(
+      ((homeworks?.reduce((sum, hw) => sum + (hw.score || 0), 0) || 0) / 
+      (homeworks?.length || 1))
+    );
 
-    return {
-      completedTasks,
+    const pendingFees = fees
+      ?.filter(fee => fee.status === STATUS.PENDING)
+      .reduce((sum, fee) => sum + fee.amount, 0) || 0;
+
+    console.log('🎯 Fetching quick links');
+    const quickLinks = getQuickLinks();
+
+    const studentDashboard = {
+      attendancePercentage,
       pendingTasks,
-      attendancePercentage: Number(attendancePercentage.toFixed(1)),
-      averageScore: Number(averageScore.toFixed(1)),
-      totalFees,
-      paidFees,
+      averageScore,
       pendingFees,
+      quickLinks: quickLinks.filter(link => link.role === 'all' || link.role === 'student'),
+      performanceMetrics: {
+        studentPerformance: calculatePerformanceMetrics(homeworks),
+        attendanceTrend: calculateAttendanceTrend(attendance)
+      }
     };
+
+    console.log('✅ Student dashboard compiled successfully:', studentDashboard);
+    return studentDashboard;
   } catch (error) {
-    console.error('Error fetching student dashboard data:', error);
+    console.error('❌ Error in getStudentDashboardData:', error);
     throw error;
   }
-};
+}

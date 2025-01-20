@@ -3,13 +3,12 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { LogIn } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { signIn } from '@/services/authservice';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
+  const { user, signIn } = useAuth();
 
   useEffect(() => {
     if (user) {
@@ -22,12 +21,10 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const { error } = await signIn(email, password);
-      if (error) throw error;
-
+      await signIn(email, password);
       toast.success('Successfully signed in!');
       window.location.href = '/dashboard';
-    } catch (error) {
+    } catch (error: any) {
       toast.error('Failed to sign in. Please check your credentials.');
       console.error('Login error:', error);
     } finally {

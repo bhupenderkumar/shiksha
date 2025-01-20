@@ -1,21 +1,29 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { homeworkService } from '@/services/homeworkService';
 import { fileService } from '@/services/fileService';
+import { fileTableService } from '@/services/fileTableService';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Attachment } from '@/components/Attachment';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { 
-  ArrowLeft, 
-  Calendar, 
-  Clock, 
-  Book, 
-  Users, 
-  Paperclip, 
+import { ImagePreviewDialog } from '@/components/ui/ImagePreviewDialog';
+import { ImageGrid } from '@/components/ui/ImageGrid';
+import { AttachmentsList } from '@/components/ui/AttachmentsList';
+import { useImagePreview } from '@/hooks/use-image-preview';
+import { useAuth } from '@/lib/auth';
+import Layout from '@/components/Layout';
+import PublicLayout from '@/components/PublicLayout';
+import { format } from 'date-fns';
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  Book,
+  Users,
+  Paperclip,
   Eye,
   AlertCircle,
   FileText,
@@ -24,20 +32,28 @@ import {
   XCircle,
   SendHorizonal
 } from 'lucide-react';
-import { format, isValid, parseISO } from 'date-fns';
 import toast from 'react-hot-toast';
 
 interface HomeworkDetails {
   id: string;
   title: string;
   description: string;
-  dueDate: string;
+  dueDate: Date;
   status: string;
   attachments?: Array<{
     id: string;
     fileName: string;
     filePath: string;
     fileType: string;
+    url?: string;
+    feeId: string | null;
+    schoolId: string | null;
+    homeworkId: string | null;
+    uploadedAt: string;
+    uploadedBy: string;
+    classworkId: string | null;
+    grievanceId: string | null;
+    homeworkSubmissionId: string | null;
   }>;
   class?: {
     id: string;
@@ -49,23 +65,46 @@ interface HomeworkDetails {
     name: string;
     code: string;
   };
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const HomeworkDetails = () => {
   const { id } = useParams() as { id: string };
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [homeworkDetails, setHomeworkDetails] = useState<HomeworkDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+  const {
+    previewImage,
+    isImage,
+    handleImageClick,
+    preloadAdjacentImages,
+    getPreviewImages,
+    closePreview
+  } = useImagePreview(homeworkDetails?.attachments || []);
 
   useEffect(() => {
     const getHomeworkDetails = async () => {
       try {
         const data = await homeworkService.getHomeworkDetails(id);
-        setHomeworkDetails(data);
+        const files = await fileTableService.getFilesByHomeworkId(id);
+
+        // Get signed URLs for all attachments
+        const attachmentsWithUrls = await Promise.all(files.map(async (file) => {
+          const url = await fileService.getSignedUrl(file.filePath);
+          return {
+            ...file,
+            url
+          };
+        }));
+
+        setHomeworkDetails({
+          ...data,
+          attachments: attachmentsWithUrls
+        });
       } catch (err: any) {
         setError(err.message || 'Failed to load homework details');
         toast.error('Failed to load homework details');
@@ -79,9 +118,13 @@ const HomeworkDetails = () => {
 
   useEffect(() => {
     if (homeworkDetails) {
-      document.title = `Homework | ${homeworkDetails.class?.name || 'N/A'} | ${homeworkDetails.subject?.name || 'N/A'} | ${format(new Date(homeworkDetails.dueDate), 'dd MMMM yyyy')} | First Step Public School | Saurabh Vihar`;
+      document.title = `Homework | ${homeworkDetails.class?.name || 'N/A'} | ${homeworkDetails.subject?.name || 'N/A'} | ${format(homeworkDetails.dueDate, 'MMM dd, yyyy')} | First Step Public School | Saurabh Vihar`;
     }
   }, [homeworkDetails]);
+
+  useEffect(() => {
+    preloadAdjacentImages();
+  }, [preloadAdjacentImages]);
 
   const handleDownload = async (filePath: string, fileName: string) => {
     try {
@@ -90,44 +133,6 @@ const HomeworkDetails = () => {
     } catch (error) {
       console.error('Error downloading file:', error);
       toast.error('Failed to download file');
-    }
-  };
-
-  const isImage = (fileName: string): boolean => {
-    return /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName);
-  };
-
-  const handleImageClick = async (filePath: string) => {
-    try {
-      const viewUrl = await fileService.getViewUrl(filePath);
-      setPreviewImage(viewUrl);
-    } catch (error) {
-      console.error('Error getting view URL:', error);
-      toast.error('Failed to load image preview');
-    }
-  };
-
-  const formatDate = (dateString: string | undefined) => {
-    if (!dateString) return 'Not specified';
-    try {
-      const date = parseISO(dateString);
-      if (!isValid(date)) return 'Invalid date';
-      return format(date, 'MMMM dd, yyyy');
-    } catch (error) {
-      console.error('Error formatting date:', error);
-      return 'Invalid date';
-    }
-  };
-
-  const formatDateTime = (dateString: string | undefined) => {
-    if (!dateString) return 'Not specified';
-    try {
-      const date = parseISO(dateString);
-      if (!isValid(date)) return 'Invalid date';
-      return format(date, 'MMMM dd, yyyy HH:mm');
-    } catch (error) {
-      console.error('Error formatting date:', error);
-      return 'Invalid date';
     }
   };
 
@@ -186,15 +191,15 @@ const HomeworkDetails = () => {
     );
   }
 
-  return (
+  const renderContent = () => (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <Button
         variant="ghost"
-        onClick={() => navigate('/homework')}
+        onClick={() => navigate(user ? '/homework' : '/')}
         className="mb-6 hover:bg-blue-50"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
-        Back to Homework
+        {user ? 'Back to Homework' : 'Back to Home'}
       </Button>
 
       <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-100">
@@ -204,8 +209,8 @@ const HomeworkDetails = () => {
               {homeworkDetails.title || 'Untitled Homework'}
             </CardTitle>
             {homeworkDetails.status && (
-              <Badge 
-                variant="outline" 
+              <Badge
+                variant="outline"
                 className={`px-3 py-1 flex items-center gap-2 ${getStatusColor(homeworkDetails.status)}`}
               >
                 {getStatusIcon(homeworkDetails.status)}
@@ -216,31 +221,54 @@ const HomeworkDetails = () => {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="flex items-center text-gray-700">
-                <Calendar className="w-5 h-5 mr-2 text-indigo-600" />
-                <span>Due: {formatDate(homeworkDetails.dueDate)}</span>
-              </div>
-              
-              {homeworkDetails.class && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-6 col-span-2">
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <h3 className="text-lg font-semibold text-indigo-900 mb-3">Timing Details</h3>
                 <div className="flex items-center text-gray-700">
-                  <Users className="w-5 h-5 mr-2 text-indigo-600" />
-                  <span>Class: {homeworkDetails.class.name} {homeworkDetails.class.section}</span>
+                  <Calendar className="w-5 h-5 mr-2 text-indigo-600 flex-shrink-0" />
+                  <span>Due: {format(homeworkDetails.dueDate, 'MMM dd, yyyy, h:mm a')}</span>
                 </div>
-              )}
-              
-              {homeworkDetails.subject && (
-                <div className="flex items-center text-gray-700">
-                  <Book className="w-5 h-5 mr-2 text-indigo-600" />
-                  <span>Subject: {homeworkDetails.subject.name} ({homeworkDetails.subject.code})</span>
+                {homeworkDetails.createdAt && (
+                  <div className="flex items-center text-gray-700 mt-2">
+                    <Clock className="w-5 h-5 mr-2 text-indigo-600 flex-shrink-0" />
+                    <span>Created: {format(homeworkDetails.createdAt, 'MMM dd, yyyy, h:mm a')}</span>
+                  </div>
+                )}
+              </div>
+
+              {homeworkDetails.class && (
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <h3 className="text-lg font-semibold text-indigo-900 mb-3">Class Details</h3>
+                  <div className="flex items-center text-gray-700">
+                    <Users className="w-5 h-5 mr-2 text-indigo-600 flex-shrink-0" />
+                    <span>Class: {homeworkDetails.class.name} {homeworkDetails.class.section}</span>
+                  </div>
                 </div>
               )}
 
-              {homeworkDetails.createdAt && (
-                <div className="flex items-center text-gray-700">
-                  <Clock className="w-5 h-5 mr-2 text-indigo-600" />
-                  <span>Created: {formatDateTime(homeworkDetails.createdAt)}</span>
+              {homeworkDetails.subject && (
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <h3 className="text-lg font-semibold text-indigo-900 mb-3">Subject Details</h3>
+                  <div className="flex items-center text-gray-700">
+                    <Book className="w-5 h-5 mr-2 text-indigo-600 flex-shrink-0" />
+                    <span>{homeworkDetails.subject.name} ({homeworkDetails.subject.code})</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-6">
+              {homeworkDetails.status && (
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <h3 className="text-lg font-semibold text-indigo-900 mb-3">Status</h3>
+                  <Badge
+                    variant="outline"
+                    className={`px-3 py-1 flex items-center gap-2 ${getStatusColor(homeworkDetails.status)}`}
+                  >
+                    {getStatusIcon(homeworkDetails.status)}
+                    <span className="capitalize">{homeworkDetails.status.toLowerCase()}</span>
+                  </Badge>
                 </div>
               )}
             </div>
@@ -261,36 +289,58 @@ const HomeworkDetails = () => {
           </div>
 
           {homeworkDetails.attachments && homeworkDetails.attachments.length > 0 ? (
-            <div>
-              <h3 className="text-lg font-semibold text-indigo-900 mb-4 flex items-center">
-                <Paperclip className="w-5 h-5 mr-2" />
-                Attachments ({homeworkDetails.attachments.length})
-              </h3>
-              <div className="grid gap-3">
-                {homeworkDetails.attachments.map((attachment, index) => (
-                  <div
-                    key={attachment.id || index}
-                    className="flex items-center justify-between bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow"
-                  >
-                    <Attachment
-                      fileName={attachment.fileName}
-                      fileType={attachment.fileType}
-                      onDownload={() => handleDownload(attachment.filePath, attachment.fileName)}
-                      className="flex-1"
+            <div className="space-y-6">
+              {/* Images Section */}
+              {homeworkDetails.attachments.some(attachment => isImage(attachment.fileName)) && (
+                <div>
+                  <h3 className="text-lg font-semibold text-indigo-900 mb-4 flex items-center">
+                    <Eye className="w-5 h-5 mr-2 flex-shrink-0" />
+                    Images ({homeworkDetails.attachments.filter(attachment => isImage(attachment.fileName)).length})
+                  </h3>
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <ImageGrid
+                      images={homeworkDetails.attachments
+                        ?.filter(attachment => isImage(attachment.fileName))
+                        .map((attachment) => ({
+                          id: attachment.id,
+                          url: attachment.url || '',
+                          alt: attachment.fileName,
+                          loadingText: "Loading image..."
+                        })) || []}
+                      className="grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+                      onImageClick={(index: number) => {
+                        const imageAttachments = homeworkDetails.attachments
+                          ?.filter(a => isImage(a.fileName)) || [];
+                        const attachment = imageAttachments[index];
+                        if (attachment) {
+                          const url = attachment.url;
+                          handleImageClick(url, attachment.id, index);
+                        }
+                      }}
                     />
-                    {isImage(attachment.fileName) && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleImageClick(attachment.filePath)}
-                        className="ml-2"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                    )}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+
+              {/* Other Attachments Section */}
+              {homeworkDetails.attachments.some(attachment => !isImage(attachment.fileName)) && (
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold text-indigo-900 mb-4 flex items-center">
+                    <Paperclip className="w-5 h-5 mr-2 flex-shrink-0" />
+                    Other Attachments
+                  </h3>
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <AttachmentsList
+                      attachments={homeworkDetails.attachments
+                        ?.filter(attachment => !isImage(attachment.fileName))
+                        .map(attachment => ({
+                          ...attachment,
+                          onDownload: () => handleDownload(attachment.filePath, attachment.fileName)
+                        })) || []}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <EmptyState
@@ -303,15 +353,15 @@ const HomeworkDetails = () => {
         </CardContent>
       </Card>
 
-      <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
-        <DialogContent className="max-w-4xl">
-          {previewImage && (
-            <img src={previewImage} alt="Preview" className="w-full h-auto" />
-          )}
-        </DialogContent>
-      </Dialog>
+      <ImagePreviewDialog
+        open={!!previewImage}
+        images={getPreviewImages()}
+        onClose={closePreview}
+      />
     </div>
   );
+
+  return <PublicLayout>{renderContent()}</PublicLayout>;
 };
 
 export default HomeworkDetails;

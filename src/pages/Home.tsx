@@ -157,7 +157,10 @@ export default function Home() {
                 </Link>
               </Button>
               <Button size="lg" variant="outline">
-                Signup
+              <Link to="/register">
+                  Signup
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
               </Button>
             </motion.div>
           </div>

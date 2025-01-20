@@ -1,5 +1,5 @@
 import { supabase } from '../lib/api-client';
-import { ASSIGNMENT_TABLE } from '../lib/constants';
+import { ASSIGNMENT_TABLE, SCHEMA } from '../lib/constants'; // Import SCHEMA
 import { toast } from 'react-hot-toast';
 
 export const loadAssignments = async (date: Date, isEditable: boolean): Promise<Assignment[]> => {
@@ -7,6 +7,7 @@ export const loadAssignments = async (date: Date, isEditable: boolean): Promise<
     const dateStr = date.toISOString().split('T')[0];
 
     let query = supabase
+      .schema(SCHEMA) // Use SCHEMA constant
       .from(ASSIGNMENT_TABLE)
       .select(`
         *,
@@ -39,6 +40,7 @@ export const loadAssignments = async (date: Date, isEditable: boolean): Promise<
 export const loadAllAssignments = async (): Promise<Assignment[]> => {
   try {
     const { data, error } = await supabase
+      .schema(SCHEMA) // Use SCHEMA constant
       .from(ASSIGNMENT_TABLE)
       .select(`*, assignment_files (*)`)
       .order('created_at', { ascending: false });
@@ -60,10 +62,12 @@ export const createOrUpdateAssignment = async (assignmentData: Partial<Assignmen
   try {
     const { error } = editingAssignmentId
       ? await supabase
+          .schema(SCHEMA) // Use SCHEMA constant
           .from(ASSIGNMENT_TABLE)
           .update(assignmentData)
           .eq('id', editingAssignmentId)
       : await supabase
+          .schema(SCHEMA) // Use SCHEMA constant
           .from(ASSIGNMENT_TABLE)
           .insert([{ ...assignmentData }]);
 
@@ -78,7 +82,11 @@ export const createOrUpdateAssignment = async (assignmentData: Partial<Assignmen
 
 export const deleteAssignment = async (id: string) => {
   try {
-    const { error } = await supabase.from(ASSIGNMENT_TABLE).delete().eq('id', id);
+    const { error } = await supabase
+      .schema(SCHEMA) // Use SCHEMA constant
+      .from(ASSIGNMENT_TABLE)
+      .delete()
+      .eq('id', id);
     if (error) throw error;
 
     toast.success('Assignment deleted successfully');
@@ -86,4 +94,4 @@ export const deleteAssignment = async (id: string) => {
     toast.error('Failed to delete assignment');
     console.error(error);
   }
-}; 
+};
