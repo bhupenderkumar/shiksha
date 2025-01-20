@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { notificationService, Notification } from '@/services/notificationService';
-import { profileService } from '@/services/profileService';
+import { isAdminOrTeacher, profileService } from '@/services/profileService';
 import { useProfileAccess } from '@/services/profileService';
 import { useAuth } from '@/lib/auth';
 import { Textarea } from '@/components/ui/textarea';
@@ -59,7 +59,7 @@ const NotificationCard = ({ notification, onUpdate, onDelete }) => {
               minute: '2-digit',
             })}
           </p>
-          {isAdminOrTeacher && (
+          {isAdminOrTeacher() && (
             <div className="space-x-2">
               <Button size="sm" variant="outline" onClick={() => onUpdate(notification.id)}>
                 Edit

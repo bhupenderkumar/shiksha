@@ -2,6 +2,20 @@ import { supabase } from '@/lib/api-client';
 import { v4 as uuidv4 } from 'uuid';
 import { SUBJECT_TABLE } from '../lib/constants';
 
+// String Constants
+const ERROR_MESSAGES = {
+  LOAD_SUBJECTS: 'Error loading subjects:',
+  CREATE_SUBJECT: 'Error creating subject:',
+  UPDATE_SUBJECT: 'Error updating subject:',
+  DELETE_SUBJECT: 'Error deleting subject:'
+};
+
+const TABLE_COLUMNS = `
+  *,
+  class:classId(*),
+  teacher:teacherId(*)
+`;
+
 export interface SubjectType {
   id: string;
   name: string;
@@ -17,21 +31,20 @@ export const loadSubjects = async (classId?: string) => {
     let query = supabase
       .schema('school')
       .from(SUBJECT_TABLE)
-      .select(`
-        *,
-        class:classId(*),
-        teacher:teacherId(*)
-      `);
+      .select(TABLE_COLUMNS);
 
     if (classId) {
       query = query.eq('classId', classId);
     }
 
     const { data, error } = await query;
-    if (error) throw error;
+    if (error) {
+      console.error(ERROR_MESSAGES.LOAD_SUBJECTS, error);
+      throw error;
+    }
     return data;
   } catch (error) {
-    console.error('Error loading subjects:', error);
+    console.error(ERROR_MESSAGES.LOAD_SUBJECTS, error);
     throw error;
   }
 };
@@ -50,10 +63,13 @@ export const createSubject = async (subject: Omit<SubjectType, 'id' | 'createdAt
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error(ERROR_MESSAGES.CREATE_SUBJECT, error);
+      throw error;
+    }
     return data;
   } catch (error) {
-    console.error('Error creating subject:', error);
+    console.error(ERROR_MESSAGES.CREATE_SUBJECT, error);
     throw error;
   }
 };
@@ -71,10 +87,13 @@ export const updateSubject = async (id: string, subject: Partial<SubjectType>) =
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error(ERROR_MESSAGES.UPDATE_SUBJECT, error);
+      throw error;
+    }
     return data;
   } catch (error) {
-    console.error('Error updating subject:', error);
+    console.error(ERROR_MESSAGES.UPDATE_SUBJECT, error);
     throw error;
   }
 };
@@ -87,9 +106,12 @@ export const deleteSubject = async (id: string) => {
       .delete()
       .eq('id', id);
 
-    if (error) throw error;
+    if (error) {
+      console.error(ERROR_MESSAGES.DELETE_SUBJECT, error);
+      throw error;
+    }
   } catch (error) {
-    console.error('Error deleting subject:', error);
+    console.error(ERROR_MESSAGES.DELETE_SUBJECT, error);
     throw error;
   }
 };

@@ -11,6 +11,7 @@ export const GENDERS = {
 } as const;
 
 export const STORAGE_BUCKET = 'File';
+export const FILE_TABLE = 'File';
 export const ASSIGNMENT_TABLE = 'Homework';
 export const ATTENDANCE_TABLE = 'Attendance';
 export const CLASS_TABLE = 'Class';
@@ -26,6 +27,22 @@ export const STAFF_TABLE = 'Staff';
 export const SETTINGS_TABLE = 'Settings';
 export const USER_SETTINGS_TABLE = 'UserSettings';
 export const USER_TABLE = 'User';
+export const SCHEMA = 'school';
+export const PROFILE_TABLE = 'Profile'
 
-export const YOUTUBE_API_KEY = 'AIzaSyCzU8oifsMi0AENEjRSiPQ87iRycT5ByTo';
-export const YOUTUBE_CHANNEL_ID = 'UCIbKG2jiKpOuV0R1dozJdIw'; // Channel ID for First Step School Zone 
+export const PUBLIC_ROUTES = [
+  '/',
+  '/login',
+  '/register',
+  '/homework/view/:id',
+  '/homework/:id',
+  '/classwork/:id'
+];
+
+// Environment variables should be used instead of hardcoding API keys
+export const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
+export const YOUTUBE_CHANNEL_ID = import.meta.env.VITE_YOUTUBE_CHANNEL_ID;
+
+if (!YOUTUBE_API_KEY || !YOUTUBE_CHANNEL_ID) {
+  console.warn('YouTube API configuration is missing. YouTube features will be disabled.');
+}
