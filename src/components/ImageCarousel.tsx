@@ -1,93 +1,69 @@
 import React, { useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/Select';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-interface ImageCarouselProps {
-  files: {
-    id: string;
-    file_path: string;
-    file_type: 'image' | 'pdf';
-    file_name: string;
-  }[];
+export interface ImageCarouselProps {
+  images: string[];
+  className?: string;
 }
 
-export const ImageCarousel: React.FC<ImageCarouselProps> = ({ files }) => {
+export function ImageCarousel({ images, className = '' }: ImageCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const handlePrevious = () => {
-    setCurrentIndex((prev) => (prev === 0 ? files.length - 1 : prev - 1));
+  const next = () => {
+    setCurrentIndex((currentIndex + 1) % images.length);
   };
 
-  const handleNext = () => {
-    setCurrentIndex((prev) => (prev === files.length - 1 ? 0 : prev + 1));
+  const previous = () => {
+    setCurrentIndex((currentIndex - 1 + images.length) % images.length);
   };
-
-  const handleFileClick = async (file: typeof files[0]) => {
-    const { data, error } = await supabase.storage
-      .from('assignments')
-      .createSignedUrl(file.file_path, 60);
-
-    if (error) {
-      console.error(error);
-      return;
-    }
-
-    window.open(data.signedUrl, '_blank');
-  };
-
-  const currentFile = files[currentIndex];
 
   return (
-    <div className="relative">
-      <div className="aspect-w-16 aspect-h-9 bg-gray-100 rounded-lg overflow-hidden">
-        {currentFile.file_type === 'image' ? (
-          <img
-            src={`${supabase.storage.from('assignments').getPublicUrl(currentFile.file_path).data.publicUrl}`}
-            alt={currentFile.file_name}
-            className="object-contain w-full h-full cursor-pointer"
-            onClick={() => handleFileClick(currentFile)}
+    <div className={`relative overflow-hidden rounded-lg ${className}`}>
+      <AnimatePresence mode="wait">
+        <motion.img
+          key={currentIndex}
+          src={images[currentIndex]}
+          alt="School photo"
+          className="w-full h-[400px] object-cover"
+          initial={{ opacity: 0, x: 100 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -100 }}
+          transition={{ duration: 0.3 }}
+        />
+      </AnimatePresence>
+
+      {/* Navigation Dots */}
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+        {images.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentIndex(index)}
+            className={`w-2 h-2 rounded-full transition-colors ${
+              index === currentIndex ? 'bg-primary' : 'bg-background/80'
+            }`}
           />
-        ) : (
-          <div
-            className="flex items-center justify-center cursor-pointer"
-            onClick={() => handleFileClick(currentFile)}
-          >
-            <div className="text-center">
-              <svg
-                className="mx-auto h-12 w-12 text-gray-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                />
-              </svg>
-              <p className="mt-1 text-sm text-gray-500">{currentFile.file_name}</p>
-            </div>
-          </div>
-        )}
+        ))}
       </div>
 
-      {files.length > 1 && (
-        <div className="absolute inset-0 flex items-center justify-between p-4">
-          <button
-            onClick={handlePrevious}
-            className="p-2 rounded-full bg-black bg-opacity-50 text-white hover:bg-opacity-75"
-          >
-            ←
-          </button>
-          <button
-            onClick={handleNext}
-            className="p-2 rounded-full bg-black bg-opacity-50 text-white hover:bg-opacity-75"
-          >
-            →
-          </button>
-        </div>
-      )}
+      {/* Navigation Buttons */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-background/80 hover:bg-background/90"
+        onClick={previous}
+      >
+        <ChevronLeft className="h-6 w-6" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-background/80 hover:bg-background/90"
+        onClick={next}
+      >
+        <ChevronRight className="h-6 w-6" />
+      </Button>
     </div>
   );
-};
+}

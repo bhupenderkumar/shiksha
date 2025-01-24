@@ -20,9 +20,14 @@ import HomeworkView from './pages/HomeworkView';
 import NotificationsPage from './pages/notifications';
 import ProfilePage from './pages/profile';
 import HomeworkDetails from './pages/HomeworkDetails';
+import AdmissionEnquiry from './pages/AdmissionEnquiry';
+import ViewAdmissionEnquiries from './pages/ViewAdmissionEnquiries';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { AuthProvider } from '@/lib/auth';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 // Public routes that don't require authentication
-const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/', '/homework/view/:id', '/homework/:id', '/classwork/:id']
+const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/', '/homework/view/:id', '/homework/:id', '/classwork/:id', '/admission-enquiry', '/admission-enquiry/:id', '/admission-enquiries']
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -65,6 +70,9 @@ function AppRoutes() {
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<Home />} />
+      <Route path='/admission-enquiry' element={<AdmissionEnquiry />} />
+      <Route path='/admission-enquiry/:id' element={<AdmissionEnquiry />} />
+      <Route path='/admission-enquiries' element={<ViewAdmissionEnquiries />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/homework/view/:id" element={
@@ -185,14 +193,18 @@ function AppRoutes() {
 
 function App() {
   return (
-    <>
-      <Toaster position="top-right" />
-      <Router>
-        <div className="flex flex-col min-h-screen bg-background mt-4">
-          <AppRoutes />
-        </div>
-      </Router>
-    </>
+    <AuthProvider>
+      <ThemeProvider defaultTheme="system" storageKey="ui-theme">
+        <TooltipProvider>
+          <Router>
+            <div className="flex flex-col min-h-screen bg-background mt-4">
+              <AppRoutes />
+              <Toaster position="top-right" />
+            </div>
+          </Router>
+        </TooltipProvider>
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
 

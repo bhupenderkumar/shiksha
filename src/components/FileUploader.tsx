@@ -8,7 +8,6 @@ type FileUploaderProps = {
   onFilesSelected?: (files: File[]) => void;
   onFileDelete?: (fileId: string) => void;
   existingFiles?: Array<{ id: string; fileName: string; filePath: string }>;
-  maxFiles?: number;
   acceptedFileTypes?: string[];
 };
 
@@ -16,7 +15,6 @@ export function FileUploader({
   onFilesSelected,
   onFileDelete,
   existingFiles = [],
-  maxFiles = 5,
   acceptedFileTypes = ['image/*'],
 }: FileUploaderProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -27,11 +25,6 @@ export function FileUploader({
     if (!files?.length) return;
 
     const fileArray = Array.from(files);
-    if (fileArray.length + existingFiles.length > maxFiles) {
-      toast.error(`You can only upload a maximum of ${maxFiles} files.`);
-      return;
-    }
-
     setSelectedFiles(prev => [...prev, ...fileArray]);
     if (onFilesSelected) {
       onFilesSelected(fileArray);
@@ -82,7 +75,7 @@ export function FileUploader({
             className="hidden"
             onChange={handleFileChange}
             accept={acceptedFileTypes.join(',')}
-            multiple={maxFiles > 1}
+            multiple
           />
         </label>
       </div>

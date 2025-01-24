@@ -17,7 +17,36 @@ import { PageAnimation } from "@/components/ui/page-animation";
 import { AnimatedText } from "@/components/ui/animated-text";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from 'react';
-import { fetchLatestVideos } from '@/services/youtubeService';
+
+declare global {
+  interface Window {
+    google: any;
+  }
+}
+
+const google = window.google;
+
+type Review = {
+  author_name: string;
+  rating: number;
+  relative_time_description: string;
+  text: string;
+  profile_photo_url: string;
+  time: number;
+};
+
+type Photo = {
+  photo_reference: string;
+};
+
+type Video = {
+  id: {
+    videoId: string;
+  };
+  snippet: {
+    title: string;
+  };
+};
 import { fetchPlaceDetails, fetchPlacePhotos, getSchoolLocation } from '@/services/googleMapsService';
 
 const features = [
@@ -324,6 +353,116 @@ export default function Home() {
             <p className="text-muted-foreground">Find us on the map</p>
           </div>
           <div id="map" className="h-96 w-full rounded-lg"></div>
+        </div>
+      </section>
+
+      {/* Admission Process Section */}
+      <section className="py-24 bg-gradient-to-b from-background to-primary/5">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <AnimatedText
+              text="Admission Process"
+              className="text-3xl font-bold mb-4"
+              variant="slideUp"
+            />
+            <p className="text-muted-foreground">Simple steps to join our school family</p>
+          </div>
+          <div className="grid md:grid-cols-4 gap-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              viewport={{ once: true }}
+              className="text-center"
+            >
+              <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
+                <span className="text-2xl font-bold text-primary">1</span>
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Submit Enquiry</h3>
+              <p className="text-muted-foreground">Fill out the admission enquiry form with required details</p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              viewport={{ once: true }}
+              className="text-center"
+            >
+              <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
+                <span className="text-2xl font-bold text-primary">2</span>
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Document Submission</h3>
+              <p className="text-muted-foreground">Submit required documents for verification</p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              viewport={{ once: true }}
+              className="text-center"
+            >
+              <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
+                <span className="text-2xl font-bold text-primary">3</span>
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Interview</h3>
+              <p className="text-muted-foreground">Schedule and attend admission interview</p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              viewport={{ once: true }}
+              className="text-center"
+            >
+              <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
+                <span className="text-2xl font-bold text-primary">4</span>
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Confirmation</h3>
+              <p className="text-muted-foreground">Receive admission confirmation and complete enrollment</p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Admission Enquiry Section */}
+      <section className="py-24 bg-primary/5">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <AnimatedText
+              text="Start Your Journey"
+              className="text-3xl font-bold mb-4"
+              variant="slideUp"
+            />
+            <p className="text-muted-foreground">Submit an admission enquiry today</p>
+          </div>
+          <div className="max-w-2xl mx-auto">
+            <Card>
+              <CardContent className="p-6">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  viewport={{ once: true }}
+                  className="space-y-6"
+                >
+                  <div className="text-center space-y-4">
+                    <h3 className="text-xl font-semibold">Admission Enquiry</h3>
+                    <p className="text-muted-foreground">
+                      Take the first step towards securing your child's future. Submit an enquiry and our admissions team will get in touch with you.
+                    </p>
+                  </div>
+                  <div className="flex justify-center">
+                    <Button size="lg" asChild className="bg-primary hover:bg-primary/90">
+                      <Link to="/admission/enquiry">
+                        Submit Enquiry
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
+                </motion.div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </section>
 

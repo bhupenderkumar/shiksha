@@ -89,91 +89,116 @@ const isValidISOString = (str: string) => {
   }
 };
 
-// Homework service to manage homework-related operations
+interface HomeworkSearchParams {
+  searchTerm?: string;
+  subjectId?: string;
+  status?: HomeworkStatus;
+  dateRange?: {
+    start: Date;
+    end: Date;
+  };
+}
+
+// Service for managing homework-related operations
 export const homeworkService = {
-  async getAll(role: string, classId?: string) {
-    let query = supabase
-      .schema(SCHEMA as any)
-      .from(HOMEWORK_TABLE)
-      .select(`
-        *,
-        class:Class(id, name, section),
-        subject:Subject(id, name, code),
-        attachments:File(*)
-      `)
-      .order('dueDate', { ascending: false });
+  /**
+   * Fetch all homework entries based on user role and class ID
+   * @param role User role (e.g., 'STUDENT', 'TEACHER')
+   * @param classId Optional class ID to filter homework by
+   * @returns Array of homework objects
+   */
+  async getAll(role: string, classId?: string, params?: HomeworkSearchParams) {
+    try {
+      let query = supabase
+        .schema(SCHEMA)
+        .from(HOMEWORK_TABLE)
+        .select(`
+          *,
+          class:Class(id, name, section),
+          subject:Subject(id, name, code),
+          attachments:File(*)
+        `);
 
-    if (role === 'STUDENT' && classId) {
-      query = query.eq('classId', classId);
-    }
+      // Apply role-based filters
+      if (role === 'STUDENT' && classId) {
+        query = query.eq('classId', classId);
+      }
 
-    const { data, error } = await query;
+      // Apply search filters
+      if (params?.searchTerm) {
+        query = query.or(`
+          title.ilike.%${params.searchTerm}%,
+          description.ilike.%${params.searchTerm}%,
+          subject.name.ilike.%${params.searchTerm}%
+        `);
+      }
 
-    if (error) throw error;
+      if (params?.subjectId) {
+        query = query.eq('subjectId', params.subjectId);
+      }
 
-    return (data as any[]).map(homework => {
-      const transformedHomework = {
+      if (params?.status) {
+        query = query.eq('status', params.status);
+      }
+
+      if (params?.dateRange) {
+        query = query
+          .gte('dueDate', params.dateRange.start.toISOString())
+          .lte('dueDate', params.dateRange.end.toISOString());
+      }
+
+      const { data, error } = await query.order('dueDate', { ascending: false });
+
+      if (error) throw error;
+
+      return (data as any[]).map(homework => ({
         ...homework,
         dueDate: new Date(homework.dueDate),
         createdAt: new Date(homework.createdAt),
         updatedAt: new Date(homework.updatedAt),
-      };
-      
-      // Ensure attachments are preserved
-      if (homework.attachments) {
-        transformedHomework.attachments = homework.attachments;
-      }
-    
-      return transformedHomework;
-    }) as HomeworkType[];
+      })) as HomeworkType[];
+    } catch (error) {
+      console.error('Error fetching homework:', error);
+      throw error;
+    }
   },
 
+  /**
+   * Create a new homework entry
+   * @param data Homework data to create
+   * @param userId User ID of the creator
+   * @returns Created homework object
+   */
   async create(data: CreateHomeworkData, userId: string) {
     try {
       const { attachments, uploadedBy, ...homeworkData } = data;
       const homeworkId = uuidv4();
-      const now = new Date().toISOString();
-
-      // Use the dueDate as is if it's already an ISO string, otherwise convert it
-      const dueDate = typeof homeworkData.dueDate === 'string' && isValidISOString(homeworkData.dueDate)
-        ? homeworkData.dueDate
-        : new Date(homeworkData.dueDate).toISOString();
 
       const { data: homework, error: homeworkError } = await supabase
-        .schema(SCHEMA as any)
+        .schema(SCHEMA)
         .from(HOMEWORK_TABLE)
-        .insert([{
-          ...homeworkData,
-          id: homeworkId,
-          status: 'PENDING',
-          createdAt: now,
-          updatedAt: now,
-          dueDate
+        .insert([{ 
+          ...homeworkData, 
+          id: homeworkId, 
+          status: 'PENDING', 
+          createdAt: new Date().toISOString(), 
+          updatedAt: new Date().toISOString() 
         }])
         .select(`
           *,
-          class:Class(
-            id,
-            name,
-            section
-          ),
-          subject:Subject(
-            id,
-            name,
-            code
-          ),
+          class:Class(id, name, section),
+          subject:Subject(id, name, code),
           attachments:File(*)
         `)
         .single();
 
       if (homeworkError) throw homeworkError;
-      if (!homework) throw new Error('Failed to create homework');
 
       // Handle file uploads if present
       if (attachments && attachments.length > 0) {
         // Validate required fields
         const validAttachments = attachments.filter(file => {
-          if (!file.fileName || !file.filePath) {
+          if (!file.name || !file.filePath) {
             console.warn('Skipping invalid file attachment:', file);
             return false;
           }
@@ -183,16 +208,16 @@ export const homeworkService = {
         if (validAttachments.length > 0) {
           const fileInserts = validAttachments.map(file => ({
             id: file.id || uuidv4(),
-            fileName: file.fileName,
-            filePath: file.filePath,
-            fileType: file.fileType || 'application/octet-stream',
+            fileName: file.name,
+            filePath: file.filePath.fullPath,
+            fileType: file.type || 'application/octet-stream',
             homeworkId: homeworkId,
             uploadedBy: uploadedBy || userId,
-            uploadedAt: file.uploadedAt || now
+            uploadedAt: new Date().toISOString()
           }));
 
           const { error: fileError } = await supabase
-            .schema(SCHEMA as any)
+            .schema(SCHEMA)
             .from('File')
             .insert(fileInserts);
 
@@ -204,14 +229,21 @@ export const homeworkService = {
         ...homework,
         dueDate: new Date(homework.dueDate),
         createdAt: new Date(homework.createdAt),
-        updatedAt: new Date(homework.updatedAt)
+        updatedAt: new Date(homework.updatedAt),
       } as HomeworkType;
     } catch (error) {
       console.error('Error creating homework:', error);
-      throw error;
+      throw new Error('Failed to create homework');
     }
   },
 
+  /**
+   * Update an existing homework entry
+   * @param id Homework ID to update
+   * @param data Homework data to update
+   * @param userId User ID of the updater
+   * @returns Updated homework object
+   */
   async update(id: string, data: UpdateHomeworkData, userId: string) {
     try {
       const { attachments, uploadedBy, ...homeworkData } = data;
@@ -224,24 +256,28 @@ export const homeworkService = {
       }
 
       const { data: updatedHomework, error } = await supabase
-        .schema(SCHEMA as any)
+        .schema(SCHEMA)
         .from(HOMEWORK_TABLE)
         .update({
           ...homeworkData,
           updatedAt: now
         })
         .eq('id', id)
-        .select()
+        .select(`
+          *,
+          class:Class(id, name, section),
+          subject:Subject(id, name, code),
+          attachments:File(*)
+        `)
         .single();
 
       if (error) throw error;
-      if (!updatedHomework) throw new Error('Failed to update homework');
 
       // Handle new file attachments
       if (attachments && attachments.length > 0) {
         // Validate required fields
         const validAttachments = attachments.filter(file => {
-          if (!file.fileName || !file.filePath) {
+          if (!file.name || !file.filePath) {
             console.warn('Skipping invalid file attachment:', file);
             return false;
           }
@@ -251,16 +287,16 @@ export const homeworkService = {
         if (validAttachments.length > 0) {
           const fileInserts = validAttachments.map(file => ({
             id: file.id || uuidv4(),
-            fileName: file.fileName,
-            filePath: file.filePath,
-            fileType: file.fileType || 'application/octet-stream',
+            fileName: file.name,
+            filePath: file.filePath.fullPath,
+            fileType: file.type || 'application/octet-stream',
             homeworkId: id,
             uploadedBy: uploadedBy || userId,
-            uploadedAt: file.uploadedAt || now
+            uploadedAt: now
           }));
 
           const { error: fileError } = await supabase
-            .schema(SCHEMA as any)
+            .schema(SCHEMA)
             .from('File')
             .insert(fileInserts);
 
@@ -269,13 +305,22 @@ export const homeworkService = {
       }
 
       // Fetch and return the updated homework with attachments
-      return await homeworkService.getHomeworkDetails(id);
+      return {
+        ...updatedHomework,
+        dueDate: new Date(updatedHomework.dueDate),
+        createdAt: new Date(updatedHomework.createdAt),
+        updatedAt: new Date(updatedHomework.updatedAt),
+      } as HomeworkType;
     } catch (error) {
       console.error('Error updating homework:', error);
-      throw error;
+      throw new Error('Failed to update homework');
     }
   },
 
+  /**
+   * Delete a homework entry by ID
+   * @param id Homework ID to delete
+   */
   async delete(id: string) {
     try {
       const files = await fileTableService.getFilesByHomeworkId(id);
@@ -286,7 +331,7 @@ export const homeworkService = {
       }));
 
       const { error } = await supabase
-        .schema(SCHEMA as any)
+        .schema(SCHEMA)
         .from(HOMEWORK_TABLE)
         .delete()
         .eq('id', id);
@@ -301,44 +346,31 @@ export const homeworkService = {
     }
   },
 
+  /**
+   * Fetch homework details by ID
+   * @param id Homework ID to fetch
+   * @returns Homework object with attachments
+   */
   async getHomeworkDetails(id: string) {
-    const { data: homework, error: homeworkError } = await supabase
-      .schema(SCHEMA as any)
+    const { data, error } = await supabase
+      .schema(SCHEMA)
       .from(HOMEWORK_TABLE)
       .select(`
         *,
-        class:Class(
-          id,
-          name,
-          section
-        ),
-        subject:Subject(
-          id,
-          name,
-          code
-        )
+        class:Class(id, name, section),
+        subject:Subject(id, name, code),
+        attachments:File(*)
       `)
       .eq('id', id)
       .single();
 
-    if (homeworkError) throw new Error(homeworkError.message);
-    if (!homework) throw new Error('Homework not found');
-
-    // Fetch files separately
-    const { data: files, error: filesError } = await supabase
-      .schema(SCHEMA as any)
-      .from('File')
-      .select('*')
-      .eq('homeworkId', id);
-
-    if (filesError) throw new Error(filesError.message);
+    if (error) throw error;
 
     return {
-      ...homework,
-      dueDate: new Date(homework.dueDate),
-      createdAt: new Date(homework.createdAt),
-      updatedAt: new Date(homework.updatedAt),
-      attachments: files || []
+      ...data,
+      dueDate: new Date(data.dueDate),
+      createdAt: new Date(data.createdAt),
+      updatedAt: new Date(data.updatedAt),
     } as HomeworkType;
   }
 };
