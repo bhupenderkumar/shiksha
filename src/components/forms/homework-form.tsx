@@ -188,9 +188,9 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
     }
   };
 
-  const handleFileChange = (newFiles: File[]) => {
-    setFiles(newFiles);
-    setValue('files', newFiles); 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files || []);
+    setFiles(prevFiles => [...prevFiles, ...selectedFiles]);
   };
 
   const removeExistingFile = (fileId: string) => {
@@ -336,12 +336,8 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
           <div className="mt-2">
             <FileUploader
               onFilesSelected={handleFileChange}
-              maxFiles={5}
               acceptedFileTypes={[
-                'image/*',
-                'application/pdf',
-                'application/msword',
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                'image/*'
               ]}
             />
           </div>

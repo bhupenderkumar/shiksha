@@ -1,33 +1,30 @@
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router } from 'react-router-dom';
 import Layout from '../components/Layout';
-import Dashboard from '../pages/Dashboard';
-import Homework from '../pages/Homework';
-import Fees from '../pages/Fees';
-import Subjects from '../pages/Subjects';
 import { useAuth } from '../lib/auth';
 import '../styles/globals.css';
-import { Students } from '.';
+import { ThemeProvider } from "@/components/theme-provider";
+import { PWAPrompt } from "@/components/ui/pwa-prompt";
+import { Toaster } from "react-hot-toast";
 
-function App() {
+function App({ Component, pageProps }: any) {
   const { profile } = useAuth();
 
   return (
-    <Router>
-      <Layout>
-        <div className="min-h-screen bg-gradient-to-br from-[#4f46e5] to-[#9333ea]">
-          <Routes>
-            <Route path="/dashboard" Component={Dashboard} />
-            <Route path="/students" Component={Students} />
-            <Route path="/subjects" Component={Subjects} />
-            <Route path="/homework" Component={Homework} />
-            <Route path="/fees" Component={Fees} />
-            <Route path="/" element={<Navigate to="/dashboard" />} />
-          </Routes>
-        </div>
-      </Layout>
-    </Router>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <Router>
+        <Layout>
+          <Component {...pageProps} />
+        </Layout>
+        <PWAPrompt />
+        <Toaster position="bottom-right" />
+      </Router>
+    </ThemeProvider>
   );
 }
-
 
 export default App;

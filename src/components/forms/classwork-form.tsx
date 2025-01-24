@@ -7,14 +7,14 @@ import { Calendar } from '@/components/ui/calendar';
 import { FileUploader } from '@/components/FileUploader';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useClassSubjects } from '@/hooks/use-class-subjects';
-import type { ClassworkType } from '@/services/classworkService';
+import type { ClassworkType, CreateClassworkData } from '@/services/classworkService';
 import toast from 'react-hot-toast';
 import { fileService } from '@/services/fileService';
 import { fetchClassworkDetails } from '@/services/classworkService';
 import { useAuth } from '@/lib/auth';
 
 type ClassworkFormProps = {
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: CreateClassworkData) => Promise<void>;
   initialData?: ClassworkType;
 };
 
@@ -22,31 +22,37 @@ export function ClassworkForm({ onSubmit, initialData }: ClassworkFormProps) {
   const { user } = useAuth();
   const { classes, loading } = useClassSubjects();
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Omit<CreateClassworkData, 'uploadedBy'>>({
     title: initialData?.title || '',
     description: initialData?.description || '',
     date: initialData?.date || new Date(),
     classId: initialData?.classId || '',
-    attachments: initialData?.attachments || [], // Ensure attachments is initialized as an array
+    attachments: initialData?.attachments || [],
   });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
-      if (initialData) {
-        const classworkDetails = await fetchClassworkDetails(initialData.id);
-        setFormData({
-          ...formData,
-          title: classworkDetails.title,
-          description: classworkDetails.description,
-          date: classworkDetails.date,
-          classId: classworkDetails.classId,
-          attachments: classworkDetails.attachments,
-        });
+      if (initialData?.id) {
+        try {
+          const classworkDetails = await fetchClassworkDetails(initialData.id);
+          setFormData({
+            title: classworkDetails.title,
+            description: classworkDetails.description,
+            date: classworkDetails.date,
+            classId: classworkDetails.classId,
+            attachments: classworkDetails.attachments || [],
+          });
+        } catch (error) {
+          console.error('Error fetching classwork details:', error);
+          toast.error('Failed to load classwork details');
+        }
       }
     };
 
     fetchData();
-  }, [initialData]);
+  }, [initialData?.id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,8 +61,15 @@ export function ClassworkForm({ onSubmit, initialData }: ClassworkFormProps) {
       return;
     }
 
+    if (!user?.id) {
+      toast.error('User not authenticated');
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
-      const newFiles = formData.attachments.filter(file => !file.id);
+      const newFiles = formData.attachments.filter(file => !file.id) as File[];
       const existingFiles = formData.attachments.filter(file => file.id);
 
       const timestamp = new Date().getTime();
@@ -74,21 +87,23 @@ export function ClassworkForm({ onSubmit, initialData }: ClassworkFormProps) {
             };
           } catch (error) {
             console.error('Error uploading file:', error);
-            throw error;
+            throw new Error(`Failed to upload file ${file.name}`);
           }
         })
       );
 
-      const submitData = {
+      const submitData: CreateClassworkData = {
         ...formData,
         attachments: [...existingFiles, ...uploadedFiles],
-        uploadedBy: user?.id // This will only be used for file records
+        uploadedBy: user.id
       };
 
       await onSubmit(submitData);
     } catch (error) {
       console.error('Error submitting classwork:', error);
-      toast.error('Failed to create classwork');
+      toast.error(error instanceof Error ? error.message : 'Failed to create classwork');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -173,14 +188,13 @@ export function ClassworkForm({ onSubmit, initialData }: ClassworkFormProps) {
             onFilesSelected={handleFileUpload}
             onFileDelete={handleFileDelete}
             existingFiles={formData.attachments}
-            maxFiles={5}
             acceptedFileTypes={['image/*']} // Only allow images
           />
         </div>
       </div>
 
       <div className="flex justify-end space-x-2 sticky bottom-0 bg-background pt-4 border-t">
-        <Button type="submit">
+        <Button type="submit" disabled={isSubmitting}>
           {initialData ? 'Update' : 'Create'}
         </Button>
       </div>

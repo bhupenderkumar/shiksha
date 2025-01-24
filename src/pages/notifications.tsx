@@ -110,31 +110,18 @@ const NotificationsPage = () => {
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const { isAdminOrTeacher, profile } = useProfileAccess();
   const { user } = useAuth();
+  const classId = user?.classId; // Assuming user has classId property
   const [deleteDialog, setDeleteDialog] = useState({ open: false, notificationId: null });
 
-  const fetchNotifications = async () => {
-    if (user) {
-      try {
-        setLoading(true);
-        const data = isAdminOrTeacher
-          ? await notificationService.getNotifications()
-          : await notificationService.getNotificationsForUser(user.id);
-        setNotifications(data || []);
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
-      } finally {
-        setLoading(false);
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (classId) {
+        const fetchedNotifications = await notificationService.getNotificationsByClassId(classId);
+        setNotifications(fetchedNotifications);
       }
-    }
-  };
-
-  useEffect(() => {
+    };
     fetchNotifications();
-  }, []);
-
-  useEffect(() => {
-    fetchNotifications();
-  }, [user]);
+  }, [classId]);
 
   useEffect(() => {
     const fetchClassesAndStudents = async () => {
@@ -177,7 +164,7 @@ const NotificationsPage = () => {
         classId: '',
       });
       setSelectedStudents([]);
-      fetchNotifications(); // Refresh notifications after creating new ones
+      // Refresh notifications after creating new ones
     }
   };
 
@@ -265,7 +252,13 @@ const NotificationsPage = () => {
           )}
         </TabsList>
         <TabsContent value="view">
-          {renderNotificationsList()}
+          {notifications.length > 0 ? (
+            notifications.map(notification => (
+              <NotificationCard key={notification.id} notification={notification} />
+            ))
+          ) : (
+            <EmptyState message="No notifications available" />
+          )}
         </TabsContent>
         {isAdminOrTeacher && (
           <TabsContent value="create">
