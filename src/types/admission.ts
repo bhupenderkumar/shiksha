@@ -5,6 +5,38 @@ export type CommunicationType = typeof COMMUNICATION_TYPES[keyof typeof COMMUNIC
 export type RequiredDocument = typeof REQUIRED_DOCUMENTS[number];
 export type Gender = 'Male' | 'Female' | 'Other';
 
+// Database row types (matching actual database column names)
+export interface ProspectiveStudentRow {
+  id: string;
+  studentname: string;
+  parentname: string;
+  dateofbirth: string | null;
+  gender: Gender;
+  email: string;
+  contactnumber: string;
+  gradeapplying: string;
+  currentschool?: string;
+  address: string;
+  bloodgroup?: string;
+  status: EnquiryStatus;
+  applieddate: string;
+  lastupdatedate: string;
+  schoolid: string;
+  assignedto?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdmissionProcessRow {
+  id: string;
+  prospectivestudentid: string;
+  documentsrequired: any;
+  interviewdate: string | null;
+  assignedclass: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Note {
   id: string;
   prospectiveStudentId: string;
@@ -35,15 +67,23 @@ export interface ProspectiveStudent extends ProspectiveStudentData {
   assignedTo?: string;
   createdAt: Date;
   updatedAt: Date;
+  documentsRequired?: DocumentStatus;
+}
+
+export interface DocumentSubmission {
+  type: string;
+  uploadDate: Date;
+  status: string;
+  fileName: string;
 }
 
 export interface DocumentStatus {
   required: RequiredDocument[];
-  submitted?: RequiredDocument[];
-  verificationStatus?: {
+  submitted: DocumentSubmission[];
+  verificationStatus: {
     [key in RequiredDocument]?: 'pending' | 'verified' | 'rejected';
   };
-  rejectionReason?: {
+  rejectionReason: {
     [key in RequiredDocument]?: string;
   };
 }
@@ -92,7 +132,6 @@ export interface AdmissionCommunication {
   updatedAt: Date;
 }
 
-// Helper type for stats display
 export interface AdmissionStats {
   totalApplications: number;
   newApplications: number;
@@ -104,8 +143,7 @@ export interface AdmissionStats {
   enrolled: number;
 }
 
-// Helper type for timeline display
-export interface AdmissionTimeline {
+export interface AdmissionTimelineStep {
   step: number;
   status: EnquiryStatus;
   title: string;
@@ -113,22 +151,40 @@ export interface AdmissionTimeline {
   completed: boolean;
   current: boolean;
   label?: string;
-  date?: Date;
-  canTransition?: boolean;
 }
 
-export interface StatusTransition {
-  from: EnquiryStatus;
-  to: EnquiryStatus;
-  requiresDocuments?: boolean;
-  requiresInterview?: boolean;
-  requiresPayment?: boolean;
-}
-
-// Helper type for progress tracking
 export interface AdmissionProgress {
+  currentStatus: EnquiryStatus;
   currentStep: number;
   lastSaved: Date;
   completedSteps: string[];
   nextStep: string;
+  timeline: AdmissionTimelineStep[];
+  documentsStatus: Record<RequiredDocument, DocumentStatus>;
+  interviewDate?: Date;
+  assignedClass?: string;
+}
+
+export interface FilteredEnquiry extends ProspectiveStudent {
+  AdmissionProcess: AdmissionProcess | null;
+}
+
+export interface SearchParams {
+  status?: EnquiryStatus[];
+  dateRange?: {
+    start: Date;
+    end: Date;
+  };
+  searchTerm?: string;
+  gradeApplying?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface EnquiryUpdateData extends Partial<ProspectiveStudentData> {
+  status?: EnquiryStatus;
+  interviewDate?: Date;
+  documentsStatus?: Partial<Record<RequiredDocument, DocumentStatus>>;
+  assignedClass?: string;
+  notes?: string;
 }

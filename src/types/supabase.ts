@@ -7,6 +7,106 @@ export type Json =
   | Json[];
 
 export interface Database {
+  school: {
+    Tables: {
+      ProspectiveStudent: {
+        Row: {
+          id: string;
+          studentname: string;
+          parentname: string;
+          email: string;
+          contactnumber: string;
+          gradeapplying: string;
+          gender: string;
+          dateofbirth: string | null;
+          address: string;
+          status: string;
+          applieddate: string;
+          lastupdatedate: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          studentname: string;
+          parentname: string;
+          email: string;
+          contactnumber: string;
+          gradeapplying: string;
+          gender: string;
+          dateofbirth?: string | null;
+          address: string;
+          status?: string;
+          applieddate?: string;
+          lastupdatedate?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          studentname?: string;
+          parentname?: string;
+          email?: string;
+          contactnumber?: string;
+          gradeapplying?: string;
+          gender?: string;
+          dateofbirth?: string | null;
+          address?: string;
+          status?: string;
+          applieddate?: string;
+          lastupdatedate?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      AdmissionProcess: {
+        Row: {
+          id: string;
+          prospectivestudentid: string;
+          documentsrequired: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          prospectivestudentid: string;
+          documentsrequired?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          prospectivestudentid?: string;
+          documentsrequired?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      AdmissionNotes: {
+        Row: {
+          id: string;
+          prospectivestudentid: string;
+          content: string;
+          createdby: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          prospectivestudentid: string;
+          content: string;
+          createdby: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          prospectivestudentid?: string;
+          content?: string;
+          createdby?: string;
+          created_at?: string;
+        };
+      };
+    };
+  };
   public: {
     Tables: {
       Attendance: {
@@ -14,28 +114,28 @@ export interface Database {
           id: string;
           date: string;
           status: 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY';
-          studentId: string;
-          classId: string;
-          createdAt: string;
-          updatedAt: string;
+          studentid: string;
+          classid: string;
+          created_at: string;
+          updated_at: string;
         };
         Insert: {
           id?: string;
           date: string;
           status: 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY';
-          studentId: string;
-          classId: string;
-          createdAt?: string;
-          updatedAt?: string;
+          studentid: string;
+          classid: string;
+          created_at?: string;
+          updated_at?: string;
         };
         Update: {
           id?: string;
           date?: string;
           status?: 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY';
-          studentId?: string;
-          classId?: string;
-          createdAt?: string;
-          updatedAt?: string;
+          studentid?: string;
+          classid?: string;
+          created_at?: string;
+          updated_at?: string;
         };
       };
       Staff: {
@@ -44,169 +144,24 @@ export interface Database {
           role: 'TEACHER' | 'ADMIN' | 'PRINCIPAL' | 'ACCOUNTANT';
           name: string;
           email: string;
-          createdAt: string;
-          updatedAt: string;
+          created_at: string;
+          updated_at: string;
         };
         Insert: {
           id?: string;
           role: 'TEACHER' | 'ADMIN' | 'PRINCIPAL' | 'ACCOUNTANT';
           name: string;
           email: string;
-          createdAt?: string;
-          updatedAt?: string;
+          created_at?: string;
+          updated_at?: string;
         };
         Update: {
           id?: string;
           role?: 'TEACHER' | 'ADMIN' | 'PRINCIPAL' | 'ACCOUNTANT';
           name?: string;
           email?: string;
-          createdAt?: string;
-          updatedAt?: string;
-        };
-      };
-      Student: {
-        Row: {
-          id: string;
-          name: string;
-          email: string;
-          classId: string;
-          createdAt: string;
-          updatedAt: string;
-        };
-        Insert: {
-          id?: string;
-          name: string;
-          email: string;
-          classId: string;
-          createdAt?: string;
-          updatedAt?: string;
-        };
-        Update: {
-          id?: string;
-          name?: string;
-          email?: string;
-          classId?: string;
-          createdAt?: string;
-          updatedAt?: string;
-        };
-      };
-      Profile: {
-        Row: {
-          id: string;
-          user_id: string;
-          full_name: string | null;
-          avatar_url: string | null;
-          role: string;
-          classId: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          full_name?: string | null;
-          avatar_url?: string | null;
-          role: string;
-          classId: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          full_name?: string | null;
-          avatar_url?: string | null;
-          role?: string;
-          classId?: string;
-        };
-      };
-      Homework: {
-        Row: {
-          id: string;
-          title: string;
-          description: string;
-          dueDate: string;
-          status: 'PENDING' | 'SUBMITTED' | 'GRADED' | 'LATE';
-          subjectId: string;
-          classId: string;
-          createdAt: string;
-          updatedAt: string;
-        };
-        Insert: {
-          id?: string;
-          title: string;
-          description: string;
-          dueDate: string;
-          status?: 'PENDING' | 'SUBMITTED' | 'GRADED' | 'LATE';
-          subjectId: string;
-          classId: string;
-          createdAt?: string;
-          updatedAt?: string;
-        };
-        Update: {
-          id?: string;
-          title?: string;
-          description?: string;
-          dueDate?: string;
-          status?: 'PENDING' | 'SUBMITTED' | 'GRADED' | 'LATE';
-          subjectId?: string;
-          classId?: string;
-          createdAt?: string;
-          updatedAt?: string;
-        };
-      };
-      Fee: {
-        Row: {
-          id: string;
-          amount: number;
-          status: 'PENDING' | 'PAID' | 'OVERDUE';
-          studentId: string;
-          dueDate: string;
-          createdAt: string;
-          updatedAt: string;
-        };
-        Insert: {
-          id?: string;
-          amount: number;
-          status?: 'PENDING' | 'PAID' | 'OVERDUE';
-          studentId: string;
-          dueDate: string;
-          createdAt?: string;
-          updatedAt?: string;
-        };
-        Update: {
-          id?: string;
-          amount?: number;
-          status?: 'PENDING' | 'PAID' | 'OVERDUE';
-          studentId?: string;
-          dueDate?: string;
-          createdAt?: string;
-          updatedAt?: string;
-        };
-      };
-      File: {
-        Row: {
-          id: string;
-          fileName: string;
-          filePath: string;
-          fileType: string;
-          uploadedBy: string;
-          createdAt: string;
-          updatedAt: string;
-        };
-        Insert: {
-          id?: string;
-          fileName: string;
-          filePath: string;
-          fileType: string;
-          uploadedBy: string;
-          createdAt?: string;
-          updatedAt?: string;
-        };
-        Update: {
-          id?: string;
-          fileName?: string;
-          filePath?: string;
-          fileType?: string;
-          uploadedBy?: string;
-          createdAt?: string;
-          updatedAt?: string;
+          created_at?: string;
+          updated_at?: string;
         };
       };
     };

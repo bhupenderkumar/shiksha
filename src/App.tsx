@@ -22,6 +22,7 @@ import ProfilePage from './pages/profile';
 import HomeworkDetails from './pages/HomeworkDetails';
 import AdmissionEnquiry from './pages/AdmissionEnquiry';
 import ViewAdmissionEnquiries from './pages/ViewAdmissionEnquiries';
+import AdmissionProcess from "@/pages/AdmissionProcess";
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/lib/auth';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -82,6 +83,7 @@ function AppRoutes() {
       } />
       <Route path="/homework/:id" element={<HomeworkDetails />} />
       <Route path="/classwork/:id" element={<ClassworkDetail />} />
+      <Route path="/admission/process/:id" element={<AdmissionProcess />} />
 
       {/* Protected Routes */}
       <Route path="/dashboard" element={
