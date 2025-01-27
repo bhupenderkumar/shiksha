@@ -61,7 +61,9 @@ export const REQUIRED_DOCUMENTS = [
   'report_card',
   'medical_records',
   'address_proof',
-  'photographs'
+  'student_photo',
+  'father_photo',
+  'mother_photo'
 ] as const;
 
 export const PUBLIC_ROUTES = [

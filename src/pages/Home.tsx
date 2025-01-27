@@ -17,14 +17,16 @@ import { PageAnimation } from "@/components/ui/page-animation";
 import { AnimatedText } from "@/components/ui/animated-text";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from 'react';
+import { fetchPlaceDetails, fetchPlacePhotos, getSchoolLocation } from '@/services/googleMapsService';
+import { admissionService } from "@/services/admissionService";
+import HomePart1 from "@/pages/HomePart1";
+import { ProspectiveStudent, Gender } from "@/types/admission";
 
 declare global {
   interface Window {
     google: any;
   }
 }
-
-const google = window.google;
 
 type Review = {
   author_name: string;
@@ -47,7 +49,6 @@ type Video = {
     title: string;
   };
 };
-import { fetchPlaceDetails, fetchPlacePhotos, getSchoolLocation } from '@/services/googleMapsService';
 
 const features = [
   {
@@ -94,48 +95,106 @@ const testimonials = [
   },
 ];
 
-export default function Home() {
-  const [videos, setVideos] = useState([]);
-  const [reviews, setReviews] = useState([]);
-  const [photos, setPhotos] = useState([]);
+async function fetchLatestVideos(): Promise<Video[]> {
+  try {
+    const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
+    const YOUTUBE_CHANNEL_ID = import.meta.env.VITE_YOUTUBE_CHANNEL_ID;
 
-  useEffect(() => {
+    if (!YOUTUBE_API_KEY || !YOUTUBE_CHANNEL_ID) {
+      console.error('YouTube API key or Channel ID not set in environment variables');
+      return [];
+    }
+
+    const response = await fetch(
+      `https://www.googleapis.com/youtube/v3/search?key=${YOUTUBE_API_KEY}&channelId=${YOUTUBE_CHANNEL_ID}&part=snippet,id&order=date&maxResults=5&type=video`
+    );
+
+    if (!response.ok) {
+      throw new Error(`YouTube API request failed: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.items.map((item: any) => ({
+      id: { videoId: item.id.videoId },
+      snippet: { title: item.snippet.title }
+    }));
+  } catch (error) {
+    console.error('Error fetching videos:', error);
+    return [];
+  }
+}
+
+export default function Home() {
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [photos, setPhotos] = useState<string[]>([]);
+
+useEffect(() => {
     const getVideos = async () => {
       const latestVideos = await fetchLatestVideos();
       setVideos(latestVideos);
     };
 
     const loadGoogleMapsScript = () => {
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY`;
-      script.async = true;
-      script.onload = initMap;
-      document.body.appendChild(script);
+      try {
+        if (!import.meta.env.VITE_GOOGLE_MAPS_API_KEY) {
+          console.error('Google Maps API key is not set in environment variables');
+          return;
+        }
+
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`;
+        script.async = true;
+        script.onerror = () => console.error('Failed to load Google Maps script');
+        script.onload = initMap;
+        document.body.appendChild(script);
+      } catch (error) {
+        console.error('Error loading Google Maps:', error);
+      }
     };
 
     const initMap = () => {
-      const location = getSchoolLocation();
-      const map = new google.maps.Map(document.getElementById('map'), {
-        center: location,
-        zoom: 15,
-      });
-      new google.maps.Marker({
-        position: location,
-        map: map,
-        title: SCHOOL_INFO.name,
-      });
+      try {
+        if (!window.google?.maps) {
+          console.error('Google Maps not loaded');
+          return;
+        }
+
+        const mapElement = document.getElementById('map');
+        if (!mapElement) {
+          console.error('Map container element not found');
+          return;
+        }
+
+        const location = getSchoolLocation();
+        const map = new window.google.maps.Map(mapElement, {
+          center: location,
+          zoom: 15,
+        });
+        new window.google.maps.Marker({
+          position: location,
+          map: map,
+          title: SCHOOL_INFO.name,
+        });
+      } catch (error) {
+        console.error('Error initializing map:', error);
+      }
     };
 
     const fetchPlaceData = async () => {
-      const placeData = await fetchPlaceDetails();
-      if (placeData) {
-        setReviews(placeData.reviews || []);
-        const photoUrls = await Promise.all(
-          (placeData.photos || []).slice(0, 8).map(photo => 
-            fetchPlacePhotos(photo.photo_reference)
-          )
-        );
-        setPhotos(photoUrls.filter(url => url !== null));
+      try {
+        const placeData = await fetchPlaceDetails();
+        if (placeData) {
+          setReviews(placeData.reviews || []);
+          const photoUrls = await Promise.all(
+            (placeData.photos || []).slice(0, 8).map((photo: Photo) =>
+              fetchPlacePhotos(photo.photo_reference)
+            )
+          );
+          setPhotos(photoUrls.filter(url => url !== null));
+        }
+      } catch (error) {
+        console.error('Error fetching place data:', error);
       }
     };
 
@@ -192,6 +251,12 @@ export default function Home() {
                 </Link>
               </Button>
             </motion.div>
+            <Button size="lg" variant="outline" asChild>
+              <Link to="/admission-enquiry">
+                Start Admission Process
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
@@ -233,6 +298,82 @@ export default function Home() {
                 </motion.div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* Admission Process Section */}
+      <section className="py-24 bg-gradient-to-b from-background to-primary/5">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <AnimatedText
+              text="Admission Process"
+              className="text-3xl font-bold mb-4"
+              variant="slideUp"
+            />
+            <p className="text-muted-foreground">Simple steps to join our school family</p>
+          </div>
+          <div className="grid md:grid-cols-4 gap-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              viewport={{ once: true }}
+              className="text-center"
+            >
+              <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
+                <span className="text-2xl font-bold text-primary">1</span>
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Submit Enquiry</h3>
+              <p className="text-muted-foreground">Fill out the admission enquiry form with required details</p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              viewport={{ once: true }}
+              className="text-center"
+            >
+              <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
+                <span className="text-2xl font-bold text-primary">2</span>
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Document Submission</h3>
+              <p className="text-muted-foreground">Submit required documents for verification</p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              viewport={{ once: true }}
+              className="text-center"
+            >
+              <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
+                <span className="text-2xl font-bold text-primary">3</span>
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Interview</h3>
+              <p className="text-muted-foreground">Schedule and attend admission interview</p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              viewport={{ once: true }}
+              className="text-center"
+            >
+              <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
+                <span className="text-2xl font-bold text-primary">4</span>
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Admission Confirmation</h3>
+              <p className="text-muted-foreground">Receive confirmation and join our school family</p>
+            </motion.div>
+          </div>
+          <div className="mt-12 text-center">
+            <Button size="lg" asChild className="bg-primary hover:bg-primary/90">
+              <Link to="/admission-enquiry">
+                Start Your Journey Today
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
@@ -355,183 +496,6 @@ export default function Home() {
           <div id="map" className="h-96 w-full rounded-lg"></div>
         </div>
       </section>
-
-      {/* Admission Process Section */}
-      <section className="py-24 bg-gradient-to-b from-background to-primary/5">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <AnimatedText
-              text="Admission Process"
-              className="text-3xl font-bold mb-4"
-              variant="slideUp"
-            />
-            <p className="text-muted-foreground">Simple steps to join our school family</p>
-          </div>
-          <div className="grid md:grid-cols-4 gap-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              viewport={{ once: true }}
-              className="text-center"
-            >
-              <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
-                <span className="text-2xl font-bold text-primary">1</span>
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Submit Enquiry</h3>
-              <p className="text-muted-foreground">Fill out the admission enquiry form with required details</p>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              viewport={{ once: true }}
-              className="text-center"
-            >
-              <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
-                <span className="text-2xl font-bold text-primary">2</span>
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Document Submission</h3>
-              <p className="text-muted-foreground">Submit required documents for verification</p>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              viewport={{ once: true }}
-              className="text-center"
-            >
-              <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
-                <span className="text-2xl font-bold text-primary">3</span>
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Interview</h3>
-              <p className="text-muted-foreground">Schedule and attend admission interview</p>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              viewport={{ once: true }}
-              className="text-center"
-            >
-              <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
-                <span className="text-2xl font-bold text-primary">4</span>
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Confirmation</h3>
-              <p className="text-muted-foreground">Receive admission confirmation and complete enrollment</p>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Admission Enquiry Section */}
-      <section className="py-24 bg-primary/5">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <AnimatedText
-              text="Start Your Journey"
-              className="text-3xl font-bold mb-4"
-              variant="slideUp"
-            />
-            <p className="text-muted-foreground">Submit an admission enquiry today</p>
-          </div>
-          <div className="max-w-2xl mx-auto">
-            <Card>
-              <CardContent className="p-6">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  viewport={{ once: true }}
-                  className="space-y-6"
-                >
-                  <div className="text-center space-y-4">
-                    <h3 className="text-xl font-semibold">Admission Enquiry</h3>
-                    <p className="text-muted-foreground">
-                      Take the first step towards securing your child's future. Submit an enquiry and our admissions team will get in touch with you.
-                    </p>
-                  </div>
-                  <div className="flex justify-center">
-                    <Button size="lg" asChild className="bg-primary hover:bg-primary/90">
-                      <Link to="/admission/enquiry">
-                        Submit Enquiry
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </div>
-                </motion.div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Contact Section */}
-      <section className="py-24 bg-primary/5">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <AnimatedText
-              text="Begin Your Child's Journey"
-              className="text-3xl font-bold mb-4"
-              variant="slideUp"
-            />
-            <p className="text-muted-foreground mb-8">
-              Take the first step towards your child's bright future
-            </p>
-            <div className="space-y-4">
-              <p className="flex items-center justify-center gap-2">
-                <CheckCircle className="w-5 h-5 text-primary" />
-                <span>World-class education at affordable fees</span>
-              </p>
-              <p className="flex items-center justify-center gap-2">
-                <CheckCircle className="w-5 h-5 text-primary" />
-                <span>Safe and nurturing environment</span>
-              </p>
-              <p className="flex items-center justify-center gap-2">
-                <CheckCircle className="w-5 h-5 text-primary" />
-                <span>Experienced and caring faculty</span>
-              </p>
-            </div>
-            <div className="mt-8">
-              <Button size="lg" className="bg-primary hover:bg-primary/90">
-                Contact Us Now
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="py-12 bg-card">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-8">
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
-              <p className="text-muted-foreground">{SCHOOL_INFO.address}</p>
-              <p className="text-muted-foreground">{SCHOOL_INFO.phone}</p>
-              <p className="text-muted-foreground">{SCHOOL_INFO.email}</p>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
-              <ul className="space-y-2 text-muted-foreground">
-                <li><Link to="/about">About Us</Link></li>
-                <li><Link to="/admission">Admissions</Link></li>
-                <li><Link to="/facilities">Facilities</Link></li>
-                <li><Link to="/contact">Contact</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Follow Us</h3>
-              <div className="flex space-x-4">
-                {/* Add social media icons/links here */}
-              </div>
-            </div>
-          </div>
-          <div className="mt-8 pt-8 border-t text-center text-muted-foreground">
-            &copy; {new Date().getFullYear()} {SCHOOL_INFO.name}. All rights reserved.
-          </div>
-        </div>
-      </footer>
     </PageAnimation>
   );
 }

@@ -30,11 +30,11 @@ import {
 } from "lucide-react";
 import { AdmissionEnquiryForm } from "@/components/admission/AdmissionEnquiryForm";
 import { admissionService } from "@/services/admissionService";
-import { ProspectiveStudent, EnquiryStatus } from "@/types/admission";
+import { ProspectiveStudent, EnquiryStatus, RequiredDocument } from "@/types/admission";
 import { ProcessTimeline } from "@/components/admission/ProcessTimeline";
 import { FileUpload } from "@/components/ui/file-upload";
 import { Separator } from "@/components/ui/separator";
-import { Select } from "@/components/ui/select";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 
 interface Note {
@@ -53,21 +53,94 @@ interface Communication {
   createdAt: Date;
 }
 
-const REQUIRED_DOCUMENTS = [
-  "STUDENT_ID",
-  "STUDENT_PASSPORT",
-  "STUDENT_BIRTH_CERTIFICATE",
-  "STUDENT_IMMUNIZATION_RECORD",
-  "STUDENT_MEDICAL_REPORT",
-  "PARENT_ID",
-  "PARENT_PASSPORT",
-];
+// Using DocumentStatus from admission.ts types
+import { DocumentStatus } from "@/types/admission";
 
-const FILE_CONFIG = {
-  ALLOWED_TYPES: ["image/jpeg", "image/png", "application/pdf"],
+// Import required documents from constants
+import { REQUIRED_DOCUMENTS } from "@/lib/constants";
+
+const DocumentUploadSection = ({
+  prospectiveStudentId,
+  documents,
+  onDocumentUpload
+}: {
+  prospectiveStudentId: string;
+  documents: Record<RequiredDocument, DocumentStatus>;
+  onDocumentUpload: () => void;
+}) => {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState<Record<string, boolean>>({});
+
+  const handleFileUpload = async (file: File, documentType: RequiredDocument) => {
+    try {
+      setLoading(prev => ({ ...prev, [documentType]: true }));
+      await admissionService.uploadDocument(prospectiveStudentId, file, documentType);
+      toast.success(`${documentType} uploaded successfully`);
+      onDocumentUpload();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to upload document');
+    } finally {
+      setLoading(prev => ({ ...prev, [documentType]: false }));
+    }
+  };
+
+  const handleViewDocument = async (doc: DocumentStatus) => {
+    if (!doc.submitted?.[0]?.fileName) {
+      toast.error('No document available to view');
+      return;
+    }
+    
+    try {
+      const url = await admissionService.getDocumentUrl(doc.submitted[0].fileName);
+      window.open(url, '_blank');
+    } catch (error) {
+      toast.error('Failed to view document');
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-medium">Required Documents</h3>
+        <Badge variant="outline">Optional</Badge>
+      </div>
+      {REQUIRED_DOCUMENTS.map((docType) => (
+        <div key={docType} className="p-4 border rounded-lg">
+          <div className="flex items-center justify-between mb-2">
+            <span className="font-medium">{docType.replace(/_/g, ' ')}</span>
+            <Badge variant="outline">Optional</Badge>
+          </div>
+          <FileUpload
+            onUpload={(file) => handleFileUpload(file, docType as RequiredDocument)}
+            accept=".pdf,.jpg,.jpeg,.png"
+            loading={loading[docType]}
+          />
+          {documents[docType]?.submitted?.length > 0 && (
+            <div className="mt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleViewDocument(documents[docType])}
+              >
+                View Document
+              </Button>
+              <div className="text-sm text-muted-foreground mt-1">
+                Status: {documents[docType].verificationStatus?.[docType] || 'pending'}
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+      <div className="flex justify-end mt-4">
+        <Button onClick={() => navigate(`/admission/process/${prospectiveStudentId}`)}>
+          Continue to Next Step
+        </Button>
+      </div>
+    </div>
+  );
 };
 
-export default function AdmissionEnquiry() {
+const AdmissionEnquiry: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [enquiry, setEnquiry] = useState<ProspectiveStudent | null>(null);
@@ -80,12 +153,25 @@ export default function AdmissionEnquiry() {
   const [selectedDocType, setSelectedDocType] = useState<RequiredDocument | null>(null);
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const [communicationType, setCommunicationType] = useState<'email' | 'phone' | 'in_person'>('email');
+  const [documents, setDocuments] = useState<Record<RequiredDocument, DocumentStatus>>(() => {
+    const initial: Record<RequiredDocument, DocumentStatus> = {} as Record<RequiredDocument, DocumentStatus>;
+    REQUIRED_DOCUMENTS.forEach(doc => {
+      initial[doc] = {
+        required: [doc],
+        submitted: [],
+        verificationStatus: {},
+        rejectionReason: {}
+      };
+    });
+    return initial;
+  });
 
   useEffect(() => {
     if (id) {
       fetchEnquiry();
       fetchNotes();
       fetchCommunications();
+      loadDocuments();
     } else {
       setLoading(false);
     }
@@ -116,10 +202,28 @@ export default function AdmissionEnquiry() {
   const fetchCommunications = async () => {
     try {
       const data = await admissionService.getCommunicationHistory(id!);
-      setCommunications(data);
+      const formattedData: Communication[] = data.map((comm: any) => ({
+        id: comm.id,
+        message: comm.message,
+        type: comm.type,
+        direction: comm.direction,
+        communicationDate: new Date(comm.communicationDate),
+        createdAt: new Date(comm.createdAt),
+      }));
+      setCommunications(formattedData);
     } catch (error) {
       console.error("Error fetching communications:", error);
       toast.error("Failed to load communications");
+    }
+  };
+
+  const loadDocuments = async () => {
+    if (!id) return;
+    try {
+      const docs = await admissionService.getAllDocuments(id);
+      setDocuments(docs);
+    } catch (error) {
+      toast.error('Failed to load documents');
     }
   };
 
@@ -150,7 +254,7 @@ export default function AdmissionEnquiry() {
       setUploadingDoc(true);
       await admissionService.uploadDocument(id!, file, selectedDocType);
       toast.success("Document uploaded successfully");
-      fetchEnquiry(); // Refresh document status
+      loadDocuments(); // Refresh document status
     } catch (error) {
       console.error("Error uploading document:", error);
       toast.error("Failed to upload document");
@@ -201,8 +305,18 @@ export default function AdmissionEnquiry() {
   }
 
   return (
-    <div className="container mx-auto py-6 px-4 space-y-6">
+    <div className="container mx-auto py-6 space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        {!id && (
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/")}
+            className="mb-4 sm:mb-0"
+          >
+            <ChevronLeft className="h-4 w-4 mr-2" />
+            Back to Home
+          </Button>
+        )}
         <Button
           variant="ghost"
           onClick={() => navigate("/admission-enquiries")}
@@ -242,6 +356,22 @@ export default function AdmissionEnquiry() {
                   }
                 }}
               />
+              <Button
+                variant="default"
+                onClick={() => navigate("/start-admission-process")}
+                className="mt-4"
+              >
+                Start Admission Process
+              </Button>
+              {id && (
+                <Button
+                  variant="secondary"
+                  onClick={() => navigate(`/resume-admission-process/${id}`)}
+                  className="mt-4"
+                >
+                  Resume Admission Process
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -360,64 +490,15 @@ export default function AdmissionEnquiry() {
                       <CardTitle>Required Documents</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-6">
-                        <div className="flex items-center gap-4">
-                          <Select
-                            value={selectedDocType || ""}
-                            onValueChange={(value) => setSelectedDocType(value as RequiredDocument)}
-                          >
-                            <SelectTrigger className="w-[200px]">
-                              <SelectValue placeholder="Select document type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {REQUIRED_DOCUMENTS.map(doc => (
-                                <SelectItem key={doc} value={doc}>
-                                  {doc.replace(/_/g, ' ')}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FileUpload
-                            onUpload={handleFileUpload}
-                            loading={uploadingDoc}
-                            accept={FILE_CONFIG.ALLOWED_TYPES.join(',')}
-                          />
-                        </div>
-
-                        <Separator />
-
-                        <div className="space-y-4">
-                          {enquiry?.AdmissionProcess?.documentsRequired.submitted.map((doc, index) => (
-                            <div key={index} className="flex items-center justify-between">
-                              <div>
-                                <p className="font-medium">{doc.type.replace(/_/g, ' ')}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  Uploaded on {formatDate(new Date(doc.uploadDate))}
-                                </p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Badge variant={doc.status === 'verified' ? 'success' : 'warning'}>
-                                  {doc.status}
-                                </Badge>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={async () => {
-                                    try {
-                                      const url = await admissionService.getDocumentUrl(doc.fileName);
-                                      window.open(url, '_blank');
-                                    } catch (error) {
-                                      toast.error("Failed to open document");
-                                    }
-                                  }}
-                                >
-                                  <FileText className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                      <DocumentUploadSection
+                        prospectiveStudentId={id || ''}
+                        documents={documents}
+                        onDocumentUpload={() => {
+                          if (id) {
+                            admissionService.getAllDocuments(id).then(setDocuments);
+                          }
+                        }}
+                      />
                     </CardContent>
                   </Card>
                 </TabsContent>
@@ -496,4 +577,6 @@ export default function AdmissionEnquiry() {
       </div>
     </div>
   );
-}
+};
+
+export default AdmissionEnquiry;

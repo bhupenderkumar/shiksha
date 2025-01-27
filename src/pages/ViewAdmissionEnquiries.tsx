@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { DateRange } from "react-day-picker";
 import {
@@ -22,8 +23,9 @@ import { ButtonWithIcon } from "@/components/ui/button-with-icon";
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { PageAnimation } from "@/components/ui/page-animation";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { admissionService } from "@/services/admissionService";
-import { ProspectiveStudent, EnquiryStatus } from "@/types/admission";
+import { ProspectiveStudent, EnquiryStatus, RequiredDocument } from "@/types/admission";
 import { toast } from "react-hot-toast";
 import {
   Calendar,
@@ -40,6 +42,8 @@ import {
   FileText,
   MessageCircle,
   Calendar as CalendarIcon,
+  Eye,
+  RefreshCw,
 } from "lucide-react";
 import { ADMISSION_STATUS } from "@/lib/constants";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -52,20 +56,11 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip } from "@/components/ui/tooltip";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
-interface FilteredEnquiry extends ProspectiveStudent {
-  AdmissionProcess: {
-    documentsSubmitted: any;
-    interviewDate: string | null;
-  } | null;
-  AdmissionCommunication?: Array<{
-    communicationDate: Date;
-    notes: string;
-  }>;
-}
+import type { FilteredEnquiry } from '@/types/admission';
 
 type SortField = 'appliedDate' | 'studentName' | 'status' | 'lastUpdateDate';
 
@@ -76,7 +71,7 @@ interface SortConfig {
 
 const PAGE_SIZE = 10;
 
-export default function ViewAdmissionEnquiries() {
+const ViewAdmissionEnquiries: React.FC = () => {
   const navigate = useNavigate();
   const [enquiries, setEnquiries] = useState<FilteredEnquiry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,6 +85,8 @@ export default function ViewAdmissionEnquiries() {
     direction: 'desc',
   });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [loadingDocumentId, setLoadingDocumentId] = useState<string | null>(null);
+  const [documentCounts, setDocumentCounts] = useState<Record<string, number>>({});
   const [quickViewId, setQuickViewId] = useState<string | null>(null);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
@@ -120,7 +117,7 @@ export default function ViewAdmissionEnquiries() {
         searchTerm: debouncedSearchTerm || undefined
       });
       setEnquiries(data);
-      setTotalCount(total);
+      setTotalCount(total || 0);
     } catch (error) {
       console.error("Error fetching enquiries:", error);
       toast.error("Failed to load enquiries");
@@ -130,7 +127,7 @@ export default function ViewAdmissionEnquiries() {
   };
 
   const handleResumeAdmission = (id: string) => {
-    navigate(`/admission-progress/${id}`);
+    navigate(`/admission/process/${id}`);
   };
 
   const handleStatusUpdate = async (id: string, newStatus: EnquiryStatus) => {
@@ -152,11 +149,24 @@ export default function ViewAdmissionEnquiries() {
   };
 
   const handleScheduleInterview = (id: string) => {
-    navigate(`/admission-progress/${id}?action=schedule`);
+    navigate(`/admission/process/${id}?action=schedule`);
   };
 
-  const handleViewDocuments = (id: string) => {
-    navigate(`/admission-progress/${id}?tab=documents`);
+  const handleViewDocuments = async (id: string) => {
+    try {
+      const documents = await admissionService.getAllDocuments(id);
+      // Get the first submitted document
+      const firstDoc = Object.values(documents).find(doc => doc.submitted.length > 0);
+      if (firstDoc?.submitted[0]?.fileName) {
+        const url = await admissionService.getDocumentUrl(firstDoc.submitted[0].fileName);
+        window.open(url, '_blank');
+      } else {
+        toast.error('No documents found');
+      }
+    } catch (error) {
+      console.error('Error viewing document:', error);
+      toast.error('Failed to view document');
+    }
   };
 
   const handleAddCommunication = (id: string) => {
@@ -177,8 +187,57 @@ export default function ViewAdmissionEnquiries() {
   };
 
   const handleQuickMessage = (id: string) => {
-    navigate(`/admission-progress/${id}?tab=communications`);
+    navigate(`/admission/process/${id}?tab=communications`);
   };
+
+  const handleFileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    documentType: RequiredDocument,
+    prospectiveStudentId: string
+  ) => {
+    try {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
+
+      // Convert FileList to array for multiple file handling
+      const fileArray = Array.from(files);
+      const uploadPromises = fileArray.map(file =>
+        admissionService.uploadDocument(prospectiveStudentId, file, documentType)
+      );
+
+      toast.promise(Promise.all(uploadPromises), {
+        loading: 'Uploading documents...',
+        success: 'Documents uploaded successfully',
+        error: 'Failed to upload documents'
+      });
+
+      // Refresh documents after upload
+      await fetchDocuments(prospectiveStudentId);
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to upload documents');
+    }
+  };
+
+  const renderDocumentUpload = (documentType: RequiredDocument, prospectiveStudentId: string) => (
+    <div className="flex items-center gap-2">
+      <Input
+        type="file"
+        multiple
+        accept=".pdf,.jpg,.jpeg,.png"
+        onChange={(e) => handleFileUpload(e, documentType, prospectiveStudentId)}
+        className="max-w-xs"
+      />
+      <ButtonWithIcon
+        variant="outline"
+        size="sm"
+        onClick={() => fetchDocuments(prospectiveStudentId)}
+        icon={<RefreshCw className="h-4 w-4" />}
+      >
+        Refresh
+      </ButtonWithIcon>
+    </div>
+  );
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
@@ -216,14 +275,15 @@ export default function ViewAdmissionEnquiries() {
     return sort.direction === 'asc' ? '↑' : '↓';
   };
 
-  const getLastCommunication = (enquiry: FilteredEnquiry) => {
-    if (!enquiry.AdmissionCommunication?.length) return null;
-    const lastComm = enquiry.AdmissionCommunication.sort(
-      (a, b) => b.communicationDate.getTime() - a.communicationDate.getTime()
-    )[0];
+  const getProcessInfo = (enquiry: FilteredEnquiry) => {
+    if (!enquiry.AdmissionProcess) return null;
+    
+    const process = enquiry.AdmissionProcess;
     return {
-      date: formatDate(lastComm.communicationDate),
-      notes: lastComm.notes.slice(0, 50) + (lastComm.notes.length > 50 ? '...' : '')
+      date: process.interviewDate ? formatDate(process.interviewDate) : 'No interview scheduled',
+      notes: process.interviewNotes ?
+        process.interviewNotes.slice(0, 50) + (process.interviewNotes.length > 50 ? '...' : '') :
+        'No interview notes'
     };
   };
 
@@ -251,13 +311,15 @@ export default function ViewAdmissionEnquiries() {
   };
 
   const TableSkeleton = () => (
-    <div className="space-y-3">
+    <>
       {Array(5).fill(0).map((_, i) => (
-        <div key={i} className="flex gap-4">
-          <Skeleton className="h-12 w-full" />
-        </div>
+        <TableRow key={i}>
+          <TableCell colSpan={8}>
+            <Skeleton className="h-12 w-full" />
+          </TableCell>
+        </TableRow>
       ))}
-    </div>
+    </>
   );
 
   return (
@@ -271,7 +333,18 @@ export default function ViewAdmissionEnquiries() {
         >
           <div className="flex flex-col gap-4">
             <div className="flex justify-between items-center">
-              <h1 className="text-3xl font-bold">Admission Enquiries</h1>
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={() => navigate(-1)}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Back
+                </Button>
+                <h1 className="text-3xl font-bold">Admission Enquiries</h1>
+              </div>
               {selectedIds.length > 0 && (
                 <div className="flex items-center gap-2">
                   <Badge>{selectedIds.length} selected</Badge>
@@ -496,49 +569,76 @@ export default function ViewAdmissionEnquiries() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          {getLastCommunication(enquiry) ? (
+                          {getProcessInfo(enquiry) ? (
                             <div className="space-y-1">
                               <div className="text-sm font-medium">
-                                {getLastCommunication(enquiry)?.date}
+                                {getProcessInfo(enquiry)?.date}
                               </div>
                               <div className="text-sm text-muted-foreground">
-                                {getLastCommunication(enquiry)?.notes}
+                                {getProcessInfo(enquiry)?.notes}
                               </div>
                             </div>
                           ) : (
                             <span className="text-sm text-muted-foreground">
-                              No communications yet
+                              No interview information
                             </span>
                           )}
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col md:flex-row gap-2 justify-end">
-                            <Tooltip content="View Documents">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleViewDocuments(enquiry.id)}
-                              >
-                                <FileText className="h-4 w-4" />
-                              </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => navigate(`/admission/process/${enquiry.id}`)}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>View Admission Details</TooltipContent>
                             </Tooltip>
-                            <Tooltip content="Send Message">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleQuickMessage(enquiry.id)}
-                              >
-                                <MessageCircle className="h-4 w-4" />
-                              </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={loadingDocumentId === enquiry.id}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleViewDocuments(enquiry.id);
+                                  }}
+                                >
+                                  <FileText className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {loadingDocumentId === enquiry.id ? 'Loading document...' : 'View Documents'}
+                              </TooltipContent>
                             </Tooltip>
-                            <Tooltip content="Resume Process">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleResumeAdmission(enquiry.id)}
-                              >
-                                <PlayCircle className="h-4 w-4" />
-                              </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleQuickMessage(enquiry.id)}
+                                >
+                                  <MessageCircle className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Send Message</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleResumeAdmission(enquiry.id)}
+                                >
+                                  <PlayCircle className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Resume Process</TooltipContent>
                             </Tooltip>
                             <ButtonWithIcon
                               size="sm"
@@ -572,6 +672,8 @@ export default function ViewAdmissionEnquiries() {
                                 ))}
                               </SelectContent>
                             </Select>
+                            {renderDocumentUpload("Birth Certificate", enquiry.id)}
+                            {renderDocumentUpload("Report Card", enquiry.id)}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -618,4 +720,6 @@ export default function ViewAdmissionEnquiries() {
       </div>
     </PageAnimation>
   );
-}
+};
+
+export default ViewAdmissionEnquiries;
