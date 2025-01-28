@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Download } from 'lucide-react';
 
 type AttachmentProps = {
@@ -9,10 +9,27 @@ type AttachmentProps = {
   };
 };
 
+const imageCache: Record<string, string> = {}; // Cache for images
+
 export const Attachment: React.FC<AttachmentProps> = ({ attachment }) => {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+
   const handleDownload = () => {
-    window.open(attachment.filePath, '_blank');
+    // Check if the image URL is cached
+    if (imageCache[attachment.filePath]) {
+      window.open(imageCache[attachment.filePath], '_blank');
+    } else {
+      // Fetch the image URL and cache it
+      const url = attachment.filePath;
+      imageCache[attachment.filePath] = url; // Store in cache
+      window.open(url, '_blank');
+    }
   };
+
+  useEffect(() => {
+    // Optionally, load the image URL into state if needed
+    setImageUrl(attachment.filePath);
+  }, [attachment.filePath]);
 
   return (
     <div className="flex items-center justify-between p-2 border rounded-md">

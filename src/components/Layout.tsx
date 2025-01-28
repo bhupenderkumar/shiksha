@@ -24,6 +24,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { ThemeToggle } from './ui/theme-toggle';
 import { NoInternet } from './NoInternet';
 import { NetworkProvider } from '@/contexts/NetworkContext';
+import { InstallPWAButton } from "./ui/install-pwa-button";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
@@ -216,6 +217,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     </motion.div>
                   );
                 })}
+                <InstallPWAButton />
               </nav>
             </aside>
 
