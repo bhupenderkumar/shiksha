@@ -117,28 +117,7 @@ export function HomeworkCard({ homework, onEdit, onDelete, onView, isStudent, at
             </p>
             <Badge className={getStatusColor(homework.status)}>{homework.status}</Badge>
           </div>
-          {!isStudent && (
-            <div className="flex space-x-2">
-              {onEdit && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onEdit(homework)}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-              )}
-              {onDelete && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onDelete(homework)}
-                >
-                  <Trash className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          )}
+         
         </div>
       </CardHeader>
       <CardContent>

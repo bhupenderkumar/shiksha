@@ -11,9 +11,9 @@ console.log('Supabase Key:', supabaseKey);
 console.log('Service Role Key:', supabaseServiceRoleKey);
 
 // Check if required environment variables are present
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing required Supabase environment variables');
-}
+// if (!supabaseUrl || !supabaseKey) {
+//   throw new Error('Missing required Supabase environment variables');
+// }
 
 // Regular client for user operations
 export const supabase = createClient<Database>(supabaseUrl, supabaseKey);

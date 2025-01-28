@@ -8,6 +8,11 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
+.dark .profile-container {
+    background-color: #1a1a1a;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
 .profile-button {
   background-color: #007bff;
   color: white;
@@ -25,4 +30,8 @@
 .profile-header {
   font-size: 2em;
   color: #333;
+}
+
+.dark .profile-header {
+    color: #ffffff;
 }

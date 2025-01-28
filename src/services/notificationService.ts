@@ -86,6 +86,42 @@ class NotificationService {
     }
   }
 
+  async createNotificationForClass(title: string, message: string, type: string, classId: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .schema('school')
+        .from(NOTIFICATION_TABLE)
+        .insert({ title, message, type, classId, studentId: null });
+
+      if (error) {
+        console.error(ERROR_MESSAGES.CREATE_NOTIFICATION, error);
+      }
+    } catch (error) {
+      console.error(ERROR_MESSAGES.CREATE_NOTIFICATION, error);
+    }
+  }
+
+  async getNotificationsByClassId(classId: string): Promise<Notification[]> {
+    try {
+      const { data, error } = await supabase
+        .schema('school')
+        .from(NOTIFICATION_TABLE)
+        .select(TABLE_COLUMNS)
+        .eq('classId', classId)
+        .order('createdAt', SORT_ORDER.CREATED_DESC);
+
+      if (error) {
+        console.error(ERROR_MESSAGES.FETCH_NOTIFICATIONS, error);
+        return [];
+      }
+
+      return data;
+    } catch (error) {
+      console.error(ERROR_MESSAGES.FETCH_NOTIFICATIONS, error);
+      return [];
+    }
+  }
+
   async updateNotification(id: string, notification: Partial<Notification>): Promise<Notification | null> {
     try {
       const { data, error } = await supabase

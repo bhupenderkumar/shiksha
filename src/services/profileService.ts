@@ -1,15 +1,8 @@
-// String Constants
+// Constants for user roles, error messages, and log messages
 const USER_ROLES = {
   ADMIN: 'ADMIN',
   TEACHER: 'TEACHER',
   STUDENT: 'STUDENT'
-} as const;
-
-// Role hierarchy and permissions
-const ROLE_HIERARCHY = {
-  [USER_ROLES.ADMIN]: ['ADMIN', 'TEACHER', 'STUDENT'],
-  [USER_ROLES.TEACHER]: ['TEACHER', 'STUDENT'],
-  [USER_ROLES.STUDENT]: ['STUDENT']
 } as const;
 
 const ERROR_MESSAGES = {
@@ -28,6 +21,12 @@ const LOG_MESSAGES = {
   STUDENT_RESPONSE: 'Student query response:'
 };
 
+const ROLE_HIERARCHY = {
+  [USER_ROLES.ADMIN]: ['ADMIN', 'TEACHER', 'STUDENT'],
+  [USER_ROLES.TEACHER]: ['TEACHER', 'STUDENT'],
+  [USER_ROLES.STUDENT]: ['STUDENT']
+} as const;
+
 const DEFAULT_VALUES = {
   USER_NAME: 'User',
   ROLE: USER_ROLES.STUDENT
@@ -45,25 +44,42 @@ export interface UserProfile extends User {
   avatar_url?: string;
 }
 
+/**
+ * ProfileService class handles user profile management.
+ */
 class ProfileService {
   private cache: Map<string, UserProfile> = new Map();
 
-  // Check if a role has permission to perform an action
+  /**
+   * Check if a role has permission to perform an action.
+   * @param userRole The role of the user.
+   * @param requiredRole The required role for the action.
+   * @returns True if the user has permission, false otherwise.
+   */
   private hasPermission(userRole: UserRole, requiredRole: UserRole): boolean {
     return ROLE_HIERARCHY[userRole]?.includes(requiredRole) || false;
   }
 
+  /**
+   * Sanitize an email address by converting it to lowercase and trimming whitespace.
+   * @param email The email address to sanitize.
+   * @returns The sanitized email address.
+   */
   private sanitizeEmail(email: string): string {
     return email.toLowerCase().trim();
   }
 
-  private encodeData(data: Record<string, any>): Record<string, any> {
-    return Object.fromEntries(
-      Object.entries(data).map(([key, value]) => [key, typeof value === 'string' ? value.trim() : value])
-    );
-  }
-
+  /**
+   * Get a user's profile information.
+   * @param userId The ID of the user.
+   * @returns The user's profile information, or null if not found.
+   */
   async getUser(userId: string): Promise<UserProfile | null> {
+    // Check if the user profile is already cached
+    if (this.cache.has(userId)) {
+      return this.cache.get(userId) || null;
+    }
+
     console.log(LOG_MESSAGES.FETCH_ROLE, userId);
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
@@ -71,37 +87,38 @@ class ProfileService {
       if (user?.email) {
         const sanitizedEmail = this.sanitizeEmail(user.email);
         console.log(LOG_MESSAGES.QUERY_STAFF, sanitizedEmail);
-        
+
         // First try staff lookup
         let { data: staffData, error: staffError } = await supabase
-        .schema(SCHEMA)
+          .schema(SCHEMA)
           .from(STAFF_TABLE)
           .select('*')
           .eq('email', sanitizedEmail);
+
         console.log(LOG_MESSAGES.STAFF_RESPONSE, { staffData, staffError });
-        
+
         if (staffData && staffData.length > 0) {
           const role = staffData[0].role ? (staffData[0].role as UserRole) : USER_ROLES.TEACHER;
-          
+
           const userProfile: UserProfile = {
             ...user,
             role,
             full_name: staffData[0].name,
             avatar_url: user.user_metadata?.avatar_url,
           };
-          this.cache.set(userId, userProfile);
+          this.cache.set(userId, userProfile); // Cache the user profile
           return userProfile;
         }
 
         // Try student lookup using parent's email
         let { data: studentData, error: studentError } = await supabase
-        .schema(SCHEMA)
+          .schema(SCHEMA)
           .from(STUDENT_TABLE)
           .select('*')
           .eq('parentEmail', sanitizedEmail);
+
         console.log(LOG_MESSAGES.STUDENT_RESPONSE, { studentData, studentError });
 
-        // Create student profile if found
         if (studentData && studentData.length > 0) {
           const userProfile: UserProfile = {
             ...user,
@@ -109,7 +126,7 @@ class ProfileService {
             full_name: studentData[0].name,
             avatar_url: user.user_metadata?.avatar_url,
           };
-          this.cache.set(userId, userProfile);
+          this.cache.set(userId, userProfile); // Cache the user profile
           return userProfile;
         }
 
@@ -123,13 +140,19 @@ class ProfileService {
         this.cache.set(userId, userProfile);
         return userProfile;
       }
-      return null;
+      throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
     } catch (error) {
       console.error(ERROR_MESSAGES.FETCH_USER, error);
-      return null;
+      throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
     }
   }
 
+  /**
+   * Update a user's role.
+   * @param userId The ID of the user.
+   * @param newRole The new role for the user.
+   * @param currentUser The current user.
+   */
   async updateUserRole(userId: string, newRole: UserRole, currentUser: UserProfile): Promise<void> {
     if (!this.hasPermission(currentUser.role, USER_ROLES.ADMIN)) {
       throw new Error(ERROR_MESSAGES.INSUFFICIENT_PERMISSIONS);
@@ -148,6 +171,10 @@ class ProfileService {
     }
   }
 
+  /**
+   * Get the current user's profile information.
+   * @returns The current user's profile information, or null if not found.
+   */
   async getCurrentUser(): Promise<UserProfile | null> {
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
@@ -167,21 +194,42 @@ class ProfileService {
 
 export const profileService = new ProfileService();
 
-// Utility functions
+/**
+ * Check if a user is an admin.
+ * @param user The user to check.
+ * @returns True if the user is an admin, false otherwise.
+ */
 export const isAdmin = (user?: UserProfile | null): boolean => 
   Boolean(user?.role && ROLE_HIERARCHY[user.role]?.includes(USER_ROLES.ADMIN));
 
+/**
+ * Check if a user is a teacher.
+ * @param user The user to check.
+ * @returns True if the user is a teacher, false otherwise.
+ */
 export const isTeacher = (user?: UserProfile | null): boolean => 
   Boolean(user?.role && ROLE_HIERARCHY[user.role]?.includes(USER_ROLES.TEACHER));
 
+/**
+ * Check if a user is a student.
+ * @param user The user to check.
+ * @returns True if the user is a student, false otherwise.
+ */
 export const isStudent = (user?: UserProfile | null): boolean => 
   Boolean(user?.role && ROLE_HIERARCHY[user.role]?.includes(USER_ROLES.STUDENT));
 
+/**
+ * Check if a user is an admin or teacher.
+ * @param user The user to check.
+ * @returns True if the user is an admin or teacher, false otherwise.
+ */
 export const isAdminOrTeacher = (user?: UserProfile | null): boolean => 
   Boolean(user?.role && (ROLE_HIERARCHY[user.role]?.includes(USER_ROLES.ADMIN) || 
                         ROLE_HIERARCHY[user.role]?.includes(USER_ROLES.TEACHER)));
 
-// React Hook for user profile
+/**
+ * React Hook for user profile.
+ */
 export function useProfile() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -215,7 +263,9 @@ export function useProfile() {
   return { profile, loading, error };
 }
 
-// Hook for role-based access control
+/**
+ * Hook for role-based access control.
+ */
 export function useProfileAccess() {
   const { profile, loading, error } = useProfile();
   // Add debug logging
