@@ -568,7 +568,7 @@ export const admissionService = {
         .eq('prospectivestudentid', id)
         .order('communicationdate', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
 
       return data.map(comm => ({
         id: comm.id,
