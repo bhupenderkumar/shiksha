@@ -10,6 +10,17 @@ export const GENDERS = {
   OTHER: 'OTHER'
 } as const;
 
+export const PROFILE_TABLE = 'Profile';
+
+export const PUBLIC_ROUTES = [
+  '/',
+  '/login',
+  '/register',
+  '/homework/view/:id',
+  '/homework/:id',
+  '/classwork/:id'
+];
+
 export const STORAGE_BUCKET = 'File';
 export const FILE_TABLE = 'File';
 export const ASSIGNMENT_TABLE = 'Homework';
@@ -28,16 +39,60 @@ export const SETTINGS_TABLE = 'Settings';
 export const USER_SETTINGS_TABLE = 'UserSettings';
 export const USER_TABLE = 'User';
 export const SCHEMA = 'school';
-export const PROFILE_TABLE = 'Profile'
 
-export const PUBLIC_ROUTES = [
-  '/',
-  '/login',
-  '/register',
-  '/homework/view/:id',
-  '/homework/:id',
-  '/classwork/:id'
-];
+export const ADMISSION_STATUS = {
+  NEW: 'NEW',
+  IN_REVIEW: 'IN_REVIEW',
+  SCHEDULED_INTERVIEW: 'SCHEDULED_INTERVIEW',
+  PENDING_DOCUMENTS: 'PENDING_DOCUMENTS',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  ENROLLED: 'ENROLLED'
+} as const;
+
+export const COMMUNICATION_TYPES = {
+  EMAIL: 'email',
+  PHONE: 'phone',
+  MEETING: 'MEETING',
+  SMS: 'SMS',
+  WHATSAPP: 'WHATSAPP',
+  IN_PERSON: 'in_person'
+} as const;
+
+export const REQUIRED_DOCUMENTS = [
+  'birth_certificate',
+  'transfer_certificate',
+  'previous_marksheet',
+  'report_card',
+  'medical_records',
+  'medical_certificate',
+  'passport_photo',
+  'address_proof',
+  'aadhar_card',
+  'parent_id_proof'
+] as const;
+
+export const DOCUMENT_STATUS = {
+  PENDING: 'pending',
+  SUBMITTED: 'submitted',
+  VERIFIED: 'verified',
+  REJECTED: 'rejected'
+} as const;
+
+export const DOCUMENT_VERIFICATION_STATUS = {
+  PENDING: 'pending',
+  VERIFIED: 'verified',
+  REJECTED: 'rejected'
+} as const;
+
+export const ADMISSION_TABLES = {
+  PROSPECTIVE_STUDENT: 'ProspectiveStudent',
+  ADMISSION_PROCESS: 'AdmissionProcess',
+  ADMISSION_COMMUNICATION: 'AdmissionCommunication',
+  ADMISSION_NOTES: 'AdmissionNotes'
+} as const;
+
+export const ADMISSION_BUCKET = 'admission-documents';
 
 // Environment variables should be used instead of hardcoding API keys
 export const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
