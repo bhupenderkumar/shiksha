@@ -37,6 +37,8 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 
+
+
 interface Note {
   id: string;
   content: string;
@@ -67,6 +69,7 @@ const DocumentUploadSection = ({
   prospectiveStudentId: string;
   documents: Record<RequiredDocument, DocumentStatus>;
   onDocumentUpload: () => void;
+
 }) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState<Record<string, boolean>>({});
@@ -100,6 +103,7 @@ const DocumentUploadSection = ({
 
   return (
     <div className="space-y-4">
+
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-medium">Required Documents</h3>
         <Badge variant="outline">Optional</Badge>
@@ -202,6 +206,7 @@ const AdmissionEnquiry: React.FC = () => {
   const fetchCommunications = async () => {
     try {
       const data = await admissionService.getCommunicationHistory(id!);
+
       const formattedData: Communication[] = data.map((comm: any) => ({
         id: comm.id,
         message: comm.message,
@@ -218,6 +223,7 @@ const AdmissionEnquiry: React.FC = () => {
   };
 
   const loadDocuments = async () => {
+
     if (!id) return;
     try {
       const docs = await admissionService.getAllDocuments(id);
@@ -230,12 +236,13 @@ const AdmissionEnquiry: React.FC = () => {
   const handleAddNote = async () => {
     if (!newNote.trim()) return;
 
+
     try {
       setSavingNote(true);
       await admissionService.addEnquiryNote(id!, newNote);
       setNewNote("");
       await fetchNotes();
-      toast.success("Note added successfully");
+       toast.success("Note added successfully");
     } catch (error) {
       console.error("Error adding note:", error);
       toast.error("Failed to add note");
@@ -243,6 +250,7 @@ const AdmissionEnquiry: React.FC = () => {
       setSavingNote(false);
     }
   };
+
 
   const handleFileUpload = async (file: File) => {
     if (!selectedDocType) {
@@ -306,6 +314,7 @@ const AdmissionEnquiry: React.FC = () => {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         {!id && (
           <Button
@@ -577,6 +586,7 @@ const AdmissionEnquiry: React.FC = () => {
       </div>
     </div>
   );
+
 };
 
 export default AdmissionEnquiry;

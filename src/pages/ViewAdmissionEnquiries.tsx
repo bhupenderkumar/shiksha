@@ -23,6 +23,7 @@ import { ButtonWithIcon } from "@/components/ui/button-with-icon";
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { PageAnimation } from "@/components/ui/page-animation";
+
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { admissionService } from "@/services/admissionService";
 import { ProspectiveStudent, EnquiryStatus, RequiredDocument } from "@/types/admission";
@@ -43,6 +44,7 @@ import {
   MessageCircle,
   Calendar as CalendarIcon,
   Eye,
+
   RefreshCw,
 } from "lucide-react";
 import { ADMISSION_STATUS } from "@/lib/constants";
@@ -56,11 +58,13 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import type { FilteredEnquiry } from '@/types/admission';
+
 
 type SortField = 'appliedDate' | 'studentName' | 'status' | 'lastUpdateDate';
 
@@ -70,6 +74,7 @@ interface SortConfig {
 }
 
 const PAGE_SIZE = 10;
+
 
 const ViewAdmissionEnquiries: React.FC = () => {
   const navigate = useNavigate();
@@ -189,6 +194,7 @@ const ViewAdmissionEnquiries: React.FC = () => {
   const handleQuickMessage = (id: string) => {
     navigate(`/admission/process/${id}?tab=communications`);
   };
+
 
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -586,7 +592,7 @@ const ViewAdmissionEnquiries: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col md:flex-row gap-2 justify-end">
-                            <Tooltip>
+                    <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
                                   variant="ghost"
@@ -672,6 +678,7 @@ const ViewAdmissionEnquiries: React.FC = () => {
                                 ))}
                               </SelectContent>
                             </Select>
+
                             {renderDocumentUpload("Birth Certificate", enquiry.id)}
                             {renderDocumentUpload("Report Card", enquiry.id)}
                           </div>
@@ -720,6 +727,7 @@ const ViewAdmissionEnquiries: React.FC = () => {
       </div>
     </PageAnimation>
   );
+
 };
 
 export default ViewAdmissionEnquiries;

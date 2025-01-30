@@ -82,6 +82,58 @@ export interface Database {
           updated_at?: string;
         };
       };
+      File: {
+        Row: {
+          id: string;
+          fileName: string;
+          filePath: string;
+          fileType: string;
+          uploadedBy: string;
+          createdAt: string;
+          updatedAt: string;
+        };
+        Insert: {
+          id?: string;
+          fileName: string;
+          filePath: string;
+          fileType: string;
+          uploadedBy: string;
+          createdAt?: string;
+          updatedAt?: string;
+        };
+        Update: {
+          id?: string;
+          fileName?: string;
+          filePath?: string;
+          fileType?: string;
+          uploadedBy?: string;
+          createdAt?: string;
+          updatedAt?: string;
+        };
+      };
+    };
+  };
+  school: {
+    Tables: {
+      prospective_student: {
+        Row: {
+          id: string;
+          student_name: string;
+          parent_name: string;
+          date_of_birth: string | null;
+          gender: 'Male' | 'Female' | 'Other';
+          email: string;
+          contact_number: string;
+          grade_applying: string;
+          current_school: string | null;
+          address: string;
+          blood_group: string | null;
+          status: string;
+          applied_date: string;
+          last_update_date: string;
+          school_id: string;
+          assigned_to: string | null;
+
       AdmissionNotes: {
         Row: {
           id: string;
@@ -121,6 +173,22 @@ export interface Database {
         };
         Insert: {
           id?: string;
+          student_name: string;
+          parent_name: string;
+          date_of_birth?: string | null;
+          gender: 'Male' | 'Female' | 'Other';
+          email: string;
+          contact_number: string;
+          grade_applying: string;
+          current_school?: string | null;
+          address: string;
+          blood_group?: string | null;
+          status: string;
+          applied_date?: string;
+          last_update_date?: string;
+          school_id: string;
+          assigned_to?: string | null;
+
           date: string;
           status: 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY';
           studentid: string;
@@ -130,6 +198,22 @@ export interface Database {
         };
         Update: {
           id?: string;
+          student_name?: string;
+          parent_name?: string;
+          date_of_birth?: string | null;
+          gender?: 'Male' | 'Female' | 'Other';
+          email?: string;
+          contact_number?: string;
+          grade_applying?: string;
+          current_school?: string | null;
+          address?: string;
+          blood_group?: string | null;
+          status?: string;
+          applied_date?: string;
+          last_update_date?: string;
+          school_id?: string;
+          assigned_to?: string | null;
+
           date?: string;
           status?: 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY';
           studentid?: string;
@@ -138,6 +222,7 @@ export interface Database {
           updated_at?: string;
         };
       };
+
       Staff: {
         Row: {
           id: string;
@@ -149,6 +234,7 @@ export interface Database {
         };
         Insert: {
           id?: string;
+
           role: 'TEACHER' | 'ADMIN' | 'PRINCIPAL' | 'ACCOUNTANT';
           name: string;
           email: string;

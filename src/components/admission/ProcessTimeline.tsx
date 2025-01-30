@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { EnquiryStatus } from "@/types/admission";
 import { Card } from "@/components/ui/card";
@@ -170,8 +171,11 @@ export function ProcessTimeline({
               </div>
             </Card>
           </motion.div>
+
         ))}
       </div>
     </div>
   );
+
+
 }

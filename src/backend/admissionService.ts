@@ -1,9 +1,7 @@
-
 import { supabase } from '@/lib/api-client';
 import { v4 as uuidv4 } from 'uuid';
-import { fileService } from './fileService';
 import { ADMISSION_STATUS, COMMUNICATION_TYPES, REQUIRED_DOCUMENTS } from '@/lib/constants';
-import { toast } from '@/components/ui/toast';
+import { toast } from 'react-hot-toast';
 import {
   ProspectiveStudent,
   ProspectiveStudentData,
@@ -19,9 +17,7 @@ import {
   AdmissionProgress,
   SearchParams,
   FilteredEnquiry,
-  EnquiryUpdateData,
-  ProspectiveStudentRow,
-  AdmissionProcessRow
+  EnquiryUpdateData
 } from '@/types/admission';
 
 // Constants
@@ -104,7 +100,7 @@ export const admissionService = {
         supabase
           .schema(SCHEMA)
           .from(TABLES.PROSPECTIVE_STUDENT)
-          .select('status')
+          .select('status, applieddate')
           .eq('id', id)
           .single()
       ]);
@@ -520,19 +516,19 @@ export const admissionService = {
     }
   ): Promise<void> {
     try {
-      const updateData: Partial<AdmissionProcessRow> = {};
-      
+      const updateData: Partial<AdmissionProcess> = {};
+
       if (data.interviewDate) {
-        updateData.interviewdate = data.interviewDate.toISOString();
+        updateData.interviewDate = data.interviewDate.toISOString();
       }
       if (data.assignedClass) {
-        updateData.assignedclass = data.assignedClass;
+        updateData.assignedClass = data.assignedClass;
       }
       if (data.documentsStatus) {
-        updateData.documentsrequired = data.documentsStatus;
+        updateData.documentsRequired = data.documentsStatus;
       }
       
-      updateData.updated_at = new Date().toISOString();
+      updateData.updatedAt = new Date().toISOString();
 
       // Update status in ProspectiveStudent if provided
       if (data.status) {
@@ -572,7 +568,7 @@ export const admissionService = {
         .eq('prospectivestudentid', id)
         .order('communicationdate', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
 
       return data.map(comm => ({
         id: comm.id,
@@ -584,6 +580,7 @@ export const admissionService = {
         createdAt: formatDate(comm.created_at),
         updatedAt: formatDate(comm.updated_at)
       }));
+    }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to fetch communication history");
       throw error;

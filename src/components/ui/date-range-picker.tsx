@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { CalendarIcon } from "lucide-react";
 import { addDays, format } from "date-fns";
@@ -9,11 +10,13 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+
 } from "@/components/ui/popover";
 
 interface DateRangePickerProps extends React.HTMLAttributes<HTMLDivElement> {
   value?: DateRange;
   onChange?: (range: DateRange | undefined) => void;
+
 }
 
 export function DateRangePicker({
@@ -21,6 +24,7 @@ export function DateRangePicker({
   onChange,
   className,
 }: DateRangePickerProps) {
+
   const [date, setDate] = React.useState<DateRange | undefined>(value);
 
   React.useEffect(() => {
@@ -54,12 +58,13 @@ export function DateRangePicker({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="end">
+
           <Calendar
             initialFocus
             mode="range"
             defaultMonth={date?.from}
             selected={date}
+
             onSelect={(range) => {
               setDate(range);
               onChange?.(range);
@@ -69,5 +74,6 @@ export function DateRangePicker({
         </PopoverContent>
       </Popover>
     </div>
+
   );
 }
