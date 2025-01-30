@@ -4,7 +4,7 @@ import { feesService, Fee } from '@/services/feesService';
 import { Card } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { studentService } from '@/services/student.service';
-import { Fade } from 'react-reveal';
+import { motion } from 'framer-motion';
 import { CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, User, Calendar, Droplet, School, Mail } from 'lucide-react';
@@ -92,7 +92,11 @@ const ProfilePage = () => {
         </Button>
       </div>
 
-      <Fade>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
         <Card className="overflow-hidden bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
           <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
             <CardTitle className="flex items-center gap-2">
@@ -117,10 +121,14 @@ const ProfilePage = () => {
             </div>
           </CardContent>
         </Card>
-      </Fade>
+      </motion.div>
 
       
-        <Fade>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
           <Card className="overflow-hidden bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
             <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
               <CardTitle className="flex items-center gap-2">
@@ -157,7 +165,7 @@ const ProfilePage = () => {
               </div>
             </CardContent>
           </Card>
-        </Fade>
+        </motion.div>
       
     </div>
   );

@@ -92,6 +92,26 @@ class ClassService {
   }
 
   /**
+   * Get all classes ordered by name
+   * @returns Promise<ClassType[]>
+   */
+  async getAllClasses() {
+    try {
+      const { data, error } = await supabase
+        .schema(SCHEMA)
+        .from(CLASS_TABLE)
+        .select(TABLE_COLUMNS)
+        .order('name');
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error(ERROR_MESSAGES.FETCH_CLASSES, error);
+      throw error;
+    }
+  }
+
+  /**
    * Alias for findMany() for backward compatibility
    */
   async getAll() {

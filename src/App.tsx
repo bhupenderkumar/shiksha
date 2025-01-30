@@ -20,15 +20,14 @@ import HomeworkView from './pages/HomeworkView';
 import NotificationsPage from './pages/notifications';
 import ProfilePage from './pages/profile';
 import HomeworkDetails from './pages/HomeworkDetails';
-import AdmissionEnquiry from './pages/AdmissionEnquiry';
 import ViewAdmissionEnquiries from './pages/ViewAdmissionEnquiries';
-import AdmissionProcess from "@/pages/AdmissionProcess";
-import { TooltipProvider } from '@/components/ui/tooltip';
-import { AuthProvider } from '@/lib/auth';
-import { ThemeProvider } from './contexts/ThemeContext';
+import AdmissionEnquiry from './pages/AdmissionEnquiry.tsx';
+import YearEndFeedback from './pages/YearEndFeedback';
+import ViewYearEndFeedback from './pages/ViewYearEndFeedback';
 
 // Public routes that don't require authentication
-const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/', '/homework/view/:id', '/homework/:id', '/classwork/:id', '/admission-enquiry', '/admission-enquiry/:id', '/admission-enquiries']
+const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/', '/homework/view/:id', '/homework/:id', '/classwork/:id', '/admission-enquiry', '/admission-enquiry/:id', '/admission-enquiries', '/year-end-feedback', '/year-end-feedback/:id']
+
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -57,16 +56,6 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppRoutes() {
-  const { loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="h-screen w-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
   return (
     <Routes>
       {/* Public Routes */}
@@ -76,13 +65,144 @@ function AppRoutes() {
       <Route path='/admission-enquiries' element={<ViewAdmissionEnquiries />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      <Route path="/homework/view/:id" element={
-        <Layout>
-          <HomeworkView />
-        </Layout>
-      } />
+      <Route
+        path="/dashboard"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <Dashboard />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/students"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <Students />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/subjects"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <Subjects />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/homework"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <Homework />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route path="/homework/view/:id" element={<HomeworkView />} />
       <Route path="/homework/:id" element={<HomeworkDetails />} />
+      <Route
+        path="/fees"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <Fees />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/classwork"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <ClassworkComponent />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
       <Route path="/classwork/:id" element={<ClassworkDetail />} />
+
+      <Route
+        path="/attendance"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <AttendancePage />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <SettingsPage />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/feedback"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <Feedback />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/notifications"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <NotificationsPage />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <ProfilePage />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route path="/admission-enquiry" element={<AdmissionEnquiry />} />
+      <Route path="/admission-enquiry/:id" element={<AdmissionEnquiry />} />
+      <Route
+        path="/admission-enquiries"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <ViewAdmissionEnquiries />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route path="/year-end-feedback" element={<YearEndFeedback />} />
+      <Route path="/year-end-feedback/:id" element={<YearEndFeedback />} />
+      <Route
+        path="/view-year-end-feedback"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <ViewYearEndFeedback />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
       <Route path="/admission/process/:id" element={<AdmissionProcess />} />
 
       {/* Protected Routes */}

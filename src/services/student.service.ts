@@ -10,7 +10,7 @@ const ERROR_MESSAGES = {
 };
 
 import { supabase, supabaseAdmin } from '@/lib/api-client';
-import { STUDENT_TABLE } from '../lib/constants';
+import { STUDENT_TABLE, SCHEMA } from '../lib/constants';
 
 export interface StudentCredentials {
   email: string;
@@ -47,7 +47,7 @@ class StudentService {
   async findMany(params: { classId?: string } = {}) {
     try {
       let query = supabase
-        .schema('school')
+        .schema(SCHEMA)
         .from(STUDENT_TABLE)
         .select(`
           *,
@@ -75,7 +75,7 @@ class StudentService {
   async findOne(id: string) {
     try {
       const { data, error } = await supabase
-        .schema('school')
+        .schema(SCHEMA)
         .from(STUDENT_TABLE)
         .select(`
           *,
@@ -114,7 +114,7 @@ class StudentService {
 
       // Create profile
       const { error: profileError } = await supabase
-        .schema('school')
+        .schema(SCHEMA)
         .from('Profile')
         .insert([{
           id: authData.user.id,
@@ -130,7 +130,7 @@ class StudentService {
 
       // Create student record
       const { data: student, error: studentError } = await supabase
-        .schema('school')
+        .schema(SCHEMA)
         .from(STUDENT_TABLE)
         .insert([{
           id: authData.user.id,
@@ -177,14 +177,14 @@ class StudentService {
 
         // Update profile
         await supabase
-          .schema('school')
+          .schema(SCHEMA)
           .from('Profile')
           .update({ full_name: data.name })
           .eq('user_id', id);
       }
 
       const { data: updated, error } = await supabase
-        .schema('school')
+        .schema(SCHEMA)
         .from(STUDENT_TABLE)
         .update({
           ...data,
@@ -211,8 +211,8 @@ class StudentService {
 
   async delete(id: string) {
     try {
-      await supabase.schema('school').from(STUDENT_TABLE).delete().eq('id', id);
-      await supabase.schema('school').from('Profile').delete().eq('user_id', id);
+      await supabase.schema(SCHEMA).from(STUDENT_TABLE).delete().eq('id', id);
+      await supabase.schema(SCHEMA).from('Profile').delete().eq('user_id', id);
       await supabaseAdmin.auth.admin.deleteUser(id);
     } catch (error) {
       console.error(ERROR_MESSAGES.DELETE_STUDENT, error);
@@ -223,7 +223,7 @@ class StudentService {
   async findByEmail(email: string): Promise<Student | null> {
     try {
       const { data, error } = await supabase
-        .schema('school')
+        .schema(SCHEMA)
         .from(STUDENT_TABLE)
         .select(`*, class:Class (id, name, section)`)
         .eq('parentEmail', email)
@@ -239,6 +239,27 @@ class StudentService {
 
   getByClass(classId: string) {
     return this.findMany({ classId });
+  }
+
+  async getStudentsByClass(classId: string) {
+    try {
+      const { data, error } = await supabase
+        .schema(SCHEMA)
+        .from(STUDENT_TABLE)
+        .select('id, name, class:Class (id, name)')
+        .eq('classId', classId)
+        .order('name');
+
+      if (error) {
+        console.error('Error fetching students by class:', error);
+        throw error;
+      }
+      console.log('Students data:', data); // Debug log
+      return data;
+    } catch (error) {
+      console.error('Error fetching students by class:', error);
+      throw error;
+    }
   }
 }
 
