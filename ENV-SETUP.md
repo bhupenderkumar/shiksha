@@ -108,7 +108,8 @@ This guide explains how to set up the environment variables required for the adm
 When adding new environment variables:
 1. Update `.env.example` with the new variable
 2. Update this documentation
-3. Notify all developers of the change
-4. Update deployment configurations
+3. Update application code to handle the new variable, including appropriate validation
+4. Notify all developers of the change
+5. Update deployment configurations
 
 For any issues or questions about environment setup, contact the system administrator.
