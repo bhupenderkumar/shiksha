@@ -28,6 +28,7 @@ import ViewYearEndFeedback from './pages/ViewYearEndFeedback';
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/', '/homework/view/:id', '/homework/:id', '/classwork/:id', '/admission-enquiry', '/admission-enquiry/:id', '/admission-enquiries', '/year-end-feedback', '/year-end-feedback/:id']
 
+
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const location = useLocation();
@@ -59,6 +60,9 @@ function AppRoutes() {
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<Home />} />
+      <Route path='/admission-enquiry' element={<AdmissionEnquiry />} />
+      <Route path='/admission-enquiry/:id' element={<AdmissionEnquiry />} />
+      <Route path='/admission-enquiries' element={<ViewAdmissionEnquiries />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route
@@ -124,6 +128,7 @@ function AppRoutes() {
         }
       />
       <Route path="/classwork/:id" element={<ClassworkDetail />} />
+
       <Route
         path="/attendance"
         element={
@@ -198,6 +203,110 @@ function AppRoutes() {
           </PrivateRoute>
         }
       />
+      <Route path="/admission/process/:id" element={<AdmissionProcess />} />
+
+      {/* Protected Routes */}
+      <Route path="/dashboard" element={
+        <PrivateRoute>
+          <Layout>
+            <Dashboard />
+          </Layout>
+        </PrivateRoute>
+      } />
+      <Route path="/students" element={
+        <PrivateRoute>
+          <Layout>
+            <Students />
+          </Layout>
+        </PrivateRoute>
+      } />
+      <Route path="/subjects" element={
+        <PrivateRoute>
+          <Layout>
+            <Subjects />
+          </Layout>
+        </PrivateRoute>
+      } />
+      <Route path="/homework" element={
+        <PrivateRoute>
+          <Layout>
+            <Homework />
+          </Layout>
+        </PrivateRoute>
+      } />
+      <Route path="/classwork" element={
+        <PrivateRoute>
+          <Layout>
+            <ClassworkComponent />
+          </Layout>
+        </PrivateRoute>
+      } />
+      <Route path="/student-dashboard" element={
+        <PrivateRoute>
+          <Layout>
+            <StudentDashboard />
+          </Layout>
+        </PrivateRoute>
+      } />
+      <Route path="/fees" element={
+        <PrivateRoute>
+          <Layout>
+            <Fees />
+          </Layout>
+        </PrivateRoute>
+      } />
+      <Route path="/attendance" element={
+        <PrivateRoute>
+          <Layout>
+            <AttendancePage />
+          </Layout>
+        </PrivateRoute>
+      } />
+      <Route path="/settings" element={
+        <PrivateRoute>
+          <Layout>
+            <SettingsPage />
+          </Layout>
+        </PrivateRoute>
+      } />
+      <Route path="/classwork/:id/edit" element={
+        <PrivateRoute>
+          <Layout>
+            <ClassworkDetail />
+          </Layout>
+        </PrivateRoute>
+      } />
+
+      <Route path="/homework/:id/edit" element={
+        <PrivateRoute>
+          <Layout>
+            <HomeworkDetails />
+          </Layout>
+        </PrivateRoute>
+      } />
+
+      <Route path="/feedback" element={
+        <PrivateRoute>
+          <Layout>
+            <Feedback />
+          </Layout>
+        </PrivateRoute>
+      } />
+      <Route path="/notifications" element={
+        <PrivateRoute>
+          <Layout>
+            <NotificationsPage />
+          </Layout>
+        </PrivateRoute>
+      } />
+      <Route path="/profile" element={
+        <PrivateRoute>
+          <Layout>
+            <ProfilePage />
+          </Layout>
+        </PrivateRoute>
+      } />
+
       {/* Catch all route */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
@@ -206,14 +315,18 @@ function AppRoutes() {
 
 function App() {
   return (
-    <>
-      <Toaster position="top-right" />
-      <Router>
-        <div className="flex flex-col min-h-screen bg-background mt-4">
-          <AppRoutes />
-        </div>
-      </Router>
-    </>
+    <AuthProvider>
+      <ThemeProvider defaultTheme="system" storageKey="ui-theme">
+        <TooltipProvider>
+          <Router>
+            <div className="flex flex-col min-h-screen bg-background mt-4">
+              <AppRoutes />
+              <Toaster position="top-right" />
+            </div>
+          </Router>
+        </TooltipProvider>
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
 

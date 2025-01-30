@@ -21,80 +21,100 @@ import NepSyllabus from '@/components/NepSyllabus';
 export default function ClassworkPage() {
   const { user } = useAuth(); // Retrieve user from Auth context
 
+  const { profile, loading: profileLoading, isAdminOrTeacher } = useProfileAccess();
+
   const [classworks, setClassworks] = useState<ClassworkType[]>([]);
   const [dialogState, setDialogState] = useState<{
     isOpen: boolean;
     mode: 'create' | 'edit';
+    loading: boolean;
   }>({
     isOpen: false,
-    mode: 'create'
+    mode: 'create',
+    loading: false
   });
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedClasswork, setSelectedClasswork] = useState<ClassworkType | null>(null);
-  const [files, setFiles] = useState<File[]>([]);
-
-  const { profile, loading: profileLoading, isAdminOrTeacher } = useProfileAccess();
+  const [error, setError] = useState<string | null>(null);
 
   const isMobile = useMediaQuery({ query: '(max-width: 640px)' });
-
   const navigate = useNavigate();
 
   const { loading, execute: fetchClassworks } = useAsync(
     async () => {
       if (!profile) return;
-      const data = await classworkService.getAll(profile.role);
-      setClassworks(data);
+      try {
+        const data = await classworkService.getAll(profile.role);
+        setClassworks(data);
+        setError(null);
+      } catch (err) {
+        setError('Failed to fetch classworks');
+        throw err;
+      }
     },
     { showErrorToast: true }
   );
 
   const { execute: createClasswork } = useAsync(
-    async (data) => {
-      await classworkService.create(data, user?.id); // Pass user ID here
-      await fetchClassworks();
-      handleCloseDialog();
-      toast.success('Classwork created successfully!');
+    async (data: CreateClassworkData) => {
+      if (!user?.id) throw new Error('User not authenticated');
+      
+      setDialogState(prev => ({ ...prev, loading: true }));
+      try {
+        await classworkService.create(data, user.id);
+        await fetchClassworks();
+        handleCloseDialog();
+        toast.success('Classwork created successfully!');
+      } finally {
+        setDialogState(prev => ({ ...prev, loading: false }));
+      }
     },
     { showErrorToast: true }
   );
 
   const { execute: updateClasswork } = useAsync(
-    async (data) => {
-      if (!selectedClasswork) return;
-      await classworkService.update(selectedClasswork.id, data, user?.id); // Pass user ID here
-      await fetchClassworks();
-      handleCloseDialog();
-      toast.success('Classwork updated successfully!');
+    async (data: UpdateClassworkData) => {
+      if (!selectedClasswork || !user?.id) return;
+      
+      setDialogState(prev => ({ ...prev, loading: true }));
+      try {
+        await classworkService.update(selectedClasswork.id, data, user.id);
+        await fetchClassworks();
+        handleCloseDialog();
+        toast.success('Classwork updated successfully!');
+      } finally {
+        setDialogState(prev => ({ ...prev, loading: false }));
+      }
     },
     { showErrorToast: true }
   );
 
   const handleDeleteClasswork = async (id: string) => {
     try {
-      await classworkService.delete(id); // Ensure this uses the updated delete method
+      await classworkService.delete(id);
       await fetchClassworks();
       setIsDeleteDialogOpen(false);
       setSelectedClasswork(null);
       toast.success('Classwork deleted successfully!');
     } catch (error) {
       console.error('Error deleting classwork:', error);
-      // Handle error, e.g., show a notification
+      toast.error('Failed to delete classwork');
     }
   };
 
   useEffect(() => {
-    if (profile) {
-      fetchClassworks();
+    if (profile && !profileLoading) {
+      fetchClassworks().catch(console.error);
     }
-  }, [profile]);
+  }, [profile, profileLoading]);
 
   const handleEdit = (classwork: ClassworkType) => {
     setSelectedClasswork(classwork);
-    setDialogState({ isOpen: true, mode: 'edit' }); // Open dialog for editing
+    setDialogState({ isOpen: true, mode: 'edit', loading: false });
   };
 
   const handleCloseDialog = () => {
-    setDialogState({ isOpen: false, mode: 'create' });
+    setDialogState({ isOpen: false, mode: 'create', loading: false });
     setSelectedClasswork(null);
   };
 
@@ -119,7 +139,7 @@ export default function ClassworkPage() {
         icon={<Book className="text-primary-500" />}
         action={
           isAdminOrTeacher ? (
-            <Button className="text-sm" onClick={() => setDialogState({ isOpen: true, mode: 'create' })}>
+            <Button className="text-sm" onClick={() => setDialogState({ isOpen: true, mode: 'create', loading: false })}>
               <Plus className="w-4 h-4 mr-2" />
               Add Classwork
             </Button>
@@ -134,7 +154,7 @@ export default function ClassworkPage() {
           icon={<Book className="w-full h-full" />}
           action={
             isAdminOrTeacher ? (
-              <Button className="text-sm" onClick={() => setDialogState({ isOpen: true, mode: 'create' })}>
+              <Button className="text-sm" onClick={() => setDialogState({ isOpen: true, mode: 'create', loading: false })}>
                 Create Classwork
               </Button>
             ) : null

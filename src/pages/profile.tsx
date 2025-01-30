@@ -84,7 +84,7 @@ const ProfilePage = () => {
         <h1 className="text-3xl font-bold text-gray-900">{profile.full_name}</h1>
         <Button
           onClick={handleDownloadProfile}
-          disabled={downloading || !student}
+          disabled={downloading}
           className="bg-primary hover:bg-primary/90 text-white"
         >
           <Download className="mr-2 h-4 w-4" />

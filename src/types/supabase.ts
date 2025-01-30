@@ -7,113 +7,79 @@ export type Json =
   | Json[];
 
 export interface Database {
-  public: {
+  school: {
     Tables: {
-      Attendance: {
+      ProspectiveStudent: {
         Row: {
           id: string;
-          date: string;
-          status: 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY';
-          studentId: string;
-          classId: string;
-          createdAt: string;
-          updatedAt: string;
+          studentname: string;
+          parentname: string;
+          email: string;
+          contactnumber: string;
+          gradeapplying: string;
+          gender: string;
+          dateofbirth: string | null;
+          address: string;
+          status: string;
+          applieddate: string;
+          lastupdatedate: string;
+          created_at: string;
+          updated_at: string;
         };
         Insert: {
           id?: string;
-          date: string;
-          status: 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY';
-          studentId: string;
-          classId: string;
-          createdAt?: string;
-          updatedAt?: string;
+          studentname: string;
+          parentname: string;
+          email: string;
+          contactnumber: string;
+          gradeapplying: string;
+          gender: string;
+          dateofbirth?: string | null;
+          address: string;
+          status?: string;
+          applieddate?: string;
+          lastupdatedate?: string;
+          created_at?: string;
+          updated_at?: string;
         };
         Update: {
           id?: string;
-          date?: string;
-          status?: 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY';
-          studentId?: string;
-          classId?: string;
-          createdAt?: string;
-          updatedAt?: string;
-        };
-      };
-      Staff: {
-        Row: {
-          id: string;
-          role: 'TEACHER' | 'ADMIN' | 'PRINCIPAL' | 'ACCOUNTANT';
-          name: string;
-          email: string;
-          createdAt: string;
-          updatedAt: string;
-        };
-        Insert: {
-          id?: string;
-          role: 'TEACHER' | 'ADMIN' | 'PRINCIPAL' | 'ACCOUNTANT';
-          name: string;
-          email: string;
-          createdAt?: string;
-          updatedAt?: string;
-        };
-        Update: {
-          id?: string;
-          role?: 'TEACHER' | 'ADMIN' | 'PRINCIPAL' | 'ACCOUNTANT';
-          name?: string;
+          studentname?: string;
+          parentname?: string;
           email?: string;
-          createdAt?: string;
-          updatedAt?: string;
+          contactnumber?: string;
+          gradeapplying?: string;
+          gender?: string;
+          dateofbirth?: string | null;
+          address?: string;
+          status?: string;
+          applieddate?: string;
+          lastupdatedate?: string;
+          created_at?: string;
+          updated_at?: string;
         };
       };
-      Student: {
+      AdmissionProcess: {
         Row: {
           id: string;
-          name: string;
-          email: string;
-          classId: string;
-          createdAt: string;
-          updatedAt: string;
+          prospectivestudentid: string;
+          documentsrequired: Json;
+          created_at: string;
+          updated_at: string;
         };
         Insert: {
           id?: string;
-          name: string;
-          email: string;
-          classId: string;
-          createdAt?: string;
-          updatedAt?: string;
+          prospectivestudentid: string;
+          documentsrequired?: Json;
+          created_at?: string;
+          updated_at?: string;
         };
         Update: {
           id?: string;
-          name?: string;
-          email?: string;
-          classId?: string;
-          createdAt?: string;
-          updatedAt?: string;
-        };
-      };
-      Profile: {
-        Row: {
-          id: string;
-          user_id: string;
-          full_name: string | null;
-          avatar_url: string | null;
-          role: string;
-          classId: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          full_name?: string | null;
-          avatar_url?: string | null;
-          role: string;
-          classId: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          full_name?: string | null;
-          avatar_url?: string | null;
-          role?: string;
-          classId?: string;
+          prospectivestudentid?: string;
+          documentsrequired?: Json;
+          created_at?: string;
+          updated_at?: string;
         };
       };
       File: {
@@ -167,6 +133,41 @@ export interface Database {
           last_update_date: string;
           school_id: string;
           assigned_to: string | null;
+
+      AdmissionNotes: {
+        Row: {
+          id: string;
+          prospectivestudentid: string;
+          content: string;
+          createdby: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          prospectivestudentid: string;
+          content: string;
+          createdby: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          prospectivestudentid?: string;
+          content?: string;
+          createdby?: string;
+          created_at?: string;
+        };
+      };
+    };
+  };
+  public: {
+    Tables: {
+      Attendance: {
+        Row: {
+          id: string;
+          date: string;
+          status: 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY';
+          studentid: string;
+          classid: string;
           created_at: string;
           updated_at: string;
         };
@@ -187,6 +188,11 @@ export interface Database {
           last_update_date?: string;
           school_id: string;
           assigned_to?: string | null;
+
+          date: string;
+          status: 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY';
+          studentid: string;
+          classid: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -207,113 +213,41 @@ export interface Database {
           last_update_date?: string;
           school_id?: string;
           assigned_to?: string | null;
+
+          date?: string;
+          status?: 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY';
+          studentid?: string;
+          classid?: string;
           created_at?: string;
           updated_at?: string;
         };
       };
-      admission_process: {
+
+      Staff: {
         Row: {
           id: string;
-          prospective_student_id: string;
-          assigned_class_id: string | null;
-          admission_number: string | null;
-          documents_required: Json;
-          documents_submitted: Json;
-          interview_date: string | null;
-          interview_notes: string | null;
-          fee_details: Json | null;
-          approved_by: string | null;
-          student_id: string | null;
+          role: 'TEACHER' | 'ADMIN' | 'PRINCIPAL' | 'ACCOUNTANT';
+          name: string;
+          email: string;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id?: string;
-          prospective_student_id: string;
-          assigned_class_id?: string | null;
-          admission_number?: string | null;
-          documents_required?: Json;
-          documents_submitted?: Json;
-          interview_date?: string | null;
-          interview_notes?: string | null;
-          fee_details?: Json | null;
-          approved_by?: string | null;
-          student_id?: string | null;
+
+          role: 'TEACHER' | 'ADMIN' | 'PRINCIPAL' | 'ACCOUNTANT';
+          name: string;
+          email: string;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           id?: string;
-          prospective_student_id?: string;
-          assigned_class_id?: string | null;
-          admission_number?: string | null;
-          documents_required?: Json;
-          documents_submitted?: Json;
-          interview_date?: string | null;
-          interview_notes?: string | null;
-          fee_details?: Json | null;
-          approved_by?: string | null;
-          student_id?: string | null;
+          role?: 'TEACHER' | 'ADMIN' | 'PRINCIPAL' | 'ACCOUNTANT';
+          name?: string;
+          email?: string;
           created_at?: string;
           updated_at?: string;
-        };
-      };
-      admission_communication: {
-        Row: {
-          id: string;
-          prospective_student_id: string;
-          communication_type: string;
-          notes: string;
-          staff_id: string;
-          communication_date: string;
-          direction: 'incoming' | 'outgoing';
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          prospective_student_id: string;
-          communication_type: string;
-          notes: string;
-          staff_id: string;
-          communication_date?: string;
-          direction?: 'incoming' | 'outgoing';
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          prospective_student_id?: string;
-          communication_type?: string;
-          notes?: string;
-          staff_id?: string;
-          communication_date?: string;
-          direction?: 'incoming' | 'outgoing';
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      admission_notes: {
-        Row: {
-          id: string;
-          prospective_student_id: string;
-          content: string;
-          created_by: string;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          prospective_student_id: string;
-          content: string;
-          created_by: string;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          prospective_student_id?: string;
-          content?: string;
-          created_by?: string;
-          created_at?: string;
         };
       };
     };

@@ -5,6 +5,38 @@ export type CommunicationType = typeof COMMUNICATION_TYPES[keyof typeof COMMUNIC
 export type RequiredDocument = typeof REQUIRED_DOCUMENTS[number];
 export type Gender = 'Male' | 'Female' | 'Other';
 
+// Database row types (matching actual database column names)
+export interface ProspectiveStudentRow {
+  id: string;
+  studentname: string;
+  parentname: string;
+  dateofbirth: string | null;
+  gender: Gender;
+  email: string;
+  contactnumber: string;
+  gradeapplying: string;
+  currentschool?: string;
+  address: string;
+  bloodgroup?: string;
+  status: EnquiryStatus;
+  applieddate: string;
+  lastupdatedate: string;
+  schoolid: string;
+  assignedto?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdmissionProcessRow {
+  id: string;
+  prospectivestudentid: string;
+  documentsrequired: any;
+  interviewdate: string | null;
+  assignedclass: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Note {
   id: string;
   prospectiveStudentId: string;

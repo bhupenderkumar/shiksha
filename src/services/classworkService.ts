@@ -32,7 +32,7 @@ export interface ClassworkType {
 }
 
 // Define the structure of data required to create a new classwork entry
-interface CreateClassworkData {
+export interface CreateClassworkData {
   title: string;
   description: string;
   date: Date;
@@ -41,20 +41,27 @@ interface CreateClassworkData {
     fileName: string;
     filePath: string;
     fileType: string;
+    id?: string;  // Added to support existing files
   }>;
   uploadedBy: string;
 }
 
 // Define the structure of data required to update an existing classwork entry
-type UpdateClassworkData = Partial<Omit<CreateClassworkData, 'uploadedBy'>> & {
+export type UpdateClassworkData = Partial<Omit<CreateClassworkData, 'uploadedBy'>> & {
   uploadedBy?: string;
 };
 
-// Classwork service to manage classwork-related operations
+// Service for managing classwork-related operations
 export const classworkService = {
+  /**
+   * Fetch all classwork entries based on user role and class ID
+   * @param role User role (e.g., 'STUDENT', 'TEACHER')
+   * @param classId Optional class ID to filter classwork by
+   * @returns Array of classwork objects
+   */
   async getAll(role: string, classId?: string) {
     let query = supabase
-    .schema(SCHEMA)
+      .schema(SCHEMA)
       .from(CLASSWORK_TABLE)
       .select(`
         *,
@@ -69,7 +76,10 @@ export const classworkService = {
 
     const { data, error } = await query;
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching classwork:', error);
+      throw new Error('Failed to fetch classwork');
+    }
 
     return (data as any[]).map(classwork => ({
       ...classwork,
@@ -79,60 +89,84 @@ export const classworkService = {
     })) as ClassworkType[];
   },
 
+  /**
+   * Create a new classwork entry
+   * @param data Classwork data to create
+   * @param userId User ID of the creator
+   * @returns Created classwork object
+   */
   async create(data: CreateClassworkData, userId: string) {
-    try {
-      const { attachments, uploadedBy, ...classworkData } = data;
-      const classworkId = uuidv4();
+    const { attachments, uploadedBy, ...classworkData } = data;
+    const classworkId = uuidv4();
 
+    try {
+      // Start a transaction
       const { data: classwork, error: classworkError } = await supabase
-      .schema(SCHEMA)
+        .schema(SCHEMA)
         .from(CLASSWORK_TABLE)
-        .insert([{ 
-          ...classworkData, 
-          id: classworkId, 
-          createdAt: new Date().toISOString(), 
-          updatedAt: new Date().toISOString() 
-        }])
+        .insert([
+          {
+            id: classworkId,
+            ...classworkData,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        ])
         .select()
         .single();
 
       if (classworkError) throw classworkError;
 
+      // Handle attachments if they exist
       if (attachments && attachments.length > 0) {
-        for (const file of attachments) {
-          await fileTableService.createFile({
-            fileName: file.fileName,
-            filePath: file.filePath,
-            classworkId: classworkId,
-            fileType: file.fileType,
-            uploadedBy: uploadedBy
+        const filePromises = attachments.map(async (attachment) => {
+          if (attachment.id) return attachment; // Skip if it's an existing file
+          
+          return await fileTableService.createFileRecord({
+            fileName: attachment.fileName,
+            filePath: attachment.filePath,
+            fileType: attachment.fileType,
+            uploadedBy,
+            classworkId,
           });
-        }
+        });
+
+        await Promise.all(filePromises);
       }
 
-      return classwork;
+      return await this.fetchClassworkDetails(classworkId);
     } catch (error) {
       console.error('Error creating classwork:', error);
-      throw error;
+      throw new Error('Failed to create classwork');
     }
   },
 
+  /**
+   * Update an existing classwork entry
+   * @param id Classwork ID to update
+   * @param data Classwork data to update
+   * @param userId User ID of the updater
+   * @returns Updated classwork object
+   */
   async update(id: string, data: UpdateClassworkData, userId: string) {
     try {
       const { attachments, uploadedBy, ...classworkData } = data;
+      const now = new Date().toISOString();
 
       const { data: updatedClasswork, error } = await supabase
-      .schema(SCHEMA)
+        .schema(SCHEMA)
         .from(CLASSWORK_TABLE)
         .update({
           ...classworkData,
-          updatedAt: new Date().toISOString()
+          updatedAt: now
         })
         .eq('id', id)
-        .select();
+        .select()
+        .single();
 
       if (error) throw error;
 
+      // Handle attachments if present
       if (attachments) {
         const newFiles = attachments.filter(f => !('id' in f));
         for (const file of newFiles) {
@@ -151,10 +185,14 @@ export const classworkService = {
       return updatedClasswork;
     } catch (error) {
       console.error('Error updating classwork:', error);
-      throw error;
+      throw new Error('Failed to update classwork');
     }
   },
 
+  /**
+   * Delete a classwork entry by ID
+   * @param id Classwork ID to delete
+   */
   async delete(id: string) {
     try {
       const files = await fileTableService.getFilesByClassworkId(id);
@@ -165,7 +203,7 @@ export const classworkService = {
       }));
 
       const { error } = await supabase
-      .schema(SCHEMA)
+        .schema(SCHEMA)
         .from(CLASSWORK_TABLE)
         .delete()
         .eq('id', id);
@@ -176,9 +214,42 @@ export const classworkService = {
       }
     } catch (error) {
       console.error('Error in delete:', error);
-      throw error;
+      throw new Error('Failed to delete classwork');
     }
-  }
+  },
+
+  /**
+   * Fetch classwork details by ID
+   * @param id Classwork ID to fetch
+   * @returns Classwork object
+   */
+  async fetchClassworkDetails(id: string) {
+    const { data, error } = await supabase
+      .schema(SCHEMA)
+      .from(CLASSWORK_TABLE)
+      .select(`
+        *,
+        class:Class(
+          id, 
+          name,
+          section,
+          roomNumber,
+          capacity
+        ),
+        attachments:File(*)
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+
+    return {
+      ...data,
+      date: new Date(data.date),
+      createdAt: new Date(data.createdAt),
+      updatedAt: new Date(data.updatedAt),
+    } as ClassworkType;
+  },
 };
 
 export const fetchClassworkDetails = async (id: string) => {
