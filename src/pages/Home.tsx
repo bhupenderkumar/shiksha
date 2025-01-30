@@ -118,8 +118,33 @@ const testimonials = [
 ];
 
 async function fetchLatestVideos(): Promise<Video[]> {
-  // Implement the logic to fetch the latest videos
-  return [];
+
+  try {
+    const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
+    const YOUTUBE_CHANNEL_ID = import.meta.env.VITE_YOUTUBE_CHANNEL_ID;
+
+    if (!YOUTUBE_API_KEY || !YOUTUBE_CHANNEL_ID) {
+      console.error('YouTube API key or Channel ID not set in environment variables');
+      return [];
+    }
+
+    const response = await fetch(
+      `https://www.googleapis.com/youtube/v3/search?key=${YOUTUBE_API_KEY}&channelId=${YOUTUBE_CHANNEL_ID}&part=snippet,id&order=date&maxResults=5&type=video`
+    );
+
+    if (!response.ok) {
+      throw new Error(`YouTube API request failed: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.items.map((item: any) => ({
+      id: { videoId: item.id.videoId },
+      snippet: { title: item.snippet.title }
+    }));
+  } catch (error) {
+    console.error('Error fetching videos:', error);
+    return [];
+  }
 }
 
 export default function Home() {
@@ -134,36 +159,66 @@ useEffect(() => {
     };
 
     const loadGoogleMapsScript = () => {
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`;
-      script.async = true;
-      script.onload = initMap;
-      document.body.appendChild(script);
+
+      try {
+        if (!import.meta.env.VITE_GOOGLE_MAPS_API_KEY) {
+          console.error('Google Maps API key is not set in environment variables');
+          return;
+        }
+
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`;
+        script.async = true;
+        script.onerror = () => console.error('Failed to load Google Maps script');
+        script.onload = initMap;
+        document.body.appendChild(script);
+      } catch (error) {
+        console.error('Error loading Google Maps:', error);
+      }
     };
 
     const initMap = () => {
-      const location = getSchoolLocation();
-      const map = new window.google.maps.Map(document.getElementById('map'), {
-        center: location,
-        zoom: 15,
-      });
-      new window.google.maps.Marker({
-        position: location,
-        map: map,
-        title: SCHOOL_INFO.name,
-      });
+      try {
+        if (!window.google?.maps) {
+          console.error('Google Maps not loaded');
+          return;
+        }
+
+        const mapElement = document.getElementById('map');
+        if (!mapElement) {
+          console.error('Map container element not found');
+          return;
+        }
+
+        const location = getSchoolLocation();
+        const map = new window.google.maps.Map(mapElement, {
+          center: location,
+          zoom: 15,
+        });
+        new window.google.maps.Marker({
+          position: location,
+          map: map,
+          title: SCHOOL_INFO.name,
+        });
+      } catch (error) {
+        console.error('Error initializing map:', error);
+      }
     };
 
     const fetchPlaceData = async () => {
-      const placeData = await fetchPlaceDetails();
-      if (placeData) {
-        setReviews(placeData.reviews || []);
-        const photoUrls = await Promise.all(
-          (placeData.photos || []).slice(0, 8).map((photo: Photo) =>
-            fetchPlacePhotos(photo.photo_reference)
-          )
-        );
-        setPhotos(photoUrls.filter(url => url !== null));
+      try {
+        const placeData = await fetchPlaceDetails();
+        if (placeData) {
+          setReviews(placeData.reviews || []);
+          const photoUrls = await Promise.all(
+            (placeData.photos || []).slice(0, 8).map((photo: Photo) =>
+              fetchPlacePhotos(photo.photo_reference)
+            )
+          );
+          setPhotos(photoUrls.filter(url => url !== null));
+        }
+      } catch (error) {
+        console.error('Error fetching place data:', error);
       }
     };
 
@@ -273,6 +328,82 @@ useEffect(() => {
                 )}
               </motion.div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Admission Process Section */}
+      <section className="py-24 bg-gradient-to-b from-background to-primary/5">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <AnimatedText
+              text="Admission Process"
+              className="text-3xl font-bold mb-4"
+              variant="slideUp"
+            />
+            <p className="text-muted-foreground">Simple steps to join our school family</p>
+          </div>
+          <div className="grid md:grid-cols-4 gap-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              viewport={{ once: true }}
+              className="text-center"
+            >
+              <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
+                <span className="text-2xl font-bold text-primary">1</span>
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Submit Enquiry</h3>
+              <p className="text-muted-foreground">Fill out the admission enquiry form with required details</p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              viewport={{ once: true }}
+              className="text-center"
+            >
+              <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
+                <span className="text-2xl font-bold text-primary">2</span>
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Document Submission</h3>
+              <p className="text-muted-foreground">Submit required documents for verification</p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              viewport={{ once: true }}
+              className="text-center"
+            >
+              <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
+                <span className="text-2xl font-bold text-primary">3</span>
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Interview</h3>
+              <p className="text-muted-foreground">Schedule and attend admission interview</p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              viewport={{ once: true }}
+              className="text-center"
+            >
+              <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
+                <span className="text-2xl font-bold text-primary">4</span>
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Admission Confirmation</h3>
+              <p className="text-muted-foreground">Receive confirmation and join our school family</p>
+            </motion.div>
+          </div>
+          <div className="mt-12 text-center">
+            <Button size="lg" asChild className="bg-primary hover:bg-primary/90">
+              <Link to="/admission-enquiry">
+                Start Your Journey Today
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>

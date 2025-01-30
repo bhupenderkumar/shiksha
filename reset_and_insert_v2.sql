@@ -752,6 +752,51 @@ INSERT INTO school."Student" (
 INSERT INTO school."Student" ("createdAt","updatedAt","parentName","contactNumber",id,"admissionNumber", "address","name", "parentEmail", "dateOfBirth", gender,  "classId", "parentContact") 
 VALUES (NOW(),NOW(),'BHUPENDER','+91-971727473','S10', 'ADM212','SAURABH VIHAR','Nitya', 'sharmakbhupender@gmail.com', '2010-05-15', 'Female', 'CLS203', '9999999999');
 
+-- Create AdmissionEnquiry table
+CREATE TABLE school."AdmissionEnquiry" (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    "studentName" TEXT NOT NULL,
+    "parentName" TEXT NOT NULL,
+    email TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    "gradeApplying" TEXT NOT NULL,
+    "currentSchool" TEXT,
+    message TEXT NOT NULL,
+    status TEXT DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'CONTACTED', 'APPROVED', 'REJECTED')),
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Add RLS Policies for AdmissionEnquiry
+ALTER TABLE school."AdmissionEnquiry" ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public to create admission enquiries"
+    ON school."AdmissionEnquiry"
+    FOR INSERT
+    TO anon
+    WITH CHECK (true);
+
+CREATE POLICY "Allow staff to view admission enquiries"
+    ON school."AdmissionEnquiry"
+    FOR SELECT
+    TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM school."Staff" s
+            WHERE s.email = auth.jwt()->>'email'
+        )
+    );
+
+CREATE POLICY "Allow staff to update admission enquiries"
+    ON school."AdmissionEnquiry"
+    FOR UPDATE
+    TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM school."Staff" s
+            WHERE s.email = auth.jwt()->>'email'
+        )
+    );
 
 -- Recreate the UserSettings table with a UNIQUE constraint on user_id
 CREATE TABLE IF NOT EXISTS school."UserSettings" (

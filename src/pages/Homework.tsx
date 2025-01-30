@@ -14,9 +14,12 @@ import { PageHeader } from '@/components/ui/page-header';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useProfileAccess } from '@/services/profileService';
-import { fileService } from '@/services/fileService';
 import { useMediaQuery } from 'react-responsive';
-import { v4 as uuidv4 } from 'uuid';
+import { Attachment } from '@/components/Attachment'; // Import Attachment component
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import debounce from 'lodash/debounce';
 
 export default function HomeworkPage() {
   const navigate = useNavigate();
@@ -34,40 +37,34 @@ export default function HomeworkPage() {
   const { profile, loading: profileLoading, isAdminOrTeacher } = useProfileAccess();
   const isMobile = useMediaQuery({ query: '(max-width: 640px)' });
 
+  const [searchParams, setSearchParams] = useState({
+    searchTerm: '',
+    subjectId: '',
+    status: '',
+    dateRange: null
+  });
+
   const { loading, execute: fetchHomeworks } = useAsync(
     async () => {
       if (!profile) return;
-      const data = await homeworkService.getAll(profile.role, profile.classId);
+      const data = await homeworkService.getAll(
+        profile.role, 
+        profile.classId,
+        {
+          searchTerm: searchParams.searchTerm,
+          subjectId: searchParams.subjectId || undefined,
+          status: searchParams.status as HomeworkStatus || undefined,
+          dateRange: searchParams.dateRange
+        }
+      );
       setHomeworks(data);
     },
     { showErrorToast: true }
   );
 
   const { execute: createHomework } = useAsync(
-    async (data: any) => {
-      const { files, existingFiles, ...homeworkData } = data;
-      let uploadedFiles = [];
-      
-      if (files && files.length > 0) {
-        uploadedFiles = await Promise.all(
-          files.map(async (file: File) => {
-            const filePath = await fileService.uploadFile(file, 'homework');
-            return {
-              name: file.name,
-              filePath,
-              type: file.type || file.name.split('.').pop() || 'application/octet-stream'
-            };
-          })
-        );
-      }
-
-      const homeworkPayload = { 
-        ...homeworkData, 
-        attachments: [...(existingFiles || []), ...uploadedFiles],
-        status: 'PENDING' 
-      };
-
-      await homeworkService.create(homeworkPayload);
+    async (data) => {
+      await homeworkService.create(data, user?.id);
       await fetchHomeworks();
       handleCloseDialog();
       toast.success('Homework created successfully!');
@@ -76,28 +73,9 @@ export default function HomeworkPage() {
   );
 
   const { execute: updateHomework } = useAsync(
-    async (data: any) => {
+    async (data) => {
       if (!selectedHomework) return;
-      const { files, existingFiles, ...homeworkData } = data;
-      let uploadedFiles = [];
-      
-      if (files && files.length > 0) {
-        uploadedFiles = await Promise.all(
-          files.map(async (file: File) => {
-            const filePath = await fileService.uploadFile(file, 'homework');
-            return {
-              name: file.name,
-              filePath,
-              type: file.type || file.name.split('.').pop() || 'application/octet-stream'
-            };
-          })
-        );
-      }
-
-      await homeworkService.update(selectedHomework.id, {
-        ...homeworkData,
-        attachments: [...(existingFiles || []), ...uploadedFiles]
-      });
+      await homeworkService.update(selectedHomework.id, data, user?.id);
       await fetchHomeworks();
       handleCloseDialog();
       toast.success('Homework updated successfully!');
@@ -105,29 +83,32 @@ export default function HomeworkPage() {
     { showErrorToast: true }
   );
 
-  useEffect(() => {
-    if (profile) {
-      fetchHomeworks();
-    }
-  }, [profile]);
-
-  const handleEdit = (homework: HomeworkType) => {
-    setSelectedHomework(homework);
-    setDialogState({ isOpen: true, mode: 'edit' });
-  };
-
-  const handleDelete = async () => {
-    if (!selectedHomework) return;
+  const handleDeleteHomework = async (id: string) => {
     try {
-      await homeworkService.delete(selectedHomework.id);
+      await homeworkService.delete(id);
       await fetchHomeworks();
       setIsDeleteDialogOpen(false);
       setSelectedHomework(null);
       toast.success('Homework deleted successfully!');
     } catch (error) {
       console.error('Error deleting homework:', error);
-      toast.error('Failed to delete homework');
     }
+  };
+
+  // Debounce search to avoid too many requests
+  const debouncedSearch = debounce((value) => {
+    setSearchParams(prev => ({ ...prev, searchTerm: value }));
+  }, 300);
+
+  useEffect(() => {
+    if (profile) {
+      fetchHomeworks();
+    }
+  }, [profile, searchParams]);
+
+  const handleEdit = (homework: HomeworkType) => {
+    setSelectedHomework(homework);
+    setDialogState({ isOpen: true, mode: 'edit' });
   };
 
   const handleCloseDialog = () => {
@@ -142,6 +123,48 @@ export default function HomeworkPage() {
       </div>
     );
   }
+
+  const renderSearchFilters = () => (
+    <div className="mb-6 space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Input
+          placeholder="Search homework..."
+          onChange={(e) => debouncedSearch(e.target.value)}
+          className="w-full"
+        />
+        
+        {isAdminOrTeacher && (
+          <Select
+            value={searchParams.status}
+            onChange={(value) => setSearchParams(prev => ({ ...prev, status: value }))}
+            options={[
+              { label: 'All Status', value: '' },
+              { label: 'Pending', value: 'PENDING' },
+              { label: 'Completed', value: 'COMPLETED' },
+              { label: 'Overdue', value: 'OVERDUE' }
+            ]}
+            className="w-full"
+          />
+        )}
+
+        <Select
+          value={searchParams.subjectId}
+          onChange={(value) => setSearchParams(prev => ({ ...prev, subjectId: value }))}
+          options={[
+            { label: 'All Subjects', value: '' },
+            // Add subject options based on your data
+          ]}
+          className="w-full"
+        />
+
+        <DateRangePicker
+          value={searchParams.dateRange}
+          onChange={(range) => setSearchParams(prev => ({ ...prev, dateRange: range }))}
+          className="w-full"
+        />
+      </div>
+    </div>
+  );
 
   return (
     <div className="container mx-auto py-8">
@@ -158,6 +181,8 @@ export default function HomeworkPage() {
           ) : null
         }
       />
+
+      {renderSearchFilters()}
 
       {homeworks.length === 0 ? (
         <EmptyState
@@ -181,7 +206,7 @@ export default function HomeworkPage() {
                   key={homework.id}
                   homework={homework}
                   onEdit={handleEdit}
-                  onDelete={handleDelete}
+                  onDelete={handleDeleteHomework}
                   onView={() => {}}
                   isStudent={profile?.role === 'STUDENT'}
                   attachments={homework.attachments}
@@ -246,7 +271,7 @@ export default function HomeworkPage() {
                 <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>
                   Cancel
                 </AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete}>
+                <AlertDialogAction onClick={() => handleDeleteHomework(selectedHomework?.id || '')}>
                   Delete
                 </AlertDialogAction>
               </AlertDialogFooter>

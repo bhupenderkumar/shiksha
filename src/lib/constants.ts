@@ -5,9 +5,9 @@ export const ROLES = {
 } as const;
 
 export const GENDERS = {
-  MALE: 'MALE',
-  FEMALE: 'FEMALE',
-  OTHER: 'OTHER'
+  MALE: 'Male',
+  FEMALE: 'Female',
+  OTHER: 'Other'
 } as const;
 
 export const PROFILE_TABLE = 'Profile';
@@ -93,6 +93,54 @@ export const ADMISSION_TABLES = {
 } as const;
 
 export const ADMISSION_BUCKET = 'admission-documents';
+export const PROFILE_TABLE = 'Profile';
+
+// Admission related tables
+export const PROSPECTIVE_STUDENT_TABLE = 'ProspectiveStudent';
+export const ADMISSION_PROCESS_TABLE = 'AdmissionProcess';
+export const ADMISSION_COMMUNICATION_TABLE = 'AdmissionCommunication';
+
+// Admission Status Enum
+export const ADMISSION_STATUS = {
+  NEW: 'NEW',
+  IN_REVIEW: 'IN_REVIEW',
+  SCHEDULED_INTERVIEW: 'SCHEDULED_INTERVIEW',
+  PENDING_DOCUMENTS: 'PENDING_DOCUMENTS',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  ENROLLED: 'ENROLLED'
+} as const;
+
+// Communication Types
+export const COMMUNICATION_TYPES = {
+  PHONE: 'PHONE',
+  EMAIL: 'EMAIL',
+  MEETING: 'MEETING',
+  OTHER: 'OTHER'
+} as const;
+
+// Required Documents
+export const REQUIRED_DOCUMENTS = [
+  'birth_certificate',
+  'transfer_certificate',
+  'report_card',
+  'medical_records',
+  'address_proof',
+  'student_photo',
+  'father_photo',
+  'mother_photo'
+] as const;
+
+export const PUBLIC_ROUTES = [
+  '/',
+  '/login',
+  '/register',
+  '/homework/view/:id',
+  '/homework/:id',
+  '/classwork/:id',
+  '/admission-enquiry'
+];
+
 
 // Environment variables should be used instead of hardcoding API keys
 export const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;

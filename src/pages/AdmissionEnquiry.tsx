@@ -36,7 +36,8 @@ import { FileUpload } from "@/components/ui/file-upload";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { REQUIRED_DOCUMENTS } from "@/lib/constants";
+
+
 
 interface Note {
   id: string;
@@ -54,7 +55,13 @@ interface Communication {
   createdAt: Date;
 }
 
-function DocumentUploadSection({
+// Using DocumentStatus from admission.ts types
+import { DocumentStatus } from "@/types/admission";
+
+// Import required documents from constants
+import { REQUIRED_DOCUMENTS } from "@/lib/constants";
+
+const DocumentUploadSection = ({
   prospectiveStudentId,
   documents,
   onDocumentUpload
@@ -62,70 +69,82 @@ function DocumentUploadSection({
   prospectiveStudentId: string;
   documents: Record<RequiredDocument, DocumentStatus>;
   onDocumentUpload: () => void;
-}) {
-  const [selectedDocType, setSelectedDocType] = useState<RequiredDocument | null>(null);
-  const [uploading, setUploading] = useState(false);
 
-  const handleFileUpload = async (file: File) => {
-    if (!selectedDocType) return;
-    setUploading(true);
+}) => {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState<Record<string, boolean>>({});
+
+  const handleFileUpload = async (file: File, documentType: RequiredDocument) => {
     try {
-      await admissionService.uploadDocument(prospectiveStudentId, file, selectedDocType);
+      setLoading(prev => ({ ...prev, [documentType]: true }));
+      await admissionService.uploadDocument(prospectiveStudentId, file, documentType);
+      toast.success(`${documentType} uploaded successfully`);
       onDocumentUpload();
-      toast.success("Document uploaded successfully");
     } catch (error) {
-      console.error("Error uploading document:", error);
-      toast.error("Failed to upload document");
+      toast.error(error instanceof Error ? error.message : 'Failed to upload document');
     } finally {
-      setUploading(false);
-      setSelectedDocType(null);
+      setLoading(prev => ({ ...prev, [documentType]: false }));
+    }
+  };
+
+  const handleViewDocument = async (doc: DocumentStatus) => {
+    if (!doc.submitted?.[0]?.fileName) {
+      toast.error('No document available to view');
+      return;
+    }
+    
+    try {
+      const url = await admissionService.getDocumentUrl(doc.submitted[0].fileName);
+      window.open(url, '_blank');
+    } catch (error) {
+      toast.error('Failed to view document');
     }
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col space-y-2">
-        <Label>Document Type</Label>
-        <Select
-          value={selectedDocType || ""}
-          onValueChange={(value) => setSelectedDocType(value as RequiredDocument)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select document type" />
-          </SelectTrigger>
-          <SelectContent>
-            {REQUIRED_DOCUMENTS.map((docType) => (
-              <SelectItem key={docType} value={docType}>
-                {docType.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-medium">Required Documents</h3>
+        <Badge variant="outline">Optional</Badge>
       </div>
-
-      {selectedDocType && (
-        <FileUpload
-          onUpload={handleFileUpload}
-          loading={uploading}
-          accept=".pdf,.jpg,.jpeg,.png"
-        />
-      )}
-
-      <div className="space-y-2">
-        {Object.entries(documents).map(([docType, status]) => (
-          <div key={docType} className="flex items-center justify-between p-2 border rounded">
-            <span>{docType.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}</span>
-            <Badge variant={status.submitted.length > 0 ? "success" : "secondary"}>
-              {status.submitted.length > 0 ? "Submitted" : "Pending"}
-            </Badge>
+      {REQUIRED_DOCUMENTS.map((docType) => (
+        <div key={docType} className="p-4 border rounded-lg">
+          <div className="flex items-center justify-between mb-2">
+            <span className="font-medium">{docType.replace(/_/g, ' ')}</span>
+            <Badge variant="outline">Optional</Badge>
           </div>
-        ))}
+          <FileUpload
+            onUpload={(file) => handleFileUpload(file, docType as RequiredDocument)}
+            accept=".pdf,.jpg,.jpeg,.png"
+            loading={loading[docType]}
+          />
+          {documents[docType]?.submitted?.length > 0 && (
+            <div className="mt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleViewDocument(documents[docType])}
+              >
+                View Document
+              </Button>
+              <div className="text-sm text-muted-foreground mt-1">
+                Status: {documents[docType].verificationStatus?.[docType] || 'pending'}
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+      <div className="flex justify-end mt-4">
+        <Button onClick={() => navigate(`/admission/process/${prospectiveStudentId}`)}>
+          Continue to Next Step
+        </Button>
       </div>
     </div>
   );
-}
+};
 
-function AdmissionEnquiry() {
+const AdmissionEnquiry: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [enquiry, setEnquiry] = useState<ProspectiveStudent | null>(null);
@@ -135,6 +154,8 @@ function AdmissionEnquiry() {
   const [savingNote, setSavingNote] = useState(false);
   const [communications, setCommunications] = useState<Communication[]>([]);
   const [newMessage, setNewMessage] = useState("");
+  const [selectedDocType, setSelectedDocType] = useState<RequiredDocument | null>(null);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
   const [communicationType, setCommunicationType] = useState<'email' | 'phone' | 'in_person'>('email');
   const [documents, setDocuments] = useState<Record<RequiredDocument, DocumentStatus>>(() => {
     const initial: Record<RequiredDocument, DocumentStatus> = {} as Record<RequiredDocument, DocumentStatus>;
@@ -185,47 +206,43 @@ function AdmissionEnquiry() {
   const fetchCommunications = async () => {
     try {
       const data = await admissionService.getCommunicationHistory(id!);
-      setCommunications(data);
+
+      const formattedData: Communication[] = data.map((comm: any) => ({
+        id: comm.id,
+        message: comm.message,
+        type: comm.type,
+        direction: comm.direction,
+        communicationDate: new Date(comm.communicationDate),
+        createdAt: new Date(comm.createdAt),
+      }));
+      setCommunications(formattedData);
     } catch (error) {
       console.error("Error fetching communications:", error);
-      toast.error("Failed to load communication history");
+      toast.error("Failed to load communications");
     }
   };
 
   const loadDocuments = async () => {
-    try {
-      const data = await admissionService.getAllDocuments(id!);
-      setDocuments(data);
-    } catch (error) {
-      console.error("Error loading documents:", error);
-      toast.error("Failed to load documents");
-    }
-  };
 
-  const handleSubmit = async (data: ProspectiveStudent) => {
+    if (!id) return;
     try {
-      if (id) {
-        await admissionService.updateEnquiry(id, data);
-        toast.success("Enquiry updated successfully");
-      } else {
-        const result = await admissionService.createEnquiry(data);
-        toast.success("Enquiry created successfully");
-        navigate(`/admission-enquiry/${result.id}`);
-      }
+      const docs = await admissionService.getAllDocuments(id);
+      setDocuments(docs);
     } catch (error) {
-      console.error("Error saving enquiry:", error);
-      toast.error("Failed to save enquiry");
+      toast.error('Failed to load documents');
     }
   };
 
   const handleAddNote = async () => {
     if (!newNote.trim()) return;
-    setSavingNote(true);
+
+
     try {
+      setSavingNote(true);
       await admissionService.addEnquiryNote(id!, newNote);
       setNewNote("");
-      fetchNotes();
-      toast.success("Note added successfully");
+      await fetchNotes();
+       toast.success("Note added successfully");
     } catch (error) {
       console.error("Error adding note:", error);
       toast.error("Failed to add note");
@@ -234,179 +251,342 @@ function AdmissionEnquiry() {
     }
   };
 
-  const handleAddCommunication = async () => {
+
+  const handleFileUpload = async (file: File) => {
+    if (!selectedDocType) {
+      toast.error("Please select a document type");
+      return;
+    }
+
+    try {
+      setUploadingDoc(true);
+      await admissionService.uploadDocument(id!, file, selectedDocType);
+      toast.success("Document uploaded successfully");
+      loadDocuments(); // Refresh document status
+    } catch (error) {
+      console.error("Error uploading document:", error);
+      toast.error("Failed to upload document");
+    } finally {
+      setUploadingDoc(false);
+      setSelectedDocType(null);
+    }
+  };
+
+  const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
+
     try {
       await admissionService.addCommunication(id!, {
-        type: communicationType,
         message: newMessage,
+        type: communicationType,
+        direction: 'outgoing'
       });
       setNewMessage("");
-      fetchCommunications();
-      toast.success("Communication recorded successfully");
+      await fetchCommunications();
+      toast.success("Message sent successfully");
     } catch (error) {
-      console.error("Error recording communication:", error);
-      toast.error("Failed to record communication");
+      console.error("Error sending message:", error);
+      toast.error("Failed to send message");
     }
+  };
+
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full"
+        />
       </div>
     );
   }
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        {!id && (
           <Button
             variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/")}
+            className="mb-4 sm:mb-0"
           >
-            <ChevronLeft className="h-6 w-6" />
+            <ChevronLeft className="h-4 w-4 mr-2" />
+            Back to Home
           </Button>
-          <h1 className="text-2xl font-bold">
-            {id ? "Edit Admission Enquiry" : "New Admission Enquiry"}
-          </h1>
-        </div>
-        {enquiry && (
-          <Badge variant={enquiry.status === "APPROVED" ? "success" : "secondary"}>
-            {enquiry.status}
-          </Badge>
         )}
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/admission-enquiries")}
+          className="mb-4 sm:mb-0"
+        >
+          <ChevronLeft className="h-4 w-4 mr-2" />
+          Back to Enquiries
+        </Button>
+        <h1 className="text-3xl font-bold">
+          {id ? "Resume Admission Process" : "New Admission Enquiry"}
+        </h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Enquiry Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <AdmissionEnquiryForm
-              initialData={enquiry}
-              onSubmit={handleSubmit}
-            />
-          </CardContent>
-        </Card>
+        {/* Main Form Section */}
+        <div className="lg:col-span-2 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Admission Form</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <AdmissionEnquiryForm
+                initialData={enquiry}
+                onSubmit={async (data) => {
+                  try {
+                    if (id) {
+                      await admissionService.updateEnquiry(id, data);
+                      toast.success("Enquiry updated successfully");
+                    } else {
+                      await admissionService.createEnquiry(data);
+                      toast.success("Enquiry created successfully");
+                      navigate("/admission-enquiries");
+                    }
+                  } catch (error) {
+                    console.error("Error saving enquiry:", error);
+                    toast.error("Failed to save enquiry");
+                  }
+                }}
+              />
+              <Button
+                variant="default"
+                onClick={() => navigate("/start-admission-process")}
+                className="mt-4"
+              >
+                Start Admission Process
+              </Button>
+              {id && (
+                <Button
+                  variant="secondary"
+                  onClick={() => navigate(`/resume-admission-process/${id}`)}
+                  className="mt-4"
+                >
+                  Resume Admission Process
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
+        {/* Side Panel */}
         <div className="space-y-6">
-          {id && (
+          {enquiry && (
             <>
+              {/* Quick Info Card */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Documents</CardTitle>
+                  <CardTitle>Enquiry Details</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <DocumentUploadSection
-                    prospectiveStudentId={id}
-                    documents={documents}
-                    onDocumentUpload={loadDocuments}
-                  />
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Notes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex space-x-2">
-                      <Textarea
-                        value={newNote}
-                        onChange={(e) => setNewNote(e.target.value)}
-                        placeholder="Add a note..."
-                      />
-                      <Button
-                        onClick={handleAddNote}
-                        disabled={savingNote || !newNote.trim()}
-                      >
-                        {savingNote ? "Saving..." : "Add"}
-                      </Button>
-                    </div>
-                    <ScrollArea className="h-[200px]">
-                      <div className="space-y-4">
-                        {notes.map((note) => (
-                          <div key={note.id} className="p-3 bg-muted rounded-lg">
-                            <p className="text-sm">{note.content}</p>
-                            <div className="mt-2 text-xs text-muted-foreground">
-                              {new Date(note.createdAt).toLocaleString()}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </ScrollArea>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    <span>{enquiry.studentName}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    <span>{enquiry.email}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4" />
+                    <span>{enquiry.contactNumber}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <School className="h-4 w-4" />
+                    <span>Grade {enquiry.gradeApplying}</span>
                   </div>
                 </CardContent>
               </Card>
 
+              {/* Process Timeline */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Communication History</CardTitle>
+                  <CardTitle>Admission Progress</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Select
-                        value={communicationType}
-                        onValueChange={(value) => setCommunicationType(value as typeof communicationType)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="email">Email</SelectItem>
-                          <SelectItem value="phone">Phone</SelectItem>
-                          <SelectItem value="in_person">In Person</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <div className="flex space-x-2">
-                        <Textarea
-                          value={newMessage}
-                          onChange={(e) => setNewMessage(e.target.value)}
-                          placeholder="Record communication..."
-                        />
+                  <ProcessTimeline status={enquiry.status} />
+                </CardContent>
+              </Card>
+
+              {/* Notes Section */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>Notes & Updates</CardTitle>
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Note
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent>
+                      <SheetHeader>
+                        <SheetTitle>Add New Note</SheetTitle>
+                      </SheetHeader>
+                      <div className="space-y-4 mt-4">
+                        <div className="space-y-2">
+                          <Label>Note Content</Label>
+                          <Textarea
+                            placeholder="Enter your note here..."
+                            value={newNote}
+                            onChange={(e) => setNewNote(e.target.value)}
+                            rows={6}
+                          />
+                        </div>
                         <Button
-                          onClick={handleAddCommunication}
-                          disabled={!newMessage.trim()}
+                          onClick={handleAddNote}
+                          disabled={savingNote || !newNote.trim()}
+                          className="w-full"
                         >
-                          Add
+                          {savingNote ? "Saving..." : "Save Note"}
                         </Button>
                       </div>
+                    </SheetContent>
+                  </Sheet>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-[300px] pr-4">
+                    <div className="space-y-4">
+                      {notes.length === 0 ? (
+                        <p className="text-center text-muted-foreground py-4">
+                          No notes yet
+                        </p>
+                      ) : (
+                        notes.map((note) => (
+                          <Card key={note.id}>
+                            <CardContent className="pt-4">
+                              <p className="text-sm">{note.content}</p>
+                              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                                <Calendar className="h-3 w-3" />
+                                {formatDate(note.createdAt)}
+                                <User className="h-3 w-3 ml-2" />
+                                {note.createdBy}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))
+                      )}
                     </div>
-                    <ScrollArea className="h-[200px]">
-                      <div className="space-y-4">
-                        {communications.map((comm) => (
-                          <div key={comm.id} className="p-3 bg-muted rounded-lg">
-                            <div className="flex items-center space-x-2">
-                              {comm.type === "email" && <Mail className="h-4 w-4" />}
-                              {comm.type === "phone" && <Phone className="h-4 w-4" />}
-                              {comm.type === "in_person" && <User className="h-4 w-4" />}
-                              <span className="text-sm font-medium">
-                                {comm.type.replace("_", " ").toUpperCase()}
-                              </span>
-                            </div>
-                            <p className="mt-2 text-sm">{comm.message}</p>
-                            <div className="mt-2 text-xs text-muted-foreground">
-                              {new Date(comm.communicationDate).toLocaleString()}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </ScrollArea>
-                  </div>
+                  </ScrollArea>
                 </CardContent>
               </Card>
+
+              {/* Documents Tab */}
+              <Tabs>
+                <TabsList>
+                  <TabsTrigger value="documents">Documents</TabsTrigger>
+                  <TabsTrigger value="communications">Communications</TabsTrigger>
+                </TabsList>
+                <TabsContent value="documents">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Required Documents</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <DocumentUploadSection
+                        prospectiveStudentId={id || ''}
+                        documents={documents}
+                        onDocumentUpload={() => {
+                          if (id) {
+                            admissionService.getAllDocuments(id).then(setDocuments);
+                          }
+                        }}
+                      />
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                {/* Communications Tab */}
+                <TabsContent value="communications">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Communications History</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-6">
+                        <ScrollArea className="h-[400px] pr-4">
+                          <div className="space-y-4">
+                            {communications.map((comm) => (
+                              <Card key={comm.id} className={`p-4 ${
+                                comm.direction === 'outgoing' ? 'ml-12 bg-primary/10' : 'mr-12'
+                              }`}>
+                                <div className="flex items-start justify-between gap-4">
+                                  <div>
+                                    <p className="whitespace-pre-wrap">{comm.message}</p>
+                                    <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                                      <Badge variant="outline">{comm.type}</Badge>
+                                      {formatDate(comm.communicationDate)}
+                                    </div>
+                                  </div>
+                                </div>
+                              </Card>
+                            ))}
+                          </div>
+                        </ScrollArea>
+
+                        <Separator />
+
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-4">
+                            <Select
+                              value={communicationType}
+                              onValueChange={(value) => setCommunicationType(value as any)}
+                            >
+                              <SelectTrigger className="w-[150px]">
+                                <SelectValue placeholder="Type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="email">Email</SelectItem>
+                                <SelectItem value="phone">Phone</SelectItem>
+                                <SelectItem value="in_person">In Person</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Textarea
+                              placeholder="Type your message..."
+                              value={newMessage}
+                              onChange={(e) => setNewMessage(e.target.value)}
+                              className="flex-1"
+                              rows={3}
+                            />
+                            <Button
+                              onClick={handleSendMessage}
+                              disabled={!newMessage.trim()}
+                              className="self-end"
+                            >
+                              Send
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
             </>
           )}
         </div>
       </div>
     </div>
   );
-}
+
+};
 
 export default AdmissionEnquiry;
