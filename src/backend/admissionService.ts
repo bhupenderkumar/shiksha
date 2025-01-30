@@ -580,6 +580,7 @@ export const admissionService = {
         createdAt: formatDate(comm.created_at),
         updatedAt: formatDate(comm.updated_at)
       }));
+    }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to fetch communication history");
       throw error;
