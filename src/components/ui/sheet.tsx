@@ -46,4 +46,4 @@ const SheetContent = React.forwardRef<
 ));
 SheetContent.displayName = SheetPrimitive.Content.displayName;
 
-export { Sheet, SheetTrigger, SheetClose, SheetContent };
+export { Sheet, SheetTrigger, SheetClose, SheetContent, SheetHeader, SheetTitle };

@@ -5,6 +5,97 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  /* Custom Scrollbar Styles */
+  .scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 100vh;
+  }
+
+  .scrollbar::-webkit-scrollbar-thumb {
+    background: rgb(156 163 175);
+    border-radius: 100vh;
+  }
+
+  .scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgb(107 114 128);
+  }
+
+  /* Firefox */
+  .scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(156 163 175) transparent;
+  }
+
+  /* For Edge */
+  .scrollbar {
+    -ms-overflow-style: auto;
+  }
+
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-white rounded-full px-6 py-3 font-bold transition-all duration-300 hover:opacity-90 hover:scale-105 active:scale-95;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground rounded-full px-6 py-3 font-bold transition-all duration-300 hover:opacity-90 hover:scale-105 active:scale-95;
+  }
+  
+  .input-primary {
+    @apply bg-background border border-input rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+  }
+  
+  .card {
+    @apply bg-background rounded-lg border border-border p-6 shadow-sm transition-all duration-300 hover:shadow-md;
+  }
+  
+  .nav-link {
+    @apply text-muted-foreground hover:text-foreground transition-colors duration-200;
+  }
+  
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors duration-200;
+  }
+  
+  .badge-primary {
+    @apply bg-primary bg-opacity-10 text-primary;
+  }
+  
+  .badge-secondary {
+    @apply bg-secondary text-secondary-foreground;
+  }
+  
+  .badge-destructive {
+    @apply bg-destructive bg-opacity-10 text-destructive;
+  }
+
+  /* Input styles */
+  input, textarea, select {
+    @apply rounded-xl border-2 border-gray-200 focus:border-primary 
+           transition-all duration-200 focus:ring-2 focus:ring-primary focus:ring-opacity-20;
+  }
+
+  /* Toast notifications */
+  .toast {
+    @apply rounded-xl shadow-lg border-2 border-primary border-opacity-20;
+  }
+}
+
 @layer base {
   :root {
     --background: #ffffff;
@@ -71,55 +162,6 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
-  }
-}
-
-@layer components {
-  .btn-primary {
-    @apply bg-primary text-white rounded-full px-6 py-3 font-bold transition-all duration-300 hover:opacity-90 hover:scale-105 active:scale-95;
-  }
-  
-  .btn-secondary {
-    @apply bg-secondary text-secondary-foreground rounded-full px-6 py-3 font-bold transition-all duration-300 hover:opacity-90 hover:scale-105 active:scale-95;
-  }
-  
-  .input-primary {
-    @apply bg-background border border-input rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
-  }
-  
-  .card {
-    @apply bg-background rounded-lg border border-border p-6 shadow-sm transition-all duration-300 hover:shadow-md;
-  }
-  
-  .nav-link {
-    @apply text-muted-foreground hover:text-foreground transition-colors duration-200;
-  }
-  
-  .badge {
-    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors duration-200;
-  }
-  
-  .badge-primary {
-    @apply bg-primary bg-opacity-10 text-primary;
-  }
-  
-  .badge-secondary {
-    @apply bg-secondary text-secondary-foreground;
-  }
-  
-  .badge-destructive {
-    @apply bg-destructive bg-opacity-10 text-destructive;
-  }
-
-  /* Input styles */
-  input, textarea, select {
-    @apply rounded-xl border-2 border-gray-200 focus:border-primary 
-           transition-all duration-200 focus:ring-2 focus:ring-primary focus:ring-opacity-20;
-  }
-
-  /* Toast notifications */
-  .toast {
-    @apply rounded-xl shadow-lg border-2 border-primary border-opacity-20;
   }
 }
 
