@@ -10,17 +10,6 @@ export const GENDERS = {
   OTHER: 'Other'
 } as const;
 
-export const PROFILE_TABLE = 'Profile';
-
-export const PUBLIC_ROUTES = [
-  '/',
-  '/login',
-  '/register',
-  '/homework/view/:id',
-  '/homework/:id',
-  '/classwork/:id'
-];
-
 export const STORAGE_BUCKET = 'File';
 export const FILE_TABLE = 'File';
 export const ASSIGNMENT_TABLE = 'Homework';
@@ -39,6 +28,19 @@ export const SETTINGS_TABLE = 'Settings';
 export const USER_SETTINGS_TABLE = 'UserSettings';
 export const USER_TABLE = 'User';
 export const SCHEMA = 'school';
+export const PROFILE_TABLE = 'Profile';
+
+export const ADMISSION_TABLES = {
+  PROSPECTIVE_STUDENT: 'ProspectiveStudent',
+  ADMISSION_PROCESS: 'AdmissionProcess',
+  ADMISSION_COMMUNICATION: 'AdmissionCommunication',
+  ADMISSION_NOTES: 'AdmissionNotes'
+} as const;
+
+export const ADMISSION_BUCKET = 'admission-documents';
+export const PROSPECTIVE_STUDENT_TABLE = 'ProspectiveStudent';
+export const ADMISSION_PROCESS_TABLE = 'AdmissionProcess';
+export const ADMISSION_COMMUNICATION_TABLE = 'AdmissionCommunication';
 
 export const ADMISSION_STATUS = {
   NEW: 'NEW',
@@ -51,12 +53,13 @@ export const ADMISSION_STATUS = {
 } as const;
 
 export const COMMUNICATION_TYPES = {
-  EMAIL: 'email',
-  PHONE: 'phone',
+  PHONE: 'PHONE',
+  EMAIL: 'EMAIL',
   MEETING: 'MEETING',
   SMS: 'SMS',
   WHATSAPP: 'WHATSAPP',
-  IN_PERSON: 'in_person'
+  IN_PERSON: 'in_person',
+  OTHER: 'OTHER'
 } as const;
 
 export const REQUIRED_DOCUMENTS = [
@@ -69,7 +72,10 @@ export const REQUIRED_DOCUMENTS = [
   'passport_photo',
   'address_proof',
   'aadhar_card',
-  'parent_id_proof'
+  'parent_id_proof',
+  'student_photo',
+  'father_photo',
+  'mother_photo'
 ] as const;
 
 export const DOCUMENT_STATUS = {
@@ -85,52 +91,6 @@ export const DOCUMENT_VERIFICATION_STATUS = {
   REJECTED: 'rejected'
 } as const;
 
-export const ADMISSION_TABLES = {
-  PROSPECTIVE_STUDENT: 'ProspectiveStudent',
-  ADMISSION_PROCESS: 'AdmissionProcess',
-  ADMISSION_COMMUNICATION: 'AdmissionCommunication',
-  ADMISSION_NOTES: 'AdmissionNotes'
-} as const;
-
-export const ADMISSION_BUCKET = 'admission-documents';
-export const PROFILE_TABLE = 'Profile';
-
-// Admission related tables
-export const PROSPECTIVE_STUDENT_TABLE = 'ProspectiveStudent';
-export const ADMISSION_PROCESS_TABLE = 'AdmissionProcess';
-export const ADMISSION_COMMUNICATION_TABLE = 'AdmissionCommunication';
-
-// Admission Status Enum
-export const ADMISSION_STATUS = {
-  NEW: 'NEW',
-  IN_REVIEW: 'IN_REVIEW',
-  SCHEDULED_INTERVIEW: 'SCHEDULED_INTERVIEW',
-  PENDING_DOCUMENTS: 'PENDING_DOCUMENTS',
-  APPROVED: 'APPROVED',
-  REJECTED: 'REJECTED',
-  ENROLLED: 'ENROLLED'
-} as const;
-
-// Communication Types
-export const COMMUNICATION_TYPES = {
-  PHONE: 'PHONE',
-  EMAIL: 'EMAIL',
-  MEETING: 'MEETING',
-  OTHER: 'OTHER'
-} as const;
-
-// Required Documents
-export const REQUIRED_DOCUMENTS = [
-  'birth_certificate',
-  'transfer_certificate',
-  'report_card',
-  'medical_records',
-  'address_proof',
-  'student_photo',
-  'father_photo',
-  'mother_photo'
-] as const;
-
 export const PUBLIC_ROUTES = [
   '/',
   '/login',
@@ -139,8 +99,7 @@ export const PUBLIC_ROUTES = [
   '/homework/:id',
   '/classwork/:id',
   '/admission-enquiry'
-];
-
+] as const;
 
 // Environment variables should be used instead of hardcoding API keys
 export const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
