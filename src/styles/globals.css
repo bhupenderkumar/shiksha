@@ -49,7 +49,8 @@
   }
   
   .btn-primary {
-    @apply bg-primary text-white rounded-full px-6 py-3 font-bold transition-all duration-300 hover:opacity-90 hover:scale-105 active:scale-95;
+    @apply bg-primary text-primary-foreground rounded-full px-6 py-3 font-bold transition-all duration-300 hover:opacity-90 hover:scale-105 active:scale-95;
+    box-shadow: 0 4px 15px -3px rgba(37, 99, 235, 0.4);
   }
   
   .btn-secondary {
@@ -98,60 +99,93 @@
 
 @layer base {
   :root {
+    /* Light theme */
     --background: #ffffff;
-    --foreground: #0f172a;
+    --foreground: #1a1a1a;
     
-    --primary: #4F46E5;
+    /* Primary - Educational Blue */
+    --primary: #2563eb;
     --primary-foreground: #ffffff;
     
-    --secondary: #f1f5f9;
-    --secondary-foreground: #0f172a;
+    /* Secondary - Soft Slate */
+    --secondary: #f8fafc;
+    --secondary-foreground: #1e293b;
     
+    /* Muted - Gentle Gray */
     --muted: #f1f5f9;
     --muted-foreground: #64748b;
     
-    --accent: #f1f5f9;
-    --accent-foreground: #0f172a;
+    /* Accent - Playful Purple */
+    --accent: #818cf8;
+    --accent-foreground: #ffffff;
     
+    /* Destructive - Warm Red */
     --destructive: #ef4444;
     --destructive-foreground: #ffffff;
     
+    /* UI Elements */
     --border: #e2e8f0;
     --input: #e2e8f0;
-    --ring: #94a3b8;
+    --ring: #3b82f6;
+    
+    /* Card and Popover */
+    --card: #ffffff;
+    --card-foreground: #1a1a1a;
+    --popover: #ffffff;
+    --popover-foreground: #1a1a1a;
+    
+    /* Chart Colors */
+    --chart-1: #3b82f6;
+    --chart-2: #10b981;
+    --chart-3: #6366f1;
+    --chart-4: #f59e0b;
+    --chart-5: #ec4899;
     
     --radius: 0.5rem;
-    --ring-primary-opacity: 0.2;
   }
  
   .dark {
-    --background: #0a0a0a;
-    --foreground: #ffffff;
+    /* Dark theme */
+    --background: #0f172a;
+    --foreground: #f8fafc;
     
-    --primary: #6366f1;
+    /* Primary - Glowing Blue */
+    --primary: #60a5fa;
     --primary-foreground: #ffffff;
     
-    --secondary: #1a1a1a;
-    --secondary-foreground: #ffffff;
+    /* Secondary - Deep Navy */
+    --secondary: #1e293b;
+    --secondary-foreground: #f8fafc;
     
-    --muted: #1a1a1a;
-    --muted-foreground: #ffffff;
+    /* Muted - Dark Slate */
+    --muted: #334155;
+    --muted-foreground: #94a3b8;
     
-    --accent: #121212;
-    --accent-foreground: #ffffff;
+    /* Accent - Soft Purple */
+    --accent: #a5b4fc;
+    --accent-foreground: #1e293b;
     
-    --destructive: #ef4444;
+    /* Destructive - Bright Red */
+    --destructive: #f87171;
     --destructive-foreground: #ffffff;
     
-    --border: #2a2a2a;
-    --input: #2a2a2a;
-    --ring: #6366f1;
-
-    --card: #121212;
-    --card-foreground: #ffffff;
+    /* UI Elements */
+    --border: #334155;
+    --input: #334155;
+    --ring: #60a5fa;
     
-    --popover: #121212;
-    --popover-foreground: #ffffff;
+    /* Card and Popover */
+    --card: #1e293b;
+    --card-foreground: #f8fafc;
+    --popover: #1e293b;
+    --popover-foreground: #f8fafc;
+    
+    /* Chart Colors */
+    --chart-1: #60a5fa;
+    --chart-2: #34d399;
+    --chart-3: #a5b4fc;
+    --chart-4: #fbbf24;
+    --chart-5: #f472b6;
   }
 }
 
@@ -168,7 +202,8 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-primary text-white rounded-full px-6 py-3 font-bold transition-all duration-300 hover:opacity-90 hover:scale-105 active:scale-95;
+    @apply bg-primary text-primary-foreground rounded-full px-6 py-3 font-bold transition-all duration-300 hover:opacity-90 hover:scale-105 active:scale-95;
+    box-shadow: 0 4px 15px -3px rgba(37, 99, 235, 0.4);
   }
   
   .btn-secondary {
@@ -242,15 +277,15 @@
 
 .card-shadow:hover {
   transform: translateY(-5px);
-  box-shadow: 0 12px 25px -3px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 12px 25px -3px rgba(37, 99, 235, 0.15);
 }
 
 /* Playful button styles */
 .btn-primary {
-  @apply bg-primary text-white rounded-full px-6 py-3 font-bold
+  @apply bg-primary text-primary-foreground rounded-full px-6 py-3 font-bold
          transition-all duration-300 hover:opacity-90
          hover:scale-105 active:scale-95;
-  box-shadow: 0 4px 15px -3px rgba(var(--primary), 0.4);
+  box-shadow: 0 4px 15px -3px rgba(37, 99, 235, 0.4);
 }
 
 /* Fun hover effects */
@@ -282,18 +317,18 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #6b7280;
+  background-color: rgba(37, 99, 235, 0.3);
   border-radius: 20px;
-  border: 4px solid #f3f4f6;
+  border: 4px solid #f8fafc;
 }
 
 ::-webkit-scrollbar-track {
-  background-color: #f3f4f6;
+  background-color: #f8fafc;
 }
 
 /* Enhanced focus states for accessibility */
 *:focus {
-  outline: 3px solid rgba(var(--primary), 0.5);
+  outline: 3px solid rgba(37, 99, 235, 0.5);
   outline-offset: 2px;
 }
 
@@ -469,7 +504,7 @@
 
 /* Custom button styles */
 .btn-primary {
-  @apply bg-primary text-white rounded-full px-6 py-2 font-medium 
+  @apply bg-primary text-primary-foreground rounded-full px-6 py-2 font-medium 
          transition-all duration-300 hover:opacity-90 
          active:transform active:scale-95;
 }
@@ -599,10 +634,26 @@
 }
 
 .dark ::-webkit-scrollbar-thumb {
-    background-color: #4a4a4a;
-    border: 4px solid #1a1a1a;
+    background-color: rgba(96, 165, 250, 0.3);
+    border: 4px solid #0f172a;
 }
 
 .dark ::-webkit-scrollbar-track {
-    background-color: #1a1a1a;
+    background-color: #1e293b;
+}
+input[type="text"] {
+    background-color: #1e293b;
+}
+
+input[type="text"]::placeholder {
+    color: #94a3b8;
+}
+
+#input type color as black
+input[type="text"] {
+    color: #000000;
+}
+
+input[type="text"]::placeholder {
+    color: #000000;
 }

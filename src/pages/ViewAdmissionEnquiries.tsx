@@ -63,10 +63,10 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import type { FilteredEnquiry } from '@/types/admission';
+import type { FilteredEnquiry, SearchParams } from '@/types/admission';
+import { useMediaQuery } from '@/hooks/use-media-query';
 
-
-type SortField = 'appliedDate' | 'studentName' | 'status' | 'lastUpdateDate';
+type SortField = 'applieddate' | 'studentname' | 'status' | 'lastupdatedate';
 
 interface SortConfig {
   field: SortField;
@@ -75,29 +75,45 @@ interface SortConfig {
 
 const PAGE_SIZE = 10;
 
+const REQUIRED_DOCUMENTS = [
+  'birth_certificate',
+  'transfer_certificate', 
+  'report_card',
+  'medical_records',
+  'address_proof',
+  'student_photo',
+  'father_photo',
+  'mother_photo'
+] as const;
 
 const ViewAdmissionEnquiries: React.FC = () => {
   const navigate = useNavigate();
   const [enquiries, setEnquiries] = useState<FilteredEnquiry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
+  const [searchParams, setSearchParams] = useState<SearchParams>({
+    page: 1,
+    limit: 10,
+    status: [],
+    searchTerm: '',
+  });
+  const [total, setTotal] = useState(0);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [sort, setSort] = useState<SortConfig>({
-    field: 'appliedDate',
+    field: 'applieddate',
     direction: 'desc',
   });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loadingDocumentId, setLoadingDocumentId] = useState<string | null>(null);
   const [documentCounts, setDocumentCounts] = useState<Record<string, number>>({});
   const [quickViewId, setQuickViewId] = useState<string | null>(null);
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const debouncedSearchTerm = useDebounce(searchParams.searchTerm, 300);
+
+  const isMobile = useMediaQuery('(max-width: 640px)');
+  const isTablet = useMediaQuery('(min-width: 641px) and (max-width: 1024px)');
 
   useEffect(() => {
     fetchEnquiries();
-  }, [statusFilter, currentPage, dateRange, sort, debouncedSearchTerm]);
+  }, [searchParams.status, searchParams.page, dateRange, sort, debouncedSearchTerm]);
 
   useHotkeys('ctrl+f', (e) => {
     e.preventDefault();
@@ -111,18 +127,9 @@ const ViewAdmissionEnquiries: React.FC = () => {
   const fetchEnquiries = async () => {
     try {
       setLoading(true);
-      const { data, total } = await admissionService.getAllEnquiries({
-        status: statusFilter !== "all" ? [statusFilter as EnquiryStatus] : undefined,
-        page: currentPage,
-        limit: PAGE_SIZE,
-        dateRange: dateRange?.from && dateRange.to ? {
-          start: dateRange.from,
-          end: dateRange.to
-        } : undefined,
-        searchTerm: debouncedSearchTerm || undefined
-      });
-      setEnquiries(data);
-      setTotalCount(total || 0);
+      const result = await admissionService.getAllEnquiries(searchParams);
+      setEnquiries(result.data);
+      setTotal(result.total);
     } catch (error) {
       console.error("Error fetching enquiries:", error);
       toast.error("Failed to load enquiries");
@@ -245,7 +252,7 @@ const ViewAdmissionEnquiries: React.FC = () => {
     </div>
   );
 
-  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString("en-US", {
@@ -328,6 +335,78 @@ const ViewAdmissionEnquiries: React.FC = () => {
     </>
   );
 
+  // Columns configuration based on screen size
+  const getColumns = () => {
+    const baseColumns = [
+      {
+        header: 'Student Name',
+        accessorKey: 'studentName',
+        cell: ({ row }) => (
+          <div className="flex flex-col">
+            <span className="font-medium">{row.original.studentName}</span>
+            {isMobile && (
+              <>
+                <span className="text-sm text-gray-500">{row.original.email}</span>
+                <Badge variant={getStatusVariant(row.original.status)}>
+                  {row.original.status}
+                </Badge>
+              </>
+            )}
+          </div>
+        ),
+      },
+      {
+        header: 'Status',
+        accessorKey: 'status',
+        cell: ({ row }) => !isMobile && (
+          <Badge variant={getStatusVariant(row.original.status)}>
+            {row.original.status}
+          </Badge>
+        ),
+      },
+    ];
+
+    if (!isMobile) {
+      baseColumns.push(
+        {
+          header: 'Grade',
+          accessorKey: 'gradeApplying',
+        },
+        {
+          header: 'Applied Date',
+          accessorKey: 'appliedDate',
+          cell: ({ row }) => new Date(row.original.appliedDate).toLocaleDateString(),
+        }
+      );
+    }
+
+    if (!isMobile && !isTablet) {
+      baseColumns.push(
+        {
+          header: 'Parent Name',
+          accessorKey: 'parentName',
+        },
+        {
+          header: 'Contact',
+          accessorKey: 'contactNumber',
+        }
+      );
+    }
+
+    return baseColumns;
+  };
+
+  // Function to get status badge variant
+  const getStatusVariant = (status: string) => {
+    const variants = {
+      [ADMISSION_STATUS.NEW]: 'default',
+      [ADMISSION_STATUS.IN_PROGRESS]: 'warning',
+      [ADMISSION_STATUS.ACCEPTED]: 'success',
+      [ADMISSION_STATUS.REJECTED]: 'destructive',
+    };
+    return variants[status] || 'default';
+  };
+
   return (
     <PageAnimation>
       <div className="container mx-auto py-8 px-4">
@@ -386,10 +465,12 @@ const ViewAdmissionEnquiries: React.FC = () => {
                   <Input
                     name="search"
                     placeholder="Search enquiries... (Ctrl+F)"
-                    value={searchTerm}
+                    value={searchParams.searchTerm}
                     onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setCurrentPage(1);
+                      setSearchParams(prev => ({
+                        ...prev,
+                        searchTerm: e.target.value
+                      }));
                     }}
                     className="pl-10"
                   />
@@ -399,22 +480,27 @@ const ViewAdmissionEnquiries: React.FC = () => {
                   value={dateRange}
                   onChange={(newRange) => {
                     setDateRange(newRange);
-                    setCurrentPage(1);
+                    setSearchParams(prev => ({
+                      ...prev,
+                      page: 1
+                    }));
                   }}
                 />
 
                 <Select
-                  value={statusFilter}
+                  value={searchParams.status?.[0] || ''}
                   onValueChange={(value) => {
-                    setStatusFilter(value);
-                    setCurrentPage(1);
+                    setSearchParams(prev => ({
+                      ...prev,
+                      status: value ? [value] : []
+                    }));
                   }}
                 >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="">All Status</SelectItem>
                     {Object.values(ADMISSION_STATUS).map(status => (
                       <SelectItem key={status} value={status}>
                         {status.replace(/_/g, ' ')}
@@ -427,10 +513,13 @@ const ViewAdmissionEnquiries: React.FC = () => {
                   <Button
                     variant="outline"
                     onClick={() => {
-                      setSearchTerm("");
-                      setStatusFilter("all");
-                      setDateRange(undefined);
-                      setCurrentPage(1);
+                      setSearchParams(prev => ({
+                        ...prev,
+                        searchTerm: '',
+                        status: [],
+                        dateRange: undefined,
+                        page: 1
+                      }));
                     }}
                   >
                     Clear filters
@@ -445,47 +534,23 @@ const ViewAdmissionEnquiries: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[30px]">
-                      <Checkbox
-                        checked={selectedIds.length === enquiries.length}
-                        onCheckedChange={(checked) => {
-                          setSelectedIds(
-                            checked ? enquiries.map(e => e.id) : []
-                          );
-                        }}
-                      />
-                    </TableHead>
-                    <TableHead>
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleSort('studentName')}
-                        className="flex items-center"
-                      >
-                        Student Details {getSortIcon('studentName')}
-                      </Button>
-                    </TableHead>
-                    <TableHead>Contact Info</TableHead>
-                    <TableHead>Grade & School</TableHead>
-                    <TableHead>
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleSort('status')}
-                        className="flex items-center"
-                      >
-                        Status {getSortIcon('status')}
-                      </Button>
-                    </TableHead>
-                    <TableHead>
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleSort('appliedDate')}
-                        className="flex items-center"
-                      >
-                        Applied Date {getSortIcon('appliedDate')}
-                      </Button>
-                    </TableHead>
-                    <TableHead>Last Interaction</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    {!isMobile && (
+                      <TableCell className="w-[30px]">
+                        <Checkbox
+                          checked={selectedIds.length === enquiries.length}
+                          onCheckedChange={(checked) => {
+                            setSelectedIds(checked ? enquiries.map(e => e.id) : []);
+                          }}
+                        />
+                      </TableCell>
+                    )}
+                    <TableCell>Student Name</TableCell>
+                    {!isMobile && <TableCell>Status</TableCell>}
+                    {!isMobile && <TableCell>Grade</TableCell>}
+                    {!isMobile && <TableCell>Applied Date</TableCell>}
+                    {!isMobile && !isTablet && <TableCell>Parent Name</TableCell>}
+                    {!isMobile && !isTablet && <TableCell>Contact</TableCell>}
+                    <TableCell className="text-right">Actions</TableCell>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -493,194 +558,103 @@ const ViewAdmissionEnquiries: React.FC = () => {
                     <TableSkeleton />
                   ) : enquiries.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8">
-                        <div className="flex flex-col items-center gap-2">
-                          <Search className="h-8 w-8 text-gray-400" />
-                          <p>No enquiries found</p>
-                        </div>
+                      <TableCell
+                        colSpan={isMobile ? 3 : isTablet ? 6 : 8}
+                        className="text-center h-24"
+                      >
+                        No enquiries found
                       </TableCell>
                     </TableRow>
                   ) : (
                     enquiries.map((enquiry) => (
                       <TableRow
                         key={enquiry.id}
-                        className="hover:bg-muted/50 cursor-pointer"
-                        onClick={() => setQuickViewId(enquiry.id)}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => navigate(`/admission/${enquiry.id}`)}
                       >
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          <Checkbox
-                            checked={selectedIds.includes(enquiry.id)}
-                            onCheckedChange={(checked) => {
-                              setSelectedIds(prev =>
-                                checked
-                                  ? [...prev, enquiry.id]
-                                  : prev.filter(id => id !== enquiry.id)
-                              );
-                            }}
-                          />
-                        </TableCell>
+                        {!isMobile && (
+                          <TableCell className="w-[30px]">
+                            <Checkbox
+                              checked={selectedIds.includes(enquiry.id)}
+                              onCheckedChange={(checked) => {
+                                setSelectedIds(prev =>
+                                  checked
+                                    ? [...prev, enquiry.id]
+                                    : prev.filter(id => id !== enquiry.id)
+                                );
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </TableCell>
+                        )}
                         <TableCell>
-                          <div className="flex items-start gap-2">
-                            <User className="h-4 w-4 mt-1" />
-                            <div>
-                              <div className="font-medium">
-                                {enquiry.studentName}
-                              </div>
-                              <div className="text-sm text-muted-foreground">
-                                {enquiry.parentName}
-                              </div>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <Mail className="h-4 w-4" />
-                              <span className="text-sm">{enquiry.email}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Phone className="h-4 w-4" />
-                              <span className="text-sm">{enquiry.contactNumber}</span>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <School className="h-4 w-4" />
-                              <span className="text-sm">Grade {enquiry.gradeApplying}</span>
-                            </div>
-                            {enquiry.currentSchool && (
-                              <div className="text-sm text-muted-foreground">
-                                {enquiry.currentSchool}
-                              </div>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{enquiry.studentName}</span>
+                            {isMobile && (
+                              <>
+                                <span className="text-sm text-gray-500">
+                                  {enquiry.email}
+                                </span>
+                                <Badge variant={getStatusVariant(enquiry.status)}>
+                                  {enquiry.status}
+                                </Badge>
+                              </>
                             )}
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                              enquiry.status
-                            )}`}
-                          >
-                            {enquiry.status.replace(/_/g, ' ')}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4" />
-                            <span className="text-sm">
-                              {formatDate(enquiry.appliedDate)}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {getProcessInfo(enquiry) ? (
-                            <div className="space-y-1">
-                              <div className="text-sm font-medium">
-                                {getProcessInfo(enquiry)?.date}
-                              </div>
-                              <div className="text-sm text-muted-foreground">
-                                {getProcessInfo(enquiry)?.notes}
-                              </div>
-                            </div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">
-                              No interview information
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col md:flex-row gap-2 justify-end">
-                    <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => navigate(`/admission/process/${enquiry.id}`)}
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>View Admission Details</TooltipContent>
-                            </Tooltip>
+                        {!isMobile && (
+                          <TableCell>
+                            <Badge variant={getStatusVariant(enquiry.status)}>
+                              {enquiry.status}
+                            </Badge>
+                          </TableCell>
+                        )}
+                        {!isMobile && (
+                          <TableCell>{enquiry.gradeApplying}</TableCell>
+                        )}
+                        {!isMobile && (
+                          <TableCell>
+                            {new Date(enquiry.appliedDate).toLocaleDateString()}
+                          </TableCell>
+                        )}
+                        {!isMobile && !isTablet && (
+                          <TableCell>{enquiry.parentName}</TableCell>
+                        )}
+                        {!isMobile && !isTablet && (
+                          <TableCell>{enquiry.contactNumber}</TableCell>
+                        )}
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
                                   variant="ghost"
-                                  size="sm"
-                                  disabled={loadingDocumentId === enquiry.id}
+                                  size="icon"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleViewDocuments(enquiry.id);
+                                    handleQuickMessage(enquiry.id);
                                   }}
-                                >
-                                  <FileText className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                {loadingDocumentId === enquiry.id ? 'Loading document...' : 'View Documents'}
-                              </TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleQuickMessage(enquiry.id)}
                                 >
                                   <MessageCircle className="h-4 w-4" />
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent>Send Message</TooltipContent>
+                              <TooltipContent>Quick message</TooltipContent>
                             </Tooltip>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
                                   variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleResumeAdmission(enquiry.id)}
+                                  size="icon"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setQuickViewId(enquiry.id);
+                                  }}
                                 >
-                                  <PlayCircle className="h-4 w-4" />
+                                  <Eye className="h-4 w-4" />
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent>Resume Process</TooltipContent>
+                              <TooltipContent>Quick view</TooltipContent>
                             </Tooltip>
-                            <ButtonWithIcon
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleScheduleInterview(enquiry.id)}
-                              leftIcon={<CalendarIcon className="h-4 w-4" />}
-                            >
-                              Schedule
-                            </ButtonWithIcon>
-                            <ButtonWithIcon
-                              size="sm"
-                              onClick={() => handleAddCommunication(enquiry.id)}
-                              leftIcon={<MessageCircle className="h-4 w-4" />}
-                            >
-                              Chat
-                            </ButtonWithIcon>
-                            <Select
-                              value={enquiry.status}
-                              onValueChange={(value) =>
-                                handleStatusUpdate(enquiry.id, value as EnquiryStatus)
-                              }
-                            >
-                              <SelectTrigger className="w-[130px]">
-                                <SelectValue placeholder="Update status" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {Object.values(ADMISSION_STATUS).map(status => (
-                                  <SelectItem key={status} value={status}>
-                                    {status.replace(/_/g, ' ')}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-
-                            {renderDocumentUpload("Birth Certificate", enquiry.id)}
-                            {renderDocumentUpload("Report Card", enquiry.id)}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -696,25 +670,25 @@ const ViewAdmissionEnquiries: React.FC = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
+                onClick={() => setSearchParams(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
+                disabled={searchParams.page === 1}
               >
                 <ChevronLeft className="h-4 w-4" />
                 Previous
               </Button>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">
-                  Page {currentPage} of {totalPages}
+                  Page {searchParams.page} of {totalPages}
                 </span>
                 <span className="text-sm text-muted-foreground">
-                  ({totalCount} total)
+                  ({total} total)
                 </span>
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
+                onClick={() => setSearchParams(prev => ({ ...prev, page: Math.min(totalPages, prev.page + 1) }))}
+                disabled={searchParams.page === totalPages}
               >
                 Next
                 <ChevronRight className="h-4 w-4" />

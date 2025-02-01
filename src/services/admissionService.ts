@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/api-client';
 import { v4 as uuidv4 } from 'uuid';
 import { fileService } from './fileService';
@@ -99,7 +98,7 @@ export const admissionService = {
           .schema(SCHEMA)
           .from(TABLES.ADMISSION_PROCESS)
           .select('*')
-          .eq('prospectivestudentid', id)
+          .eq('prospectiveStudentId', id)
           .single(),
         supabase
           .schema(SCHEMA)
@@ -127,9 +126,9 @@ export const admissionService = {
         completedSteps,
         nextStep: timeline.find(step => step.current)?.title || timeline[0].title,
         timeline,
-        documentsStatus: processData?.documentsrequired || createInitialDocumentStatus(),
-        interviewDate: processData?.interviewdate ? new Date(processData.interviewdate) : undefined,
-        assignedClass: processData?.assignedclass
+        documentsStatus: processData?.documentsRequired || createInitialDocumentStatus(),
+        interviewDate: processData?.interviewDate ? new Date(processData.interviewDate) : undefined,
+        assignedClass: processData?.assignedClassId
       };
     } catch (error) {
       console.error('Error getting admission progress:', error);
@@ -161,21 +160,21 @@ export const admissionService = {
       const { data: admissionProcess, error: fetchError } = await supabase
         .schema(SCHEMA)
         .from(TABLES.ADMISSION_PROCESS)
-        .select('documentsrequired')
-        .eq('prospectivestudentid', prospectiveStudentId)
+        .select('documentsRequired')
+        .eq('prospectiveStudentId', prospectiveStudentId)
         .single();
 
       if (fetchError) throw fetchError;
 
-      const documentsRequired = admissionProcess.documentsrequired;
+      const documentsRequired = admissionProcess.documentsRequired;
       documentsRequired[documentType].submitted.push(filePath);
       documentsRequired[documentType].verificationStatus[filePath] = 'pending';
 
       const { error: updateError } = await supabase
         .schema(SCHEMA)
         .from(TABLES.ADMISSION_PROCESS)
-        .update({ documentsrequired: documentsRequired })
-        .eq('prospectivestudentid', prospectiveStudentId);
+        .update({ documentsRequired: documentsRequired })
+        .eq('prospectiveStudentId', prospectiveStudentId);
 
       if (updateError) throw updateError;
 
@@ -213,15 +212,15 @@ export const admissionService = {
       const { data: admissionProcess, error: fetchError } = await supabase
         .schema(SCHEMA)
         .from(TABLES.ADMISSION_PROCESS)
-        .select('documentsrequired')
-        .eq('prospectivestudentid', prospectiveStudentId)
+        .select('documentsRequired')
+        .eq('prospectiveStudentId', prospectiveStudentId)
         .single();
 
       if (fetchError) throw new Error(fetchError.message);
 
-      const currentDoc = admissionProcess.documentsrequired[documentType];
+      const currentDoc = admissionProcess.documentsRequired[documentType];
       const documentsRequired = {
-        ...admissionProcess.documentsrequired,
+        ...admissionProcess.documentsRequired,
         [documentType]: {
           ...currentDoc,
           verificationStatus: {
@@ -234,8 +233,8 @@ export const admissionService = {
       const { error: updateError } = await supabase
         .schema(SCHEMA)
         .from(TABLES.ADMISSION_PROCESS)
-        .update({ documentsrequired: documentsRequired })
-        .eq('prospectivestudentid', prospectiveStudentId);
+        .update({ documentsRequired: documentsRequired })
+        .eq('prospectiveStudentId', prospectiveStudentId);
 
       if (updateError) throw new Error(`Process update error: ${updateError.message}`);
     } catch (error) {
@@ -249,12 +248,12 @@ export const admissionService = {
       const { data, error } = await supabase
         .schema(SCHEMA)
         .from(TABLES.ADMISSION_PROCESS)
-        .select('documentsrequired')
-        .eq('prospectivestudentid', prospectiveStudentId)
+        .select('documentsRequired')
+        .eq('prospectiveStudentId', prospectiveStudentId)
         .single();
 
       if (error) throw new Error(error.message);
-      return data?.documentsrequired || createInitialDocumentStatus();
+      return data?.documentsRequired || createInitialDocumentStatus();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to fetch documents");
       throw error;
@@ -294,11 +293,11 @@ export const admissionService = {
 
       return {
         ...data,
-        appliedDate: formatDate(data.applieddate),
-        lastUpdateDate: formatDate(data.lastupdatedate),
-        createdAt: formatDate(data.created_at),
-        updatedAt: formatDate(data.updated_at),
-        dateOfBirth: data.dateofbirth ? formatDate(data.dateofbirth) : null
+        appliedDate: formatDate(data.appliedDate),
+        lastUpdateDate: formatDate(data.lastUpdateDate),
+        createdAt: formatDate(data.createdAt),
+        updatedAt: formatDate(data.updatedAt),
+        dateOfBirth: data.dateOfBirth ? formatDate(data.dateOfBirth) : null
       };
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to fetch enquiry details");
@@ -311,48 +310,79 @@ export const admissionService = {
       let query = supabase
         .schema(SCHEMA)
         .from(TABLES.PROSPECTIVE_STUDENT)
-        .select(`*, ${TABLES.ADMISSION_PROCESS} (*)`, { count: 'exact' });
-
-      if (params?.status?.length) {
-        query = query.in('status', params.status);
-      }
+        .select(`
+          id,
+          studentName,
+          parentName,
+          email,
+          contactNumber,
+          gradeApplying,
+          gender,
+          dateOfBirth,
+          address,
+          status,
+          appliedDate,
+          lastUpdateDate,
+          createdAt,
+          updatedAt,
+          ${TABLES.ADMISSION_PROCESS} (
+            id,
+            prospectiveStudentId,
+            documentsRequired,
+            interviewDate,
+            assignedClassId,
+            createdAt,
+            updatedAt
+          )
+        `, { count: 'exact' });
 
       if (params?.dateRange) {
         query = query
-          .gte('applieddate', params.dateRange.start.toISOString())
-          .lte('applieddate', params.dateRange.end.toISOString());
+          .gte('appliedDate', params.dateRange.start.toISOString())
+          .lte('appliedDate', params.dateRange.end.toISOString());
       }
 
       if (params?.searchTerm) {
         query = query.or(
-          `studentname.ilike.%${params.searchTerm}%,` +
-          `parentname.ilike.%${params.searchTerm}%,` +
+          `studentName.ilike.%${params.searchTerm}%,` +
+          `parentName.ilike.%${params.searchTerm}%,` +
           `email.ilike.%${params.searchTerm}%`
         );
       }
 
       if (params?.gradeApplying) {
-        query = query.eq('gradeapplying', params.gradeApplying);
+        query = query.eq('gradeApplying', params.gradeApplying);
       }
 
-      if (params?.page !== undefined && params?.limit !== undefined) {
-        const from = (params.page - 1) * params.limit;
-        const to = from + params.limit - 1;
-        query = query.range(from, to);
-      }
-
-      const { data, error, count } = await query.order('applieddate', { ascending: false });
+      const { data, error, count } = await query.order('appliedDate', { ascending: false });
 
       if (error) throw error;
 
       return {
         data: data.map(item => ({
-          ...item,
-          appliedDate: formatDate(item.applieddate),
-          lastUpdateDate: formatDate(item.lastupdatedate),
-          createdAt: formatDate(item.created_at),
-          updatedAt: formatDate(item.updated_at),
-          dateOfBirth: item.dateofbirth ? formatDate(item.dateofbirth) : null
+          id: item.id,
+          studentName: item.studentName,
+          parentName: item.parentName,
+          email: item.email,
+          contactNumber: item.contactNumber,
+          gradeApplying: item.gradeApplying,
+          gender: item.gender,
+          dateOfBirth: item.dateOfBirth ? formatDate(item.dateOfBirth) : null,
+          address: item.address,
+          status: item.status,
+          appliedDate: formatDate(item.appliedDate),
+          lastUpdateDate: formatDate(item.lastUpdateDate),
+          createdAt: formatDate(item.createdAt),
+          updatedAt: formatDate(item.updatedAt),
+          AdmissionProcess: item.AdmissionProcess ? {
+            id: item.AdmissionProcess.id,
+            prospectiveStudentId: item.AdmissionProcess.prospectiveStudentId,
+            documentsRequired: item.AdmissionProcess.documentsRequired,
+            interviewDate: item.AdmissionProcess.interviewDate,
+            assignedClassId: item.AdmissionProcess.assignedClassId,
+            createdAt: item.AdmissionProcess.createdAt,
+            updatedAt: item.AdmissionProcess.updatedAt
+          } : undefined
         })),
         total: count || 0
       };
@@ -366,13 +396,19 @@ export const admissionService = {
     try {
       const enquiry = {
         id: uuidv4(),
-        ...data,
+        studentName: data.studentName,
+        parentName: data.parentName,
+        email: data.email,
+        contactNumber: data.contactNumber,
+        gradeApplying: data.gradeApplying,
+        gender: data.gender,
+        dateOfBirth: data.dateOfBirth.toISOString(),
+        address: data.address,
         status: ADMISSION_STATUS.NEW,
-        schoolId: '1', // TODO: Get from context
-        applieddate: new Date().toISOString(),
-        lastupdatedate: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        appliedDate: new Date().toISOString(),
+        lastUpdateDate: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
 
       const { data: result, error } = await supabase
@@ -384,16 +420,21 @@ export const admissionService = {
 
       if (error) throw error;
 
-      // Initialize admission process
       await this.initializeAdmissionProcess(result.id);
 
       return {
-        ...result,
-        appliedDate: formatDate(result.applieddate),
-        lastUpdateDate: formatDate(result.lastupdatedate),
-        createdAt: formatDate(result.created_at),
-        updatedAt: formatDate(result.updated_at),
-        dateOfBirth: result.dateofbirth ? formatDate(result.dateofbirth) : null
+        id: result.id,
+        studentName: result.studentName,
+        parentName: result.parentName,
+        email: result.email,
+        contactNumber: result.contactNumber,
+        gradeApplying: result.gradeApplying,
+        gender: result.gender,
+        dateOfBirth: formatDate(result.dateOfBirth),
+        address: result.address,
+        status: result.status,
+        appliedDate: formatDate(result.appliedDate),
+        lastUpdateDate: formatDate(result.lastUpdateDate)
       };
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to create enquiry");
@@ -408,8 +449,8 @@ export const admissionService = {
         .from(TABLES.PROSPECTIVE_STUDENT)
         .update({
           ...data,
-          updated_at: new Date().toISOString(),
-          lastupdatedate: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
+          lastUpdateDate: new Date().toISOString()
         })
         .eq('id', id)
         .select()
@@ -419,11 +460,11 @@ export const admissionService = {
 
       return {
         ...result,
-        appliedDate: formatDate(result.applieddate),
-        lastUpdateDate: formatDate(result.lastupdatedate),
-        createdAt: formatDate(result.created_at),
-        updatedAt: formatDate(result.updated_at),
-        dateOfBirth: result.dateofbirth ? formatDate(result.dateofbirth) : null
+        appliedDate: formatDate(result.appliedDate),
+        lastUpdateDate: formatDate(result.lastUpdateDate),
+        createdAt: formatDate(result.createdAt),
+        updatedAt: formatDate(result.updatedAt),
+        dateOfBirth: result.dateOfBirth ? formatDate(result.dateOfBirth) : null
       };
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to update enquiry");
@@ -431,23 +472,29 @@ export const admissionService = {
     }
   },
 
-  async getEnquiryNotes(id: string): Promise<Note[]>{
+  async getEnquiryNotes(id: string): Promise<Note[]> {
     try {
       const { data, error } = await supabase
         .schema(SCHEMA)
         .from(TABLES.ADMISSION_NOTES)
-        .select('*')
-        .eq('prospectivestudentid', id)
-        .order('created_at', { ascending: false });
+        .select(`
+          id,
+          prospectiveStudentId,
+          content,
+          created_by,
+          createdAt
+        `)
+        .eq('prospectiveStudentId', id)
+        .order('createdAt', { ascending: false });
 
       if (error) throw error;
 
       return data.map(note => ({
         id: note.id,
-        prospectiveStudentId: note.prospectivestudentid,
+        prospectiveStudentId: note.prospectiveStudentId,
         content: note.content,
-        createdBy: note.createdby,
-        createdAt: formatDate(note.created_at)
+        createdBy: note.created_by,
+        createdAt: formatDate(note.createdAt)
       }));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to fetch notes");
@@ -459,10 +506,10 @@ export const admissionService = {
     try {
       const note = {
         id: uuidv4(),
-        prospectivestudentid: prospectiveStudentId,
+        prospectiveStudentId: prospectiveStudentId,
         content,
-        createdby: 'SYSTEM', // TODO: Get from auth context
-        created_at: new Date().toISOString()
+        created_by: 'SYSTEM', // TODO: Get from auth context
+        createdAt: new Date().toISOString()
       };
 
       const { data, error } = await supabase
@@ -476,10 +523,10 @@ export const admissionService = {
 
       return {
         id: data.id,
-        prospectiveStudentId: data.prospectivestudentid,
+        prospectiveStudentId: data.prospectiveStudentId,
         content: data.content,
-        createdBy: data.createdby,
-        createdAt: formatDate(data.created_at)
+        createdBy: data.created_by,
+        createdAt: formatDate(data.createdAt)
       };
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to add note");
@@ -491,10 +538,10 @@ export const admissionService = {
     try {
       const process = {
         id: uuidv4(),
-        prospectivestudentid: prospectiveStudentId,
-        documentsrequired: createInitialDocumentStatus(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        prospectiveStudentId: prospectiveStudentId,
+        documentsRequired: createInitialDocumentStatus(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
 
       const { error } = await supabase
@@ -523,16 +570,16 @@ export const admissionService = {
       const updateData: Partial<AdmissionProcessRow> = {};
       
       if (data.interviewDate) {
-        updateData.interviewdate = data.interviewDate.toISOString();
+        updateData.interviewDate = data.interviewDate.toISOString();
       }
       if (data.assignedClass) {
-        updateData.assignedclass = data.assignedClass;
+        updateData.assignedClassId = data.assignedClass;
       }
       if (data.documentsStatus) {
-        updateData.documentsrequired = data.documentsStatus;
+        updateData.documentsRequired = data.documentsStatus;
       }
       
-      updateData.updated_at = new Date().toISOString();
+      updateData.updatedAt = new Date().toISOString();
 
       // Update status in ProspectiveStudent if provided
       if (data.status) {
@@ -554,7 +601,7 @@ export const admissionService = {
         .schema(SCHEMA)
         .from(TABLES.ADMISSION_PROCESS)
         .update(updateData)
-        .eq('prospectivestudentid', id);
+        .eq('prospectiveStudentId', id);
 
       if (error) throw error;
     } catch (error) {
@@ -568,21 +615,31 @@ export const admissionService = {
       const { data, error } = await supabase
         .schema(SCHEMA)
         .from(TABLES.ADMISSION_COMMUNICATION)
-        .select('*')
-        .eq('prospectivestudentid', id)
+        .select(`
+          id,
+          prospectiveStudentId,
+          communicationtype,
+          notes,
+          staffid,
+          communicationdate,
+          direction,
+          createdAt,
+          updatedAt
+        `)
+        .eq('prospectiveStudentId', id)
         .order('communicationdate', { ascending: false });
 
       if (error) throw error;
 
       return data.map(comm => ({
         id: comm.id,
-        prospectiveStudentId: comm.prospectivestudentid,
+        prospectiveStudentId: comm.prospectiveStudentId,
         communicationType: comm.communicationtype,
         notes: comm.notes,
         staffId: comm.staffid,
         communicationDate: formatDate(comm.communicationdate),
-        createdAt: formatDate(comm.created_at),
-        updatedAt: formatDate(comm.updated_at)
+        createdAt: formatDate(comm.createdAt),
+        updatedAt: formatDate(comm.updatedAt)
       }));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to fetch communication history");
@@ -610,14 +667,14 @@ export const admissionService = {
 
       const communication = {
         id: uuidv4(),
-        prospectivestudentid: prospectiveStudentId,
+        prospectiveStudentId: prospectiveStudentId,
         communicationtype: typeMap[data.type],
         notes: data.message + (data.notes ? `\n\nAdditional Notes: ${data.notes}` : ''),
         staffid: data.staffId || 'SYSTEM', // Default to SYSTEM if no staffId provided
         direction: data.direction || 'outgoing', // Default to outgoing if not specified
         communicationdate: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
 
       const { data: result, error } = await supabase
@@ -631,13 +688,13 @@ export const admissionService = {
 
       return {
         id: result.id,
-        prospectiveStudentId: result.prospectivestudentid,
+        prospectiveStudentId: result.prospectiveStudentId,
         communicationType: result.communicationtype,
         notes: result.notes,
         staffId: result.staffid,
         communicationDate: formatDate(result.communicationdate),
-        createdAt: formatDate(result.created_at),
-        updatedAt: formatDate(result.updated_at)
+        createdAt: formatDate(result.createdAt),
+        updatedAt: formatDate(result.updatedAt)
       };
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to add communication");
