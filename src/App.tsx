@@ -1,4 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AuthProvider } from '@/lib/auth';
+import { ThemeProvider } from '@/lib/theme-provider.tsx';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -24,6 +27,7 @@ import ViewAdmissionEnquiries from './pages/ViewAdmissionEnquiries';
 import AdmissionEnquiry from './pages/AdmissionEnquiry.tsx';
 import YearEndFeedback from './pages/YearEndFeedback';
 import ViewYearEndFeedback from './pages/ViewYearEndFeedback';
+import AdmissionProcess from './pages/AdmissionProcess';
 
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/', '/homework/view/:id', '/homework/:id', '/classwork/:id', '/admission-enquiry', '/admission-enquiry/:id', '/admission-enquiries', '/year-end-feedback', '/year-end-feedback/:id']
@@ -315,8 +319,8 @@ function AppRoutes() {
 
 function App() {
   return (
-    <AuthProvider>
-      <ThemeProvider defaultTheme="system" storageKey="ui-theme">
+    <ThemeProvider defaultTheme="system" storageKey="ui-theme">
+      <AuthProvider>
         <TooltipProvider>
           <Router>
             <div className="flex flex-col min-h-screen bg-background mt-4">
@@ -325,8 +329,8 @@ function App() {
             </div>
           </Router>
         </TooltipProvider>
-      </ThemeProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

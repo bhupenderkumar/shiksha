@@ -30,14 +30,12 @@ export interface AdmissionEnquiryFormProps {
 const formSchema = z.object({
   studentName: z.string().min(2, "Student name must be at least 2 characters"),
   parentName: z.string().min(2, "Parent name must be at least 2 characters"),
-  dateOfBirth: z.string().transform(str => new Date(str)),
-  gender: z.enum(["Male", "Female", "Other"]),
   email: z.string().email(),
   contactNumber: z.string().min(10, "Contact number must be at least 10 digits"),
   gradeApplying: z.string(),
-  currentSchool: z.string().optional(),
+  gender: z.enum(["Male", "Female", "Other"]),
+  dateOfBirth: z.string().transform(str => new Date(str)),
   address: z.string().min(5, "Address must be at least 5 characters"),
-  bloodGroup: z.string().optional(),
 });
 
 type FormInput = z.input<typeof formSchema>;
@@ -53,16 +51,20 @@ export function AdmissionEnquiryForm({ initialData, onSubmit }: AdmissionEnquiry
       email: initialData?.email || "",
       contactNumber: initialData?.contactNumber || "",
       gradeApplying: initialData?.gradeApplying || "",
-      currentSchool: initialData?.currentSchool || "",
       address: initialData?.address || "",
-      bloodGroup: initialData?.bloodGroup || "",
     },
   });
 
   const handleSubmit = async (data: FormInput) => {
     const formattedData: ProspectiveStudentData = {
-      ...data,
-      dateOfBirth: new Date(data.dateOfBirth),
+      studentname: data.studentName,
+      parentname: data.parentName,
+      dateofbirth: new Date(data.dateOfBirth),
+      gradeapplying: data.gradeApplying,
+      contactnumber: data.contactNumber,
+      email: data.email,
+      gender: data.gender,
+      address: data.address,
     };
     await onSubmit(formattedData);
   };
@@ -199,52 +201,6 @@ export function AdmissionEnquiryForm({ initialData, onSubmit }: AdmissionEnquiry
                         Grade {i + 1}
                       </SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Current School */}
-          <FormField
-            control={form.control}
-            name="currentSchool"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Current School (Optional)</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder="Enter current school" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Blood Group */}
-          <FormField
-            control={form.control}
-            name="bloodGroup"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Blood Group (Optional)</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select blood group" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map(
-                      (group) => (
-                        <SelectItem key={group} value={group}>
-                          {group}
-                        </SelectItem>
-                      )
-                    )}
                   </SelectContent>
                 </Select>
                 <FormMessage />
