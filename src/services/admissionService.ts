@@ -5,7 +5,7 @@ import { fileTableService } from './fileTableService';
 import { ADMISSION_STATUS, COMMUNICATION_TYPES, REQUIRED_DOCUMENTS } from '@/lib/constants';
 import { toast } from '@/components/ui/toast';
 import type {
-  AdmissionCommunication,
+  AdmissionCommunication as Communication,
   AdmissionProcess,
   AdmissionProcessRow,
   AdmissionProgress,
@@ -111,10 +111,6 @@ const mapDbStudentToFrontend = (dbStudent: DbProspectiveStudent): ProspectiveStu
   };
 };
 
-// TODO: Document status handling needs to be updated to match the types from @/types/admission
-// The DocumentStatus type needs the following:
-// - submitted should be DocumentSubmission[] instead of string[]
-// - DocumentSubmission should include: fileName, type, uploadDate, status
 const mapDbProcessToFrontend = (dbProcess: DbAdmissionProcess): AdmissionProcess => {
   return {
     id: dbProcess.id,
@@ -142,6 +138,259 @@ const generateAdmissionTimeline = (currentStatus: EnquiryStatus): AdmissionTimel
 
 // Export the service implementation
 export const admissionService = {
-  // ... service methods implementation
-};
+  async createEnquiry(data: ProspectiveStudentData): Promise<ProspectiveStudent> {
+    const { data: newEnquiry, error } = await supabase
+      .schema(SCHEMA)
+      .from(TABLES.PROSPECTIVE_STUDENT)
+      .insert([data])
+      .select()
+      .single();
 
+    if (error) {
+      throw new Error(`Failed to create enquiry: ${error.message}`);
+    }
+
+    return mapDbStudentToFrontend(newEnquiry);
+  },
+
+  async updateEnquiry(id: string, data: Partial<ProspectiveStudentData>): Promise<ProspectiveStudent> {
+    const { data: updatedEnquiry, error } = await supabase
+      .schema(SCHEMA)
+      .from(TABLES.PROSPECTIVE_STUDENT)
+      .update(data)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to update enquiry: ${error.message}`);
+    }
+
+    return mapDbStudentToFrontend(updatedEnquiry);
+  },
+
+  async updateEnquiryStatus(id: string, status: EnquiryStatus): Promise<void> {
+    const { error } = await supabase
+      .schema(SCHEMA)
+      .from(TABLES.PROSPECTIVE_STUDENT)
+      .update({ status, lastupdatedate: new Date().toISOString() })
+      .eq('id', id);
+
+    if (error) {
+      throw new Error(`Failed to update enquiry status: ${error.message}`);
+    }
+  },
+
+  async getEnquiryById(id: string): Promise<ProspectiveStudent> {
+    const { data: enquiry, error } = await supabase
+      .schema(SCHEMA)
+      .from(TABLES.PROSPECTIVE_STUDENT)
+      .select()
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to fetch enquiry: ${error.message}`);
+    }
+
+    return mapDbStudentToFrontend(enquiry);
+  },
+
+  async getAllEnquiries(params: SearchParams) {
+    let query = supabase
+      .schema(SCHEMA)
+      .from(TABLES.PROSPECTIVE_STUDENT)
+      .select('*, AdmissionProcess(*)');
+
+    // Apply filters
+    if (params.status && params.status.length > 0) {
+      query = query.in('status', params.status);
+    }
+
+    if (params.searchTerm) {
+      query = query.or(
+        `studentname.ilike.%${params.searchTerm}%,email.ilike.%${params.searchTerm}%,parentname.ilike.%${params.searchTerm}%`
+      );
+    }
+
+    if (params.dateRange) {
+      query = query
+        .gte('applieddate', params.dateRange.start.toISOString())
+        .lte('applieddate', params.dateRange.end.toISOString());
+    }
+
+    if (params.gradeApplying) {
+      query = query.eq('gradeapplying', params.gradeApplying);
+    }
+
+    // Get total count using a separate query
+    const countQuery = supabase
+      .schema(SCHEMA)
+      .from(TABLES.PROSPECTIVE_STUDENT)
+      .select('id', { count: 'exact', head: true });
+
+    // Apply the same filters to count query
+    if (params.status && params.status.length > 0) {
+      countQuery.in('status', params.status);
+    }
+    if (params.searchTerm) {
+      countQuery.or(
+        `studentname.ilike.%${params.searchTerm}%,email.ilike.%${params.searchTerm}%,parentname.ilike.%${params.searchTerm}%`
+      );
+    }
+    if (params.dateRange) {
+      countQuery
+        .gte('applieddate', params.dateRange.start.toISOString())
+        .lte('applieddate', params.dateRange.end.toISOString());
+    }
+    if (params.gradeApplying) {
+      countQuery.eq('gradeapplying', params.gradeApplying);
+    }
+
+    const [{ count }, { data, error }] = await Promise.all([
+      countQuery,
+      // Apply pagination to main query
+      params.page && params.limit
+        ? query.range((params.page - 1) * params.limit, params.page * params.limit - 1)
+        : query
+    ]);
+
+    if (error) {
+      throw new Error(`Failed to fetch enquiries: ${error.message}`);
+    }
+
+    return {
+      data: data.map(item => ({
+        ...mapDbStudentToFrontend(item),
+        AdmissionProcess: item.AdmissionProcess ? mapDbProcessToFrontend(item.AdmissionProcess) : null
+      })),
+      total: count || 0
+    };
+  },
+
+  async addEnquiryNote(id: string, content: string): Promise<Note> {
+    const { data: newNote, error } = await supabase
+      .schema(SCHEMA)
+      .from(TABLES.ADMISSION_NOTES)
+      .insert([{ prospectivestudentid: id, content }])
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to add note: ${error.message}`);
+    }
+
+    return newNote;
+  },
+
+  async getEnquiryNotes(id: string): Promise<Note[]> {
+    const { data: notes, error } = await supabase
+      .schema(SCHEMA)
+      .from(TABLES.ADMISSION_NOTES)
+      .select()
+      .eq('prospectivestudentid', id);
+
+    if (error) {
+      throw new Error(`Failed to fetch notes: ${error.message}`);
+    }
+
+    return notes;
+  },
+
+  async uploadDocument(id: string, file: File, documentType: RequiredDocument): Promise<void> {
+    const filePath = `${FILE_CONFIG.BUCKET}/${id}/${documentType}/${file.name}`;
+    const { error: uploadError } = await supabase.storage.from(FILE_CONFIG.BUCKET).upload(filePath, file);
+
+    if (uploadError) {
+      throw new Error(`Failed to upload document: ${uploadError.message}`);
+    }
+
+    // Get current documents status
+    const { data: currentProcess, error: fetchError } = await supabase
+      .schema(SCHEMA)
+      .from(TABLES.ADMISSION_PROCESS)
+      .select('documentsrequired')
+      .eq('prospectivestudentid', id)
+      .single();
+
+    if (fetchError) {
+      throw new Error(`Failed to fetch current document status: ${fetchError.message}`);
+    }
+
+    // Update document status
+    const currentDocs = currentProcess?.documentsrequired || {};
+    const updatedDocs = {
+      ...currentDocs,
+      [documentType]: {
+        ...currentDocs[documentType],
+        submitted: [{
+          fileName: file.name,
+          type: file.type,
+          uploadDate: new Date(),
+          status: 'pending'
+        }]
+      }
+    };
+
+    const { error: updateError } = await supabase
+      .schema(SCHEMA)
+      .from(TABLES.ADMISSION_PROCESS)
+      .update({ documentsrequired: updatedDocs })
+      .eq('prospectivestudentid', id);
+
+    if (updateError) {
+      throw new Error(`Failed to update document status: ${updateError.message}`);
+    }
+  },
+
+  async getDocumentUrl(fileName: string): Promise<string> {
+    const { data, error } = await supabase.storage
+      .from(FILE_CONFIG.BUCKET)
+      .createSignedUrl(fileName, 3600);
+
+    if (error) {
+      throw new Error(`Failed to get document URL: ${error.message}`);
+    }
+
+    return data.signedUrl;
+  },
+
+  async getAllDocuments(id: string): Promise<Record<RequiredDocument, DocumentStatus>> {
+    const { data: documents, error } = await supabase
+      .schema(SCHEMA)
+      .from(TABLES.ADMISSION_PROCESS)
+      .select('documentsrequired')
+      .eq('prospectivestudentid', id)
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to fetch documents: ${error.message}`);
+    }
+
+    return documents.documentsrequired;
+  },
+
+  async getCommunicationHistory(id: string): Promise<Communication[]> {
+    const { data: communications, error } = await supabase
+      .schema(SCHEMA)
+      .from(TABLES.ADMISSION_COMMUNICATION)
+      .select()
+      .eq('prospectivestudentid', id);
+
+    if (error) {
+      throw new Error(`Failed to fetch communications: ${error.message}`);
+    }
+
+    return communications;
+  },
+
+  async addCommunication(id: string, communication: Omit<Communication, 'id' | 'createdAt' | 'updatedAt'>): Promise<void> {
+    const { error } = await supabase
+      .from(TABLES.ADMISSION_COMMUNICATION)
+      .insert([{ ...communication, prospectivestudentid: id }]);
+
+    if (error) {
+      throw new Error(`Failed to add communication: ${error.message}`);
+    }
+  }
+};
