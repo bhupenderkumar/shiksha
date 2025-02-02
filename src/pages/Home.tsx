@@ -83,8 +83,8 @@ const features = [
 ];
 
 const achievements = [
-  { number: "1000+", label: "Happy Students" },
-  { number: "50+", label: "Expert Teachers" },
+  { number: "400+", label: "Happy Students" },
+  { number: "10+", label: "Expert Teachers" },
   { number: "95%", label: "Success Rate" },
   { number: "15+", label: "Years of Excellence" },
 ];
