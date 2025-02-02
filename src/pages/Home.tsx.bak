@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+  import { motion } from "framer-motion";
 import { SCHOOL_INFO } from "@/constants/schoolInfo";
 import {
   Rocket,
@@ -19,7 +19,6 @@ import { PageAnimation } from "@/components/ui/page-animation";
 import { AnimatedText } from "@/components/ui/animated-text";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from 'react';
-import { fetchLatestVideos } from '@/services/youtubeService';
 import { fetchPlaceDetails, fetchPlacePhotos, getSchoolLocation } from '@/services/googleMapsService';
 import { admissionService } from "@/services/admissionService";
 import HomePart1 from "@/pages/HomePart1";
@@ -41,6 +40,7 @@ type Review = {
   time: number;
 };
 
+type Photo = {
   photo_reference: string;
 };
 
