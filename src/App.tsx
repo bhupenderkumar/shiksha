@@ -14,7 +14,7 @@ import StudentDashboard from './pages/StudentDashboard';
 import AttendancePage from './pages/Attendance';
 import { useAuth } from '@/lib/auth';
 import SettingsPage from './pages/Settings';
-import Home from './pages/Home';
+import Home from './pages/Home/index';
 import { Toaster } from 'react-hot-toast';
 import ClassworkDetail from './pages/ClassworkDetail';
 import Feedback from './pages/Feedback';

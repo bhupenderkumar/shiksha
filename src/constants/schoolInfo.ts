@@ -9,6 +9,7 @@ export const SCHOOL_INFO = {
   principalSignature: "/signatures/principal.png", // Add signature image path
   accountantName: "Mr. Nikita Sharma",
   accountantSignature: "/signatures/accountant.png",
+  establishedYear: 2005,
   bankDetails: {
     bankName: "ALLAHABAD BANK",
     accountName: "First Step Public School",
