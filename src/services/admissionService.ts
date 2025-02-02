@@ -10,6 +10,8 @@ import type {
   AdmissionProcessRow,
   AdmissionProgress,
   AdmissionTimelineStep,
+  DocumentStatus,
+  DocumentSubmission,
   EnquiryStatus,
   EnquiryUpdateData,
   FeeDetails,
@@ -41,13 +43,6 @@ const FILE_CONFIG = {
 // Database interfaces
 type DocumentVerificationStatus = 'pending' | 'verified' | 'rejected';
 
-interface DocumentStatus {
-  required: RequiredDocument[];
-  submitted: string[];
-  verificationStatus: Record<string, DocumentVerificationStatus>;
-  rejectionReason: Record<string, string>;
-}
-
 interface DbProspectiveStudent {
   id: string;
   studentname: string;
@@ -68,7 +63,7 @@ interface DbProspectiveStudent {
 interface DbAdmissionProcess {
   id: string;
   prospectivestudentid: string;
-  documentsrequired: Record<RequiredDocument, DocumentStatus>;
+  documentsrequired: DocumentStatus;
   interviewdate: string | null;
   assignedclassid: string | null;
   created_at: string;
@@ -116,55 +111,20 @@ const mapDbStudentToFrontend = (dbStudent: DbProspectiveStudent): ProspectiveStu
   };
 };
 
+// TODO: Document status handling needs to be updated to match the types from @/types/admission
+// The DocumentStatus type needs the following:
+// - submitted should be DocumentSubmission[] instead of string[]
+// - DocumentSubmission should include: fileName, type, uploadDate, status
 const mapDbProcessToFrontend = (dbProcess: DbAdmissionProcess): AdmissionProcess => {
-  // First create the base document status for all required documents
-  const documentsRequired = REQUIRED_DOCUMENTS.reduce((acc, doc) => {
-    acc[doc] = {
-      required: [doc],
-      submitted: [],
-      verificationStatus: {},
-      rejectionReason: {}
-    };
-    return acc;
-  }, {} as Record<RequiredDocument, DocumentStatus>);
-
-  // Then merge in any existing document statuses
-  if (dbProcess.documentsrequired) {
-    for (const [key, value] of Object.entries(dbProcess.documentsrequired)) {
-      const docKey = key as RequiredDocument;
-      if (docKey in documentsRequired) {
-        documentsRequired[docKey] = {
-          required: value.required || [docKey],
-          submitted: value.submitted || [],
-          verificationStatus: value.verificationStatus || {},
-          rejectionReason: value.rejectionReason || {}
-        };
-      }
-    }
-  }
-
   return {
     id: dbProcess.id,
     prospectiveStudentId: dbProcess.prospectivestudentid,
-    documentsRequired,
+    documentsRequired: dbProcess.documentsrequired,
     interviewDate: formatOptionalDate(dbProcess.interviewdate),
     assignedClassId: dbProcess.assignedclassid || undefined,
     createdAt: formatDate(dbProcess.created_at),
     updatedAt: formatDate(dbProcess.updated_at)
   };
-};
-
-const createInitialDocumentStatus = (): Record<RequiredDocument, DocumentStatus> => {
-  const status = {} as Record<RequiredDocument, DocumentStatus>;
-  REQUIRED_DOCUMENTS.forEach(doc => {
-    status[doc] = {
-      required: [doc],
-      submitted: [],
-      verificationStatus: {},
-      rejectionReason: {}
-    };
-  });
-  return status;
 };
 
 const generateAdmissionTimeline = (currentStatus: EnquiryStatus): AdmissionTimelineStep[] => {
@@ -179,3 +139,9 @@ const generateAdmissionTimeline = (currentStatus: EnquiryStatus): AdmissionTimel
     label: `${status} ${statuses.indexOf(currentStatus) > index ? '✓' : ''}`
   }));
 };
+
+// Export the service implementation
+export const admissionService = {
+  // ... service methods implementation
+};
+
