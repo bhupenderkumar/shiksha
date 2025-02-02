@@ -8,6 +8,8 @@ interface FileData {
   uploadedBy: string;
   classworkId?: string;
   homeworkId?: string;
+  admissionId?: string;
+  documentType?: string;
 }
 
 // Service for managing file operations in the database

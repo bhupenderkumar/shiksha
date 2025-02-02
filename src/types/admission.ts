@@ -10,8 +10,8 @@ export interface ProspectiveStudentRow {
   id: string;
   studentname: string;
   parentname: string;
-  dateofbirth: string | null;
-  gender: Gender;
+  dateofbirth?: string;
+  gender: string;
   email: string;
   contactnumber: string;
   gradeapplying: string;
@@ -32,7 +32,7 @@ export interface AdmissionProcessRow {
   prospectivestudentid: string;
   documentsrequired: any;
   interviewdate: string | null;
-  assignedclass: string | null;
+  assignedclassid: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -58,16 +58,19 @@ export interface ProspectiveStudentData {
   bloodGroup?: string;
 }
 
-export interface ProspectiveStudent extends ProspectiveStudentData {
+export interface ProspectiveStudent {
   id: string;
+  studentName: string;
+  parentName: string;
+  email: string;
+  contactNumber: string;
+  gradeApplying: string;
+  gender: string;
+  dateOfBirth: Date;
+  address: string;
   status: EnquiryStatus;
   appliedDate: Date;
   lastUpdateDate: Date;
-  schoolId: string;
-  assignedTo?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  documentsRequired?: DocumentStatus;
 }
 
 export interface DocumentSubmission {
@@ -165,8 +168,24 @@ export interface AdmissionProgress {
   assignedClass?: string;
 }
 
-export interface FilteredEnquiry extends ProspectiveStudent {
-  AdmissionProcess: AdmissionProcess | null;
+export interface FilteredEnquiry {
+  id: string;
+  studentName: string;
+  parentName: string;
+  dateOfBirth?: Date;
+  gender: string;
+  email: string;
+  contactNumber: string;
+  gradeApplying: string;
+  currentSchool?: string;
+  address: string;
+  bloodGroup?: string;
+  status: EnquiryStatus;
+  appliedDate: Date;
+  lastUpdateDate: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  AdmissionProcess?: AdmissionProcess;
 }
 
 export interface SearchParams {
