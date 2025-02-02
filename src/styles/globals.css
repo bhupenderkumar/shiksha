@@ -641,19 +641,3 @@
 .dark ::-webkit-scrollbar-track {
     background-color: #1e293b;
 }
-input[type="text"] {
-    background-color: #1e293b;
-}
-
-input[type="text"]::placeholder {
-    color: #94a3b8;
-}
-
-#input type color as black
-input[type="text"] {
-    color: #000000;
-}
-
-input[type="text"]::placeholder {
-    color: #000000;
-}

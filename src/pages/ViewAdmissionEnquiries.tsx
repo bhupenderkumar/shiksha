@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { DateRange } from "react-day-picker";
+import { addMonths } from "date-fns";
 import {
   Table,
   TableBody,
@@ -26,7 +27,7 @@ import { PageAnimation } from "@/components/ui/page-animation";
 
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { admissionService } from "@/services/admissionService";
-import { ProspectiveStudent, EnquiryStatus, RequiredDocument } from "@/types/admission";
+import { ProspectiveStudent, RequiredDocument, EnquiryStatus, FilteredEnquiry, SearchParams } from "@/types/admission";
 import { toast } from "react-hot-toast";
 import {
   Calendar,
@@ -55,6 +56,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -63,8 +66,23 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import type { FilteredEnquiry, SearchParams } from '@/types/admission';
 import { useMediaQuery } from '@/hooks/use-media-query';
+
+// Type definitions
+interface Row {
+  original: FilteredEnquiry;
+}
+
+interface Column {
+  header: string;
+  accessorKey: keyof FilteredEnquiry;
+  cell?: ({ row }: { row: { original: FilteredEnquiry } }) => React.ReactNode;
+}
+
+// Fixed SearchParams type
+type SearchParamsWithEnquiryStatus = Omit<SearchParams, 'status'> & {
+  status: EnquiryStatus[];
+};
 
 type SortField = 'applieddate' | 'studentname' | 'status' | 'lastupdatedate';
 
@@ -72,6 +90,30 @@ interface SortConfig {
   field: SortField;
   direction: 'asc' | 'desc';
 }
+
+type StatusVariant = 'default' | 'warning' | 'success' | 'destructive';
+
+const ADMISSION_STATUSES = {
+  NEW: 'NEW',
+  IN_REVIEW: 'IN_REVIEW',
+  SCHEDULED_INTERVIEW: 'SCHEDULED_INTERVIEW',
+  PENDING_DOCUMENTS: 'PENDING_DOCUMENTS',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  ENROLLED: 'ENROLLED'
+} as const;
+
+type AdmissionStatusType = keyof typeof ADMISSION_STATUS;
+
+const STATUS_VARIANTS: Record<AdmissionStatusType, StatusVariant> = {
+  NEW: 'default',
+  IN_REVIEW: 'warning',
+  SCHEDULED_INTERVIEW: 'warning',
+  PENDING_DOCUMENTS: 'warning',
+  APPROVED: 'success',
+  REJECTED: 'destructive',
+  ENROLLED: 'success'
+};
 
 const PAGE_SIZE = 10;
 
@@ -90,7 +132,7 @@ const ViewAdmissionEnquiries: React.FC = () => {
   const navigate = useNavigate();
   const [enquiries, setEnquiries] = useState<FilteredEnquiry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchParams, setSearchParams] = useState<SearchParams>({
+  const [searchParams, setSearchParams] = useState<SearchParamsWithEnquiryStatus>({
     page: 1,
     limit: 10,
     status: [],
@@ -203,10 +245,27 @@ const ViewAdmissionEnquiries: React.FC = () => {
   };
 
 
+  // Document handling functions
+  const fetchDocuments = async (studentId: string): Promise<void> => {
+    try {
+      setLoadingDocumentId(studentId);
+      const documents = await admissionService.getAllDocuments(studentId);
+      setDocumentCounts(prev => ({
+        ...prev,
+        [studentId]: Object.values(documents).reduce((acc, curr) => acc + curr.submitted.length, 0)
+      }));
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+      toast.error('Failed to fetch documents');
+    } finally {
+      setLoadingDocumentId(null);
+    }
+  };
+
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
     documentType: RequiredDocument,
-    prospectiveStudentId: string
+    studentId: string
   ) => {
     try {
       const files = e.target.files;
@@ -215,7 +274,7 @@ const ViewAdmissionEnquiries: React.FC = () => {
       // Convert FileList to array for multiple file handling
       const fileArray = Array.from(files);
       const uploadPromises = fileArray.map(file =>
-        admissionService.uploadDocument(prospectiveStudentId, file, documentType)
+        admissionService.uploadDocument(studentId, file, documentType)
       );
 
       toast.promise(Promise.all(uploadPromises), {
@@ -225,32 +284,37 @@ const ViewAdmissionEnquiries: React.FC = () => {
       });
 
       // Refresh documents after upload
-      await fetchDocuments(prospectiveStudentId);
+      await fetchDocuments(studentId);
     } catch (error) {
       console.error('Error uploading files:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to upload documents');
     }
   };
 
-  const renderDocumentUpload = (documentType: RequiredDocument, prospectiveStudentId: string) => (
-    <div className="flex items-center gap-2">
-      <Input
-        type="file"
-        multiple
-        accept=".pdf,.jpg,.jpeg,.png"
-        onChange={(e) => handleFileUpload(e, documentType, prospectiveStudentId)}
-        className="max-w-xs"
-      />
-      <ButtonWithIcon
-        variant="outline"
-        size="sm"
-        onClick={() => fetchDocuments(prospectiveStudentId)}
-        icon={<RefreshCw className="h-4 w-4" />}
-      >
-        Refresh
-      </ButtonWithIcon>
-    </div>
-  );
+  const renderDocumentUpload = (documentType: RequiredDocument, prospectiveStudentId: string): JSX.Element => {
+    const onUpload = (e: React.ChangeEvent<HTMLInputElement>) => handleFileUpload(e, documentType, prospectiveStudentId);
+    const onRefresh = () => fetchDocuments(prospectiveStudentId);
+
+    return (
+      <div className="flex items-center gap-2">
+        <Input
+          type="file"
+          multiple
+          accept=".pdf,.jpg,.jpeg,.png"
+          onChange={onUpload}
+          className="max-w-xs"
+        />
+        <ButtonWithIcon
+          variant="outline"
+          size="sm"
+          onClick={onRefresh}
+          icon={<RefreshCw className="h-4 w-4" />}
+        >
+          Refresh
+        </ButtonWithIcon>
+      </div>
+    );
+  };
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
@@ -337,7 +401,7 @@ const ViewAdmissionEnquiries: React.FC = () => {
 
   // Columns configuration based on screen size
   const getColumns = () => {
-    const baseColumns = [
+    const baseColumns: Column[] = [
       {
         header: 'Student Name',
         accessorKey: 'studentName',
@@ -364,47 +428,48 @@ const ViewAdmissionEnquiries: React.FC = () => {
           </Badge>
         ),
       },
+      {
+        header: 'Grade',
+        accessorKey: 'gradeApplying',
+        cell: ({ row }) => row.original.gradeApplying as string
+      },
+      {
+        header: 'Applied Date',
+        accessorKey: 'appliedDate',
+        cell: ({ row }) => new Date(row.original.appliedDate).toLocaleDateString()
+      },
+      {
+        header: 'Parent Name',
+        accessorKey: 'parentName',
+        cell: ({ row }) => row.original.parentName as string
+      },
+      {
+        header: 'Contact',
+        accessorKey: 'contactNumber',
+        cell: ({ row }) => row.original.contactNumber as string
+      }
     ];
-
-    if (!isMobile) {
-      baseColumns.push(
-        {
-          header: 'Grade',
-          accessorKey: 'gradeApplying',
-        },
-        {
-          header: 'Applied Date',
-          accessorKey: 'appliedDate',
-          cell: ({ row }) => new Date(row.original.appliedDate).toLocaleDateString(),
-        }
-      );
-    }
-
-    if (!isMobile && !isTablet) {
-      baseColumns.push(
-        {
-          header: 'Parent Name',
-          accessorKey: 'parentName',
-        },
-        {
-          header: 'Contact',
-          accessorKey: 'contactNumber',
-        }
-      );
-    }
 
     return baseColumns;
   };
 
   // Function to get status badge variant
-  const getStatusVariant = (status: string) => {
-    const variants = {
-      [ADMISSION_STATUS.NEW]: 'default',
-      [ADMISSION_STATUS.IN_PROGRESS]: 'warning',
-      [ADMISSION_STATUS.ACCEPTED]: 'success',
-      [ADMISSION_STATUS.REJECTED]: 'destructive',
-    };
-    return variants[status] || 'default';
+  const getStatusVariant = (status: EnquiryStatus): StatusVariant => {
+    switch (status) {
+      case ADMISSION_STATUS.NEW:
+        return 'default';
+      case ADMISSION_STATUS.IN_REVIEW:
+      case ADMISSION_STATUS.SCHEDULED_INTERVIEW:
+      case ADMISSION_STATUS.PENDING_DOCUMENTS:
+        return 'warning';
+      case ADMISSION_STATUS.APPROVED:
+      case ADMISSION_STATUS.ENROLLED:
+        return 'success';
+      case ADMISSION_STATUS.REJECTED:
+        return 'destructive';
+      default:
+        return 'default';
+    }
   };
 
   return (
@@ -488,11 +553,12 @@ const ViewAdmissionEnquiries: React.FC = () => {
                 />
 
                 <Select
-                  value={searchParams.status?.[0] || ''}
+                  value={searchParams.status?.[0] || 'ALL'}
                   onValueChange={(value) => {
+                    const newStatus = value === 'ALL' ? [] : [value as EnquiryStatus];
                     setSearchParams(prev => ({
                       ...prev,
-                      status: value ? [value] : []
+                      status: newStatus
                     }));
                   }}
                 >
@@ -500,7 +566,7 @@ const ViewAdmissionEnquiries: React.FC = () => {
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Status</SelectItem>
+                    <SelectItem value="ALL">All Status</SelectItem>
                     {Object.values(ADMISSION_STATUS).map(status => (
                       <SelectItem key={status} value={status}>
                         {status.replace(/_/g, ' ')}
@@ -701,7 +767,6 @@ const ViewAdmissionEnquiries: React.FC = () => {
       </div>
     </PageAnimation>
   );
-
 };
 
 export default ViewAdmissionEnquiries;
