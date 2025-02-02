@@ -28,63 +28,16 @@ CREATE TABLE IF NOT EXISTS school.ProspectiveStudent (
 -- AdmissionProcess table (case-sensitive columns fixed)
 CREATE TABLE IF NOT EXISTS school.AdmissionProcess (
     id UUID PRIMARY KEY,
-    prospectivestudentid UUID NOT NULL REFERENCES school.ProspectiveStudent(id) ON DELETE CASCADE,
-    documentsrequired JSONB NOT NULL DEFAULT '{
-      "birth_certificate": {
-        "required": ["birth_certificate"],
-        "submitted": [],
-        "verificationStatus": {},
-        "rejectionReason": {}
-      },
-      "transfer_certificate": {
-        "required": ["transfer_certificate"],
-        "submitted": [],
-        "verificationStatus": {},
-        "rejectionReason": {}
-      },
-      "report_card": {
-        "required": ["report_card"],
-        "submitted": [],
-        "verificationStatus": {},
-        "rejectionReason": {}
-      },
-      "medical_records": {
-        "required": ["medical_records"],
-        "submitted": [],
-        "verificationStatus": {},
-        "rejectionReason": {}
-      },
-      "address_proof": {
-        "required": ["address_proof"],
-        "submitted": [],
-        "verificationStatus": {},
-        "rejectionReason": {}
-      },
-      "student_photo": {
-        "required": ["student_photo"],
-        "submitted": [],
-        "verificationStatus": {},
-        "rejectionReason": {}
-      },
-      "father_photo": {
-        "required": ["father_photo"],
-        "submitted": [],
-        "verificationStatus": {},
-        "rejectionReason": {}
-      },
-      "mother_photo": {
-        "required": ["mother_photo"],
-        "submitted": [],
-        "verificationStatus": {},
-        "rejectionReason": {}
-      }
-    }',
+    prospectivestudentid UUID NOT NULL,
+    documentsrequired JSONB NOT NULL DEFAULT '{}',
     interviewdate TIMESTAMP WITH TIME ZONE,
-    assignedclass VARCHAR(10),
+    assignedclassid VARCHAR(10),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_prospective_student FOREIGN KEY (prospectivestudentid) 
-        REFERENCES school.ProspectiveStudent(id) ON DELETE CASCADE
+    CONSTRAINT fk_prospective_student 
+        FOREIGN KEY (prospectivestudentid) 
+        REFERENCES school.ProspectiveStudent(id) 
+        ON DELETE CASCADE
 );
 
 -- AdmissionNotes table (case-sensitive columns fixed)
@@ -124,4 +77,4 @@ COMMENT ON TABLE school.AdmissionProcess IS 'Tracks the admission process and re
 COMMENT ON TABLE school.AdmissionNotes IS 'Stores notes and updates related to each admission enquiry';
 COMMENT ON TABLE school.AdmissionCommunication IS 'Stores communication history with prospective students';
 COMMENT ON COLUMN school.AdmissionProcess.interviewdate IS 'Timestamp of scheduled interview';
-COMMENT ON COLUMN school.AdmissionProcess.assignedclass IS 'Class assigned to the student after admission';
+COMMENT ON COLUMN school.AdmissionProcess.assignedclassid IS 'Class assigned to the student after admission';

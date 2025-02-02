@@ -10,6 +10,8 @@ import {
   Star,
   CheckCircle,
   ArrowRight,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,6 +23,7 @@ import { fetchPlaceDetails, fetchPlacePhotos, getSchoolLocation } from '@/servic
 import { admissionService } from "@/services/admissionService";
 import HomePart1 from "@/pages/HomePart1";
 import { ProspectiveStudent, Gender } from "@/types/admission";
+import { useTheme } from "@/lib/theme-provider";
 
 declare global {
   interface Window {
@@ -151,6 +154,7 @@ export default function Home() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [photos, setPhotos] = useState<string[]>([]);
+  const { theme, setTheme } = useTheme();
 
 useEffect(() => {
     const getVideos = async () => {
@@ -232,6 +236,18 @@ useEffect(() => {
     <PageAnimation>
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-primary/5 to-background">
+        <div className="absolute top-4 right-4 z-20">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+            className="rounded-full"
+          >
+            <Sun className="h-6 w-6 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-6 w-6 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <span className="sr-only">Toggle theme</span>
+          </Button>
+        </div>
         <div className="absolute inset-0 bg-grid-white/10 bg-grid-pattern" />
         <div className="container mx-auto px-4 py-32 relative z-10">
           <div className="text-center space-y-8 max-w-4xl mx-auto">
@@ -328,82 +344,6 @@ useEffect(() => {
                 )}
               </motion.div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Admission Process Section */}
-      <section className="py-24 bg-gradient-to-b from-background to-primary/5">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <AnimatedText
-              text="Admission Process"
-              className="text-3xl font-bold mb-4"
-              variant="slideUp"
-            />
-            <p className="text-muted-foreground">Simple steps to join our school family</p>
-          </div>
-          <div className="grid md:grid-cols-4 gap-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              viewport={{ once: true }}
-              className="text-center"
-            >
-              <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
-                <span className="text-2xl font-bold text-primary">1</span>
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Submit Enquiry</h3>
-              <p className="text-muted-foreground">Fill out the admission enquiry form with required details</p>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              viewport={{ once: true }}
-              className="text-center"
-            >
-              <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
-                <span className="text-2xl font-bold text-primary">2</span>
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Document Submission</h3>
-              <p className="text-muted-foreground">Submit required documents for verification</p>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              viewport={{ once: true }}
-              className="text-center"
-            >
-              <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
-                <span className="text-2xl font-bold text-primary">3</span>
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Interview</h3>
-              <p className="text-muted-foreground">Schedule and attend admission interview</p>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              viewport={{ once: true }}
-              className="text-center"
-            >
-              <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
-                <span className="text-2xl font-bold text-primary">4</span>
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Admission Confirmation</h3>
-              <p className="text-muted-foreground">Receive confirmation and join our school family</p>
-            </motion.div>
-          </div>
-          <div className="mt-12 text-center">
-            <Button size="lg" asChild className="bg-primary hover:bg-primary/90">
-              <Link to="/admission-enquiry">
-                Start Your Journey Today
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
           </div>
         </div>
       </section>

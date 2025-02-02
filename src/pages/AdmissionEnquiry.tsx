@@ -48,11 +48,13 @@ interface Note {
 
 interface Communication {
   id: string;
-  message: string;
-  type: 'email' | 'phone' | 'in_person';
-  direction: 'incoming' | 'outgoing';
-  communicationDate: Date;
-  createdAt: Date;
+  prospectivestudentid: string;
+  communicationtype: 'email' | 'phone' | 'in_person';
+  notes: string;
+  staffid: string;
+  communicationdate: Date;
+  created_at: Date;
+  updated_at: Date;
 }
 
 // Using DocumentStatus from admission.ts types
@@ -184,7 +186,16 @@ const AdmissionEnquiry: React.FC = () => {
   const fetchEnquiry = async () => {
     try {
       const data = await admissionService.getEnquiryById(id!);
-      setEnquiry(data);
+      setEnquiry({
+        ...data,
+        studentName: data.studentname,
+        parentName: data.parentname,
+        dateOfBirth: new Date(data.dateofbirth),
+        gradeApplying: data.gradeapplying,
+        contactNumber: data.contactnumber,
+        appliedDate: new Date(data.applieddate),
+        lastUpdateDate: new Date(data.lastupdatedate)
+      });
     } catch (error) {
       console.error("Error fetching enquiry:", error);
       toast.error("Failed to load enquiry details");
@@ -290,13 +301,12 @@ const AdmissionEnquiry: React.FC = () => {
     }
   };
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("en-US", {
+  const formatDate = (date: Date | string) => {
+    const d = typeof date === 'string' ? new Date(date) : date;
+    return d.toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
     });
   };
 
