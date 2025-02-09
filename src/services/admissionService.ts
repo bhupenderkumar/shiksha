@@ -386,6 +386,7 @@ export const admissionService = {
 
   async addCommunication(id: string, communication: Omit<Communication, 'id' | 'createdAt' | 'updatedAt'>): Promise<void> {
     const { error } = await supabase
+      .schema(SCHEMA)
       .from(TABLES.ADMISSION_COMMUNICATION)
       .insert([{ ...communication, prospectivestudentid: id }]);
 

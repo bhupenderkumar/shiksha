@@ -4,6 +4,7 @@ import { HeroSection } from "./components/HeroSection";
 import { FeaturesSection } from "./components/FeaturesSection";
 import { AdmissionProcess } from "./components/AdmissionProcess";
 import { VideosSection } from "./components/VideosSection";
+import { SlipManagementSection } from "./components/SlipManagementSection";
 import { AchievementsSection } from "./components/AchievementsSection";
 import { QuickLinks } from "./components/QuickLinks";
 import { TestimonialsSection } from "./components/TestimonialsSection";
@@ -55,6 +56,16 @@ export default function Home() {
                     className="fill-primary/5" />
             </svg>
           </div>
+        </div>
+
+        {/* Slip Management Section */}
+        <div className="relative mt-8">
+          <SectionAnimation animation="fadeInUp" delay="medium">
+            <SlipManagementSection />
+          </SectionAnimation>
+
+          {/* Connector line */}
+          <div className="absolute left-1/2 -translate-x-1/2 h-16 w-px bg-primary/20 -bottom-8" />
         </div>
 
         {/* Achievements with dramatic entrance */}
