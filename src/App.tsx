@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { AuthProvider } from '@/lib/auth';
 import { ThemeProvider } from '@/lib/theme-provider.tsx';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { CustomCursor } from '@/components/ui/custom-cursor';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -32,7 +33,7 @@ import AdmissionProcess from './pages/AdmissionProcess';
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/', '/homework/view/:id', '/homework/:id', '/classwork/:id', '/admission-enquiry', '/admission-enquiry/:id', '/admission-enquiries', '/year-end-feedback', '/year-end-feedback/:id']
 
-
+// Private route component
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const location = useLocation();
@@ -319,17 +320,18 @@ function AppRoutes() {
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="system" storageKey="ui-theme">
-      <AuthProvider>
-        <TooltipProvider>
+    <ThemeProvider defaultTheme="light" storageKey="ui-theme">
+      <TooltipProvider>
+        <AuthProvider>
           <Router>
+            <CustomCursor />
             <div className="flex flex-col min-h-screen bg-background mt-4">
               <AppRoutes />
               <Toaster position="top-right" />
             </div>
           </Router>
-        </TooltipProvider>
-      </AuthProvider>
+        </AuthProvider>
+      </TooltipProvider>
     </ThemeProvider>
   );
 }

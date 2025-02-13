@@ -16,7 +16,17 @@ export const SCHOOL_INFO = {
     accountNumber: "ALLA0212897",
     ifscCode: "110010132",
     branch: "Ashok Enclave II , Faridabad"
-  }
+  },
+  googlePlaceId: "YOUR_GOOGLE_PLACE_ID", // Replace this with your actual Google Place ID
+  location: {
+    lat: 28.6139, // Replace with your actual latitude
+    lng: 77.2090, // Replace with your actual longitude
+  },
+  socialMedia: {
+    facebook: "https://facebook.com/firststepschool",
+    twitter: "https://twitter.com/firststepschool",
+    instagram: "https://instagram.com/firststepschool",
+  },
 };
 
 export const FEE_RECEIPT_TERMS = [
