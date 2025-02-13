@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/api-client';
 import { v4 as uuidv4 } from 'uuid';
-import { fileService } from './fileService';
-import { fileTableService } from './fileTableService';
+import { fileService } from '@/services/fileService';
+import { fileTableService } from '@/services/fileTableService';
 import { ADMISSION_STATUS, COMMUNICATION_TYPES, REQUIRED_DOCUMENTS } from '@/lib/constants';
 import { toast } from '@/components/ui/toast';
 import type {
@@ -26,16 +26,18 @@ import type {
 
 // Constants
 const SCHEMA = 'school';
+const FILE_BUCKET = 'File';
 
 const TABLES = {
   PROSPECTIVE_STUDENT: 'ProspectiveStudent',
   ADMISSION_PROCESS: 'AdmissionProcess',
   ADMISSION_COMMUNICATION: 'AdmissionCommunication',
-  ADMISSION_NOTES: 'AdmissionNotes'
+  ADMISSION_NOTES: 'AdmissionNotes',
+  FILE: 'File'
 } as const;
 
 const FILE_CONFIG = {
-  BUCKET: 'File',
+  BUCKET: FILE_BUCKET,
   MAX_SIZE: 5 * 1024 * 1024,
   ALLOWED_TYPES: ['application/pdf', 'image/jpeg', 'image/png']
 } as const;
@@ -45,27 +47,57 @@ type DocumentVerificationStatus = 'pending' | 'verified' | 'rejected';
 
 interface DbProspectiveStudent {
   id: string;
-  studentname: string;
-  parentname: string;
+  student_name: string;
+  parent_name: string;
   email: string;
-  contactnumber: string;
-  gradeapplying: string;
+  contact_number: string;
+  grade_applying: string;
   gender: string;
-  dateofbirth: string | null;
+  date_of_birth: string | null;
   address: string | null;
   status: string;
-  applieddate: string;
-  lastupdatedate: string;
+  applied_date: string;
+  last_update_date: string;
   created_at: string;
   updated_at: string;
 }
 
 interface DbAdmissionProcess {
   id: string;
-  prospectivestudentid: string;
-  documentsrequired: DocumentStatus;
-  interviewdate: string | null;
-  assignedclassid: string | null;
+  prospective_student_id: string;
+  documents_required: DocumentStatus;
+  interview_date: string | null;
+  assigned_class_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface DbAdmissionNote {
+  id: string;
+  prospective_student_id: string;
+  content: string;
+  created_by: string;
+  created_at: string;
+}
+
+interface DbAdmissionCommunication {
+  id: string;
+  prospective_student_id: string;
+  communication_type: string;
+  notes: string | null;
+  staff_id: string;
+  communication_date: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface DbFile {
+  id: string;
+  file_name: string;
+  file_path: string;
+  file_type: string;
+  file_size: number;
+  uploaded_by: string;
   created_at: string;
   updated_at: string;
 }
@@ -97,27 +129,27 @@ const toISOString = (date: Date | undefined): string => {
 const mapDbStudentToFrontend = (dbStudent: DbProspectiveStudent): ProspectiveStudent => {
   return {
     id: dbStudent.id,
-    studentName: dbStudent.studentname,
-    parentName: dbStudent.parentname,
+    studentName: dbStudent.student_name,
+    parentName: dbStudent.parent_name,
     email: dbStudent.email,
-    contactNumber: dbStudent.contactnumber,
-    gradeApplying: dbStudent.gradeapplying,
+    contactNumber: dbStudent.contact_number,
+    gradeApplying: dbStudent.grade_applying,
     gender: dbStudent.gender as Gender,
-    dateOfBirth: formatDate(dbStudent.dateofbirth),
+    dateOfBirth: formatDate(dbStudent.date_of_birth),
     address: dbStudent.address || '',
     status: dbStudent.status as EnquiryStatus,
-    appliedDate: formatDate(dbStudent.applieddate),
-    lastUpdateDate: formatDate(dbStudent.lastupdatedate)
+    appliedDate: formatDate(dbStudent.applied_date),
+    lastUpdateDate: formatDate(dbStudent.last_update_date)
   };
 };
 
 const mapDbProcessToFrontend = (dbProcess: DbAdmissionProcess): AdmissionProcess => {
   return {
     id: dbProcess.id,
-    prospectiveStudentId: dbProcess.prospectivestudentid,
-    documentsRequired: dbProcess.documentsrequired,
-    interviewDate: formatOptionalDate(dbProcess.interviewdate),
-    assignedClassId: dbProcess.assignedclassid || undefined,
+    prospectiveStudentId: dbProcess.prospective_student_id,
+    documentsRequired: dbProcess.documents_required,
+    interviewDate: formatOptionalDate(dbProcess.interview_date),
+    assignedClassId: dbProcess.assigned_class_id || undefined,
     createdAt: formatDate(dbProcess.created_at),
     updatedAt: formatDate(dbProcess.updated_at)
   };
@@ -139,10 +171,30 @@ const generateAdmissionTimeline = (currentStatus: EnquiryStatus): AdmissionTimel
 // Export the service implementation
 export const admissionService = {
   async createEnquiry(data: ProspectiveStudentData): Promise<ProspectiveStudent> {
+    const id = uuidv4();
+    const now = new Date().toISOString();
+    
+    const dbData = {
+      id,
+      student_name: data.studentName,
+      parent_name: data.parentName,
+      email: data.email,
+      contact_number: data.contactNumber,
+      grade_applying: data.gradeApplying,
+      gender: data.gender,
+      date_of_birth: data.dateOfBirth?.toISOString() || null,
+      address: data.address || null,
+      status: ADMISSION_STATUS.NEW,
+      applied_date: now,
+      last_update_date: now,
+      created_at: now,
+      updated_at: now
+    };
+
     const { data: newEnquiry, error } = await supabase
       .schema(SCHEMA)
       .from(TABLES.PROSPECTIVE_STUDENT)
-      .insert([data])
+      .insert([dbData])
       .select()
       .single();
 
@@ -150,14 +202,48 @@ export const admissionService = {
       throw new Error(`Failed to create enquiry: ${error.message}`);
     }
 
+    // Create initial admission process entry
+    const { error: processError } = await supabase
+      .schema(SCHEMA)
+      .from(TABLES.ADMISSION_PROCESS)
+      .insert([{
+        id: uuidv4(),
+        prospective_student_id: id,
+        documents_required: REQUIRED_DOCUMENTS.reduce((acc, doc) => ({
+          ...acc,
+          [doc]: { status: 'pending', url: null }
+        }), {}),
+        interview_date: null,
+        assigned_class_id: null,
+        created_at: now,
+        updated_at: now
+      }]);
+
+    if (processError) {
+      throw new Error(`Failed to create admission process: ${processError.message}`);
+    }
+
     return mapDbStudentToFrontend(newEnquiry);
   },
 
   async updateEnquiry(id: string, data: Partial<ProspectiveStudentData>): Promise<ProspectiveStudent> {
+    const dbData = {
+      student_name: data.studentName,
+      parent_name: data.parentName,
+      email: data.email,
+      contact_number: data.contactNumber,
+      grade_applying: data.gradeApplying,
+      gender: data.gender,
+      date_of_birth: data.dateOfBirth?.toISOString(),
+      address: data.address,
+      last_update_date: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
     const { data: updatedEnquiry, error } = await supabase
       .schema(SCHEMA)
       .from(TABLES.PROSPECTIVE_STUDENT)
-      .update(data)
+      .update(dbData)
       .eq('id', id)
       .select()
       .single();
@@ -170,10 +256,15 @@ export const admissionService = {
   },
 
   async updateEnquiryStatus(id: string, status: EnquiryStatus): Promise<void> {
+    const now = new Date().toISOString();
     const { error } = await supabase
       .schema(SCHEMA)
       .from(TABLES.PROSPECTIVE_STUDENT)
-      .update({ status, lastupdatedate: new Date().toISOString() })
+      .update({ 
+        status, 
+        last_update_date: now,
+        updated_at: now 
+      })
       .eq('id', id);
 
     if (error) {
@@ -181,98 +272,100 @@ export const admissionService = {
     }
   },
 
-  async getEnquiryById(id: string): Promise<ProspectiveStudent> {
+  async getEnquiryById(id: string): Promise<{
+    student: ProspectiveStudent;
+    process: AdmissionProcess;
+    timeline: AdmissionTimelineStep[];
+  }> {
     const { data: enquiry, error } = await supabase
       .schema(SCHEMA)
       .from(TABLES.PROSPECTIVE_STUDENT)
-      .select()
+      .select(`
+        *,
+        ${TABLES.ADMISSION_PROCESS}(*)
+      `)
       .eq('id', id)
       .single();
 
-    if (error) {
-      throw new Error(`Failed to fetch enquiry: ${error.message}`);
+    if (error || !enquiry) {
+      throw new Error(`Failed to fetch enquiry: ${error?.message || 'Not found'}`);
     }
 
-    return mapDbStudentToFrontend(enquiry);
+    const student = mapDbStudentToFrontend(enquiry);
+    const process = mapDbProcessToFrontend(enquiry[TABLES.ADMISSION_PROCESS][0]);
+    const timeline = generateAdmissionTimeline(student.status);
+
+    return { student, process, timeline };
   },
 
   async getAllEnquiries(params: SearchParams) {
     let query = supabase
       .schema(SCHEMA)
       .from(TABLES.PROSPECTIVE_STUDENT)
-      .select('*, AdmissionProcess(*)');
+      .select('*', { count: 'exact' });
 
     // Apply filters
-    if (params.status && params.status.length > 0) {
-      query = query.in('status', params.status);
+    if (params.status) {
+      query = query.eq('status', params.status);
+    }
+    if (params.search) {
+      query = query.or(`
+        student_name.ilike.%${params.search}%,
+        parent_name.ilike.%${params.search}%,
+        email.ilike.%${params.search}%,
+        contact_number.ilike.%${params.search}%
+      `);
+    }
+    if (params.fromDate) {
+      query = query.gte('applied_date', params.fromDate.toISOString());
+    }
+    if (params.toDate) {
+      query = query.lte('applied_date', params.toDate.toISOString());
+    }
+    if (params.grade) {
+      query = query.eq('grade_applying', params.grade);
     }
 
-    if (params.searchTerm) {
-      query = query.or(
-        `studentname.ilike.%${params.searchTerm}%,email.ilike.%${params.searchTerm}%,parentname.ilike.%${params.searchTerm}%`
-      );
-    }
+    // Apply sorting
+    const sortColumn = params.sortBy || 'applied_date';
+    const sortOrder = params.sortOrder || 'desc';
+    query = query.order(sortColumn, { ascending: sortOrder === 'asc' });
 
-    if (params.dateRange) {
-      query = query
-        .gte('applieddate', params.dateRange.start.toISOString())
-        .lte('applieddate', params.dateRange.end.toISOString());
-    }
+    // Apply pagination
+    const page = params.page || 1;
+    const limit = params.limit || 10;
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    query = query.range(from, to);
 
-    if (params.gradeApplying) {
-      query = query.eq('gradeapplying', params.gradeApplying);
-    }
-
-    // Get total count using a separate query
-    const countQuery = supabase
-      .schema(SCHEMA)
-      .from(TABLES.PROSPECTIVE_STUDENT)
-      .select('id', { count: 'exact', head: true });
-
-    // Apply the same filters to count query
-    if (params.status && params.status.length > 0) {
-      countQuery.in('status', params.status);
-    }
-    if (params.searchTerm) {
-      countQuery.or(
-        `studentname.ilike.%${params.searchTerm}%,email.ilike.%${params.searchTerm}%,parentname.ilike.%${params.searchTerm}%`
-      );
-    }
-    if (params.dateRange) {
-      countQuery
-        .gte('applieddate', params.dateRange.start.toISOString())
-        .lte('applieddate', params.dateRange.end.toISOString());
-    }
-    if (params.gradeApplying) {
-      countQuery.eq('gradeapplying', params.gradeApplying);
-    }
-
-    const [{ count }, { data, error }] = await Promise.all([
-      countQuery,
-      // Apply pagination to main query
-      params.page && params.limit
-        ? query.range((params.page - 1) * params.limit, params.page * params.limit - 1)
-        : query
-    ]);
+    const { data, error, count } = await query;
 
     if (error) {
       throw new Error(`Failed to fetch enquiries: ${error.message}`);
     }
 
     return {
-      data: data.map(item => ({
-        ...mapDbStudentToFrontend(item),
-        AdmissionProcess: item.AdmissionProcess ? mapDbProcessToFrontend(item.AdmissionProcess) : null
-      })),
-      total: count || 0
+      enquiries: data.map(mapDbStudentToFrontend),
+      total: count || 0,
+      page,
+      limit
     };
   },
 
-  async addEnquiryNote(id: string, content: string): Promise<Note> {
-    const { data: newNote, error } = await supabase
+  async addEnquiryNote(id: string, content: string, createdBy: string): Promise<Note> {
+    const noteId = uuidv4();
+    const now = new Date().toISOString();
+
+    const { data: note, error } = await supabase
       .schema(SCHEMA)
       .from(TABLES.ADMISSION_NOTES)
-      .insert([{ prospectivestudentid: id, content }])
+      .insert([{
+        id: noteId,
+        prospective_student_id: id,
+        content,
+        created_by: createdBy,
+        created_at: now
+      }])
       .select()
       .single();
 
@@ -280,117 +373,238 @@ export const admissionService = {
       throw new Error(`Failed to add note: ${error.message}`);
     }
 
-    return newNote;
+    return {
+      id: note.id,
+      content: note.content,
+      createdBy: note.created_by,
+      createdAt: formatDate(note.created_at)
+    };
   },
 
   async getEnquiryNotes(id: string): Promise<Note[]> {
     const { data: notes, error } = await supabase
       .schema(SCHEMA)
       .from(TABLES.ADMISSION_NOTES)
-      .select()
-      .eq('prospectivestudentid', id);
+      .select('*')
+      .eq('prospective_student_id', id)
+      .order('created_at', { ascending: false });
 
     if (error) {
       throw new Error(`Failed to fetch notes: ${error.message}`);
     }
 
-    return notes;
+    return notes.map(note => ({
+      id: note.id,
+      content: note.content,
+      createdBy: note.created_by,
+      createdAt: formatDate(note.created_at)
+    }));
   },
 
   async uploadDocument(id: string, file: File, documentType: RequiredDocument): Promise<void> {
-    const filePath = `${FILE_CONFIG.BUCKET}/${id}/${documentType}/${file.name}`;
-    const { error: uploadError } = await supabase.storage.from(FILE_CONFIG.BUCKET).upload(filePath, file);
-
-    if (uploadError) {
-      throw new Error(`Failed to upload document: ${uploadError.message}`);
-    }
-
-    // Get current documents status
-    const { data: currentProcess, error: fetchError } = await supabase
-      .schema(SCHEMA)
-      .from(TABLES.ADMISSION_PROCESS)
-      .select('documentsrequired')
-      .eq('prospectivestudentid', id)
-      .single();
-
-    if (fetchError) {
-      throw new Error(`Failed to fetch current document status: ${fetchError.message}`);
-    }
-
-    // Update document status
-    const currentDocs = currentProcess?.documentsrequired || {};
-    const updatedDocs = {
-      ...currentDocs,
-      [documentType]: {
-        ...currentDocs[documentType],
-        submitted: [{
-          fileName: file.name,
-          type: file.type,
-          uploadDate: new Date(),
-          status: 'pending'
-        }]
+    try {
+      // Validate file using fileService
+      const validation = fileService.validateFile(file);
+      if (!validation.isValid) {
+        throw new Error(validation.error);
       }
-    };
 
-    const { error: updateError } = await supabase
-      .schema(SCHEMA)
-      .from(TABLES.ADMISSION_PROCESS)
-      .update({ documentsrequired: updatedDocs })
-      .eq('prospectivestudentid', id);
+      // Upload file using fileService
+      const filePath = `admission/${id}/${documentType}`;
+      const uploadedFile = await fileService.uploadFile(file, filePath);
+      
+      if (!uploadedFile) {
+        throw new Error('Failed to upload file');
+      }
 
-    if (updateError) {
-      throw new Error(`Failed to update document status: ${updateError.message}`);
+      // Create file record
+      const fileId = uuidv4();
+      const now = new Date().toISOString();
+      
+      const { error: fileError } = await supabase
+        .schema(SCHEMA)
+        .from(TABLES.FILE)
+        .insert([{
+          id: fileId,
+          file_name: file.name,
+          file_path: uploadedFile.path,
+          file_type: file.type,
+          file_size: file.size,
+          uploaded_by: 'admission',
+          created_at: now,
+          updated_at: now
+        }]);
+
+      if (fileError) {
+        throw new Error(`Failed to create file record: ${fileError.message}`);
+      }
+
+      // Update admission process
+      const { data: process, error: processError } = await supabase
+        .schema(SCHEMA)
+        .from(TABLES.ADMISSION_PROCESS)
+        .select('documents_required')
+        .eq('prospective_student_id', id)
+        .single();
+
+      if (processError || !process) {
+        throw new Error(`Failed to fetch process: ${processError?.message || 'Not found'}`);
+      }
+
+      const documentsRequired = {
+        ...process.documents_required,
+        [documentType]: {
+          status: 'pending' as DocumentVerificationStatus,
+          url: uploadedFile.path,
+          fileId
+        }
+      };
+
+      const { error: updateError } = await supabase
+        .schema(SCHEMA)
+        .from(TABLES.ADMISSION_PROCESS)
+        .update({
+          documents_required: documentsRequired,
+          updated_at: now
+        })
+        .eq('prospective_student_id', id);
+
+      if (updateError) {
+        throw new Error(`Failed to update document status: ${updateError.message}`);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to upload document';
+      throw new Error(message);
     }
   },
 
-  async getDocumentUrl(fileName: string): Promise<string> {
-    const { data, error } = await supabase.storage
-      .from(FILE_CONFIG.BUCKET)
-      .createSignedUrl(fileName, 3600);
-
-    if (error) {
-      throw new Error(`Failed to get document URL: ${error.message}`);
+  async getDocumentUrl(filePath: string): Promise<string> {
+    try {
+      return await fileService.getSignedUrl(filePath);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to get document URL';
+      throw new Error(message);
     }
-
-    return data.signedUrl;
   },
 
   async getAllDocuments(id: string): Promise<Record<RequiredDocument, DocumentStatus>> {
-    const { data: documents, error } = await supabase
+    const { data: process, error } = await supabase
       .schema(SCHEMA)
       .from(TABLES.ADMISSION_PROCESS)
-      .select('documentsrequired')
-      .eq('prospectivestudentid', id)
+      .select('documents_required')
+      .eq('prospective_student_id', id)
       .single();
 
-    if (error) {
-      throw new Error(`Failed to fetch documents: ${error.message}`);
+    if (error || !process) {
+      throw new Error(`Failed to fetch documents: ${error?.message || 'Not found'}`);
     }
 
-    return documents.documentsrequired;
+    return process.documents_required;
   },
 
   async getCommunicationHistory(id: string): Promise<Communication[]> {
     const { data: communications, error } = await supabase
       .schema(SCHEMA)
       .from(TABLES.ADMISSION_COMMUNICATION)
-      .select()
-      .eq('prospectivestudentid', id);
+      .select('*')
+      .eq('prospective_student_id', id)
+      .order('communication_date', { ascending: false });
 
     if (error) {
-      throw new Error(`Failed to fetch communications: ${error.message}`);
+      throw new Error(`Failed to fetch communication history: ${error.message}`);
     }
 
-    return communications;
+    return communications.map(comm => ({
+      id: comm.id,
+      type: comm.communication_type,
+      notes: comm.notes || '',
+      staffId: comm.staff_id,
+      communicationDate: formatDate(comm.communication_date),
+      createdAt: formatDate(comm.created_at),
+      updatedAt: formatDate(comm.updated_at)
+    }));
   },
 
-  async addCommunication(id: string, communication: Omit<Communication, 'id' | 'createdAt' | 'updatedAt'>): Promise<void> {
+  async addCommunication(
+    id: string,
+    communication: Omit<Communication, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<void> {
+    const now = new Date().toISOString();
+    
     const { error } = await supabase
+      .schema(SCHEMA)
       .from(TABLES.ADMISSION_COMMUNICATION)
-      .insert([{ ...communication, prospectivestudentid: id }]);
+      .insert([{
+        id: uuidv4(),
+        prospective_student_id: id,
+        communication_type: communication.type,
+        notes: communication.notes,
+        staff_id: communication.staffId,
+        communication_date: communication.communicationDate.toISOString(),
+        created_at: now,
+        updated_at: now
+      }]);
 
     if (error) {
       throw new Error(`Failed to add communication: ${error.message}`);
+    }
+  },
+
+  async scheduleInterview(
+    id: string,
+    interviewDate: Date,
+    assignedClassId?: string
+  ): Promise<void> {
+    const { error } = await supabase
+      .schema(SCHEMA)
+      .from(TABLES.ADMISSION_PROCESS)
+      .update({
+        interview_date: interviewDate.toISOString(),
+        assigned_class_id: assignedClassId,
+        updated_at: new Date().toISOString()
+      })
+      .eq('prospective_student_id', id);
+
+    if (error) {
+      throw new Error(`Failed to schedule interview: ${error.message}`);
+    }
+  },
+
+  async verifyDocument(
+    id: string,
+    documentType: RequiredDocument,
+    status: DocumentVerificationStatus
+  ): Promise<void> {
+    const { data: process, error: fetchError } = await supabase
+      .schema(SCHEMA)
+      .from(TABLES.ADMISSION_PROCESS)
+      .select('documents_required')
+      .eq('prospective_student_id', id)
+      .single();
+
+    if (fetchError || !process) {
+      throw new Error(`Failed to fetch process: ${fetchError?.message || 'Not found'}`);
+    }
+
+    const documentsRequired = {
+      ...process.documents_required,
+      [documentType]: {
+        ...process.documents_required[documentType],
+        status
+      }
+    };
+
+    const { error: updateError } = await supabase
+      .schema(SCHEMA)
+      .from(TABLES.ADMISSION_PROCESS)
+      .update({
+        documents_required: documentsRequired,
+        updated_at: new Date().toISOString()
+      })
+      .eq('prospective_student_id', id);
+
+    if (updateError) {
+      throw new Error(`Failed to verify document: ${updateError.message}`);
     }
   }
 };

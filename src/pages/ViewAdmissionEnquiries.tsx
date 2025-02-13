@@ -1,771 +1,203 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { DateRange } from "react-day-picker";
-import { addMonths } from "date-fns";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { ButtonWithIcon } from "@/components/ui/button-with-icon";
-import { Button } from "@/components/ui/button";
-import { DateRangePicker } from "@/components/ui/date-range-picker";
-import { PageAnimation } from "@/components/ui/page-animation";
-
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { admissionService } from "@/services/admissionService";
-import { ProspectiveStudent, RequiredDocument, EnquiryStatus, FilteredEnquiry, SearchParams } from "@/types/admission";
-import { toast } from "react-hot-toast";
-import {
-  Calendar,
-  Mail,
-  Phone,
-  Search,
-  User,
-  School,
-  Clock,
-  PlayCircle,
-  ArrowUpDown,
-  ChevronLeft,
-  ChevronRight,
-  FileText,
-  MessageCircle,
-  Calendar as CalendarIcon,
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { admissionService } from '@/services/admissionService';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/components/ui/empty-state';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { AttachmentsList } from '@/components/ui/AttachmentsList';
+import { 
+  ArrowLeft, 
+  Calendar, 
+  Clock, 
+  Book, 
+  Users, 
+  Paperclip, 
   Eye,
+  AlertCircle,
+  FileText 
+} from 'lucide-react';
+import { format } from 'date-fns';
+import { useAuth } from '@/lib/auth';
+import Layout from '@/components/Layout';
+import { ADMISSION_STATUS } from '@/lib/constants';
+import type { ProspectiveStudent, SearchParams } from '@/types/admission';
 
-  RefreshCw,
-} from "lucide-react";
-import { ADMISSION_STATUS } from "@/lib/constants";
-import { useDebounce } from "@/hooks/use-debounce";
-import { useHotkeys } from 'react-hotkeys-hook';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
-
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-
-import { useMediaQuery } from '@/hooks/use-media-query';
-
-// Type definitions
-interface Row {
-  original: FilteredEnquiry;
+interface EnquiryListProps {
+  enquiries: ProspectiveStudent[];
+  onViewClick: (id: string) => void;
 }
 
-interface Column {
-  header: string;
-  accessorKey: keyof FilteredEnquiry;
-  cell?: ({ row }: { row: { original: FilteredEnquiry } }) => React.ReactNode;
-}
-
-// Fixed SearchParams type
-type SearchParamsWithEnquiryStatus = Omit<SearchParams, 'status'> & {
-  status: EnquiryStatus[];
-};
-
-type SortField = 'applieddate' | 'studentname' | 'status' | 'lastupdatedate';
-
-interface SortConfig {
-  field: SortField;
-  direction: 'asc' | 'desc';
-}
-
-type StatusVariant = 'default' | 'warning' | 'success' | 'destructive';
-
-const ADMISSION_STATUSES = {
-  NEW: 'NEW',
-  IN_REVIEW: 'IN_REVIEW',
-  SCHEDULED_INTERVIEW: 'SCHEDULED_INTERVIEW',
-  PENDING_DOCUMENTS: 'PENDING_DOCUMENTS',
-  APPROVED: 'APPROVED',
-  REJECTED: 'REJECTED',
-  ENROLLED: 'ENROLLED'
-} as const;
-
-type AdmissionStatusType = keyof typeof ADMISSION_STATUS;
-
-const STATUS_VARIANTS: Record<AdmissionStatusType, StatusVariant> = {
-  NEW: 'default',
-  IN_REVIEW: 'warning',
-  SCHEDULED_INTERVIEW: 'warning',
-  PENDING_DOCUMENTS: 'warning',
-  APPROVED: 'success',
-  REJECTED: 'destructive',
-  ENROLLED: 'success'
-};
-
-const PAGE_SIZE = 10;
-
-const REQUIRED_DOCUMENTS = [
-  'birth_certificate',
-  'transfer_certificate', 
-  'report_card',
-  'medical_records',
-  'address_proof',
-  'student_photo',
-  'father_photo',
-  'mother_photo'
-] as const;
-
-const ViewAdmissionEnquiries: React.FC = () => {
-  const navigate = useNavigate();
-  const [enquiries, setEnquiries] = useState<FilteredEnquiry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchParams, setSearchParams] = useState<SearchParamsWithEnquiryStatus>({
-    page: 1,
-    limit: 10,
-    status: [],
-    searchTerm: '',
-  });
-  const [total, setTotal] = useState(0);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-  const [sort, setSort] = useState<SortConfig>({
-    field: 'applieddate',
-    direction: 'desc',
-  });
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [loadingDocumentId, setLoadingDocumentId] = useState<string | null>(null);
-  const [documentCounts, setDocumentCounts] = useState<Record<string, number>>({});
-  const [quickViewId, setQuickViewId] = useState<string | null>(null);
-  const debouncedSearchTerm = useDebounce(searchParams.searchTerm, 300);
-
-  const isMobile = useMediaQuery('(max-width: 640px)');
-  const isTablet = useMediaQuery('(min-width: 641px) and (max-width: 1024px)');
-
-  useEffect(() => {
-    fetchEnquiries();
-  }, [searchParams.status, searchParams.page, dateRange, sort, debouncedSearchTerm]);
-
-  useHotkeys('ctrl+f', (e) => {
-    e.preventDefault();
-    document.querySelector<HTMLInputElement>('[name="search"]')?.focus();
-  });
-
-  useHotkeys('esc', () => {
-    setQuickViewId(null);
-  });
-
-  const fetchEnquiries = async () => {
-    try {
-      setLoading(true);
-      const result = await admissionService.getAllEnquiries(searchParams);
-      setEnquiries(result.data);
-      setTotal(result.total);
-    } catch (error) {
-      console.error("Error fetching enquiries:", error);
-      toast.error("Failed to load enquiries");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResumeAdmission = (id: string) => {
-    navigate(`/admission/process/${id}`);
-  };
-
-  const handleStatusUpdate = async (id: string, newStatus: EnquiryStatus) => {
-    try {
-      await admissionService.updateEnquiryStatus(id, newStatus);
-      await fetchEnquiries();
-      toast.success("Status updated successfully");
-    } catch (error) {
-      console.error("Error updating status:", error);
-      toast.error("Failed to update status");
-    }
-  };
-
-  const handleSort = (field: SortField) => {
-    setSort(prev => ({
-      field,
-      direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc'
-    }));
-  };
-
-  const handleScheduleInterview = (id: string) => {
-    navigate(`/admission/process/${id}?action=schedule`);
-  };
-
-  const handleViewDocuments = async (id: string) => {
-    try {
-      const documents = await admissionService.getAllDocuments(id);
-      // Get the first submitted document
-      const firstDoc = Object.values(documents).find(doc => doc.submitted.length > 0);
-      if (firstDoc?.submitted[0]?.fileName) {
-        const url = await admissionService.getDocumentUrl(firstDoc.submitted[0].fileName);
-        window.open(url, '_blank');
-      } else {
-        toast.error('No documents found');
-      }
-    } catch (error) {
-      console.error('Error viewing document:', error);
-      toast.error('Failed to view document');
-    }
-  };
-
-  const handleAddCommunication = (id: string) => {
-    navigate(`/admission-progress/${id}?tab=communication`);
-  };
-
-  const handleBatchStatusUpdate = async (newStatus: EnquiryStatus) => {
-    try {
-      await Promise.all(
-        selectedIds.map(id => admissionService.updateEnquiryStatus(id, newStatus))
-      );
-      await fetchEnquiries();
-      setSelectedIds([]);
-      toast.success(`Updated ${selectedIds.length} enquiries`);
-    } catch (error) {
-      toast.error("Failed to update selected enquiries");
-    }
-  };
-
-  const handleQuickMessage = (id: string) => {
-    navigate(`/admission/process/${id}?tab=communications`);
-  };
-
-
-  // Document handling functions
-  const fetchDocuments = async (studentId: string): Promise<void> => {
-    try {
-      setLoadingDocumentId(studentId);
-      const documents = await admissionService.getAllDocuments(studentId);
-      setDocumentCounts(prev => ({
-        ...prev,
-        [studentId]: Object.values(documents).reduce((acc, curr) => acc + curr.submitted.length, 0)
-      }));
-    } catch (error) {
-      console.error('Error fetching documents:', error);
-      toast.error('Failed to fetch documents');
-    } finally {
-      setLoadingDocumentId(null);
-    }
-  };
-
-  const handleFileUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    documentType: RequiredDocument,
-    studentId: string
-  ) => {
-    try {
-      const files = e.target.files;
-      if (!files || files.length === 0) return;
-
-      // Convert FileList to array for multiple file handling
-      const fileArray = Array.from(files);
-      const uploadPromises = fileArray.map(file =>
-        admissionService.uploadDocument(studentId, file, documentType)
-      );
-
-      toast.promise(Promise.all(uploadPromises), {
-        loading: 'Uploading documents...',
-        success: 'Documents uploaded successfully',
-        error: 'Failed to upload documents'
-      });
-
-      // Refresh documents after upload
-      await fetchDocuments(studentId);
-    } catch (error) {
-      console.error('Error uploading files:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to upload documents');
-    }
-  };
-
-  const renderDocumentUpload = (documentType: RequiredDocument, prospectiveStudentId: string): JSX.Element => {
-    const onUpload = (e: React.ChangeEvent<HTMLInputElement>) => handleFileUpload(e, documentType, prospectiveStudentId);
-    const onRefresh = () => fetchDocuments(prospectiveStudentId);
-
+const EnquiryList: React.FC<EnquiryListProps> = ({ enquiries, onViewClick }) => {
+  if (enquiries.length === 0) {
     return (
-      <div className="flex items-center gap-2">
-        <Input
-          type="file"
-          multiple
-          accept=".pdf,.jpg,.jpeg,.png"
-          onChange={onUpload}
-          className="max-w-xs"
-        />
-        <ButtonWithIcon
-          variant="outline"
-          size="sm"
-          onClick={onRefresh}
-          icon={<RefreshCw className="h-4 w-4" />}
-        >
-          Refresh
-        </ButtonWithIcon>
-      </div>
+      <EmptyState
+        icon={AlertCircle}
+        title="No enquiries found"
+        description="There are no admission enquiries matching your criteria."
+      />
     );
-  };
-
-  const totalPages = Math.ceil(total / PAGE_SIZE);
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  const getStatusColor = (status: EnquiryStatus) => {
-    switch (status) {
-      case "NEW":
-        return "bg-yellow-100 text-yellow-800";
-      case "IN_REVIEW":
-        return "bg-blue-100 text-blue-800";
-      case "SCHEDULED_INTERVIEW":
-        return "bg-purple-100 text-purple-800";
-      case "PENDING_DOCUMENTS":
-        return "bg-orange-100 text-orange-800";
-      case "APPROVED":
-        return "bg-green-100 text-green-800";
-      case "REJECTED":
-        return "bg-red-100 text-red-800";
-      case "ENROLLED":
-        return "bg-teal-100 text-teal-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getSortIcon = (field: SortField) => {
-    if (sort.field !== field) return <ArrowUpDown className="h-4 w-4 ml-1" />;
-    return sort.direction === 'asc' ? '↑' : '↓';
-  };
-
-  const getProcessInfo = (enquiry: FilteredEnquiry) => {
-    if (!enquiry.AdmissionProcess) return null;
-    
-    const process = enquiry.AdmissionProcess;
-    return {
-      date: process.interviewDate ? formatDate(process.interviewDate) : 'No interview scheduled',
-      notes: process.interviewNotes ?
-        process.interviewNotes.slice(0, 50) + (process.interviewNotes.length > 50 ? '...' : '') :
-        'No interview notes'
-    };
-  };
-
-  const QuickViewDialog = () => {
-    const enquiry = enquiries.find(e => e.id === quickViewId);
-    if (!enquiry) return null;
-
-    return (
-      <Dialog open={!!quickViewId} onOpenChange={() => setQuickViewId(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Quick View - {enquiry.studentName}</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-2 gap-4">
-            <Card className="p-4">
-              <h3 className="font-medium mb-2">Student Details</h3>
-            </Card>
-            <Card className="p-4">
-              <h3 className="font-medium mb-2">Latest Communications</h3>
-            </Card>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  };
-
-  const TableSkeleton = () => (
-    <>
-      {Array(5).fill(0).map((_, i) => (
-        <TableRow key={i}>
-          <TableCell colSpan={8}>
-            <Skeleton className="h-12 w-full" />
-          </TableCell>
-        </TableRow>
-      ))}
-    </>
-  );
-
-  // Columns configuration based on screen size
-  const getColumns = () => {
-    const baseColumns: Column[] = [
-      {
-        header: 'Student Name',
-        accessorKey: 'studentName',
-        cell: ({ row }) => (
-          <div className="flex flex-col">
-            <span className="font-medium">{row.original.studentName}</span>
-            {isMobile && (
-              <>
-                <span className="text-sm text-gray-500">{row.original.email}</span>
-                <Badge variant={getStatusVariant(row.original.status)}>
-                  {row.original.status}
-                </Badge>
-              </>
-            )}
-          </div>
-        ),
-      },
-      {
-        header: 'Status',
-        accessorKey: 'status',
-        cell: ({ row }) => !isMobile && (
-          <Badge variant={getStatusVariant(row.original.status)}>
-            {row.original.status}
-          </Badge>
-        ),
-      },
-      {
-        header: 'Grade',
-        accessorKey: 'gradeApplying',
-        cell: ({ row }) => row.original.gradeApplying as string
-      },
-      {
-        header: 'Applied Date',
-        accessorKey: 'appliedDate',
-        cell: ({ row }) => new Date(row.original.appliedDate).toLocaleDateString()
-      },
-      {
-        header: 'Parent Name',
-        accessorKey: 'parentName',
-        cell: ({ row }) => row.original.parentName as string
-      },
-      {
-        header: 'Contact',
-        accessorKey: 'contactNumber',
-        cell: ({ row }) => row.original.contactNumber as string
-      }
-    ];
-
-    return baseColumns;
-  };
-
-  // Function to get status badge variant
-  const getStatusVariant = (status: EnquiryStatus): StatusVariant => {
-    switch (status) {
-      case ADMISSION_STATUS.NEW:
-        return 'default';
-      case ADMISSION_STATUS.IN_REVIEW:
-      case ADMISSION_STATUS.SCHEDULED_INTERVIEW:
-      case ADMISSION_STATUS.PENDING_DOCUMENTS:
-        return 'warning';
-      case ADMISSION_STATUS.APPROVED:
-      case ADMISSION_STATUS.ENROLLED:
-        return 'success';
-      case ADMISSION_STATUS.REJECTED:
-        return 'destructive';
-      default:
-        return 'default';
-    }
-  };
+  }
 
   return (
-    <PageAnimation>
-      <div className="container mx-auto py-8 px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="space-y-6"
-        >
-          <div className="flex flex-col gap-4">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-4">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex items-center gap-2"
-                  onClick={() => navigate(-1)}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Back
-                </Button>
-                <h1 className="text-3xl font-bold">Admission Enquiries</h1>
-              </div>
-              {selectedIds.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <Badge>{selectedIds.length} selected</Badge>
-                  <Select
-                    onValueChange={(value) => handleBatchStatusUpdate(value as EnquiryStatus)}
-                  >
-                    <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder="Update selected status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.values(ADMISSION_STATUS).map(status => (
-                        <SelectItem key={status} value={status}>
-                          {status.replace(/_/g, ' ')}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedIds([])}
-                  >
-                    Clear selection
-                  </Button>
-                </div>
-              )}
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {enquiries.map((enquiry) => (
+        <Card key={enquiry.id} className="hover:shadow-lg transition-shadow">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-semibold">
+              {enquiry.studentName}
+            </CardTitle>
+            <div className="flex items-center text-sm text-gray-500">
+              <Users className="w-4 h-4 mr-1" />
+              {enquiry.parentName}
             </div>
-
-            <Card className="p-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    name="search"
-                    placeholder="Search enquiries... (Ctrl+F)"
-                    value={searchParams.searchTerm}
-                    onChange={(e) => {
-                      setSearchParams(prev => ({
-                        ...prev,
-                        searchTerm: e.target.value
-                      }));
-                    }}
-                    className="pl-10"
-                  />
-                </div>
-                
-                <DateRangePicker
-                  value={dateRange}
-                  onChange={(newRange) => {
-                    setDateRange(newRange);
-                    setSearchParams(prev => ({
-                      ...prev,
-                      page: 1
-                    }));
-                  }}
-                />
-
-                <Select
-                  value={searchParams.status?.[0] || 'ALL'}
-                  onValueChange={(value) => {
-                    const newStatus = value === 'ALL' ? [] : [value as EnquiryStatus];
-                    setSearchParams(prev => ({
-                      ...prev,
-                      status: newStatus
-                    }));
-                  }}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">All Status</SelectItem>
-                    {Object.values(ADMISSION_STATUS).map(status => (
-                      <SelectItem key={status} value={status}>
-                        {status.replace(/_/g, ' ')}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <div className="flex justify-end">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setSearchParams(prev => ({
-                        ...prev,
-                        searchTerm: '',
-                        status: [],
-                        dateRange: undefined,
-                        page: 1
-                      }));
-                    }}
-                  >
-                    Clear filters
-                  </Button>
-                </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex items-center text-sm">
+                <Book className="w-4 h-4 mr-2" />
+                Grade {enquiry.gradeApplying}
               </div>
-            </Card>
-          </div>
-
-          <Card className="overflow-hidden">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    {!isMobile && (
-                      <TableCell className="w-[30px]">
-                        <Checkbox
-                          checked={selectedIds.length === enquiries.length}
-                          onCheckedChange={(checked) => {
-                            setSelectedIds(checked ? enquiries.map(e => e.id) : []);
-                          }}
-                        />
-                      </TableCell>
-                    )}
-                    <TableCell>Student Name</TableCell>
-                    {!isMobile && <TableCell>Status</TableCell>}
-                    {!isMobile && <TableCell>Grade</TableCell>}
-                    {!isMobile && <TableCell>Applied Date</TableCell>}
-                    {!isMobile && !isTablet && <TableCell>Parent Name</TableCell>}
-                    {!isMobile && !isTablet && <TableCell>Contact</TableCell>}
-                    <TableCell className="text-right">Actions</TableCell>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    <TableSkeleton />
-                  ) : enquiries.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={isMobile ? 3 : isTablet ? 6 : 8}
-                        className="text-center h-24"
-                      >
-                        No enquiries found
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    enquiries.map((enquiry) => (
-                      <TableRow
-                        key={enquiry.id}
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => navigate(`/admission/${enquiry.id}`)}
-                      >
-                        {!isMobile && (
-                          <TableCell className="w-[30px]">
-                            <Checkbox
-                              checked={selectedIds.includes(enquiry.id)}
-                              onCheckedChange={(checked) => {
-                                setSelectedIds(prev =>
-                                  checked
-                                    ? [...prev, enquiry.id]
-                                    : prev.filter(id => id !== enquiry.id)
-                                );
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                          </TableCell>
-                        )}
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="font-medium">{enquiry.studentName}</span>
-                            {isMobile && (
-                              <>
-                                <span className="text-sm text-gray-500">
-                                  {enquiry.email}
-                                </span>
-                                <Badge variant={getStatusVariant(enquiry.status)}>
-                                  {enquiry.status}
-                                </Badge>
-                              </>
-                            )}
-                          </div>
-                        </TableCell>
-                        {!isMobile && (
-                          <TableCell>
-                            <Badge variant={getStatusVariant(enquiry.status)}>
-                              {enquiry.status}
-                            </Badge>
-                          </TableCell>
-                        )}
-                        {!isMobile && (
-                          <TableCell>{enquiry.gradeApplying}</TableCell>
-                        )}
-                        {!isMobile && (
-                          <TableCell>
-                            {new Date(enquiry.appliedDate).toLocaleDateString()}
-                          </TableCell>
-                        )}
-                        {!isMobile && !isTablet && (
-                          <TableCell>{enquiry.parentName}</TableCell>
-                        )}
-                        {!isMobile && !isTablet && (
-                          <TableCell>{enquiry.contactNumber}</TableCell>
-                        )}
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleQuickMessage(enquiry.id);
-                                  }}
-                                >
-                                  <MessageCircle className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Quick message</TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setQuickViewId(enquiry.id);
-                                  }}
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Quick view</TooltipContent>
-                            </Tooltip>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </Card>
-
-          {!loading && enquiries.length > 0 && (
-            <div className="flex justify-center gap-2 mt-4">
+              <div className="flex items-center text-sm">
+                <Calendar className="w-4 h-4 mr-2" />
+                {format(enquiry.appliedDate, 'PPP')}
+              </div>
+              <div className="flex items-center text-sm">
+                <Clock className="w-4 h-4 mr-2" />
+                {format(enquiry.lastUpdateDate, 'PPP')}
+              </div>
+              <Badge 
+                variant={enquiry.status === ADMISSION_STATUS.NEW ? 'default' : 
+                        enquiry.status === ADMISSION_STATUS.IN_PROGRESS ? 'secondary' :
+                        enquiry.status === ADMISSION_STATUS.APPROVED ? 'success' : 'destructive'}
+                className="mt-2"
+              >
+                {enquiry.status}
+              </Badge>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setSearchParams(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
-                disabled={searchParams.page === 1}
+                className="w-full mt-4"
+                onClick={() => onViewClick(enquiry.id)}
               >
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </Button>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  Page {searchParams.page} of {totalPages}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  ({total} total)
-                </span>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSearchParams(prev => ({ ...prev, page: Math.min(totalPages, prev.page + 1) }))}
-                disabled={searchParams.page === totalPages}
-              >
-                Next
-                <ChevronRight className="h-4 w-4" />
+                <Eye className="w-4 h-4 mr-2" />
+                View Details
               </Button>
             </div>
-          )}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+};
 
-          <QuickViewDialog />
-        </motion.div>
+const ViewAdmissionEnquiries = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [enquiries, setEnquiries] = useState<ProspectiveStudent[]>([]);
+  const [totalEnquiries, setTotalEnquiries] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchParams, setSearchParams] = useState<SearchParams>({
+    page: 1,
+    limit: 9,
+    sortBy: 'applieddate',
+    sortOrder: 'desc'
+  });
+
+  useEffect(() => {
+    const fetchEnquiries = async () => {
+      try {
+        setLoading(true);
+        const result = await admissionService.getAllEnquiries(searchParams);
+        setEnquiries(result.enquiries);
+        setTotalEnquiries(result.total);
+        setCurrentPage(result.page);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch enquiries');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEnquiries();
+  }, [searchParams]);
+
+  const handleViewClick = (id: string) => {
+    navigate(`/admission/enquiry/${id}`);
+  };
+
+  const handlePageChange = (page: number) => {
+    setSearchParams(prev => ({ ...prev, page }));
+  };
+
+  const handleSearch = (search: string) => {
+    setSearchParams(prev => ({ ...prev, search, page: 1 }));
+  };
+
+  const handleStatusFilter = (status: string) => {
+    setSearchParams(prev => ({ ...prev, status, page: 1 }));
+  };
+
+  const handleDateFilter = (fromDate?: Date, toDate?: Date) => {
+    setSearchParams(prev => ({ ...prev, fromDate, toDate, page: 1 }));
+  };
+
+  const handleGradeFilter = (grade: string) => {
+    setSearchParams(prev => ({ ...prev, grade, page: 1 }));
+  };
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="p-4">
+          <EmptyState
+            icon={AlertCircle}
+            title="Error"
+            description={error}
+            action={
+              <Button onClick={() => window.location.reload()}>
+                Try Again
+              </Button>
+            }
+          />
+        </div>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout>
+      <div className="container mx-auto p-4 space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Admission Enquiries</h1>
+          <Button onClick={() => navigate('/admission/new')}>
+            New Enquiry
+          </Button>
+        </div>
+
+        {/* Filters */}
+        <Card>
+          <CardContent className="p-4">
+            {/* Add your filter components here */}
+          </CardContent>
+        </Card>
+
+        {loading ? (
+          <LoadingSpinner />
+        ) : (
+          <>
+            <EnquiryList
+              enquiries={enquiries}
+              onViewClick={handleViewClick}
+            />
+            {/* Add pagination component here */}
+          </>
+        )}
       </div>
-    </PageAnimation>
+    </Layout>
   );
 };
 
