@@ -9,6 +9,7 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  publicDir: path.resolve(__dirname, "./docs"),
   preview: {
     port: 3000,
     strictPort: true,
