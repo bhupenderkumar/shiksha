@@ -4,9 +4,14 @@ import { useGoogleMaps } from "@/hooks/useGoogleMaps";
 import { Loader2 } from "lucide-react";
 import { LightingContainer, LightingEffect } from "@/components/ui/lighting-effect";
 import { cn } from "@/lib/utils";
+import { SchoolMap } from "@/components/home/SchoolMap";
+import { useTheme } from "@/lib/theme-provider";
+import { motion } from "framer-motion";
 
 export function MapSection() {
   const { isLoading, error } = useGoogleMaps('school-map');
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   if (error) {
     return (
@@ -50,19 +55,41 @@ export function MapSection() {
           </div>
 
           <div className="relative">
-            {isLoading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+            {isLoading ? (
+              <div className="h-96 w-full rounded-lg shadow-lg bg-background/50 flex items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin" />
               </div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="relative rounded-lg overflow-hidden shadow-lg"
+              >
+                <div 
+                  id="school-map"
+                  className="h-96 w-full rounded-lg"
+                  style={{ border: `4px solid rgba(var(--primary), 0.1)` }}
+                />
+                
+                {/* Map Legend */}
+                <div className="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm p-3 rounded-lg shadow-md">
+                  <h4 className="font-semibold text-sm mb-2">Map Legend</h4>
+                  <div className="flex items-center mb-1">
+                    <div className="w-4 h-4 bg-primary rounded-full mr-2"></div>
+                    <span className="text-xs">School</span>
+                  </div>
+                  <div className="flex items-center mb-1">
+                    <div className="w-4 h-4 bg-orange-500 rounded-full mr-2"></div>
+                    <span className="text-xs">Bus Route</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
+                    <span className="text-xs">Landmarks</span>
+                  </div>
+                </div>
+              </motion.div>
             )}
-            <div
-              id="school-map"
-              className={cn(
-                "h-96 w-full rounded-lg shadow-lg",
-                isLoading ? "opacity-50" : "opacity-100"
-              )}
-              style={{ transition: "opacity 0.3s ease" }}
-            />
           </div>
         </div>
       </section>
