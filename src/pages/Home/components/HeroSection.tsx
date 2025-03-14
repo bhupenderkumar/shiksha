@@ -155,6 +155,32 @@ export function HeroSection() {
               />
             </div>
 
+            {/* Quick stats */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto"
+            >
+              {[
+                { label: "Students", value: "400+" },
+                { label: "Teachers", value: "10+" },
+                { label: "Success Rate", value: "95%" },
+                { label: "Activities", value: "20+" }
+              ].map((stat, index) => (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.4 + index * 0.1 }}
+                  className="bg-white/5 backdrop-blur-sm rounded-lg p-3 text-center border border-primary/10"
+                >
+                  <div className="text-2xl font-bold text-primary">{stat.value}</div>
+                  <div className="text-sm text-muted-foreground">{stat.label}</div>
+                </motion.div>
+              ))}
+            </motion.div>
+
             {/* Action buttons with enhanced hover effects */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
