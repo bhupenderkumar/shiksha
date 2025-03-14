@@ -25,6 +25,24 @@ const GTMScript: React.FC = () => {
   return null;
 }
 
+// Service Worker Registration for PWA
+const registerServiceWorker = () => {
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service Worker registration failed:', error);
+        });
+    });
+  }
+};
+
+// Register the service worker
+registerServiceWorker();
+
 const root = document.getElementById('root');
 
 if (root) {
