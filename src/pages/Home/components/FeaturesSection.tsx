@@ -5,8 +5,21 @@ import { features } from "@/data/home/features";
 import { LightingContainer, LightingEffect } from "@/components/ui/lighting-effect";
 import { cn } from "@/lib/utils";
 import { animations } from "@/lib/animations";
+import { TeacherCharacter } from "@/components/animations/characters/TeacherCharacter";
+import { useTheme } from "@/lib/theme-provider";
 
 export function FeaturesSection() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
+  // Classroom elements
+  const classroomElements = {
+    whiteboard: isDark ? "#d8dee9" : "#f8f9fa",
+    desk: isDark ? "#4c566a" : "#adb5bd",
+    floor: isDark ? "#2e3440" : "#e9ecef",
+    wall: isDark ? "#3b4252" : "#f1f3f5",
+  };
+
   return (
     <LightingContainer>
       <section className="relative py-8 bg-gradient-to-b from-gray-50/50 to-background overflow-hidden">
@@ -61,7 +74,40 @@ export function FeaturesSection() {
                       "rounded-2xl transform hover:-translate-y-1",
                       "bg-white/50 backdrop-blur-sm"
                     )}>
-                      <CardContent className="p-8">
+                      {/* Classroom background */}
+                      <div 
+                        className="absolute inset-0 z-0" 
+                        style={{ 
+                          background: classroomElements.wall,
+                          borderBottom: `15px solid ${classroomElements.floor}`
+                        }}
+                      />
+                      
+                      {/* Whiteboard */}
+                      <div 
+                        className="absolute top-4 left-1/2 transform -translate-x-1/2 z-0"
+                        style={{
+                          width: "80%",
+                          height: "40px",
+                          background: classroomElements.whiteboard,
+                          border: `2px solid ${isDark ? "#4c566a" : "#ced4da"}`,
+                        }}
+                      >
+                        <div className="text-center text-xs font-bold pt-2">
+                          {feature.title}
+                        </div>
+                      </div>
+                      
+                      {/* Teacher character */}
+                      <div className="absolute bottom-4 right-4 z-0 opacity-70 scale-75">
+                        <TeacherCharacter 
+                          variant="pointing" 
+                          direction={index % 2 === 0 ? "right" : "left"}
+                          delay={index * 0.2}
+                        />
+                      </div>
+
+                      <CardContent className="p-8 relative z-10 bg-opacity-80 backdrop-blur-sm bg-background/80">
                         <motion.div
                           className={cn(
                             "w-12 h-12 mb-6 text-primary",
@@ -90,7 +136,40 @@ export function FeaturesSection() {
                     "rounded-2xl transform hover:-translate-y-1",
                     "bg-white/50 backdrop-blur-sm"
                   )}>
-                    <CardContent className="p-8">
+                    {/* Classroom background */}
+                    <div 
+                      className="absolute inset-0 z-0" 
+                      style={{ 
+                        background: classroomElements.wall,
+                        borderBottom: `15px solid ${classroomElements.floor}`
+                      }}
+                    />
+                    
+                    {/* Whiteboard */}
+                    <div 
+                      className="absolute top-4 left-1/2 transform -translate-x-1/2 z-0"
+                      style={{
+                        width: "80%",
+                        height: "40px",
+                        background: classroomElements.whiteboard,
+                        border: `2px solid ${isDark ? "#4c566a" : "#ced4da"}`,
+                      }}
+                    >
+                      <div className="text-center text-xs font-bold pt-2">
+                        {feature.title}
+                      </div>
+                    </div>
+                    
+                    {/* Teacher character */}
+                    <div className="absolute bottom-4 right-4 z-0 opacity-70 scale-75">
+                      <TeacherCharacter 
+                        variant="pointing" 
+                        direction={index % 2 === 0 ? "right" : "left"}
+                        delay={index * 0.2}
+                      />
+                    </div>
+
+                    <CardContent className="p-8 relative z-10 bg-opacity-80 backdrop-blur-sm bg-background/80">
                       <motion.div
                         className={cn(
                           "w-12 h-12 mb-6 text-primary",

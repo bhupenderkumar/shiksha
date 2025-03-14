@@ -8,9 +8,25 @@ import { SCHOOL_INFO } from "@/constants/schoolInfo";
 import { LightingContainer, LightingEffect } from "@/components/ui/lighting-effect";
 import { animations } from "@/lib/animations";
 import { cn } from "@/lib/utils";
+import { StudentCharacter } from "@/components/animations/characters/StudentCharacter";
+import { TeacherCharacter } from "@/components/animations/characters/TeacherCharacter";
+import { SchoolBuilding } from "@/components/animations/school-elements/SchoolBuilding";
 
 export function HeroSection() {
   const { theme, setTheme } = useTheme();
+  const isDark = theme === "dark";
+
+  // Cloud animation
+  const cloudAnimation = {
+    animate: {
+      x: [0, 10, 0],
+      transition: {
+        duration: 20,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }
+    }
+  };
 
   return (
     <LightingContainer>
@@ -55,52 +71,55 @@ export function HeroSection() {
         {/* Background grid pattern */}
         <div className="absolute inset-0 bg-grid-white/10 bg-grid-pattern dark:opacity-20" />
 
+        {/* Sky background with day/night effect */}
+        <div 
+          className={`absolute inset-0 transition-colors duration-1000 ${
+            isDark 
+              ? "bg-gradient-to-b from-blue-950 via-indigo-950 to-purple-950" 
+              : "bg-gradient-to-b from-blue-200 via-blue-100 to-white"
+          }`}
+          style={{ zIndex: -1 }}
+        />
+        
+        {/* Clouds */}
+        <motion.div
+          className="absolute top-10 left-10 opacity-70"
+          variants={cloudAnimation}
+          animate="animate"
+        >
+          <div className={`w-40 h-16 rounded-full ${isDark ? "bg-gray-700" : "bg-white"}`}></div>
+        </motion.div>
+        
+        <motion.div
+          className="absolute top-20 right-20 opacity-60"
+          variants={cloudAnimation}
+          animate="animate"
+          transition={{ delay: 0.5 }}
+        >
+          <div className={`w-32 h-12 rounded-full ${isDark ? "bg-gray-800" : "bg-white"}`}></div>
+        </motion.div>
+
+        {/* Sun/Moon */}
+        <motion.div
+          className="absolute top-16 right-16"
+          initial={{ scale: 0.8 }}
+          animate={{ 
+            scale: [0.8, 1, 0.8],
+            transition: { duration: 8, repeat: Infinity }
+          }}
+        >
+          <div 
+            className={`w-20 h-20 rounded-full ${
+              isDark 
+                ? "bg-gray-300 shadow-[0_0_40px_10px_rgba(255,255,255,0.2)]" 
+                : "bg-yellow-300 shadow-[0_0_60px_20px_rgba(255,255,100,0.3)]"
+            }`}
+          />
+        </motion.div>
+
         {/* Main content */}
         <div className="container mx-auto px-4 py-20 relative z-10">
           <div className="text-center space-y-8 max-w-4xl mx-auto">
-            {/* Rocket icon with float animation */}
-            <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className={cn(
-                "w-32 h-32 rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20",
-                "mx-auto flex items-center justify-center",
-                "border-4 border-primary/30",
-                "shadow-xl shadow-primary/20",
-                "backdrop-blur-lg",
-                animations.float
-              )}
-            >
-              <motion.div
-                animate={{
-                  y: [0, -8, 0],
-                  rotate: [0, 5, -5, 0]
-                }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-                className="relative"
-              >
-                <Rocket className="w-16 h-16 text-primary drop-shadow-lg transform -rotate-45" />
-                {/* Flame effect */}
-                <motion.div
-                  animate={{
-                    scale: [1, 1.2, 1],
-                    opacity: [0.5, 0.8, 0.5]
-                  }}
-                  transition={{
-                    duration: 1,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                  className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-gradient-to-t from-orange-500 to-yellow-300 rounded-full blur-sm"
-                />
-              </motion.div>
-            </motion.div>
-
             {/* School name and established year */}
             <div className="space-y-2">
               <AnimatedText
@@ -162,30 +181,6 @@ export function HeroSection() {
               ))}
             </motion.div>
 
-            {/* Highlights */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="flex flex-wrap justify-center gap-2 text-sm text-muted-foreground"
-            >
-              {[
-                "Smart Classrooms",
-                "Sports Excellence",
-                "Cultural Activities"
-              ].map((highlight, index) => (
-                <motion.span
-                  key={highlight}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.6 + index * 0.1 }}
-                  className="px-3 py-1 rounded-full bg-primary/5 border border-primary/10"
-                >
-                  {highlight}
-                </motion.span>
-              ))}
-            </motion.div>
-
             {/* Action buttons with enhanced hover effects */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -228,6 +223,36 @@ export function HeroSection() {
                 <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity" />
               </Link>
             </Button>
+          </div>
+        </div>
+
+        {/* School Building Scene */}
+        <div className="absolute bottom-0 left-0 right-0 h-[300px] md:h-[400px]">
+          {/* School Building */}
+          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2">
+            <SchoolBuilding />
+          </div>
+          
+          {/* Student Characters */}
+          <div className="absolute bottom-10 left-[15%]">
+            <StudentCharacter 
+              direction="right"
+              variant="walking"
+            />
+          </div>
+          <div className="absolute bottom-10 right-[20%]">
+            <StudentCharacter 
+              direction="left"
+              variant="jumping"
+              delay={0.5}
+            />
+          </div>
+          
+          {/* Teacher Character */}
+          <div className="absolute bottom-10 left-[30%]">
+            <TeacherCharacter 
+              direction="right"
+            />
           </div>
         </div>
       </section>
