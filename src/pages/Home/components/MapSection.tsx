@@ -4,7 +4,6 @@ import { useGoogleMaps } from "@/hooks/useGoogleMaps";
 import { Loader2 } from "lucide-react";
 import { LightingContainer, LightingEffect } from "@/components/ui/lighting-effect";
 import { cn } from "@/lib/utils";
-import { SchoolMap } from "@/components/home/SchoolMap";
 import { useTheme } from "@/lib/theme-provider";
 import { motion } from "framer-motion";
 

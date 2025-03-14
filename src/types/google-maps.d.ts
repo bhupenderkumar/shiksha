@@ -21,6 +21,7 @@ declare namespace google {
     class InfoWindow {
       constructor(opts?: InfoWindowOptions);
       open(map?: Map, anchor?: MVCObject): void;
+      setContent(content: string | Node): void;
     }
 
     class LatLng {
@@ -145,5 +146,12 @@ declare namespace google {
         UNKNOWN_ERROR,
       }
     }
+  }
+}
+
+// Global declaration for Window interface
+declare global {
+  interface Window {
+    google: typeof google;
   }
 }
