@@ -5,6 +5,8 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { LightingContainer, LightingEffect } from "@/components/ui/lighting-effect";
 import { cn } from "@/lib/utils";
+import { StudentCharacter } from "@/components/animations/characters/StudentCharacter";
+import { useTheme } from "@/lib/theme-provider";
 
 const steps = [
   {
@@ -30,6 +32,9 @@ const steps = [
 ];
 
 export function AdmissionProcess() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
   return (
     <LightingContainer>
       <section className="relative py-16 bg-gradient-to-b from-background via-primary/5 to-background overflow-hidden">
@@ -59,6 +64,36 @@ export function AdmissionProcess() {
             <p className="text-lg text-muted-foreground">
               Simple steps to join our school family
             </p>
+          </div>
+
+          {/* Journey Path with Student Character */}
+          <div className="relative mb-16">
+            {/* Path Line */}
+            <div 
+              className="absolute left-1/2 transform -translate-x-1/2 h-[300px] w-4 rounded-full"
+              style={{ background: isDark ? "#4c566a" : "#dee2e6" }}
+            />
+
+            {/* Animated Path Highlight */}
+            <motion.div
+              className="absolute left-1/2 transform -translate-x-1/2 w-4 rounded-full"
+              style={{ 
+                background: isDark ? "#88c0d0" : "#74c0fc", 
+                height: 0 
+              }}
+              animate={{ height: "300px" }}
+              transition={{ duration: 3, ease: "easeInOut" }}
+            />
+
+            {/* Student Character walking up the path */}
+            <motion.div
+              className="absolute left-1/2 transform -translate-x-1/2"
+              initial={{ y: 300 }}
+              animate={{ y: 0 }}
+              transition={{ duration: 5, ease: "easeInOut" }}
+            >
+              <StudentCharacter variant="walking" direction="right" />
+            </motion.div>
           </div>
 
           {/* Steps with connecting lines */}
