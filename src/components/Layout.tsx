@@ -13,7 +13,8 @@ import {
   Bell,
   ChevronRight,
   LogOut,
-  MessageSquare
+  MessageSquare,
+  CreditCard as IdCard
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { useAuth } from '@/lib/auth';
@@ -52,6 +53,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { id: 7, icon: MessageSquare, label: 'Feedback', path: ROUTES.FEEDBACK },
     { id: 8, icon: Settings, label: 'Settings', path: ROUTES.SETTINGS },
     { id: 10, icon: Users, label: 'Profile', path: '/profile' },
+    { id: 11, icon: IdCard, label: 'ID Card', path: '/id-card' },
   ];
 
   const variants = {
@@ -88,7 +90,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           {/* Header */}
           <header className="fixed top-0 w-full z-50 border-b bg-background/80 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60">
             <div className="container mx-auto flex items-center justify-between p-4">
-              <motion.div 
+              <motion.div
                 key="header-left"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -118,16 +120,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </Link>
               </motion.div>
 
-              <motion.div 
+              <motion.div
                 key="header-right"
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="flex items-center gap-4"
               >
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="relative" 
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative"
                   onClick={() => navigate('/notifications')}
                 >
                   <Bell className="h-5 w-5" />
@@ -141,8 +143,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       </span>
                     </div>
                   </div>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="icon"
                     onClick={handleSignOut}
                     className="text-muted-foreground hover:text-primary"
@@ -193,7 +195,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       animate="visible"
                       variants={variants}
                     >
-                      <Link to={item.path} onClick={() => setIsSidebarOpen(false)}>  
+                      <Link to={item.path} onClick={() => setIsSidebarOpen(false)}>
                         <Button
                           variant={isActive ? "secondary" : "ghost"}
                           className={cn(

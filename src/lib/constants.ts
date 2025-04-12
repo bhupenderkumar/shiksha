@@ -27,6 +27,7 @@ export const STAFF_TABLE = 'Staff';
 export const SETTINGS_TABLE = 'Settings';
 export const USER_SETTINGS_TABLE = 'UserSettings';
 export const USER_TABLE = 'User';
+export const ID_CARD_TABLE = 'IDCard';
 export const SCHEMA = 'school';
 export const PROFILE_TABLE = 'Profile';
 
@@ -98,7 +99,8 @@ export const PUBLIC_ROUTES = [
   '/homework/view/:id',
   '/homework/:id',
   '/classwork/:id',
-  '/admission-enquiry'
+  '/admission-enquiry',
+  '/id-card'
 ] as const;
 
 // Environment variables should be used instead of hardcoding API keys
@@ -108,3 +110,12 @@ export const YOUTUBE_CHANNEL_ID = import.meta.env.VITE_YOUTUBE_CHANNEL_ID;
 if (!YOUTUBE_API_KEY || !YOUTUBE_CHANNEL_ID) {
   console.warn('YouTube API configuration is missing. YouTube features will be disabled.');
 }
+
+export const SCHOOL_INFO = {
+  name: 'First Step School',
+  address: 'Saurabh Vihar , Delhi 110044',
+  phone: '+91-9667935518, +91-9717267473',
+  email: 'firststepschool22@gmail.com',
+  website: 'www.myfirststepschool.com',
+  principalName: 'Dr. Jyoti Sharma'
+};
