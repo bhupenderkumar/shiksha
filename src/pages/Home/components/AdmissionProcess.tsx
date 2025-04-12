@@ -58,7 +58,7 @@ export function AdmissionProcess() {
           <div className="text-center mb-16">
             <AnimatedText
               text="Admission Process"
-              className="text-4xl font-bold mb-6 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent"
+              className="text-4xl font-bold mb-6 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent"
               variant="slideUp"
             />
             <p className="text-lg text-muted-foreground">
@@ -99,7 +99,7 @@ export function AdmissionProcess() {
           {/* Steps with connecting lines */}
           <div className="relative">
             {/* Connecting line */}
-            <div className="absolute top-24 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20 hidden md:block" />
+            <div className="absolute top-24 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/20 via-accent/40 to-secondary/20 hidden md:block" />
             
             <div className="grid md:grid-cols-4 gap-8">
               {steps.map((step, index) => (

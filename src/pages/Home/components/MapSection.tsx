@@ -8,7 +8,11 @@ import { useTheme } from "@/lib/theme-provider";
 import { motion } from "framer-motion";
 
 export function MapSection() {
-  const { isLoading, error } = useGoogleMaps('school-map');
+  const { isLoading, error } = useGoogleMaps('school-map', {
+    maxRetries: 15,        // Increase max retries for animation delays
+    retryInterval: 300,    // Check every 300ms
+    timeout: 15000         // Allow up to 15 seconds for initialization
+  });
   const { theme } = useTheme();
   const isDark = theme === "dark";
 

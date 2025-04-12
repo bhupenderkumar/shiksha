@@ -46,7 +46,7 @@ export function FeaturesSection() {
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold mb-6 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+            <h2 className="text-4xl font-bold mb-6 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
               Why Choose Us?
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
@@ -68,7 +68,7 @@ export function FeaturesSection() {
                     <Card className={cn(
                       "h-full relative overflow-hidden",
                       "hover:shadow-xl transition-all duration-300",
-                      "before:absolute before:inset-0 before:bg-gradient-to-r before:from-primary/5 before:to-purple-500/5",
+                      "before:absolute before:inset-0 before:bg-gradient-to-r before:from-primary/5 before:via-accent/5 before:to-secondary/5",
                       "before:opacity-0 hover:before:opacity-100 before:transition-opacity",
                       "border-2 border-primary/20 hover:border-primary/40",
                       "rounded-2xl transform hover:-translate-y-1",
@@ -130,7 +130,7 @@ export function FeaturesSection() {
                   <Card className={cn(
                     "h-full relative overflow-hidden",
                     "hover:shadow-xl transition-all duration-300",
-                    "before:absolute before:inset-0 before:bg-gradient-to-r before:from-primary/5 before:to-purple-500/5",
+                    "before:absolute before:inset-0 before:bg-gradient-to-r before:from-primary/5 before:via-accent/5 before:to-secondary/5",
                     "before:opacity-0 hover:before:opacity-100 before:transition-opacity",
                     "border-2 border-primary/20 hover:border-primary/40",
                     "rounded-2xl transform hover:-translate-y-1",

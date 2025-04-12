@@ -29,9 +29,12 @@ import AdmissionEnquiry from './pages/AdmissionEnquiry.tsx';
 import YearEndFeedback from './pages/YearEndFeedback';
 import ViewYearEndFeedback from './pages/ViewYearEndFeedback';
 import AdmissionProcess from './pages/AdmissionProcess';
+import PwaTest from './pages/PwaTest';
+import WhatsAppTest from './pages/WhatsAppTest';
+import IDCardForm from './pages/IDCardForm';
 
 // Public routes that don't require authentication
-const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/', '/homework/view/:id', '/homework/:id', '/classwork/:id', '/admission-enquiry', '/admission-enquiry/:id', '/admission-enquiries', '/year-end-feedback', '/year-end-feedback/:id']
+const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/', '/homework/view/:id', '/homework/:id', '/classwork/:id', '/admission-enquiry', '/admission-enquiry/:id', '/admission-enquiries', '/year-end-feedback', '/year-end-feedback/:id', '/pwa-test', '/whatsapp-test', '/id-card']
 
 // Private route component
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -52,8 +55,8 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  // If authenticated and trying to access auth pages
-  if (user && PUBLIC_ROUTES.includes(location.pathname)) {
+  // If authenticated and trying to access auth pages (except ID card page)
+  if (user && PUBLIC_ROUTES.includes(location.pathname) && location.pathname !== '/id-card') {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -70,6 +73,9 @@ function AppRoutes() {
       <Route path='/admission-enquiries' element={<ViewAdmissionEnquiries />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/pwa-test" element={<PwaTest />} />
+      <Route path="/whatsapp-test" element={<WhatsAppTest />} />
+      <Route path="/id-card" element={<IDCardForm />} />
       <Route
         path="/dashboard"
         element={
@@ -311,6 +317,7 @@ function AppRoutes() {
           </Layout>
         </PrivateRoute>
       } />
+{/* ID Card route removed from protected routes and added to public routes */}
 
       {/* Catch all route */}
       <Route path="*" element={<Navigate to="/" replace />} />

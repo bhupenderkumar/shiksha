@@ -1,22 +1,22 @@
 import { motion } from "framer-motion";
-import { Rocket, Sun, Moon, ArrowRight } from "lucide-react";
+import { Sun, Moon, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedText } from "@/components/ui/animated-text";
 import { Link } from "react-router-dom";
 import { useTheme } from "@/lib/theme-provider";
 import { SCHOOL_INFO } from "@/constants/schoolInfo";
 import { LightingContainer, LightingEffect } from "@/components/ui/lighting-effect";
-import { animations } from "@/lib/animations";
 import { cn } from "@/lib/utils";
 import { StudentCharacter } from "@/components/animations/characters/StudentCharacter";
 import { TeacherCharacter } from "@/components/animations/characters/TeacherCharacter";
 import { SchoolBuilding } from "@/components/animations/school-elements/SchoolBuilding";
+import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 
 export function HeroSection() {
   const { theme, setTheme } = useTheme();
   const isDark = theme === "dark";
-
-  // Cloud animation
+  
+  // Simple cloud animation
   const cloudAnimation = {
     animate: {
       x: [0, 10, 0],
@@ -54,22 +54,24 @@ export function HeroSection() {
           className="opacity-20"
         />
 
-        {/* Theme toggle button */}
+        {/* Theme toggle button with glassmorphic effect */}
         <div className="absolute top-4 right-4 z-20">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-            className="rounded-full hover:bg-primary/10 transition-colors"
-          >
-            <Sun className="h-6 w-6 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-6 w-6 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            <span className="sr-only">Toggle theme</span>
-          </Button>
+          <GlassmorphicCard className="p-1" intensity="low">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+              className="rounded-full hover:bg-primary/10 transition-colors"
+            >
+              <Sun className="h-6 w-6 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-6 w-6 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <span className="sr-only">Toggle theme</span>
+            </Button>
+          </GlassmorphicCard>
         </div>
 
         {/* Background grid pattern */}
-        <div className="absolute inset-0 bg-grid-white/10 bg-grid-pattern dark:opacity-20" />
+        <div className="absolute inset-0 bg-white/5 dark:bg-black/10" />
 
         {/* Sky background with day/night effect */}
         <div 
@@ -124,38 +126,42 @@ export function HeroSection() {
             <div className="space-y-2">
               <AnimatedText
                 text={SCHOOL_INFO.name}
-                className="text-4xl sm:text-5xl md:text-6xl font-bold bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent"
+                className="text-4xl sm:text-5xl md:text-6xl font-bold bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent"
                 variant="slideUp"
               />
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="text-lg text-muted-foreground"
-              >
-                Established {SCHOOL_INFO.establishedYear}
-              </motion.p>
+              <GlassmorphicCard className="inline-block px-4 py-1 mt-2" intensity="low">
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-lg text-muted-foreground"
+                >
+                  Established {SCHOOL_INFO.establishedYear}
+                </motion.p>
+              </GlassmorphicCard>
             </div>
 
-            {/* Tagline with gradient underline */}
+            {/* Tagline with glassmorphic effect */}
             <div className="relative">
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="text-xl text-muted-foreground max-w-2xl mx-auto"
-              >
-                Nurturing young minds, building bright futures. Join us in our journey of excellence in education.
-              </motion.p>
-              <motion.div
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: 1 }}
-                transition={{ delay: 0.4, duration: 0.8 }}
-                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-48 h-0.5 bg-gradient-to-r from-primary/40 via-purple-500/40 to-transparent"
-              />
+              <GlassmorphicCard className="p-6" intensity="medium">
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-xl text-foreground/90 leading-relaxed"
+                >
+                  Nurturing young minds, building bright futures. Join us in our journey of excellence in education.
+                </motion.p>
+                <motion.div
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: 1 }}
+                  transition={{ delay: 0.4, duration: 0.8 }}
+                  className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-48 h-1 bg-gradient-to-r from-primary/60 via-accent/60 to-secondary/60 rounded-full"
+                />
+              </GlassmorphicCard>
             </div>
 
-            {/* Quick stats */}
+            {/* Quick stats with glassmorphic cards */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -173,10 +179,15 @@ export function HeroSection() {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.4 + index * 0.1 }}
-                  className="bg-white/5 backdrop-blur-sm rounded-lg p-3 text-center border border-primary/10"
                 >
-                  <div className="text-2xl font-bold text-primary">{stat.value}</div>
-                  <div className="text-sm text-muted-foreground">{stat.label}</div>
+                  <GlassmorphicCard 
+                    className="p-4 text-center" 
+                    intensity="medium"
+                    borderGlow={true}
+                  >
+                    <div className="text-2xl font-bold text-primary">{stat.value}</div>
+                    <div className="text-sm text-muted-foreground">{stat.label}</div>
+                  </GlassmorphicCard>
                 </motion.div>
               ))}
             </motion.div>
@@ -188,41 +199,50 @@ export function HeroSection() {
               transition={{ delay: 0.4 }}
               className="flex flex-wrap justify-center gap-4"
             >
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 asChild
-                className="bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 transition-opacity"
+                className="bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
               >
                 <Link to="/login">
                   Login
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="hover:bg-primary/10 transition-colors"
-              >
-                <Link to="/register">
-                  Signup
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
+              <GlassmorphicCard className="overflow-hidden" borderGlow={true}>
+                <Button 
+                  size="lg" 
+                  variant="ghost" 
+                  asChild
+                  className="bg-transparent hover:bg-transparent"
+                >
+                  <Link to="/register">
+                    Signup
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </GlassmorphicCard>
             </motion.div>
 
             {/* Admission button with special effect */}
-            <Button 
-              size="lg" 
-              variant="outline" 
-              asChild
-              className="relative overflow-hidden group hover:border-primary/50 transition-colors"
+            <GlassmorphicCard 
+              className="overflow-hidden inline-block"
+              intensity="high"
+              borderGlow={true}
             >
-              <Link to="/admission-enquiry">
-                <span className="relative z-10">Start Admission Process</span>
-                <ArrowRight className="ml-2 h-4 w-4 relative z-10 group-hover:translate-x-1 transition-transform" />
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </Link>
-            </Button>
+              <Button 
+                size="lg" 
+                variant="ghost" 
+                asChild
+                className="relative overflow-hidden group bg-transparent hover:bg-transparent"
+              >
+                <Link to="/admission-enquiry">
+                  <span className="relative z-10">Start Admission Process</span>
+                  <ArrowRight className="ml-2 h-4 w-4 relative z-10 group-hover:translate-x-1 transition-transform" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Link>
+              </Button>
+            </GlassmorphicCard>
           </div>
         </div>
 

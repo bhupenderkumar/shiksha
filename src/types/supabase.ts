@@ -9,112 +9,6 @@ export type Json =
 export interface Database {
   school: {
     Tables: {
-      ProspectiveStudent: {
-        Row: {
-          id: string;
-          studentname: string;
-          parentname: string;
-          email: string;
-          contactnumber: string;
-          gradeapplying: string;
-          gender: string;
-          dateofbirth: string | null;
-          address: string;
-          status: string;
-          applieddate: string;
-          lastupdatedate: string;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          studentname: string;
-          parentname: string;
-          email: string;
-          contactnumber: string;
-          gradeapplying: string;
-          gender: string;
-          dateofbirth?: string | null;
-          address: string;
-          status?: string;
-          applieddate?: string;
-          lastupdatedate?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          studentname?: string;
-          parentname?: string;
-          email?: string;
-          contactnumber?: string;
-          gradeapplying?: string;
-          gender?: string;
-          dateofbirth?: string | null;
-          address?: string;
-          status?: string;
-          applieddate?: string;
-          lastupdatedate?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      AdmissionProcess: {
-        Row: {
-          id: string;
-          prospectivestudentid: string;
-          documentsrequired: Json;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          prospectivestudentid: string;
-          documentsrequired?: Json;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          prospectivestudentid?: string;
-          documentsrequired?: Json;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      File: {
-        Row: {
-          id: string;
-          fileName: string;
-          filePath: string;
-          fileType: string;
-          uploadedBy: string;
-          createdAt: string;
-          updatedAt: string;
-        };
-        Insert: {
-          id?: string;
-          fileName: string;
-          filePath: string;
-          fileType: string;
-          uploadedBy: string;
-          createdAt?: string;
-          updatedAt?: string;
-        };
-        Update: {
-          id?: string;
-          fileName?: string;
-          filePath?: string;
-          fileType?: string;
-          uploadedBy?: string;
-          createdAt?: string;
-          updatedAt?: string;
-        };
-      };
-    };
-  };
-  school: {
-    Tables: {
       prospective_student: {
         Row: {
           id: string;
@@ -133,7 +27,44 @@ export interface Database {
           last_update_date: string;
           school_id: string;
           assigned_to: string | null;
-
+        };
+        Insert: {
+          id?: string;
+          student_name: string;
+          parent_name: string;
+          date_of_birth?: string | null;
+          gender: 'Male' | 'Female' | 'Other';
+          email: string;
+          contact_number: string;
+          grade_applying: string;
+          current_school?: string | null;
+          address: string;
+          blood_group?: string | null;
+          status: string;
+          applied_date?: string;
+          last_update_date?: string;
+          school_id: string;
+          assigned_to?: string | null;
+        };
+        Update: {
+          id?: string;
+          student_name?: string;
+          parent_name?: string;
+          date_of_birth?: string | null;
+          gender?: 'Male' | 'Female' | 'Other';
+          email?: string;
+          contact_number?: string;
+          grade_applying?: string;
+          current_school?: string | null;
+          address?: string;
+          blood_group?: string | null;
+          status?: string;
+          applied_date?: string;
+          last_update_date?: string;
+          school_id?: string;
+          assigned_to?: string | null;
+        };
+      };
       AdmissionNotes: {
         Row: {
           id: string;
@@ -157,8 +88,56 @@ export interface Database {
           created_at?: string;
         };
       };
+      IDCard: {
+        Row: {
+          id: string;
+          student_name: string;
+          class_id: string;
+          student_photo_url: string;
+          father_name: string;
+          mother_name: string;
+          father_photo_url: string;
+          mother_photo_url: string;
+          father_mobile: string;
+          mother_mobile: string;
+          address: string;
+          created_at: string;
+          download_count: number;
+        };
+        Insert: {
+          id?: string;
+          student_name: string;
+          class_id: string;
+          student_photo_url?: string;
+          father_name: string;
+          mother_name: string;
+          father_photo_url?: string;
+          mother_photo_url?: string;
+          father_mobile: string;
+          mother_mobile: string;
+          address: string;
+          created_at?: string;
+          download_count?: number;
+        };
+        Update: {
+          id?: string;
+          student_name?: string;
+          class_id?: string;
+          student_photo_url?: string;
+          father_name?: string;
+          mother_name?: string;
+          father_photo_url?: string;
+          mother_photo_url?: string;
+          father_mobile?: string;
+          mother_mobile?: string;
+          address?: string;
+          created_at?: string;
+          download_count?: number;
+        };
+      };
     };
   };
+  
   public: {
     Tables: {
       Attendance: {
@@ -173,22 +152,6 @@ export interface Database {
         };
         Insert: {
           id?: string;
-          student_name: string;
-          parent_name: string;
-          date_of_birth?: string | null;
-          gender: 'Male' | 'Female' | 'Other';
-          email: string;
-          contact_number: string;
-          grade_applying: string;
-          current_school?: string | null;
-          address: string;
-          blood_group?: string | null;
-          status: string;
-          applied_date?: string;
-          last_update_date?: string;
-          school_id: string;
-          assigned_to?: string | null;
-
           date: string;
           status: 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY';
           studentid: string;
@@ -198,22 +161,6 @@ export interface Database {
         };
         Update: {
           id?: string;
-          student_name?: string;
-          parent_name?: string;
-          date_of_birth?: string | null;
-          gender?: 'Male' | 'Female' | 'Other';
-          email?: string;
-          contact_number?: string;
-          grade_applying?: string;
-          current_school?: string | null;
-          address?: string;
-          blood_group?: string | null;
-          status?: string;
-          applied_date?: string;
-          last_update_date?: string;
-          school_id?: string;
-          assigned_to?: string | null;
-
           date?: string;
           status?: 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY';
           studentid?: string;

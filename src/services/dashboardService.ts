@@ -57,7 +57,7 @@ interface QuickLink {
   url: string;
   icon: string;
   description: string;
-  role: 'all' | 'admin' | 'teacher' | 'student';
+  role: 'all' | 'admin' | 'teacher' | 'student' | string;
 }
 
 export async function getDashboardSummary(userId: string): Promise<DashboardSummary> {
@@ -85,13 +85,13 @@ export async function getDashboardSummary(userId: string): Promise<DashboardSumm
       { data: fees, error: feesError },
       { data: classwork, error: classworkError }
     ] = await Promise.all([
-      supabase.schema(SCHEMA).from(STUDENT_TABLE).select('*'),
-      supabase.schema(SCHEMA).from(STAFF_TABLE).select('*').eq('role', TEACHER_ROLE),
-      supabase.schema(SCHEMA).from(CLASS_TABLE).select('*'),
-      supabase.schema(SCHEMA).from(HOMEWORK_TABLE).select('*'),
-      supabase.schema(SCHEMA).from(ATTENDANCE_TABLE).select('*'),
-      supabase.schema(SCHEMA).from(FEE_TABLE).select('*'),
-      supabase.schema(SCHEMA).from(CLASSWORK_TABLE).select('*')
+      supabase.from(`${SCHEMA}.${STUDENT_TABLE}`).select('*'),
+      supabase.from(`${SCHEMA}.${STAFF_TABLE}`).select('*').eq('role', TEACHER_ROLE),
+      supabase.from(`${SCHEMA}.${CLASS_TABLE}`).select('*'),
+      supabase.from(`${SCHEMA}.${HOMEWORK_TABLE}`).select('*'),
+      supabase.from(`${SCHEMA}.${ATTENDANCE_TABLE}`).select('*'),
+      supabase.from(`${SCHEMA}.${FEE_TABLE}`).select('*'),
+      supabase.from(`${SCHEMA}.${CLASSWORK_TABLE}`).select('*')
     ]);
 
     if (studentsError || teachersError || classesError || homeworksError || attendanceError || feesError || classworkError) {
@@ -128,8 +128,7 @@ export async function getDashboardSummary(userId: string): Promise<DashboardSumm
 
     // Get upcoming deadlines
     const { data: deadlines, error: deadlinesError } = await supabase
-      .schema(SCHEMA)
-      .from('Homework')
+      .from(`${SCHEMA}.Homework`)
       .select('*')
       .eq('status', STATUS.PENDING)
       .order('dueDate', { ascending: true })
@@ -179,8 +178,7 @@ async function fetchStudents(userId: string) {
   const role = profile?.role || {};
   // Fetch students based on role
   const students = await supabase
-  .schema(SCHEMA)
-    .from(STUDENT_TABLE)
+    .from(`${SCHEMA}.${STUDENT_TABLE}`)
     .select('*')
     .eq('role', role);
   return students;
@@ -305,10 +303,10 @@ export async function getStudentDashboardData(email: string) {
       { data: fees, error: feesError },
       { data: classwork, error: classworkError }
     ] = await Promise.all([
-      supabase.schema(SCHEMA).from(HOMEWORK_TABLE).select('*').eq('studentId', student.id),
-      supabase.schema(SCHEMA).from(ATTENDANCE_TABLE).select('*').eq('studentId', student.id),
-      supabase.schema(SCHEMA).from(FEE_TABLE).select('*').eq('studentId', student.id),
-      supabase.schema(SCHEMA).from(CLASSWORK_TABLE).select('*').eq('studentId', student.id)
+      supabase.from(`${SCHEMA}.${HOMEWORK_TABLE}`).select('*').eq('studentId', student.id),
+      supabase.from(`${SCHEMA}.${ATTENDANCE_TABLE}`).select('*').eq('studentId', student.id),
+      supabase.from(`${SCHEMA}.${FEE_TABLE}`).select('*').eq('studentId', student.id),
+      supabase.from(`${SCHEMA}.${CLASSWORK_TABLE}`).select('*').eq('studentId', student.id)
     ]);
 
     if (homeworksError || attendanceError || feesError || classworkError) {
