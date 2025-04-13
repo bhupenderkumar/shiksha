@@ -102,6 +102,35 @@ const IDCardForm: React.FC = () => {
     return () => clearTimeout(fadeOutTimer);
   }, []);
 
+  // Set document title and favicon
+  useEffect(() => {
+    // Set document title
+    document.title = "FSPS ID Card Details";
+    
+    // Create favicon link element
+    const favicon = document.createElement('link');
+    favicon.rel = 'icon';
+    favicon.href = window.location.origin + '/icons/favicon.svg';
+    favicon.type = 'image/svg+xml';
+    
+    // Remove any existing favicon
+    const existingFavicon = document.querySelector('link[rel="icon"]');
+    if (existingFavicon) {
+      document.head.removeChild(existingFavicon);
+    }
+    
+    // Add new favicon to document head
+    document.head.appendChild(favicon);
+    
+    // Cleanup function to remove favicon when component unmounts
+    return () => {
+      const favicon = document.querySelector('link[rel="icon"]');
+      if (favicon) {
+        document.head.removeChild(favicon);
+      }
+    };
+  }, []);
+
   // Fetch classes on component mount
   useEffect(() => {
     const fetchClasses = async () => {
@@ -336,7 +365,7 @@ const IDCardForm: React.FC = () => {
         </div>
       )}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-0">{SCHOOL_INFO.name} - Student ID Card Generator</h1>
+        <h1 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-0">FSPS ID Card Details</h1>
         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
           <h4 className="text-sm sm:text-base">Physical (Hard copy) will be delivered by April End</h4>
           <a
