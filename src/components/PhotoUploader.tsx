@@ -236,7 +236,7 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
           <div className="flex flex-col items-center justify-center pt-3 pb-4 sm:pt-5 sm:pb-6">
             <Upload className="w-6 h-6 sm:w-8 sm:h-8 mb-1 sm:mb-2" />
             <p className="mb-1 sm:mb-2 text-xs sm:text-sm text-center px-2">
-              <span className="font-semibold">Tap to upload</span> or use camera
+              <span className="font-semibold">Tap to upload from gallery</span> or use camera
             </p>
           </div>
           <input
@@ -245,7 +245,6 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
             className="hidden"
             onChange={handleFileChange}
             accept="image/*"
-            capture={/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? "environment" : undefined}
           />
         </div>
       )}
@@ -259,7 +258,7 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
             className="text-xs sm:text-sm py-1 px-2 sm:py-2 sm:px-3 h-auto"
             onClick={() => fileInputRef.current?.click()}
           >
-            Upload Photo
+            Upload from Gallery
           </Button>
           <Button
             type="button"
