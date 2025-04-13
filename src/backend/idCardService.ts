@@ -8,8 +8,9 @@ import { toast } from 'react-hot-toast';
 // Constants
 const FILE_CONFIG = {
   BUCKET: STORAGE_BUCKET,
-  MAX_SIZE: 5 * 1024 * 1024, // 5MB
-  ALLOWED_TYPES: ['image/jpeg', 'image/png', 'image/jpg'] as string[]
+  MAX_SIZE: 4 * 1024 * 1024, // 4MB
+  ALLOWED_TYPES: ['image/jpeg', 'image/png', 'image/jpg'] as string[],
+  TOTAL_STORAGE_LIMIT: 500 * 1024 * 1024 * 1024 // 500GB
 };
 
 // Helper Functions
@@ -19,18 +20,81 @@ const validateFile = (file: File) => {
   }
 
   if (file.size > FILE_CONFIG.MAX_SIZE) {
-    throw new Error('File size too large. Maximum size is 5MB.');
+    throw new Error('File size too large. Maximum size is 4MB.');
   }
 };
-
 const getPhotoPath = (idCardId: string, photoType: PhotoType) => {
   return `id-cards/${idCardId}/${photoType}`;
 };
 
-// Services
+// Helper function to check for duplicate ID card entries
+const checkForDuplicateEntry = async (data: IDCardData): Promise<boolean> => {
+  try {
+    const { data: existingCards, error } = await supabase
+      .schema(SCHEMA)
+      .from(`${ID_CARD_TABLE}`)
+      .select('id')
+      .eq('student_name', data.studentName)
+      .eq('class_id', data.classId)
+      .eq('father_name', data.fatherName)
+      .eq('mother_name', data.motherName);
+    
+    if (error) throw error;
+    
+    return existingCards && existingCards.length > 0;
+  } catch (error) {
+    console.error('Error checking for duplicate entries:', error);
+    return false; // In case of error, allow submission to proceed
+  }
+};
+
+// Helper function to check total storage usage
+const checkStorageUsage = async (): Promise<boolean> => {
+  try {
+    // Get all files in the bucket to calculate total size
+    const { data, error } = await supabase.storage
+      .from(FILE_CONFIG.BUCKET)
+      .list();
+    
+    if (error) throw error;
+    
+    // Calculate total size of all files
+    let totalSize = 0;
+    if (data && data.length > 0) {
+      // Sum up the size of all files
+      totalSize = data.reduce((sum, file) => sum + (file.metadata?.size || 0), 0);
+    }
+    
+    return totalSize < FILE_CONFIG.TOTAL_STORAGE_LIMIT;
+  } catch (error) {
+    console.error('Error checking storage usage:', error);
+    return true; // In case of error, allow submission to proceed
+  }
+};
+
 export const idCardService = {
+  async checkDuplicateSubmission(data: IDCardData): Promise<boolean> {
+    return checkForDuplicateEntry(data);
+  },
+  
+  async checkStorageLimit(): Promise<boolean> {
+    return checkStorageUsage();
+  },
+  
   async saveIDCardData(data: IDCardData): Promise<string> {
     try {
+      // Check for duplicate submission
+      const isDuplicate = await this.checkDuplicateSubmission(data);
+      if (isDuplicate) {
+        throw new Error('A student with the same name, class, and parents already exists. Please check your information.');
+      }
+      
+      // Check storage limit
+      const hasStorageSpace = await this.checkStorageLimit();
+      if (!hasStorageSpace) {
+        throw new Error('Storage limit reached. Please contact the administrator.');
+      }
+      
       const id = data.id || uuidv4();
       
       const idCardData = {
@@ -164,6 +228,13 @@ export const idCardService = {
   async uploadPhoto(file: File, photoType: PhotoType, idCardId: string): Promise<string> {
     try {
       validateFile(file);
+      
+      // Check storage limit before uploading
+      const hasStorageSpace = await this.checkStorageLimit();
+      if (!hasStorageSpace) {
+        throw new Error('Storage limit reached. Please contact the administrator.');
+      }
+      
       const timestamp = new Date().getTime();
       const fileExtension = file.name.split('.').pop();
       const fileName = `${photoType}_${timestamp}.${fileExtension}`;

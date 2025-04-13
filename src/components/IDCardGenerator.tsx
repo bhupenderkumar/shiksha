@@ -143,23 +143,42 @@ export const IDCardGenerator: React.FC<IDCardGeneratorProps> = ({ data, idCardId
             <CardContent className="p-0">
               <div
                 ref={studentCardRef}
-                className="id-card bg-white p-3 sm:p-4 flex flex-col items-center"
-                style={{ width: '100%', height: '100%', minHeight: '350px', maxWidth: '100%' }}
+                className="id-card bg-white flex flex-col items-center"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  minHeight: '350px',
+                  maxWidth: '100%',
+                  backgroundImage: 'linear-gradient(to bottom right, rgba(219, 234, 254, 0.3), rgba(191, 219, 254, 0.3))',
+                  backgroundSize: 'cover',
+                  border: '1px solid #ccc',
+                  borderRadius: '8px',
+                  overflow: 'hidden',
+                  position: 'relative'
+                }}
               >
                 {/* School Header */}
-                <div className="w-full text-center mb-3 sm:mb-4 bg-blue-600 text-white py-1 sm:py-2">
-                  <h2 className="text-base sm:text-xl font-bold">{SCHOOL_INFO.name}</h2>
+                <div className="w-full text-center mb-3 sm:mb-4 bg-gradient-to-r from-blue-700 to-blue-500 text-white py-2 sm:py-3 px-3 shadow-md">
+                  <h2 className="text-base sm:text-xl font-bold tracking-wide">{SCHOOL_INFO.name}</h2>
                   <p className="text-[10px] sm:text-xs">{SCHOOL_INFO.address}</p>
                 </div>
 
-                <h3 className="text-base sm:text-lg font-bold mb-2">STUDENT ID CARD</h3>
+                {/* Watermark */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
+                  <h1 className="text-9xl font-bold transform rotate-45">{SCHOOL_INFO.name}</h1>
+                </div>
+
+                <div className="relative z-10 w-full px-3 sm:px-4">
+                  <div className="bg-blue-100 text-blue-800 text-center py-1 rounded-md mb-3">
+                    <h3 className="text-base sm:text-lg font-bold tracking-wider">STUDENT ID CARD</h3>
+                  </div>
 
                 {/* Student Photo */}
-                <div className="mb-3 sm:mb-4 border-2 border-gray-300 p-1">
+                <div className="mb-3 sm:mb-4 border-2 border-blue-300 p-1 rounded-md shadow-sm bg-white">
                   <img
                     src={data.studentPhoto as string}
                     alt="Student"
-                    className="w-24 sm:w-32 h-32 sm:h-40 object-cover"
+                    className="w-24 sm:w-32 h-32 sm:h-40 object-cover rounded-sm"
                     onError={(e) => {
                       e.currentTarget.src = 'https://via.placeholder.com/128x160?text=No+Photo';
                     }}
@@ -167,27 +186,44 @@ export const IDCardGenerator: React.FC<IDCardGeneratorProps> = ({ data, idCardId
                 </div>
 
                 {/* Student Details */}
-                <div className="w-full space-y-1 sm:space-y-2 text-sm sm:text-base">
-                  <div className="flex justify-between">
-                    <span className="font-semibold">Name:</span>
-                    <span className="text-right">{data.studentName}</span>
+                <div className="w-full space-y-2 text-sm sm:text-base bg-white rounded-lg p-3 border border-blue-200 shadow-sm">
+                  <div className="flex justify-between border-b border-gray-100 pb-1">
+                    <span className="font-semibold text-gray-700">Name:</span>
+                    <span className="text-right font-medium">{data.studentName}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="font-semibold">Class:</span>
-                    <span>{data.className} {data.section}</span>
+                  
+                  {data.dateOfBirth && (
+                    <div className="flex justify-between border-b border-gray-100 pb-1">
+                      <span className="font-semibold text-gray-700">Date of Birth:</span>
+                      <span className="text-right">
+                        {new Date(data.dateOfBirth).toLocaleDateString('en-IN', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric'
+                        })}
+                      </span>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between border-b border-gray-100 pb-1">
+                    <span className="font-semibold text-gray-700">Class:</span>
+                    <span className="text-right">{data.className} {data.section}</span>
                   </div>
+                  
                   {data.admissionNumber && (
-                    <div className="flex justify-between">
-                      <span className="font-semibold">Admission No:</span>
-                      <span>{data.admissionNumber}</span>
+                    <div className="flex justify-between border-b border-gray-100 pb-1">
+                      <span className="font-semibold text-gray-700">Admission No:</span>
+                      <span className="text-right">{data.admissionNumber}</span>
                     </div>
                   )}
                 </div>
+                </div>
 
                 {/* School Contact */}
-                <div className="mt-auto w-full text-center text-[10px] sm:text-xs pt-3 sm:pt-4 border-t border-gray-200 mt-3 sm:mt-4">
-                  <p>{SCHOOL_INFO.phone} | {SCHOOL_INFO.email}</p>
+                <div className="mt-auto w-full text-center text-[10px] sm:text-xs pt-3 sm:pt-4 border-t border-blue-200 mt-3 sm:mt-4 bg-gradient-to-r from-blue-50 to-blue-100 py-2">
+                  <p className="font-medium">{SCHOOL_INFO.phone} | {SCHOOL_INFO.email}</p>
                   <p>{SCHOOL_INFO.website}</p>
+                  <p className="text-[8px] mt-1 text-blue-600">ID Card valid for Academic Year 2025-26</p>
                 </div>
               </div>
             </CardContent>
@@ -200,75 +236,105 @@ export const IDCardGenerator: React.FC<IDCardGeneratorProps> = ({ data, idCardId
             <CardContent className="p-0">
               <div
                 ref={parentCardRef}
-                className="id-card bg-white p-3 sm:p-4 flex flex-col items-center"
-                style={{ width: '100%', height: '100%', minHeight: '350px', maxWidth: '100%' }}
+                className="id-card bg-white flex flex-col items-center"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  minHeight: '350px',
+                  maxWidth: '100%',
+                  backgroundImage: 'linear-gradient(to bottom right, rgba(219, 234, 254, 0.3), rgba(191, 219, 254, 0.3))',
+                  backgroundSize: 'cover',
+                  border: '1px solid #ccc',
+                  borderRadius: '8px',
+                  overflow: 'hidden',
+                  position: 'relative'
+                }}
               >
                 {/* School Header */}
-                <div className="w-full text-center mb-3 sm:mb-4 bg-blue-600 text-white py-1 sm:py-2">
-                  <h2 className="text-base sm:text-xl font-bold">{SCHOOL_INFO.name}</h2>
+                <div className="w-full text-center mb-3 sm:mb-4 bg-gradient-to-r from-blue-700 to-blue-500 text-white py-2 sm:py-3 px-3 shadow-md">
+                  <h2 className="text-base sm:text-xl font-bold tracking-wide">{SCHOOL_INFO.name}</h2>
                   <p className="text-[10px] sm:text-xs">Parent Information</p>
                 </div>
 
+                {/* Watermark */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
+                  <h1 className="text-9xl font-bold transform rotate-45">{SCHOOL_INFO.name}</h1>
+                </div>
+
+                <div className="relative z-10 w-full px-3 sm:px-4">
+                  <div className="bg-blue-100 text-blue-800 text-center py-1 rounded-md mb-3">
+                    <h3 className="text-base sm:text-lg font-bold tracking-wider">PARENT ID CARD</h3>
+                  </div>
+                </div>
+
                 {/* Parent Photos */}
-                <div className="flex justify-center space-x-3 sm:space-x-4 mb-3 sm:mb-4">
+                <div className="flex justify-center space-x-4 sm:space-x-6 mb-3 sm:mb-4">
                   <div className="flex flex-col items-center">
-                    <div className="border-2 border-gray-300 p-1">
+                    <div className="border-2 border-blue-300 p-1 rounded-md shadow-sm bg-white">
                       <img
                         src={data.fatherPhoto as string}
                         alt="Father"
-                        className="w-20 sm:w-24 h-24 sm:h-32 object-cover"
+                        className="w-20 sm:w-24 h-24 sm:h-32 object-cover rounded-sm"
                         onError={(e) => {
                           e.currentTarget.src = 'https://via.placeholder.com/96x128?text=No+Photo';
                         }}
                       />
                     </div>
-                    <span className="text-xs sm:text-sm mt-1">Father</span>
+                    <span className="text-xs sm:text-sm mt-1 bg-blue-100 px-3 py-0.5 rounded-full text-blue-800 font-medium">Father</span>
                   </div>
                   <div className="flex flex-col items-center">
-                    <div className="border-2 border-gray-300 p-1">
+                    <div className="border-2 border-blue-300 p-1 rounded-md shadow-sm bg-white">
                       <img
                         src={data.motherPhoto as string}
                         alt="Mother"
-                        className="w-20 sm:w-24 h-24 sm:h-32 object-cover"
+                        className="w-20 sm:w-24 h-24 sm:h-32 object-cover rounded-sm"
                         onError={(e) => {
                           e.currentTarget.src = 'https://via.placeholder.com/96x128?text=No+Photo';
                         }}
                       />
                     </div>
-                    <span className="text-xs sm:text-sm mt-1">Mother</span>
+                    <span className="text-xs sm:text-sm mt-1 bg-blue-100 px-3 py-0.5 rounded-full text-blue-800 font-medium">Mother</span>
                   </div>
                 </div>
 
                 {/* Parent Details */}
-                <div className="w-full space-y-1 sm:space-y-2 text-xs sm:text-sm">
-                  <div className="flex justify-between">
-                    <span className="font-semibold">Father's Name:</span>
-                    <span className="text-right">{data.fatherName}</span>
+                <div className="w-full space-y-2 text-xs sm:text-sm bg-white rounded-lg p-3 border border-blue-200 shadow-sm">
+                  <div className="flex justify-between border-b border-gray-100 pb-1">
+                    <span className="font-semibold text-gray-700">Father's Name:</span>
+                    <span className="text-right font-medium">{data.fatherName}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="font-semibold">Mother's Name:</span>
-                    <span className="text-right">{data.motherName}</span>
+                  <div className="flex justify-between border-b border-gray-100 pb-1">
+                    <span className="font-semibold text-gray-700">Mother's Name:</span>
+                    <span className="text-right font-medium">{data.motherName}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="font-semibold">Contact:</span>
-                    <span className="text-right">{data.fatherMobile}, {data.motherMobile}</span>
+                  <div className="flex justify-between border-b border-gray-100 pb-1">
+                    <span className="font-semibold text-gray-700">Father's Contact:</span>
+                    <span className="text-right">{data.fatherMobile}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="font-semibold">Address:</span>
-                    <span className="text-right max-w-[60%]">{data.address}</span>
+                  <div className="flex justify-between border-b border-gray-100 pb-1">
+                    <span className="font-semibold text-gray-700">Mother's Contact:</span>
+                    <span className="text-right">{data.motherMobile}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-gray-100 pb-1">
+                    <span className="font-semibold text-gray-700">Address:</span>
+                    <span className="text-right max-w-[60%] break-words">{data.address}</span>
                   </div>
                 </div>
 
                 {/* Student Name Reference */}
-                <div className="mt-3 sm:mt-4 w-full text-center">
-                  <p className="font-semibold text-xs sm:text-sm">Parent of: {data.studentName}</p>
-                  <p className="text-xs">Class: {data.className} {data.section}</p>
+                <div className="mt-3 sm:mt-4 w-full text-center bg-blue-50 rounded-md p-2 border border-blue-100">
+                  <p className="font-semibold text-xs sm:text-sm text-blue-800">Parent of: {data.studentName}</p>
+                  <p className="text-xs text-blue-700">Class: {data.className} {data.section}</p>
+                  {data.dateOfBirth && (
+                    <p className="text-xs text-blue-700">Date of Birth: {new Date(data.dateOfBirth).toLocaleDateString('en-IN')}</p>
+                  )}
                 </div>
 
                 {/* School Contact */}
-                <div className="mt-auto w-full text-center text-[10px] sm:text-xs pt-3 sm:pt-4 border-t border-gray-200 mt-3 sm:mt-4">
-                  <p>{SCHOOL_INFO.phone} | {SCHOOL_INFO.email}</p>
+                <div className="mt-auto w-full text-center text-[10px] sm:text-xs pt-3 sm:pt-4 border-t border-blue-200 mt-3 sm:mt-4 bg-gradient-to-r from-blue-50 to-blue-100 py-2">
+                  <p className="font-medium">{SCHOOL_INFO.phone} | {SCHOOL_INFO.email}</p>
                   <p>{SCHOOL_INFO.website}</p>
+                  <p className="text-[8px] mt-1 text-blue-600">ID Card valid for Academic Year 2025-26</p>
                 </div>
               </div>
             </CardContent>

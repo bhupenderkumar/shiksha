@@ -22,7 +22,64 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+  // Compress image function
+  const compressImage = (file: File, maxWidth = 800, quality = 0.7): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          // Create canvas
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Calculate new dimensions while maintaining aspect ratio
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Draw and compress image
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          // Convert to blob with reduced quality
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error('Canvas to Blob conversion failed'));
+                return;
+              }
+              
+              // Create new file from blob
+              const newFile = new File([blob], file.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+              });
+              
+              resolve(newFile);
+            },
+            'image/jpeg',
+            quality
+          );
+        };
+        img.onerror = () => {
+          reject(new Error('Image loading error'));
+        };
+      };
+      reader.onerror = () => {
+        reject(new Error('File reading error'));
+      };
+    });
+  };
+
+  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -32,18 +89,34 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('File size should be less than 5MB');
+    // Validate file size (max 4MB)
+    if (file.size > 4 * 1024 * 1024) {
+      toast.error('File size should be less than 4MB');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      setPreview(reader.result as string);
-      onPhotoChange(file);
-    };
-    reader.readAsDataURL(file);
+    try {
+      // Compress the image
+      const compressedFile = await compressImage(file);
+      console.log(`Original size: ${(file.size / 1024).toFixed(2)}KB, Compressed size: ${(compressedFile.size / 1024).toFixed(2)}KB`);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = () => {
+        setPreview(reader.result as string);
+        onPhotoChange(compressedFile);
+      };
+      reader.readAsDataURL(compressedFile);
+    } catch (error) {
+      console.error('Error compressing image:', error);
+      // Fall back to original file if compression fails
+      const reader = new FileReader();
+      reader.onload = () => {
+        setPreview(reader.result as string);
+        onPhotoChange(file);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const startCamera = async () => {
@@ -79,7 +152,7 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
     }
   };
 
-  const capturePhoto = () => {
+  const capturePhoto = async () => {
     if (videoRef.current && canvasRef.current) {
       const canvas = canvasRef.current;
       const video = videoRef.current;
@@ -93,21 +166,35 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
       if (context) {
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         
-        // Convert canvas to blob
-        canvas.toBlob((blob) => {
+        // Convert canvas to blob with reduced quality (0.7)
+        canvas.toBlob(async (blob) => {
           if (blob) {
-            // Create file from blob
-            const file = new File([blob], `${photoType}_photo.jpg`, { type: 'image/jpeg' });
-            
-            // Set preview and notify parent
-            const imageUrl = URL.createObjectURL(blob);
-            setPreview(imageUrl);
-            onPhotoChange(file);
-            
-            // Stop camera
-            stopCamera();
+            try {
+              // Create file from blob
+              const file = new File([blob], `${photoType}_photo.jpg`, { type: 'image/jpeg' });
+              
+              // Compress the captured image
+              const compressedFile = await compressImage(file, 800, 0.7);
+              console.log(`Camera capture - Original size: ${(file.size / 1024).toFixed(2)}KB, Compressed size: ${(compressedFile.size / 1024).toFixed(2)}KB`);
+              
+              // Set preview and notify parent
+              const imageUrl = URL.createObjectURL(compressedFile);
+              setPreview(imageUrl);
+              onPhotoChange(compressedFile);
+              
+              // Stop camera
+              stopCamera();
+            } catch (error) {
+              console.error('Error compressing captured image:', error);
+              // Fall back to original file if compression fails
+              const file = new File([blob], `${photoType}_photo.jpg`, { type: 'image/jpeg' });
+              const imageUrl = URL.createObjectURL(blob);
+              setPreview(imageUrl);
+              onPhotoChange(file);
+              stopCamera();
+            }
           }
-        }, 'image/jpeg', 0.9);
+        }, 'image/jpeg', 0.8); // Initial quality reduced from 0.9 to 0.8
       }
     }
   };

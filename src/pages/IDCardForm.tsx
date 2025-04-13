@@ -239,12 +239,24 @@ const IDCardForm: React.FC = () => {
       toast.success('ID card created successfully!');
       
       // Open WhatsApp with the specified message
-      const whatsappMessage = `hi ${data.studentName}, data has been submitted thanks`;
+      const whatsappMessage = `hi, Student Name is ${data.studentName}, data has been submitted thanks`;
       const whatsappUrl = `https://wa.me/919311872001?text=${encodeURIComponent(whatsappMessage)}`;
       window.open(whatsappUrl, '_blank');
     } catch (error) {
       console.error('Error creating ID card:', error);
-      toast.error('Failed to create ID card. Please try again.');
+      
+      // Display specific error messages for duplicate submissions and storage limits
+      if (error instanceof Error) {
+        if (error.message.includes('duplicate') || error.message.includes('already exists')) {
+          toast.error(error.message);
+        } else if (error.message.includes('Storage limit')) {
+          toast.error(error.message);
+        } else {
+          toast.error('Failed to create ID card. Please try again.');
+        }
+      } else {
+        toast.error('Failed to create ID card. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -355,7 +367,7 @@ const IDCardForm: React.FC = () => {
             <CardContent className="px-4 sm:px-6 pb-6">
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                  <div className="grid grid-cols-1 gap-4 sm:gap-6">
                     {/* Student Information */}
                     <div className="space-y-3 sm:space-y-4">
                       <h3 className="text-base sm:text-lg font-medium">Student Information</h3>
@@ -365,7 +377,7 @@ const IDCardForm: React.FC = () => {
                         name="studentName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Student Name</FormLabel>
+                            <FormLabel className="font-bold text-black">Student Name</FormLabel>
                             <FormControl>
                               <Input {...field} placeholder="Enter student name" />
                             </FormControl>
@@ -379,7 +391,7 @@ const IDCardForm: React.FC = () => {
                         name="dateOfBirth"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Date of Birth</FormLabel>
+                            <FormLabel className="font-bold text-black">Date of Birth</FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
@@ -397,7 +409,7 @@ const IDCardForm: React.FC = () => {
                         name="classId"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Class</FormLabel>
+                            <FormLabel className="font-bold text-black">Class</FormLabel>
                             <Select
                               onValueChange={field.onChange}
                               defaultValue={field.value}
@@ -421,7 +433,31 @@ const IDCardForm: React.FC = () => {
                       />
 
                       <div>
-                        <FormLabel>Student Photo</FormLabel>
+                        <FormLabel className="font-bold text-black">Student Photo</FormLabel>
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="bg-blue-50 p-2 rounded-md border border-blue-100 flex items-center">
+                            <div className="w-16 h-20 bg-white border border-gray-300 rounded-sm overflow-hidden mr-2 flex items-center justify-center">
+                              <div className="text-center p-1">
+                                <div className="w-10 h-10 mx-auto rounded-full bg-blue-100 flex items-center justify-center mb-1">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500">
+                                    <circle cx="12" cy="8" r="5"></circle>
+                                    <path d="M20 21a8 8 0 0 0-16 0"></path>
+                                  </svg>
+                                </div>
+                                <p className="text-[8px] font-medium text-blue-800">Student Photo</p>
+                              </div>
+                            </div>
+                            <div className="text-xs text-blue-800">
+                              <p className="font-semibold">Example Photo</p>
+                              <ul className="list-disc pl-4 mt-1 text-[10px]">
+                                <li>Passport size</li>
+                                <li>Clear face</li>
+                                <li>Light background</li>
+                                <li>Recent photo</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
                         <div className="mt-1">
                           <PhotoUploader
                             onPhotoChange={(file) => handlePhotoChange('student', file)}
@@ -440,7 +476,7 @@ const IDCardForm: React.FC = () => {
                         name="fatherName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Father's Name</FormLabel>
+                            <FormLabel className="font-bold text-black">Father's Name</FormLabel>
                             <FormControl>
                               <Input {...field} placeholder="Enter father's name" />
                             </FormControl>
@@ -454,7 +490,7 @@ const IDCardForm: React.FC = () => {
                         name="motherName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Mother's Name</FormLabel>
+                            <FormLabel className="font-bold text-black">Mother's Name</FormLabel>
                             <FormControl>
                               <Input {...field} placeholder="Enter mother's name" />
                             </FormControl>
@@ -463,24 +499,70 @@ const IDCardForm: React.FC = () => {
                         )}
                       />
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <FormLabel>Father's Photo</FormLabel>
-                          <div className="mt-1">
-                            <PhotoUploader
-                              onPhotoChange={(file) => handlePhotoChange('father', file)}
-                              photoType="father"
-                            />
+                      <div>
+                        <FormLabel className="font-bold text-black">Father's Photo</FormLabel>
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="bg-blue-50 p-2 rounded-md border border-blue-100 flex items-center">
+                            <div className="w-16 h-20 bg-white border border-gray-300 rounded-sm overflow-hidden mr-2 flex items-center justify-center">
+                              <div className="text-center p-1">
+                                <div className="w-10 h-10 mx-auto rounded-full bg-blue-100 flex items-center justify-center mb-1">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-700">
+                                    <circle cx="12" cy="8" r="5"></circle>
+                                    <path d="M20 21a8 8 0 0 0-16 0"></path>
+                                  </svg>
+                                </div>
+                                <p className="text-[8px] font-medium text-blue-800">Father Photo</p>
+                              </div>
+                            </div>
+                            <div className="text-xs text-blue-800">
+                              <p className="font-semibold">Example Photo</p>
+                              <ul className="list-disc pl-4 mt-1 text-[10px]">
+                                <li>Passport size</li>
+                                <li>Clear face</li>
+                                <li>Light background</li>
+                                <li>Recent photo</li>
+                              </ul>
+                            </div>
                           </div>
                         </div>
-                        <div>
-                          <FormLabel>Mother's Photo</FormLabel>
-                          <div className="mt-1">
-                            <PhotoUploader
-                              onPhotoChange={(file) => handlePhotoChange('mother', file)}
-                              photoType="mother"
-                            />
+                        <div className="mt-1">
+                          <PhotoUploader
+                            onPhotoChange={(file) => handlePhotoChange('father', file)}
+                            photoType="father"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <FormLabel className="font-bold text-black">Mother's Photo</FormLabel>
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="bg-blue-50 p-2 rounded-md border border-blue-100 flex items-center">
+                            <div className="w-16 h-20 bg-white border border-gray-300 rounded-sm overflow-hidden mr-2 flex items-center justify-center">
+                              <div className="text-center p-1">
+                                <div className="w-10 h-10 mx-auto rounded-full bg-blue-100 flex items-center justify-center mb-1">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-pink-500">
+                                    <circle cx="12" cy="8" r="5"></circle>
+                                    <path d="M20 21a8 8 0 0 0-16 0"></path>
+                                  </svg>
+                                </div>
+                                <p className="text-[8px] font-medium text-blue-800">Mother Photo</p>
+                              </div>
+                            </div>
+                            <div className="text-xs text-blue-800">
+                              <p className="font-semibold">Example Photo</p>
+                              <ul className="list-disc pl-4 mt-1 text-[10px]">
+                                <li>Passport size</li>
+                                <li>Clear face</li>
+                                <li>Light background</li>
+                                <li>Recent photo</li>
+                              </ul>
+                            </div>
                           </div>
+                        </div>
+                        <div className="mt-1">
+                          <PhotoUploader
+                            onPhotoChange={(file) => handlePhotoChange('mother', file)}
+                            photoType="mother"
+                          />
                         </div>
                       </div>
                     </div>
@@ -491,7 +573,7 @@ const IDCardForm: React.FC = () => {
                       name="fatherMobile"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Father's Mobile</FormLabel>
+                          <FormLabel className="font-bold text-black">Father's Mobile</FormLabel>
                           <FormControl>
                             <Input {...field} placeholder="Enter father's mobile number" />
                           </FormControl>
@@ -505,7 +587,7 @@ const IDCardForm: React.FC = () => {
                       name="motherMobile"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Mother's Mobile</FormLabel>
+                          <FormLabel className="font-bold text-black">Mother's Mobile</FormLabel>
                           <FormControl>
                             <Input {...field} placeholder="Enter mother's mobile number" />
                           </FormControl>
@@ -519,8 +601,8 @@ const IDCardForm: React.FC = () => {
                       control={form.control}
                       name="address"
                       render={({ field }) => (
-                        <FormItem className="col-span-2">
-                          <FormLabel>Address</FormLabel>
+                        <FormItem>
+                          <FormLabel className="font-bold text-black">Address</FormLabel>
                           <FormControl>
                             <Input {...field} placeholder="Enter address" />
                           </FormControl>
