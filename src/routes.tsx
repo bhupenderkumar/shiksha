@@ -21,6 +21,7 @@ import Attendance from './pages/Attendance';
 import Fees from './pages/Fees';
 import Settings from './pages/Settings';
 import ViewAdmissionEnquiries from './pages/ViewAdmissionEnquiries';
+import IDCardForm from './pages/IDCardForm';
 import Layout from './components/Layout';
 import PublicLayout from './components/PublicLayout';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -53,6 +54,10 @@ export const router = createBrowserRouter([
       {
         path: 'admission-progress/:id',
         element: <AdmissionProgress />,
+      },
+      {
+        path: 'id-card',
+        element: <IDCardForm />,
       },
     ],
   },

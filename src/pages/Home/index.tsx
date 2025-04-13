@@ -8,6 +8,7 @@ import { AchievementsSection } from "./components/AchievementsSection";
 import { QuickLinks } from "./components/QuickLinks";
 import { TestimonialsSection } from "./components/TestimonialsSection";
 import { MapSection } from "./components/MapSection";
+import { PWAPrompt } from "@/components/ui/pwa-prompt";
 
 export default function Home() {
   useEffect(() => {
@@ -17,6 +18,7 @@ export default function Home() {
   return (
     <PageAnimation>
       <div className="relative">
+        <PWAPrompt />
         {/* Hero with dramatic entrance */}
         <SectionAnimation animation="heroReveal">
           <HeroSection />
