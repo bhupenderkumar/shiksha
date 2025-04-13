@@ -575,7 +575,7 @@ const IDCardForm: React.FC = () => {
                         <FormItem>
                           <FormLabel className="font-bold text-black">Father's Mobile</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="Enter father's mobile number" />
+                            <Input {...field} type="tel" inputMode="numeric" pattern="[0-9]*" placeholder="Enter father's mobile number" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -589,7 +589,7 @@ const IDCardForm: React.FC = () => {
                         <FormItem>
                           <FormLabel className="font-bold text-black">Mother's Mobile</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="Enter mother's mobile number" />
+                            <Input {...field} type="tel" inputMode="numeric" pattern="[0-9]*" placeholder="Enter mother's mobile number" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
