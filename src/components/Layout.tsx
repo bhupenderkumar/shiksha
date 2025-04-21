@@ -14,7 +14,8 @@ import {
   ChevronRight,
   LogOut,
   MessageSquare,
-  CreditCard as IdCard
+  CreditCard as IdCard,
+  Puzzle
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { useAuth } from '@/lib/auth';
@@ -48,12 +49,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { id: 2, icon: Users, label: 'Students', path: ROUTES.STUDENTS, role: 'admin' },
     { id: 3, icon: BookOpen, label: 'Homework', path: ROUTES.HOMEWORK },
     { id: 4, icon: BookOpen, label: 'Classwork', path: ROUTES.CLASSWORK },
+    { id: 13, icon: Puzzle, label: 'Interactive Assignments', path: ROUTES.INTERACTIVE_ASSIGNMENTS },
     { id: 5, icon: Calendar, label: 'Attendance', path: ROUTES.ATTENDANCE },
     { id: 6, icon: CreditCard, label: 'Fees', path: ROUTES.FEES },
     { id: 7, icon: MessageSquare, label: 'Feedback', path: ROUTES.FEEDBACK },
     { id: 8, icon: Settings, label: 'Settings', path: ROUTES.SETTINGS },
     { id: 10, icon: Users, label: 'Profile', path: '/profile' },
     { id: 11, icon: IdCard, label: 'ID Card', path: '/id-card' },
+    { id: 12, icon: IdCard, label: 'ID Card Details', path: '/idcarddetails', role: 'admin' },
   ];
 
   const variants = {

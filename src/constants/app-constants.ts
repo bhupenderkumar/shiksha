@@ -11,6 +11,11 @@ export const ROUTES = {
   STUDENT_DETAIL: '/students/:id',
   HOMEWORK_DETAIL: '/homework/:id',
   CLASSWORK_DETAIL: '/classwork/:id',
+  INTERACTIVE_ASSIGNMENTS: '/interactive-assignments',
+  INTERACTIVE_ASSIGNMENT_DETAIL: '/interactive-assignments/:id',
+  INTERACTIVE_ASSIGNMENT_CREATE: '/interactive-assignments/create',
+  INTERACTIVE_ASSIGNMENT_EDIT: '/interactive-assignments/edit/:id',
+  INTERACTIVE_ASSIGNMENT_VIEW: '/interactive-assignments/view/:id',
 } as const;
 
 export const API_ENDPOINTS = {
