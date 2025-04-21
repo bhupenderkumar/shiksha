@@ -32,9 +32,39 @@ import AdmissionProcess from './pages/AdmissionProcess';
 import PwaTest from './pages/PwaTest';
 import WhatsAppTest from './pages/WhatsAppTest';
 import IDCardForm from './pages/IDCardForm';
+import IDCardDetails from './pages/IDCardDetails';
+import IDCardView from './pages/IDCardView';
+import TestInteractiveAssignment from './pages/TestInteractiveAssignment';
+import KonvaTestPage from './pages/KonvaTestPage';
+import { InteractiveAssignmentForm } from '@/components/interactive/InteractiveAssignmentForm';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+import Unauthorized from './pages/Unauthorized';
 
 // Public routes that don't require authentication
-const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/', '/homework/view/:id', '/homework/:id', '/classwork/:id', '/admission-enquiry', '/admission-enquiry/:id', '/admission-enquiries', '/year-end-feedback', '/year-end-feedback/:id', '/pwa-test', '/whatsapp-test', '/id-card']
+const PUBLIC_ROUTES = [
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/',
+  '/homework/view/:id',
+  '/homework/:id',
+  '/classwork/:id',
+  '/admission-enquiry',
+  '/admission-enquiry/:id',
+  '/admission-enquiries',
+  '/year-end-feedback',
+  '/year-end-feedback/:id',
+  '/pwa-test',
+  '/whatsapp-test',
+  '/id-card',
+  '/id-card/view',
+  '/test-interactive-assignment',
+  '/konva-test',
+  '/unauthorized',
+  '/interactive-assignments/create',
+  '/interactive-assignments/edit/:id',
+  '/interactive-assignments/view/:id'
+];
 
 // Private route component
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -75,7 +105,10 @@ function AppRoutes() {
       <Route path="/register" element={<Register />} />
       <Route path="/pwa-test" element={<PwaTest />} />
       <Route path="/whatsapp-test" element={<WhatsAppTest />} />
-      <Route path="/id-card" element={<IDCardForm />} />
+      <Route path="/id-card" element={<IDCardView />} />
+      <Route path="/test-interactive-assignment" element={<TestInteractiveAssignment />} />
+      <Route path="/konva-test" element={<KonvaTestPage />} />
+      <Route path="/unauthorized" element={<Unauthorized />} />
       <Route
         path="/dashboard"
         element={
@@ -317,7 +350,27 @@ function AppRoutes() {
           </Layout>
         </PrivateRoute>
       } />
-{/* ID Card route removed from protected routes and added to public routes */}
+      <Route path="/idcarddetails" element={
+        <PrivateRoute>
+          <Layout>
+            <IDCardDetails />
+          </Layout>
+        </PrivateRoute>
+      } />
+      <Route
+        path="/interactive-assignments/create"
+        element={
+          <ProtectedRoute
+            requireAuth={true}
+            allowedRoles={['TEACHER', 'ADMIN']} // Adjust these roles based on your requirements
+          >
+            <Layout>
+              <InteractiveAssignmentForm />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      {/* ID Card route removed from protected routes and added to public routes */}
 
       {/* Catch all route */}
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -344,3 +397,11 @@ function App() {
 }
 
 export default App;
+
+
+
+
+
+
+
+
