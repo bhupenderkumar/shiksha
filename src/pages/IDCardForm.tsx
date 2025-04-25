@@ -60,7 +60,7 @@ const IDCardForm: React.FC = () => {
   const [idCardId, setIdCardId] = useState<string>('');
   const [selectedClass, setSelectedClass] = useState<ClassOption | null>(null);
   const [formSubmitted, setFormSubmitted] = useState(false);
-  
+
   // Confetti states
   const [showConfetti, setShowConfetti] = useState(true);
   const [confettiOpacity, setConfettiOpacity] = useState(1);
@@ -79,7 +79,7 @@ const IDCardForm: React.FC = () => {
       address: '',
     },
   });
-  
+
   // Confetti effect on component mount
   useEffect(() => {
     // Show confetti for 5 seconds then fade out
@@ -95,10 +95,10 @@ const IDCardForm: React.FC = () => {
           return newOpacity;
         });
       }, 100);
-      
+
       return () => clearInterval(fadeInterval);
     }, 5000);
-    
+
     return () => clearTimeout(fadeOutTimer);
   }, []);
 
@@ -106,22 +106,22 @@ const IDCardForm: React.FC = () => {
   useEffect(() => {
     // Set document title
     document.title = "FSPS ID Card Details";
-    
+
     // Create favicon link element
     const favicon = document.createElement('link');
     favicon.rel = 'icon';
     favicon.href = window.location.origin + '/icons/favicon.svg';
     favicon.type = 'image/svg+xml';
-    
+
     // Remove any existing favicon
     const existingFavicon = document.querySelector('link[rel="icon"]');
     if (existingFavicon) {
       document.head.removeChild(existingFavicon);
     }
-    
+
     // Add new favicon to document head
     document.head.appendChild(favicon);
-    
+
     // Cleanup function to remove favicon when component unmounts
     return () => {
       const favicon = document.querySelector('link[rel="icon"]');
@@ -266,14 +266,14 @@ const IDCardForm: React.FC = () => {
       setActiveTab('preview');
       setFormSubmitted(true);
       toast.success('ID card created successfully!');
-      
+
       // Open WhatsApp with the specified message
       const whatsappMessage = `hi, Student Name is ${data.studentName}, data has been submitted thanks`;
       const whatsappUrl = `https://wa.me/919311872001?text=${encodeURIComponent(whatsappMessage)}`;
       window.open(whatsappUrl, '_blank');
     } catch (error) {
       console.error('Error creating ID card:', error);
-      
+
       // Display specific error messages for duplicate submissions and storage limits
       if (error instanceof Error) {
         if (error.message.includes('duplicate') || error.message.includes('already exists')) {
@@ -335,27 +335,27 @@ const IDCardForm: React.FC = () => {
                 const spikes = 5;
                 const outerRadius = 7;
                 const innerRadius = 3;
-                
+
                 let rot = Math.PI / 2 * 3;
                 let x = 0;
                 let y = 0;
                 let step = Math.PI / spikes;
-                
+
                 ctx.beginPath();
                 ctx.moveTo(0, -outerRadius);
-                
+
                 for (let i = 0; i < spikes; i++) {
                   x = Math.cos(rot) * outerRadius;
                   y = Math.sin(rot) * outerRadius;
                   ctx.lineTo(x, y);
                   rot += step;
-                  
+
                   x = Math.cos(rot) * innerRadius;
                   y = Math.sin(rot) * innerRadius;
                   ctx.lineTo(x, y);
                   rot += step;
                 }
-                
+
                 ctx.lineTo(0, -outerRadius);
                 ctx.closePath();
                 ctx.fill();
@@ -400,7 +400,7 @@ const IDCardForm: React.FC = () => {
                     {/* Student Information */}
                     <div className="space-y-3 sm:space-y-4">
                       <h3 className="text-base sm:text-lg font-medium">Student Information</h3>
-                      
+
                       <FormField
                         control={form.control}
                         name="studentName"
@@ -499,7 +499,7 @@ const IDCardForm: React.FC = () => {
                     {/* Parent Information */}
                     <div className="space-y-3 sm:space-y-4">
                       <h3 className="text-base sm:text-lg font-medium">Parent Information</h3>
-                      
+
                       <FormField
                         control={form.control}
                         name="fatherName"
@@ -660,18 +660,28 @@ const IDCardForm: React.FC = () => {
           {idCardData && (
             <div className="px-0 sm:px-4">
               <IDCardGenerator data={idCardData} idCardId={idCardId} />
-              
-              <div className="mt-6 flex justify-center">
+
+              <div className="mt-6 flex flex-col sm:flex-row justify-center gap-4">
+                <a
+                  href={`/id-card?id=${idCardId}`}
+                  className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  View Full ID Card Details
+                </a>
                 <a
                   href={`https://wa.me/919717267473?text=${encodeURIComponent(`Having issues with ID card for ${idCardData.studentName}? Contact us for help.`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                  className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/>
                   </svg>
-                  Having issues with your ID card? Contact us on WhatsApp
+                  Contact Support on WhatsApp
                 </a>
               </div>
             </div>

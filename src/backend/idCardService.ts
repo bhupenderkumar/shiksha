@@ -38,9 +38,9 @@ const checkForDuplicateEntry = async (data: IDCardData): Promise<boolean> => {
       .eq('class_id', data.classId)
       .eq('father_name', data.fatherName)
       .eq('mother_name', data.motherName);
-    
+
     if (error) throw error;
-    
+
     return existingCards && existingCards.length > 0;
   } catch (error) {
     console.error('Error checking for duplicate entries:', error);
@@ -55,16 +55,16 @@ const checkStorageUsage = async (): Promise<boolean> => {
     const { data, error } = await supabase.storage
       .from(FILE_CONFIG.BUCKET)
       .list();
-    
+
     if (error) throw error;
-    
+
     // Calculate total size of all files
     let totalSize = 0;
     if (data && data.length > 0) {
       // Sum up the size of all files
       totalSize = data.reduce((sum, file) => sum + (file.metadata?.size || 0), 0);
     }
-    
+
     return totalSize < FILE_CONFIG.TOTAL_STORAGE_LIMIT;
   } catch (error) {
     console.error('Error checking storage usage:', error);
@@ -72,15 +72,31 @@ const checkStorageUsage = async (): Promise<boolean> => {
   }
 };
 
+export interface IDCardListParams {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  search?: string;
+  classId?: string;
+}
+
+export interface IDCardListResult {
+  idCards: IDCardData[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export const idCardService = {
   async checkDuplicateSubmission(data: IDCardData): Promise<boolean> {
     return checkForDuplicateEntry(data);
   },
-  
+
   async checkStorageLimit(): Promise<boolean> {
     return checkStorageUsage();
   },
-  
+
   async saveIDCardData(data: IDCardData): Promise<string> {
     try {
       // Check for duplicate submission
@@ -88,15 +104,15 @@ export const idCardService = {
       if (isDuplicate) {
         throw new Error('A student with the same name, class, and parents already exists. Please check your information.');
       }
-      
+
       // Check storage limit
       const hasStorageSpace = await this.checkStorageLimit();
       if (!hasStorageSpace) {
         throw new Error('Storage limit reached. Please contact the administrator.');
       }
-      
+
       const id = data.id || uuidv4();
-      
+
       const idCardData = {
         id,
         student_name: data.studentName,
@@ -189,7 +205,7 @@ export const idCardService = {
 
       // Get class details
       const { data: classData, error: classError } = await supabase
-      .schema(SCHEMA) 
+      .schema(SCHEMA)
       .from(`${CLASS_TABLE}`)
         .select('name, section')
         .eq('id', data.class_id)
@@ -228,13 +244,13 @@ export const idCardService = {
   async uploadPhoto(file: File, photoType: PhotoType, idCardId: string): Promise<string> {
     try {
       validateFile(file);
-      
+
       // Check storage limit before uploading
       const hasStorageSpace = await this.checkStorageLimit();
       if (!hasStorageSpace) {
         throw new Error('Storage limit reached. Please contact the administrator.');
       }
-      
+
       const timestamp = new Date().getTime();
       const fileExtension = file.name.split('.').pop();
       const fileName = `${photoType}_${timestamp}.${fileExtension}`;
@@ -248,7 +264,7 @@ export const idCardService = {
         });
 
       if (uploadError) throw uploadError;
-      
+
       // Get a signed URL that will work for public access
       const { data } = await supabase.storage
         .from(FILE_CONFIG.BUCKET)
@@ -259,10 +275,10 @@ export const idCardService = {
         const publicUrlData = supabase.storage
           .from(FILE_CONFIG.BUCKET)
           .getPublicUrl(filePath);
-        
+
         return publicUrlData.data.publicUrl;
       }
-      
+
       return data.signedUrl;
     } catch (error) {
       console.error('Error uploading photo:', error);
@@ -296,7 +312,7 @@ export const idCardService = {
   async incrementDownloadCount(id: string): Promise<void> {
     try {
       const { data, error: fetchError } = await supabase
-      .schema(SCHEMA) 
+      .schema(SCHEMA)
       .from(`${ID_CARD_TABLE}`)
         .select('download_count')
         .eq('id', id)
@@ -305,7 +321,7 @@ export const idCardService = {
       if (fetchError) throw fetchError;
 
       const { error: updateError } = await supabase
-      .schema(SCHEMA)   
+      .schema(SCHEMA)
       .from(`${ID_CARD_TABLE}`)
         .update({ download_count: (data.download_count || 0) + 1 })
         .eq('id', id);
@@ -314,6 +330,176 @@ export const idCardService = {
     } catch (error) {
       console.error('Error incrementing download count:', error);
       // Don't show toast for this error as it's not critical
+    }
+  },
+
+  async deleteIDCard(id: string): Promise<void> {
+    try {
+      // First, get the ID card to check if it exists and get photo URLs
+      const { data, error: fetchError } = await supabase
+        .schema(SCHEMA)
+        .from(`${ID_CARD_TABLE}`)
+        .select('student_photo_url, father_photo_url, mother_photo_url')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) throw fetchError;
+      if (!data) throw new Error('ID card not found');
+
+      // Delete the ID card record
+      const { error: deleteError } = await supabase
+        .schema(SCHEMA)
+        .from(`${ID_CARD_TABLE}`)
+        .delete()
+        .eq('id', id);
+
+      if (deleteError) throw deleteError;
+
+      // Try to delete photos from storage if they exist
+      // Note: We don't throw errors for storage deletion failures
+      // as the database record is already deleted
+      try {
+        const photoUrls = [
+          data.student_photo_url,
+          data.father_photo_url,
+          data.mother_photo_url
+        ].filter(Boolean);
+
+        for (const url of photoUrls) {
+          if (typeof url === 'string' && url.includes(FILE_CONFIG.BUCKET)) {
+            // Extract the path from the URL
+            const path = url.split(`${FILE_CONFIG.BUCKET}/`)[1]?.split('?')[0];
+            if (path) {
+              await supabase.storage
+                .from(FILE_CONFIG.BUCKET)
+                .remove([path]);
+            }
+          }
+        }
+      } catch (storageError) {
+        console.error('Error deleting photo files:', storageError);
+        // We don't throw here as the database record is already deleted
+      }
+
+      toast.success('ID card deleted successfully');
+    } catch (error) {
+      console.error('Error deleting ID card:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to delete ID card');
+      throw error;
+    }
+  },
+
+  async getAllIDCards(params: IDCardListParams = {}): Promise<IDCardListResult> {
+    try {
+      const {
+        page = 1,
+        limit = 10,
+        sortBy = 'created_at',
+        sortOrder = 'desc',
+        search = '',
+        classId = ''
+      } = params;
+
+      // Calculate offset for pagination
+      const offset = (page - 1) * limit;
+
+      // Start building the query
+      let query = supabase
+        .schema(SCHEMA)
+        .from(`${ID_CARD_TABLE}`)
+        .select(`
+          id,
+          student_name,
+          class_id,
+          date_of_birth,
+          student_photo_url,
+          father_name,
+          mother_name,
+          father_photo_url,
+          mother_photo_url,
+          father_mobile,
+          mother_mobile,
+          address,
+          created_at,
+          download_count
+        `, { count: 'exact' });
+
+      // Add search filter if provided
+      if (search) {
+        query = query.or(
+          `student_name.ilike.%${search}%,father_name.ilike.%${search}%,mother_name.ilike.%${search}%,address.ilike.%${search}%`
+        );
+      }
+
+      // Add class filter if provided
+      if (classId) {
+        query = query.eq('class_id', classId);
+      }
+
+      // Add sorting
+      query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+
+      // Add pagination
+      query = query.range(offset, offset + limit - 1);
+
+      // Execute the query
+      const { data, error, count } = await query;
+
+      if (error) throw error;
+
+      // Get class details for all ID cards
+      const classIds = data.map(card => card.class_id).filter(Boolean);
+      let classMap: Record<string, { name: string; section: string }> = {};
+
+      if (classIds.length > 0) {
+        const { data: classData, error: classError } = await supabase
+          .schema(SCHEMA)
+          .from(`${CLASS_TABLE}`)
+          .select('id, name, section')
+          .in('id', classIds);
+
+        if (!classError && classData) {
+          classMap = classData.reduce((acc, cls) => {
+            acc[cls.id] = { name: cls.name, section: cls.section };
+            return acc;
+          }, {} as Record<string, { name: string; section: string }>);
+        }
+      }
+
+      // Map the data to IDCardData format
+      const idCards = data.map(card => {
+        const classInfo = classMap[card.class_id] || { name: 'Unknown', section: '' };
+
+        return {
+          id: card.id,
+          studentName: card.student_name,
+          classId: card.class_id,
+          className: classInfo.name,
+          section: classInfo.section,
+          dateOfBirth: card.date_of_birth,
+          studentPhoto: card.student_photo_url,
+          fatherName: card.father_name,
+          motherName: card.mother_name,
+          fatherPhoto: card.father_photo_url,
+          motherPhoto: card.mother_photo_url,
+          fatherMobile: card.father_mobile,
+          motherMobile: card.mother_mobile,
+          address: card.address,
+          createdAt: new Date(card.created_at),
+          downloadCount: card.download_count
+        } as IDCardData;
+      });
+
+      return {
+        idCards,
+        total: count || 0,
+        page,
+        limit
+      };
+    } catch (error) {
+      console.error('Error fetching ID cards:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to fetch ID cards');
+      throw error;
     }
   }
 };

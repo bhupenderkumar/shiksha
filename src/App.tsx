@@ -3,6 +3,7 @@ import { AuthProvider } from '@/lib/auth';
 import { ThemeProvider } from '@/lib/theme-provider.tsx';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { CustomCursor } from '@/components/ui/custom-cursor';
+import { AnimatedBackground } from '@/components/ui/animated-background';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -31,10 +32,48 @@ import ViewYearEndFeedback from './pages/ViewYearEndFeedback';
 import AdmissionProcess from './pages/AdmissionProcess';
 import PwaTest from './pages/PwaTest';
 import WhatsAppTest from './pages/WhatsAppTest';
-import IDCardForm from './pages/IDCardForm';
+
+import IDCardDetails from './pages/IDCardDetails';
+import IDCardView from './pages/IDCardView';
+import TestInteractiveAssignment from './pages/TestInteractiveAssignment';
+import KonvaTestPage from './pages/KonvaTestPage';
+import { InteractiveAssignmentForm } from '@/components/interactive/InteractiveAssignmentForm';
+import { InteractiveAssignments } from './pages/InteractiveAssignments';
+import EditInteractiveAssignment from './pages/EditInteractiveAssignment';
+import ViewInteractiveAssignment from './pages/ViewInteractiveAssignment';
+import PlayAssignment from './pages/PlayAssignment';
+import SimplePlayAssignment from './pages/SimplePlayAssignment';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+import Unauthorized from './pages/Unauthorized';
 
 // Public routes that don't require authentication
-const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/', '/homework/view/:id', '/homework/:id', '/classwork/:id', '/admission-enquiry', '/admission-enquiry/:id', '/admission-enquiries', '/year-end-feedback', '/year-end-feedback/:id', '/pwa-test', '/whatsapp-test', '/id-card']
+const PUBLIC_ROUTES = [
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/',
+  '/homework/view/:id',
+  '/homework/:id',
+  '/classwork/:id',
+  '/admission-enquiry',
+  '/admission-enquiry/:id',
+  '/admission-enquiries',
+  '/year-end-feedback',
+  '/year-end-feedback/:id',
+  '/pwa-test',
+  '/whatsapp-test',
+  '/id-card',
+  '/id-card/view',
+  '/test-interactive-assignment',
+  '/konva-test',
+  '/unauthorized',
+  '/interactive-assignments',
+  '/interactive-assignments/create',
+  '/interactive-assignments/edit/:id',
+  '/interactive-assignments/view/:id',
+  '/interactive-assignments/play/:id',
+  '/assignments/play/:id'
+];
 
 // Private route component
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -75,7 +114,12 @@ function AppRoutes() {
       <Route path="/register" element={<Register />} />
       <Route path="/pwa-test" element={<PwaTest />} />
       <Route path="/whatsapp-test" element={<WhatsAppTest />} />
-      <Route path="/id-card" element={<IDCardForm />} />
+      <Route path="/id-card" element={<IDCardView />} />
+      <Route path="/test-interactive-assignment" element={<TestInteractiveAssignment />} />
+      <Route path="/konva-test" element={<KonvaTestPage />} />
+      <Route path="/unauthorized" element={<Unauthorized />} />
+      <Route path="/assignments/play/:id" element={<SimplePlayAssignment />} />
+      <Route path="/interactive-assignments/play/:id" element={<SimplePlayAssignment />} />
       <Route
         path="/dashboard"
         element={
@@ -317,7 +361,66 @@ function AppRoutes() {
           </Layout>
         </PrivateRoute>
       } />
-{/* ID Card route removed from protected routes and added to public routes */}
+      <Route path="/idcarddetails" element={
+        <PrivateRoute>
+          <Layout>
+            <IDCardDetails />
+          </Layout>
+        </PrivateRoute>
+      } />
+      <Route
+        path="/interactive-assignments"
+        element={
+          <ProtectedRoute
+            requireAuth={true}
+            allowedRoles={['TEACHER', 'ADMIN', 'STUDENT']}
+          >
+            <Layout>
+              <InteractiveAssignments />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/interactive-assignments/create"
+        element={
+          <ProtectedRoute
+            requireAuth={true}
+            allowedRoles={['TEACHER', 'ADMIN']}
+          >
+            <Layout>
+              <InteractiveAssignmentForm />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/interactive-assignments/edit/:id"
+        element={
+          <ProtectedRoute
+            requireAuth={true}
+            allowedRoles={['TEACHER', 'ADMIN']}
+          >
+            <Layout>
+              <EditInteractiveAssignment />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/interactive-assignments/view/:id"
+        element={
+          <ProtectedRoute
+            requireAuth={true}
+            allowedRoles={['TEACHER', 'ADMIN', 'STUDENT']}
+          >
+            <Layout>
+              <ViewInteractiveAssignment />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      {/* ID Card route removed from protected routes and added to public routes */}
 
       {/* Catch all route */}
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -332,7 +435,8 @@ function App() {
         <AuthProvider>
           <Router>
             <CustomCursor />
-            <div className="flex flex-col min-h-screen bg-background mt-4">
+            <AnimatedBackground particleCount={30} />
+            <div className="flex flex-col min-h-screen bg-transparent mt-4 relative z-10">
               <AppRoutes />
               <Toaster position="top-right" />
             </div>
@@ -344,3 +448,11 @@ function App() {
 }
 
 export default App;
+
+
+
+
+
+
+
+

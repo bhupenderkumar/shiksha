@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 interface CursorPosition {
   x: number;
@@ -6,13 +6,14 @@ interface CursorPosition {
 }
 
 interface TrailDot extends CursorPosition {
-  id: number;
+  id: string;
 }
 
 export function CustomCursor() {
   const [position, setPosition] = useState<CursorPosition>({ x: 0, y: 0 });
   const [trail, setTrail] = useState<TrailDot[]>([]);
   const [isPointer, setIsPointer] = useState(false);
+  const idCounterRef = useRef(0);
 
   useEffect(() => {
     const MAX_TRAIL_LENGTH = 5;
@@ -20,10 +21,16 @@ export function CustomCursor() {
 
     const updateCursorPosition = (e: MouseEvent) => {
       setPosition({ x: e.clientX, y: e.clientY });
-      
-      // Add new dot to trail
+
+      // Add new dot to trail with a truly unique ID
       setTrail(prevTrail => {
-        const newDot = { x: e.clientX, y: e.clientY, id: Date.now() };
+        // Increment counter for each new dot to ensure uniqueness
+        idCounterRef.current += 1;
+        const newDot = {
+          x: e.clientX,
+          y: e.clientY,
+          id: `dot-${Date.now()}-${idCounterRef.current}`
+        };
         const updatedTrail = [...prevTrail, newDot].slice(-MAX_TRAIL_LENGTH);
         return updatedTrail;
       });
