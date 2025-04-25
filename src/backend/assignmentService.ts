@@ -57,6 +57,7 @@ export const assignmentService = {
 
   async createOrUpdateAssignment(assignmentData: any, editingAssignmentId?: string) {
     try {
+      alert(editingAssignmentId)
       const { error } = editingAssignmentId
         ? await supabase
             .schema(SCHEMA)

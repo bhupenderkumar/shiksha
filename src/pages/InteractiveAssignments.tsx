@@ -12,21 +12,22 @@ import { PageHeader } from '@/components/ui/page-header';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useProfileAccess } from '@/services/profileService';
-import { useMediaQuery } from 'react-responsive';
+
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { toast } from 'react-hot-toast';
 import { InteractiveAssignment, InteractiveAssignmentType, InteractiveAssignmentStatus } from '@/types/interactiveAssignment';
+import { ROUTES } from '@/constants/app-constants';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { AssignmentPreview } from "@/components/interactive/AssignmentPreview";
 
-export default function InteractiveAssignments() {
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+export function InteractiveAssignments() {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { user } = useAuth();
   const { isAdminOrTeacher } = useProfileAccess();
-  const isMobile = useMediaQuery({ maxWidth: 768 });
 
   const [assignments, setAssignments] = useState<InteractiveAssignment[]>([]);
   const [selectedAssignment, setSelectedAssignment] = useState<InteractiveAssignment | null>(null);
@@ -34,6 +35,7 @@ export default function InteractiveAssignments() {
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [shareableLink, setShareableLink] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('all');
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,7 +46,7 @@ export default function InteractiveAssignments() {
     to: undefined,
   });
 
-  const { execute: fetchAssignments, status: fetchStatus } = useAsync(
+  const { execute: fetchAssignments, loading: fetchLoading } = useAsync(
     async () => {
       const filters = {
         type: selectedType || undefined,
@@ -57,8 +59,8 @@ export default function InteractiveAssignments() {
       };
 
       const data = await interactiveAssignmentService.getAll(
-        profile?.role || 'STUDENT',
-        profile?.role === 'STUDENT' ? profile?.classId : undefined,
+        user?.role || 'STUDENT',
+        undefined, // We don't have classId in the user object, so we'll pass undefined
         filters
       );
 
@@ -70,16 +72,29 @@ export default function InteractiveAssignments() {
     fetchAssignments();
   }, [searchTerm, selectedType, selectedStatus, dateRange]);
 
+  // Filter assignments based on active tab
+  const filteredAssignments = React.useMemo(() => {
+    if (activeTab === 'all') return assignments;
+    return assignments.filter(assignment => {
+      switch (activeTab) {
+        case 'draft': return assignment.status === 'DRAFT';
+        case 'published': return assignment.status === 'PUBLISHED';
+        case 'archived': return assignment.status === 'ARCHIVED';
+        default: return true;
+      }
+    });
+  }, [assignments, activeTab]);
+
   const handleCreateAssignment = () => {
-    navigate('/interactive-assignments/create');
+    navigate(ROUTES.INTERACTIVE_ASSIGNMENT_CREATE);
   };
 
   const handleEditAssignment = (assignment: InteractiveAssignment) => {
-    navigate(`/interactive-assignments/edit/${assignment.id}`);
+    navigate(`${ROUTES.INTERACTIVE_ASSIGNMENT_EDIT.replace(':id', assignment.id)}`);
   };
 
   const handleViewAssignment = (assignment: InteractiveAssignment) => {
-    navigate(`/interactive-assignments/${assignment.id}`);
+    navigate(`${ROUTES.INTERACTIVE_ASSIGNMENT_VIEW.replace(':id', assignment.id)}`);
   };
 
   const handleDeleteAssignment = async () => {
@@ -102,7 +117,9 @@ export default function InteractiveAssignments() {
     setSelectedAssignment(assignment);
     try {
       const link = await interactiveAssignmentService.generateShareableLink(assignment.id);
-      setShareableLink(link);
+      if (link) {
+        setShareableLink(link);
+      }
       setIsShareDialogOpen(true);
     } catch (error) {
       toast.error('Failed to generate shareable link');
@@ -198,7 +215,19 @@ export default function InteractiveAssignments() {
                   <label className="text-sm font-medium mb-1 block">Due Date Range</label>
                   <DateRangePicker
                     value={dateRange}
-                    onChange={setDateRange}
+                    onChange={(range) => {
+                      if (range) {
+                        setDateRange({
+                          from: range.from,
+                          to: range.to
+                        });
+                      } else {
+                        setDateRange({
+                          from: undefined,
+                          to: undefined
+                        });
+                      }
+                    }}
                   />
                 </div>
               </div>
@@ -219,7 +248,8 @@ export default function InteractiveAssignments() {
 
         <div className="flex justify-between items-center">
           <div className="text-sm text-gray-500">
-            Showing {assignments.length} assignment{assignments.length !== 1 ? 's' : ''}
+            Showing {filteredAssignments.length} assignment{filteredAssignments.length !== 1 ? 's' : ''}
+            {activeTab !== 'all' && ` (${activeTab})`}
           </div>
 
           {(selectedType || selectedStatus || dateRange.from || searchTerm) && (
@@ -266,7 +296,7 @@ export default function InteractiveAssignments() {
     );
   };
 
-  if (fetchStatus === 'pending') {
+  if (fetchLoading) {
     return <LoadingSpinner />;
   }
 
@@ -286,9 +316,18 @@ export default function InteractiveAssignments() {
         }
       />
 
+      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="mb-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="draft">Draft</TabsTrigger>
+          <TabsTrigger value="published">Published</TabsTrigger>
+          <TabsTrigger value="archived">Archived</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       {renderSearchFilters()}
 
-      {assignments.length === 0 ? (
+      {filteredAssignments.length === 0 ? (
         <EmptyState
           title="No assignments found"
           description="There are no interactive assignments matching your criteria."
@@ -304,7 +343,7 @@ export default function InteractiveAssignments() {
         />
       ) : (
         <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {assignments.map((assignment) => (
+          {filteredAssignments.map((assignment) => (
             <InteractiveAssignmentCard
               key={assignment.id}
               assignment={assignment}
@@ -315,7 +354,7 @@ export default function InteractiveAssignments() {
               } : undefined}
               onView={handleViewAssignment}
               onShare={isAdminOrTeacher ? handleShareAssignment : undefined}
-              isStudent={profile?.role === 'STUDENT'}
+              isStudent={user?.role === 'STUDENT'}
             />
           ))}
         </div>
@@ -358,4 +397,5 @@ export default function InteractiveAssignments() {
     </div>
   );
 }
+
 

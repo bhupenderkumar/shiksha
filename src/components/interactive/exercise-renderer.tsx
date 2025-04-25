@@ -15,6 +15,8 @@ import CountingExerciseKonva from './counting-exercise-konva';
 import ColoringExerciseKonva from './coloring-exercise-konva';
 import AudioReadingExercise from './audio-reading-exercise';
 import { Card, CardContent } from '@/components/ui/card';
+import { normalizeInteractiveQuestion } from '@/utils/columnNameUtils';
+import QuestionDataDebugger from './QuestionDataDebugger';
 
 interface ExerciseRendererProps {
   question: InteractiveQuestion;
@@ -31,12 +33,15 @@ export function ExerciseRenderer({
   onSave,
   showAnswers = false
 }: ExerciseRendererProps) {
+  // Normalize the question to ensure all properties are available in camelCase
+  const normalizedQuestion = normalizeInteractiveQuestion(question);
+
   const handleSave = (responseData: any) => {
     if (onSave) {
       onSave({
         id: '',
         submissionId: '',
-        questionId: question.id,
+        questionId: normalizedQuestion.id,
         responseData,
         isCorrect: undefined
       });
@@ -44,7 +49,7 @@ export function ExerciseRenderer({
   };
 
   const renderExercise = () => {
-    switch (question.questionType) {
+    switch (normalizedQuestion.questionType) {
       case 'MATCHING':
         return (
           <MatchingExercise
@@ -228,7 +233,13 @@ export function ExerciseRenderer({
       default:
         return (
           <div className="p-4 bg-gray-100 rounded-md">
-            <p>Unsupported question type: {question.questionType}</p>
+            <p>Unsupported question type: {normalizedQuestion.questionType}</p>
+
+            {/* Use our QuestionDataDebugger component in non-production environments */}
+            <QuestionDataDebugger
+              question={question}
+              showDebug={process.env.NODE_ENV !== 'production'}
+            />
           </div>
         );
     }
@@ -238,6 +249,16 @@ export function ExerciseRenderer({
     <Card className="mb-6">
       <CardContent className="pt-6">
         {renderExercise()}
+
+        {/* Add a debug button that shows the QuestionDataDebugger when clicked */}
+        {process.env.NODE_ENV !== 'production' && (
+          <div className="mt-4 text-right">
+            <details className="inline-block text-xs text-gray-500">
+              <summary className="cursor-pointer hover:text-blue-500">Debug Question Data</summary>
+              <QuestionDataDebugger question={question} showDebug={true} />
+            </details>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
