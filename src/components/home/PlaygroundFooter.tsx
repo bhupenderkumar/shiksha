@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
 import { SCHOOL_INFO } from "@/constants/schoolInfo";
 import { Link } from "react-router-dom";
-import { Facebook, Instagram, Twitter, Mail, Phone, MapPin, ArrowUp } from "lucide-react";
-import { StudentCharacter } from "@/components/animations/characters/StudentCharacter";
+import { Mail, Phone, MapPin, ArrowUp } from "lucide-react";
+import { FaFacebook, FaTwitter, FaInstagram } from "react-icons/fa";
 import { useTheme } from "@/lib/theme-provider";
+import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 
 interface PlaygroundFooterProps {
   className?: string;
@@ -11,7 +12,6 @@ interface PlaygroundFooterProps {
 
 export function PlaygroundFooter({ className = "" }: PlaygroundFooterProps) {
   const { theme } = useTheme();
-  const isDark = theme === "dark";
 
   // Animation variants
   const floatingAnimation = {
@@ -36,13 +36,7 @@ export function PlaygroundFooter({ className = "" }: PlaygroundFooterProps) {
     }
   };
 
-  // Playground colors
-  const playgroundColors = {
-    grass: isDark ? "#4c566a" : "#a3be8c",
-    sand: isDark ? "#d8dee9" : "#ffe8cc",
-    equipment: isDark ? "#5e81ac" : "#4c6ef5",
-    slide: isDark ? "#bf616a" : "#fa5252",
-  };
+
 
   const scrollToTop = () => {
     window.scrollTo({
@@ -53,47 +47,57 @@ export function PlaygroundFooter({ className = "" }: PlaygroundFooterProps) {
 
   return (
     <footer className={`relative pt-32 pb-8 overflow-hidden ${className}`}>
-      {/* Playground Background */}
-      <div 
-        className="absolute bottom-0 left-0 right-0 h-32 z-0"
-        style={{ background: playgroundColors.grass }}
-      />
-      <div 
-        className="absolute bottom-0 left-1/4 right-1/4 h-16 z-10 rounded-t-full"
-        style={{ background: playgroundColors.sand }}
+      {/* Footer Background */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-32 z-0 bg-gradient-to-t from-primary/10 to-transparent"
       />
 
-      {/* Playground Equipment */}
-      <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 z-10">
-        <svg width="200" height="100" viewBox="0 0 200 100" fill="none">
-          {/* Slide */}
-          <path 
-            d="M50,10 L100,80 L80,80 L30,10 Z" 
-            fill={playgroundColors.slide}
-          />
-          <rect x="30" y="10" width="20" height="5" fill={playgroundColors.equipment} />
-          
-          {/* Swing Set */}
-          <rect x="120" y="20" width="5" height="60" fill={playgroundColors.equipment} />
-          <rect x="170" y="20" width="5" height="60" fill={playgroundColors.equipment} />
-          <rect x="120" y="20" width="55" height="5" fill={playgroundColors.equipment} />
-          
-          <line x1="130" y1="25" x2="130" y2="70" stroke={isDark ? "#d8dee9" : "#adb5bd"} strokeWidth="2" />
-          <line x1="145" y1="25" x2="145" y2="70" stroke={isDark ? "#d8dee9" : "#adb5bd"} strokeWidth="2" />
-          <line x1="160" y1="25" x2="160" y2="70" stroke={isDark ? "#d8dee9" : "#adb5bd"} strokeWidth="2" />
-          
-          <rect x="125" y="70" width="10" height="5" fill={playgroundColors.equipment} />
-          <rect x="140" y="70" width="10" height="5" fill={playgroundColors.equipment} />
-          <rect x="155" y="70" width="10" height="5" fill={playgroundColors.equipment} />
-        </svg>
-      </div>
+      {/* Decorative elements */}
+      <div className="absolute bottom-32 left-0 right-0 z-10 flex justify-center space-x-16">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <GlassmorphicCard
+            className="p-4"
+            intensity="medium"
+            borderGlow={true}
+            animated={true}
+          >
+            <div className="text-center text-primary font-bold">Learn</div>
+          </GlassmorphicCard>
+        </motion.div>
 
-      {/* Student Characters */}
-      <div className="absolute bottom-16 left-1/4 z-20 transform scale-75">
-        <StudentCharacter variant="jumping" direction="right" />
-      </div>
-      <div className="absolute bottom-16 right-1/4 z-20 transform scale-75">
-        <StudentCharacter variant="jumping" direction="left" delay={0.5} />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <GlassmorphicCard
+            className="p-4"
+            intensity="medium"
+            borderGlow={true}
+            animated={true}
+          >
+            <div className="text-center text-primary font-bold">Play</div>
+          </GlassmorphicCard>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+        >
+          <GlassmorphicCard
+            className="p-4"
+            intensity="medium"
+            borderGlow={true}
+            animated={true}
+          >
+            <div className="text-center text-primary font-bold">Grow</div>
+          </GlassmorphicCard>
+        </motion.div>
       </div>
 
       {/* Back to Top Button */}
@@ -111,7 +115,7 @@ export function PlaygroundFooter({ className = "" }: PlaygroundFooterProps) {
       <div className="container mx-auto px-4 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           <div>
-            <motion.h3 
+            <motion.h3
               className="text-xl font-bold mb-4"
               variants={floatingAnimation}
               animate="animate"
@@ -122,36 +126,36 @@ export function PlaygroundFooter({ className = "" }: PlaygroundFooterProps) {
               Nurturing young minds, building bright futures. Join us in our journey of excellence in education.
             </p>
             <div className="flex space-x-4">
-              <motion.a 
-                href={SCHOOL_INFO.socialMedia?.facebook || "#"} 
-                target="_blank" 
+              <motion.a
+                href={SCHOOL_INFO.socialMedia?.facebook || "#"}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:text-primary/80"
                 whileHover={{ scale: 1.2, rotate: 10 }}
               >
-                <Facebook size={20} />
+                <FaFacebook size={20} />
               </motion.a>
-              <motion.a 
-                href={SCHOOL_INFO.socialMedia?.twitter || "#"} 
-                target="_blank" 
+              <motion.a
+                href={SCHOOL_INFO.socialMedia?.twitter || "#"}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:text-primary/80"
                 whileHover={{ scale: 1.2, rotate: -10 }}
               >
-                <Twitter size={20} />
+                <FaTwitter size={20} />
               </motion.a>
-              <motion.a 
-                href={SCHOOL_INFO.socialMedia?.instagram || "#"} 
-                target="_blank" 
+              <motion.a
+                href={SCHOOL_INFO.socialMedia?.instagram || "#"}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:text-primary/80"
                 whileHover={{ scale: 1.2, rotate: 10 }}
               >
-                <Instagram size={20} />
+                <FaInstagram size={20} />
               </motion.a>
             </div>
           </div>
-          
+
           <div>
             <h3 className="text-xl font-bold mb-4">Quick Links</h3>
             <ul className="space-y-2">
@@ -182,7 +186,7 @@ export function PlaygroundFooter({ className = "" }: PlaygroundFooterProps) {
               </li>
             </ul>
           </div>
-          
+
           <div>
             <h3 className="text-xl font-bold mb-4">Contact Us</h3>
             <ul className="space-y-2">
@@ -201,7 +205,7 @@ export function PlaygroundFooter({ className = "" }: PlaygroundFooterProps) {
             </ul>
           </div>
         </div>
-        
+
         <div className="border-t border-muted pt-8 text-center">
           <p className="text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} {SCHOOL_INFO.name}. All rights reserved.

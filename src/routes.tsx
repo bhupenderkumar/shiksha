@@ -22,9 +22,16 @@ import Fees from './pages/Fees';
 import Settings from './pages/Settings';
 import ViewAdmissionEnquiries from './pages/ViewAdmissionEnquiries';
 import IDCardForm from './pages/IDCardForm';
+import IDCardDetails from './pages/IDCardDetails';
+import IDCardView from './pages/IDCardView';
+import InteractiveAssignments from './pages/InteractiveAssignments';
+import InteractiveAssignmentForm from './pages/InteractiveAssignmentForm';
+import InteractiveAssignmentDetails from './pages/InteractiveAssignmentDetails';
+import InteractiveAssignmentView from './pages/InteractiveAssignmentView';
 import Layout from './components/Layout';
 import PublicLayout from './components/PublicLayout';
-import ProtectedRoute from './components/ProtectedRoute';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import Unauthorized from './pages/Unauthorized';
 
 export const router = createBrowserRouter([
   {
@@ -57,7 +64,11 @@ export const router = createBrowserRouter([
       },
       {
         path: 'id-card',
-        element: <IDCardForm />,
+        element: <IDCardView />,
+      },
+      {
+        path: 'unauthorized',
+        element: <Unauthorized />,
       },
     ],
   },
@@ -126,8 +137,32 @@ export const router = createBrowserRouter([
         element: <Settings />,
       },
       {
+        path: 'idcarddetails',
+        element: <IDCardDetails />,
+      },
+      {
         path: 'admission-enquiries',
         element: <ViewAdmissionEnquiries />,
+      },
+      {
+        path: 'interactive-assignments',
+        element: <InteractiveAssignments />,
+      },
+      {
+        path: 'interactive-assignments/create',
+        element: <InteractiveAssignmentForm />,
+      },
+      {
+        path: 'interactive-assignments/:id',
+        element: <InteractiveAssignmentDetails />,
+      },
+      {
+        path: 'interactive-assignments/edit/:id',
+        element: <InteractiveAssignmentForm />,
+      },
+      {
+        path: 'interactive-assignments/view/:id',
+        element: <InteractiveAssignmentView />,
       },
     ],
   },

@@ -60,6 +60,7 @@ export const loadAllAssignments = async (): Promise<Assignment[]> => {
 
 export const createOrUpdateAssignment = async (assignmentData: Partial<Assignment>, editingAssignmentId?: string) => {
   try {
+    alert("")
     const { error } = editingAssignmentId
       ? await supabase
           .schema(SCHEMA) // Use SCHEMA constant

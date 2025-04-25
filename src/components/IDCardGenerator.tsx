@@ -16,7 +16,7 @@ interface IDCardGeneratorProps {
 
 export const IDCardGenerator: React.FC<IDCardGeneratorProps> = ({ data, idCardId }) => {
   const [downloading, setDownloading] = useState(false);
-  
+
   // Add print styles
   useEffect(() => {
     // Create style element
@@ -38,10 +38,10 @@ export const IDCardGenerator: React.FC<IDCardGeneratorProps> = ({ data, idCardId
         }
       }
     `;
-    
+
     // Append to head
     document.head.appendChild(style);
-    
+
     // Clean up on unmount
     return () => {
       document.head.removeChild(style);
@@ -53,7 +53,7 @@ export const IDCardGenerator: React.FC<IDCardGeneratorProps> = ({ data, idCardId
   const handleDownload = async () => {
     try {
       setDownloading(true);
-      
+
       if (!studentCardRef.current || !parentCardRef.current) {
         toast.error('Could not generate ID card');
         return;
@@ -98,7 +98,7 @@ export const IDCardGenerator: React.FC<IDCardGeneratorProps> = ({ data, idCardId
 
       // Increment download count
       await idCardService.incrementDownloadCount(idCardId);
-      
+
       toast.success('ID card downloaded successfully');
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -121,6 +121,7 @@ export const IDCardGenerator: React.FC<IDCardGeneratorProps> = ({ data, idCardId
             onClick={handleDownload}
             disabled={downloading}
             className="print:hidden flex-1 sm:flex-none text-xs sm:text-sm py-1 sm:py-2 h-auto"
+            data-download-button
           >
             <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
             {downloading ? 'Generating...' : 'Download PDF'}
@@ -129,6 +130,7 @@ export const IDCardGenerator: React.FC<IDCardGeneratorProps> = ({ data, idCardId
             variant="outline"
             onClick={handlePrint}
             className="print:hidden flex-1 sm:flex-none text-xs sm:text-sm py-1 sm:py-2 h-auto"
+            data-print-button
           >
             <Printer className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
             Print
@@ -191,11 +193,11 @@ export const IDCardGenerator: React.FC<IDCardGeneratorProps> = ({ data, idCardId
                     <span className="font-semibold text-gray-700">Name:</span>
                     <span className="text-right font-medium">{data.studentName}</span>
                   </div>
-                  
+
                   {data.dateOfBirth && (
-                    <div className="flex justify-between border-b border-gray-100 pb-1">
-                      <span className="font-semibold text-gray-700">Date of Birth:</span>
-                      <span className="text-right">
+                    <div className="flex justify-between border-b border-gray-100 pb-1 bg-blue-50">
+                      <span className="font-semibold text-blue-700">Date of Birth:</span>
+                      <span className="text-right font-medium text-blue-800">
                         {new Date(data.dateOfBirth).toLocaleDateString('en-IN', {
                           day: '2-digit',
                           month: '2-digit',
@@ -204,12 +206,12 @@ export const IDCardGenerator: React.FC<IDCardGeneratorProps> = ({ data, idCardId
                       </span>
                     </div>
                   )}
-                  
+
                   <div className="flex justify-between border-b border-gray-100 pb-1">
                     <span className="font-semibold text-gray-700">Class:</span>
                     <span className="text-right">{data.className} {data.section}</span>
                   </div>
-                  
+
                   {data.admissionNumber && (
                     <div className="flex justify-between border-b border-gray-100 pb-1">
                       <span className="font-semibold text-gray-700">Admission No:</span>
@@ -326,7 +328,11 @@ export const IDCardGenerator: React.FC<IDCardGeneratorProps> = ({ data, idCardId
                   <p className="font-semibold text-xs sm:text-sm text-blue-800">Parent of: {data.studentName}</p>
                   <p className="text-xs text-blue-700">Class: {data.className} {data.section}</p>
                   {data.dateOfBirth && (
-                    <p className="text-xs text-blue-700">Date of Birth: {new Date(data.dateOfBirth).toLocaleDateString('en-IN')}</p>
+                    <p className="text-xs font-semibold bg-blue-100 py-1 px-2 rounded mt-1 text-blue-800">Date of Birth: {new Date(data.dateOfBirth).toLocaleDateString('en-IN', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric'
+                    })}</p>
                   )}
                 </div>
 
