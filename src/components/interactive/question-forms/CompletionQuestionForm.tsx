@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { FormLabel } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Trash } from "lucide-react";
-
+import DOMPurify from "dompurify";
 interface CompletionQuestionFormProps {
   value: any;
   onChange: (value: any) => void;
@@ -72,7 +72,8 @@ export function CompletionQuestionForm({
       previewText = previewText.replace(new RegExp(placeholder, 'g'), replacement);
     });
     
-    return <div dangerouslySetInnerHTML={{ __html: previewText }} />;
+    const sanitizedPreviewText = DOMPurify.sanitize(previewText);
+    return <div dangerouslySetInnerHTML={{ __html: sanitizedPreviewText }} />;
   };
 
   return (
