@@ -1,8 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
-import { supabase } from '../lib/api-client';
-import { SCHEMA } from '@/lib/constants';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -16,36 +14,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireAuth = true
 }) => {
   const { user, loading } = useAuth();
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [roleLoading, setRoleLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      if (user) {
-        try {
-          const { data, error } = await supabase
-          .schema(SCHEMA)
-            .from('Profile')
-            .select('role')
-            .eq('user_id', user.id)
-            .single();
-
-          if (error) {
-            console.error('Error fetching user role:', error);
-          } else {
-            setUserRole(data?.role || null);
-          }
-        } catch (err) {
-          console.error('Error in role fetch:', err);
-        }
-      }
-      setRoleLoading(false);
-    };
-
-    fetchUserRole();
-  }, [user]);
-
-  if (loading || roleLoading) {
+  if (loading) {
     return <div className="h-screen w-screen flex items-center justify-center">
       <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
     </div>;
@@ -55,17 +25,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" replace />;
   }
 
-  // Temporarily disabled role checking - uncomment when ready to enforce roles
-  // if (allowedRoles.length > 0 && (!userRole || !allowedRoles.includes(userRole))) {
-  //   return <Navigate to="/unauthorized" replace />;
-  // }
-
-  // For debugging: Log role information but allow access
+  // Role checking completely disabled
+  // Just log that we're skipping the role check
   if (allowedRoles.length > 0) {
-    console.log('Role check (disabled):', {
-      userRole,
+    console.log('Role check bypassed:', {
       allowedRoles,
-      wouldHaveAccess: userRole && allowedRoles.includes(userRole)
+      message: 'Role checking is disabled to avoid Profile API calls'
     });
   }
 

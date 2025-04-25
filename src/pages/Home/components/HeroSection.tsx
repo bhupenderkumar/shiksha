@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useTransform } from "framer-motion";
 import { Sun, Moon, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedText } from "@/components/ui/animated-text";
@@ -6,52 +6,60 @@ import { Link } from "react-router-dom";
 import { useTheme } from "@/lib/theme-provider";
 import { SCHOOL_INFO } from "@/constants/schoolInfo";
 import { LightingContainer, LightingEffect } from "@/components/ui/lighting-effect";
-import { cn } from "@/lib/utils";
-import { StudentCharacter } from "@/components/animations/characters/StudentCharacter";
-import { TeacherCharacter } from "@/components/animations/characters/TeacherCharacter";
-import { SchoolBuilding } from "@/components/animations/school-elements/SchoolBuilding";
+
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
+import { useEffect, useState } from "react";
 
 export function HeroSection() {
   const { theme, setTheme } = useTheme();
   const isDark = theme === "dark";
-  
-  // Simple cloud animation
-  const cloudAnimation = {
-    animate: {
-      x: [0, 10, 0],
-      transition: {
-        duration: 20,
-        repeat: Infinity,
-        ease: "easeInOut"
-      }
-    }
-  };
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+  // Mouse position tracking for interactive effects
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  // Interactive light effect that follows mouse
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  useEffect(() => {
+    mouseX.set(mousePosition.x);
+    mouseY.set(mousePosition.y);
+  }, [mousePosition, mouseX, mouseY]);
 
   return (
     <LightingContainer>
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-primary/10 via-background to-background">
-        {/* Dynamic lighting effects */}
-        <LightingEffect 
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background backdrop-blur-sm">
+        {/* Subtle lighting effects */}
+        <LightingEffect
           variant="glow"
           color="primary"
           size="xl"
           position="top"
-          className="opacity-40"
+          className="opacity-30"
         />
-        <LightingEffect 
+        <LightingEffect
           variant="beam"
           color="accent"
           size="lg"
           position="right"
-          className="opacity-30"
-        />
-        <LightingEffect 
-          variant="shimmer"
-          color="secondary"
-          size="xl"
-          position="left"
           className="opacity-20"
+        />
+
+        {/* Mouse-following light effect */}
+        <motion.div
+          className="absolute w-[300px] h-[300px] rounded-full bg-gradient-to-r from-primary/10 to-accent/10 blur-3xl pointer-events-none mix-blend-soft-light"
+          style={{
+            x: useTransform(mouseX, value => value - 150),
+            y: useTransform(mouseY, value => value - 150)
+          }}
         />
 
         {/* Theme toggle button with glassmorphic effect */}
@@ -71,32 +79,35 @@ export function HeroSection() {
         </div>
 
         {/* Background grid pattern */}
-        <div className="absolute inset-0 bg-white/5 dark:bg-black/10" />
+        <div className="absolute inset-0 bg-white/5 dark:bg-black/10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, ${isDark ? 'rgba(136, 192, 208, 0.1)' : 'rgba(255, 155, 113, 0.1)'} 0%, transparent 8%)`
+          }} />
+        </div>
 
         {/* Sky background with day/night effect */}
-        <div 
+        <div
           className={`absolute inset-0 transition-colors duration-1000 ${
-            isDark 
-              ? "bg-gradient-to-b from-blue-950 via-indigo-950 to-purple-950" 
+            isDark
+              ? "bg-gradient-to-b from-blue-950 via-indigo-950 to-purple-950"
               : "bg-gradient-to-b from-blue-200 via-blue-100 to-white"
           }`}
           style={{ zIndex: -1 }}
         />
-        
+
         {/* Clouds */}
         <motion.div
           className="absolute top-10 left-10 opacity-70"
-          variants={cloudAnimation}
-          animate="animate"
+          animate={{ x: [0, 10, 0] }}
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
         >
           <div className={`w-40 h-16 rounded-full ${isDark ? "bg-gray-700" : "bg-white"}`}></div>
         </motion.div>
-        
+
         <motion.div
           className="absolute top-20 right-20 opacity-60"
-          variants={cloudAnimation}
-          animate="animate"
-          transition={{ delay: 0.5 }}
+          animate={{ x: [0, -10, 0] }}
+          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
         >
           <div className={`w-32 h-12 rounded-full ${isDark ? "bg-gray-800" : "bg-white"}`}></div>
         </motion.div>
@@ -105,15 +116,15 @@ export function HeroSection() {
         <motion.div
           className="absolute top-16 right-16"
           initial={{ scale: 0.8 }}
-          animate={{ 
+          animate={{
             scale: [0.8, 1, 0.8],
             transition: { duration: 8, repeat: Infinity }
           }}
         >
-          <div 
+          <div
             className={`w-20 h-20 rounded-full ${
-              isDark 
-                ? "bg-gray-300 shadow-[0_0_40px_10px_rgba(255,255,255,0.2)]" 
+              isDark
+                ? "bg-gray-300 shadow-[0_0_40px_10px_rgba(255,255,255,0.2)]"
                 : "bg-yellow-300 shadow-[0_0_60px_20px_rgba(255,255,100,0.3)]"
             }`}
           />
@@ -129,7 +140,7 @@ export function HeroSection() {
                 className="text-4xl sm:text-5xl md:text-6xl font-bold bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent"
                 variant="slideUp"
               />
-              <GlassmorphicCard className="inline-block px-4 py-1 mt-2" intensity="low">
+              <GlassmorphicCard className="inline-block px-4 py-1 mt-2" intensity="low" animated={true} shimmer={true}>
                 <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -143,7 +154,7 @@ export function HeroSection() {
 
             {/* Tagline with glassmorphic effect */}
             <div className="relative">
-              <GlassmorphicCard className="p-6" intensity="medium">
+              <GlassmorphicCard className="p-6" intensity="medium" animated={true} borderGlow={true}>
                 <motion.p
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -180,10 +191,12 @@ export function HeroSection() {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.4 + index * 0.1 }}
                 >
-                  <GlassmorphicCard 
-                    className="p-4 text-center" 
+                  <GlassmorphicCard
+                    className="p-4 text-center"
                     intensity="medium"
                     borderGlow={true}
+                    animated={true}
+                    shimmer={true}
                   >
                     <div className="text-2xl font-bold text-primary">{stat.value}</div>
                     <div className="text-sm text-muted-foreground">{stat.label}</div>
@@ -209,10 +222,10 @@ export function HeroSection() {
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
-              <GlassmorphicCard className="overflow-hidden" borderGlow={true}>
-                <Button 
-                  size="lg" 
-                  variant="ghost" 
+              <GlassmorphicCard className="overflow-hidden" borderGlow={true} animated={true} shimmer={true}>
+                <Button
+                  size="lg"
+                  variant="ghost"
                   asChild
                   className="bg-transparent hover:bg-transparent"
                 >
@@ -225,14 +238,17 @@ export function HeroSection() {
             </motion.div>
 
             {/* Admission button with special effect */}
-            <GlassmorphicCard 
+            <GlassmorphicCard
               className="overflow-hidden inline-block"
               intensity="high"
               borderGlow={true}
+              animated={true}
+              shimmer={true}
+              hoverEffect={true}
             >
-              <Button 
-                size="lg" 
-                variant="ghost" 
+              <Button
+                size="lg"
+                variant="ghost"
                 asChild
                 className="relative overflow-hidden group bg-transparent hover:bg-transparent"
               >
@@ -246,34 +262,9 @@ export function HeroSection() {
           </div>
         </div>
 
-        {/* School Building Scene */}
-        <div className="absolute bottom-0 left-0 right-0 h-[300px] md:h-[400px]">
-          {/* School Building */}
-          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2">
-            <SchoolBuilding />
-          </div>
-          
-          {/* Student Characters */}
-          <div className="absolute bottom-10 left-[15%]">
-            <StudentCharacter 
-              direction="right"
-              variant="walking"
-            />
-          </div>
-          <div className="absolute bottom-10 right-[20%]">
-            <StudentCharacter 
-              direction="left"
-              variant="jumping"
-              delay={0.5}
-            />
-          </div>
-          
-          {/* Teacher Character */}
-          <div className="absolute bottom-10 left-[30%]">
-            <TeacherCharacter 
-              direction="right"
-            />
-          </div>
+        {/* Decorative elements */}
+        <div className="absolute bottom-0 left-0 right-0 h-[100px]">
+          <div className="absolute bottom-0 left-0 right-0 h-[100px] bg-gradient-to-t from-primary/5 to-transparent" />
         </div>
       </section>
     </LightingContainer>

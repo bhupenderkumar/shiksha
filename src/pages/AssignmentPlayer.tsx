@@ -11,32 +11,27 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { CelebrationAnimation } from '@/components/ui/celebration-animation';
 import { toast } from 'react-hot-toast';
 import { ArrowLeft, ArrowRight, Save, CheckCircle, Clock, Award } from 'lucide-react';
-import { 
-  InteractiveAssignment, 
-  InteractiveQuestion, 
+import {
+  InteractiveAssignment,
+  InteractiveQuestion,
   InteractiveResponse,
   InteractiveSubmission
 } from '@/types/interactiveAssignment';
 
-// Import exercise components (we'll create these next)
-import { MatchingExercise } from '@/components/assignment-player/MatchingExercise';
-import { CompletionExercise } from '@/components/assignment-player/CompletionExercise';
-import { SortingExercise } from '@/components/assignment-player/SortingExercise';
-import { PuzzleExercise } from '@/components/assignment-player/PuzzleExercise';
-import { IdentificationExercise } from '@/components/assignment-player/IdentificationExercise';
-import { CountingExercise } from '@/components/assignment-player/CountingExercise';
-import { TracingExercise } from '@/components/assignment-player/TracingExercise';
-import { AudioReadingExercise } from '@/components/assignment-player/AudioReadingExercise';
-import { DrawingExercise } from '@/components/assignment-player/DrawingExercise';
-import { ColoringExercise } from '@/components/assignment-player/ColoringExercise';
-import { MultipleChoiceExercise } from '@/components/assignment-player/MultipleChoiceExercise';
-import { OrderingExercise } from '@/components/assignment-player/OrderingExercise';
+// Import simplified exercise renderer
+import { SimplifiedExerciseRenderer } from '@/components/interactive/simplified-exercise-renderer';
 
-export default function AssignmentPlayer() {
-  const { id } = useParams<{ id: string }>();
+interface AssignmentPlayerProps {
+  assignmentId?: string;
+  isPlayMode?: boolean;
+}
+
+export default function AssignmentPlayer({ assignmentId, isPlayMode = false }: AssignmentPlayerProps = {}) {
+  const params = useParams<{ id: string }>();
+  const id = assignmentId || params.id;
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  
+
   const [assignment, setAssignment] = useState<InteractiveAssignment | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -47,61 +42,64 @@ export default function AssignmentPlayer() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState<number | null>(null);
-  
+
   // Fetch assignment data
   useEffect(() => {
     const fetchAssignment = async () => {
       if (!id) return;
-      
+
       try {
         setLoading(true);
         const data = await interactiveAssignmentService.getById(id);
-        
+
         if (!data) {
           toast.error('Assignment not found');
-          navigate('/assignments');
+          isPlayMode ? navigate('/') : navigate('/interactive-assignments');
           return;
         }
-        
+
         // Sort questions by order
         if (data.questions) {
           data.questions.sort((a, b) => a.order - b.order);
         }
-        
+
         setAssignment(data);
-        
-        // Check if student has already started this assignment
-        if (profile?.role === 'STUDENT' && profile.id) {
-          const progress = await studentProgressService.getByStudentAndAssignment(profile.id, id);
-          
-          if (progress) {
-            setProgressId(progress.id);
-            
-            // If there are existing responses, load them
-            if (progress.status === 'COMPLETED' || progress.status === 'GRADED') {
-              const submission = await interactiveAssignmentService.getSubmissionByStudentAndAssignment(profile.id, id);
-              
-              if (submission && submission.responses) {
-                const responseMap: Record<string, InteractiveResponse> = {};
-                submission.responses.forEach(response => {
-                  responseMap[response.questionId] = response;
-                });
-                
-                setResponses(responseMap);
-                setSubmitted(true);
-                setScore(progress.score || null);
+
+        // Only track progress if user is logged in and not in play mode
+        if (profile?.id && !isPlayMode) {
+          // Check if student has already started this assignment
+          if (profile?.role === 'STUDENT') {
+            const progress = await studentProgressService.getByStudentAndAssignment(profile.id, id);
+
+            if (progress) {
+              setProgressId(progress.id);
+
+              // If there are existing responses, load them
+              if (progress.status === 'COMPLETED' || progress.status === 'GRADED') {
+                const submission = await interactiveAssignmentService.getSubmissionByStudentAndAssignment(profile.id, id);
+
+                if (submission && submission.responses) {
+                  const responseMap: Record<string, InteractiveResponse> = {};
+                  submission.responses.forEach(response => {
+                    responseMap[response.questionId] = response;
+                  });
+
+                  setResponses(responseMap);
+                  setSubmitted(true);
+                  setScore(progress.score || null);
+                }
               }
-            }
-          } else {
-            // Create new progress record
-            const newProgress = await studentProgressService.create({
-              studentId: profile.id,
-              assignmentId: id,
-              status: 'IN_PROGRESS'
-            });
-            
-            if (newProgress) {
-              setProgressId(newProgress.id);
+            } else {
+              // Create new progress record
+              const newProgress = await studentProgressService.create({
+                studentId: profile.id,
+                assignmentId: id,
+                status: 'IN_PROGRESS'
+              });
+
+              if (newProgress) {
+                setProgressId(newProgress.id);
+              }
             }
           }
         }
@@ -112,11 +110,11 @@ export default function AssignmentPlayer() {
         setLoading(false);
       }
     };
-    
+
     fetchAssignment();
     setStartTime(new Date());
-  }, [id, navigate, profile]);
-  
+  }, [id, navigate, profile, isPlayMode]);
+
   // Handle response update
   const handleResponseUpdate = (questionId: string, responseData: any) => {
     setResponses(prev => ({
@@ -130,11 +128,11 @@ export default function AssignmentPlayer() {
       }
     }));
   };
-  
+
   // Navigate to next question
   const handleNextQuestion = () => {
     if (!assignment || !assignment.questions) return;
-    
+
     if (currentQuestionIndex < assignment.questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
@@ -142,47 +140,62 @@ export default function AssignmentPlayer() {
       setShowCelebration(true);
     }
   };
-  
+
   // Navigate to previous question
   const handlePrevQuestion = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(prev => prev - 1);
     }
   };
-  
+
   // Submit assignment
   const handleSubmit = async () => {
-    if (!assignment || !profile?.id || !progressId) return;
-    
+    if (!assignment) return;
+
     try {
       setSubmitting(true);
-      
+
       // Calculate time spent
       const endTime = new Date();
       const timeSpent = Math.floor((endTime.getTime() - startTime.getTime()) / 1000); // in seconds
-      
+
       // Prepare responses array
       const responsesArray = Object.values(responses);
-      
-      // Submit assignment
-      const submission = await interactiveAssignmentService.createSubmission({
-        assignmentId: assignment.id,
-        studentId: profile.id,
-        responses: responsesArray
-      });
-      
-      if (submission) {
-        // Update progress
-        await studentProgressService.update(progressId, {
-          completedAt: new Date(),
-          timeSpent,
-          status: 'COMPLETED',
-          score: submission.score
+
+      // If user is logged in and has a profile, submit to the server
+      if (profile?.id && progressId) {
+        // Submit assignment
+        const submission = await interactiveAssignmentService.createSubmission({
+          assignmentId: assignment.id,
+          studentId: profile.id,
+          responses: responsesArray
         });
-        
+
+        if (submission) {
+          // Update progress
+          await studentProgressService.update(progressId, {
+            completedAt: new Date(),
+            timeSpent,
+            status: 'COMPLETED',
+            score: submission.score
+          });
+
+          setSubmitted(true);
+          setScore(submission.score || null);
+          toast.success('Assignment submitted successfully!');
+        }
+      } else {
+        // For anonymous users or play mode without login
+        // Just mark as submitted locally without saving to server
         setSubmitted(true);
-        setScore(submission.score || null);
-        toast.success('Assignment submitted successfully!');
+
+        // Calculate a simple score based on the number of responses
+        const totalQuestions = assignment.questions?.length || 0;
+        const answeredQuestions = responsesArray.length;
+        const calculatedScore = Math.round((answeredQuestions / totalQuestions) * 100);
+
+        setScore(calculatedScore);
+        toast.success('Great job completing the assignment!');
       }
     } catch (error) {
       console.error('Error submitting assignment:', error);
@@ -192,7 +205,7 @@ export default function AssignmentPlayer() {
       setShowCelebration(false);
     }
   };
-  
+
   // Render current question
   const renderQuestion = () => {
     if (!assignment || !assignment.questions || assignment.questions.length === 0) {
@@ -204,130 +217,30 @@ export default function AssignmentPlayer() {
         </Card>
       );
     }
-    
+
     const question = assignment.questions[currentQuestionIndex];
     const response = responses[question.id];
-    const isReadOnly = submitted;
-    
-    // Render different exercise types based on question type
-    switch (question.questionType) {
-      case 'MATCHING':
-        return (
-          <MatchingExercise
-            question={question}
-            initialResponse={response}
-            onResponseChange={(data) => handleResponseUpdate(question.id, data)}
-            readOnly={isReadOnly}
-          />
-        );
-      case 'COMPLETION':
-        return (
-          <CompletionExercise
-            question={question}
-            initialResponse={response}
-            onResponseChange={(data) => handleResponseUpdate(question.id, data)}
-            readOnly={isReadOnly}
-          />
-        );
-      case 'SORTING':
-      case 'ORDERING':
-        return (
-          <OrderingExercise
-            question={question}
-            initialResponse={response}
-            onResponseChange={(data) => handleResponseUpdate(question.id, data)}
-            readOnly={isReadOnly}
-          />
-        );
-      case 'PUZZLE':
-        return (
-          <PuzzleExercise
-            question={question}
-            initialResponse={response}
-            onResponseChange={(data) => handleResponseUpdate(question.id, data)}
-            readOnly={isReadOnly}
-          />
-        );
-      case 'IDENTIFICATION':
-        return (
-          <IdentificationExercise
-            question={question}
-            initialResponse={response}
-            onResponseChange={(data) => handleResponseUpdate(question.id, data)}
-            readOnly={isReadOnly}
-          />
-        );
-      case 'COUNTING':
-        return (
-          <CountingExercise
-            question={question}
-            initialResponse={response}
-            onResponseChange={(data) => handleResponseUpdate(question.id, data)}
-            readOnly={isReadOnly}
-          />
-        );
-      case 'TRACING':
-        return (
-          <TracingExercise
-            question={question}
-            initialResponse={response}
-            onResponseChange={(data) => handleResponseUpdate(question.id, data)}
-            readOnly={isReadOnly}
-          />
-        );
-      case 'AUDIO_READING':
-        return (
-          <AudioReadingExercise
-            question={question}
-            initialResponse={response}
-            onResponseChange={(data) => handleResponseUpdate(question.id, data)}
-            readOnly={isReadOnly}
-          />
-        );
-      case 'DRAWING':
-        return (
-          <DrawingExercise
-            question={question}
-            initialResponse={response}
-            onResponseChange={(data) => handleResponseUpdate(question.id, data)}
-            readOnly={isReadOnly}
-          />
-        );
-      case 'COLORING':
-        return (
-          <ColoringExercise
-            question={question}
-            initialResponse={response}
-            onResponseChange={(data) => handleResponseUpdate(question.id, data)}
-            readOnly={isReadOnly}
-          />
-        );
-      case 'MULTIPLE_CHOICE':
-        return (
-          <MultipleChoiceExercise
-            question={question}
-            initialResponse={response}
-            onResponseChange={(data) => handleResponseUpdate(question.id, data)}
-            readOnly={isReadOnly}
-          />
-        );
-      default:
-        return (
-          <Card className="p-8 text-center">
-            <CardContent>
-              <p className="text-gray-500">Unsupported question type: {question.questionType}</p>
-            </CardContent>
-          </Card>
-        );
-    }
+    // In play mode, the assignment is never read-only unless submitted
+    const isReadOnly = isPlayMode ? submitted : submitted;
+
+    // Use the SimplifiedExerciseRenderer component to render the appropriate exercise type
+    return (
+      <SimplifiedExerciseRenderer
+        question={question}
+        initialResponse={response}
+        readOnly={isReadOnly}
+        showAnswers={submitted}
+        onSave={(response) => handleResponseUpdate(question.id, response.responseData)}
+      />
+    );
   };
-  
+
   // Calculate progress percentage
   const calculateProgress = () => {
     if (!assignment || !assignment.questions) return 0;
     return Math.round((currentQuestionIndex / assignment.questions.length) * 100);
   };
-  
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -335,7 +248,7 @@ export default function AssignmentPlayer() {
       </div>
     );
   }
-  
+
   if (!assignment) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -344,26 +257,88 @@ export default function AssignmentPlayer() {
             <p className="text-gray-500">Assignment not found.</p>
             <Button
               className="mt-4"
-              onClick={() => navigate('/assignments')}
+              onClick={() => isPlayMode ? navigate('/') : navigate('/interactive-assignments')}
             >
-              Back to Assignments
+              {isPlayMode ? 'Go to Home' : 'Back to Assignments'}
             </Button>
           </CardContent>
         </Card>
       </div>
     );
   }
-  
+
+  // Render completion screen for play mode
+  if (isPlayMode && submitted) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card className="mb-6 overflow-hidden">
+          <div className="bg-gradient-to-r from-green-500 to-blue-500 p-6 text-white">
+            <h2 className="text-3xl font-bold mb-2">Assignment Completed!</h2>
+            <p>Great job completing this interactive assignment</p>
+          </div>
+
+          <CardContent className="p-8">
+            <div className="flex flex-col items-center justify-center py-8">
+              <div className="w-32 h-32 rounded-full bg-green-100 flex items-center justify-center mb-6">
+                <Award className="h-16 w-16 text-green-600" />
+              </div>
+
+              <h3 className="text-2xl font-bold mb-2">Your Score: {score || 0}%</h3>
+              <p className="text-gray-500 mb-6">You've successfully completed this assignment</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h4 className="font-medium mb-2">Assignment</h4>
+                  <p>{assignment.title}</p>
+                </div>
+
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h4 className="font-medium mb-2">Questions Answered</h4>
+                  <p>{Object.keys(responses).length} of {assignment.questions?.length || 0}</p>
+                </div>
+              </div>
+
+              <div className="mt-8 flex gap-4">
+                <Button variant="outline" onClick={() => navigate('/')}>
+                  Return Home
+                </Button>
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={() => {
+                    // Reset the state to try again
+                    setSubmitted(false);
+                    setResponses({});
+                    setCurrentQuestionIndex(0);
+                    setScore(null);
+                  }}
+                >
+                  Try Again
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <Card className="mb-6">
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <CardTitle className="text-2xl">{assignment.title}</CardTitle>
+              <CardTitle className="text-2xl">
+                {isPlayMode && !submitted ? "Play: " : ""}{assignment.title}
+              </CardTitle>
               <CardDescription>{assignment.description}</CardDescription>
+              {isPlayMode && !submitted && (
+                <p className="mt-2 text-sm text-blue-600">
+                  Complete this interactive assignment by answering all questions
+                </p>
+              )}
             </div>
-            
+
             {submitted && (
               <div className="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-md">
                 <CheckCircle className="h-5 w-5" />
@@ -377,7 +352,7 @@ export default function AssignmentPlayer() {
             )}
           </div>
         </CardHeader>
-        
+
         <CardContent>
           <div className="flex items-center gap-4 mb-6">
             <div className="flex-1">
@@ -387,10 +362,10 @@ export default function AssignmentPlayer() {
               Question {currentQuestionIndex + 1} of {assignment.questions?.length || 0}
             </div>
           </div>
-          
+
           {renderQuestion()}
         </CardContent>
-        
+
         <CardFooter className="flex justify-between">
           <Button
             variant="outline"
@@ -400,12 +375,23 @@ export default function AssignmentPlayer() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Previous
           </Button>
-          
+
           <div className="flex gap-2">
+            {isPlayMode && !submitted && (
+              <Button
+                variant="outline"
+                onClick={() => navigate('/')}
+                disabled={submitting}
+              >
+                Exit
+              </Button>
+            )}
+
             {currentQuestionIndex < (assignment.questions?.length || 0) - 1 ? (
               <Button
                 onClick={handleNextQuestion}
                 disabled={submitting}
+                className={isPlayMode ? "bg-blue-600 hover:bg-blue-700" : ""}
               >
                 Next
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -414,24 +400,27 @@ export default function AssignmentPlayer() {
               <Button
                 onClick={() => setShowCelebration(true)}
                 disabled={submitting || submitted}
+                className={isPlayMode ? "bg-green-600 hover:bg-green-700" : ""}
               >
-                Finish
+                {isPlayMode ? "Complete" : "Finish"}
                 <CheckCircle className="ml-2 h-4 w-4" />
               </Button>
             )}
           </div>
         </CardFooter>
       </Card>
-      
+
       {/* Celebration animation */}
       <CelebrationAnimation
         show={showCelebration}
         onComplete={() => setShowCelebration(false)}
-        message="Great Job!"
-        subMessage="You've completed all the questions. Ready to submit?"
+        message={isPlayMode ? "Awesome Work!" : "Great Job!"}
+        subMessage={isPlayMode
+          ? "You've completed this interactive assignment. Submit to see your results!"
+          : "You've completed all the questions. Ready to submit?"}
         actionLabel="Submit Assignment"
         onAction={handleSubmit}
-        character="teacher"
+        character={isPlayMode ? "student" : "teacher"}
       />
     </div>
   );
