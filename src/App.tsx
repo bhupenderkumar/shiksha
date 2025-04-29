@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from '@/lib/auth';
-import { ThemeProvider } from '@/lib/theme-provider.tsx';
+import { AnonymousUserProvider } from '@/contexts/AnonymousUserContext';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { CustomCursor } from '@/components/ui/custom-cursor';
 import { AnimatedBackground } from '@/components/ui/animated-background';
@@ -30,6 +30,7 @@ import AdmissionEnquiry from './pages/AdmissionEnquiry.tsx';
 import YearEndFeedback from './pages/YearEndFeedback';
 import ViewYearEndFeedback from './pages/ViewYearEndFeedback';
 import AdmissionProcess from './pages/AdmissionProcess';
+import DrawingExerciseTestPage from './pages/DrawingExerciseTest';
 import PwaTest from './pages/PwaTest';
 import WhatsAppTest from './pages/WhatsAppTest';
 
@@ -42,7 +43,7 @@ import { InteractiveAssignments } from './pages/InteractiveAssignments';
 import EditInteractiveAssignment from './pages/EditInteractiveAssignment';
 import ViewInteractiveAssignment from './pages/ViewInteractiveAssignment';
 import PlayAssignment from './pages/PlayAssignment';
-import SimplePlayAssignment from './pages/SimplePlayAssignment';
+import SimplifiedPlayAssignment from './pages/SimplifiedPlayAssignment';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import Unauthorized from './pages/Unauthorized';
 
@@ -72,7 +73,8 @@ const PUBLIC_ROUTES = [
   '/interactive-assignments/edit/:id',
   '/interactive-assignments/view/:id',
   '/interactive-assignments/play/:id',
-  '/assignments/play/:id'
+  '/assignments/play/:id',
+  '/drawing-test'
 ];
 
 // Private route component
@@ -118,8 +120,9 @@ function AppRoutes() {
       <Route path="/test-interactive-assignment" element={<TestInteractiveAssignment />} />
       <Route path="/konva-test" element={<KonvaTestPage />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
-      <Route path="/assignments/play/:id" element={<SimplePlayAssignment />} />
-      <Route path="/interactive-assignments/play/:id" element={<SimplePlayAssignment />} />
+      <Route path="/assignments/play/:id" element={<SimplifiedPlayAssignment />} />
+      <Route path="/interactive-assignments/play/:id" element={<SimplifiedPlayAssignment />} />
+      <Route path="/drawing-test" element={<DrawingExerciseTestPage />} />
       <Route
         path="/dashboard"
         element={
@@ -430,20 +433,18 @@ function AppRoutes() {
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="light" storageKey="ui-theme">
-      <TooltipProvider>
-        <AuthProvider>
-          <Router>
-            <CustomCursor />
-            <AnimatedBackground particleCount={30} />
-            <div className="flex flex-col min-h-screen bg-transparent mt-4 relative z-10">
-              <AppRoutes />
-              <Toaster position="top-right" />
-            </div>
-          </Router>
-        </AuthProvider>
-      </TooltipProvider>
-    </ThemeProvider>
+    <TooltipProvider>
+      <AuthProvider>
+        <Router>
+          <CustomCursor />
+          <AnimatedBackground particleCount={30} />
+          <div className="flex flex-col min-h-screen bg-transparent mt-4 relative z-10">
+            <AppRoutes />
+            <Toaster position="top-right" />
+          </div>
+        </Router>
+      </AuthProvider>
+    </TooltipProvider>
   );
 }
 

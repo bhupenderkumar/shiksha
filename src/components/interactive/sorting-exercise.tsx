@@ -67,10 +67,10 @@ const SortableItem = ({ id, name, imageUrl, correctCategoryId, currentCategoryId
   );
 };
 
-export function SortingExercise({ 
-  question, 
-  readOnly = false, 
-  initialResponse, 
+export function SortingExercise({
+  question,
+  readOnly = false,
+  initialResponse,
   onSave,
   showAnswers = false
 }: SortingExerciseProps) {
@@ -78,9 +78,15 @@ export function SortingExercise({
   const [items, setItems] = useState<CategorizationQuestion['items']>([]);
   const [sortedItems, setSortedItems] = useState<{ itemId: string; categoryId: string }[]>([]);
   const [unsortedItems, setUnsortedItems] = useState<string[]>([]);
-  
+
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px of movement required before activation
+        delay: 150, // 150ms delay before activation to prevent interference with text inputs
+        tolerance: 5, // 5px of movement allowed during delay
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -90,16 +96,16 @@ export function SortingExercise({
     if (question.questionData) {
       setCategories(question.questionData.categories);
       setItems(question.questionData.items);
-      
+
       // Initialize all items as unsorted
       setUnsortedItems(question.questionData.items.map(item => item.id));
       setSortedItems([]);
-      
+
       // If there's an initial response, apply it
       if (initialResponse?.sortedItems) {
         setSortedItems(initialResponse.sortedItems);
-        setUnsortedItems(prev => 
-          prev.filter(itemId => 
+        setUnsortedItems(prev =>
+          prev.filter(itemId =>
             !initialResponse.sortedItems.some(sorted => sorted.itemId === itemId)
           )
         );
@@ -109,40 +115,40 @@ export function SortingExercise({
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    
+
     if (!over) return;
-    
+
     const itemId = active.id as string;
     const targetId = over.id as string;
-    
+
     // Check if target is a category
     const isTargetCategory = categories.some(cat => cat.id === targetId);
-    
+
     if (isTargetCategory) {
       // Item is being sorted into a category
       const categoryId = targetId;
-      
+
       // Check if item is already in a category
       const existingSortedItem = sortedItems.find(item => item.itemId === itemId);
-      
+
       if (existingSortedItem) {
         // Update the category
-        setSortedItems(prev => 
-          prev.map(item => 
+        setSortedItems(prev =>
+          prev.map(item =>
             item.itemId === itemId ? { ...item, categoryId } : item
           )
         );
       } else {
         // Add to sorted items
         setSortedItems(prev => [...prev, { itemId, categoryId }]);
-        
+
         // Remove from unsorted items
         setUnsortedItems(prev => prev.filter(id => id !== itemId));
       }
     } else if (targetId === 'unsorted') {
       // Item is being moved back to unsorted
       setSortedItems(prev => prev.filter(item => item.itemId !== itemId));
-      
+
       // Add to unsorted items if not already there
       if (!unsortedItems.includes(itemId)) {
         setUnsortedItems(prev => [...prev, itemId]);
@@ -156,7 +162,7 @@ export function SortingExercise({
       toast.error('Please sort all items into categories');
       return;
     }
-    
+
     if (onSave) {
       onSave({ sortedItems });
     }
@@ -182,20 +188,20 @@ export function SortingExercise({
   return (
     <div className="w-full">
       <h3 className="text-lg font-semibold mb-4">{question.questionText}</h3>
-      
+
       <div className="p-4 bg-white border rounded-md">
         <p className="mb-4 text-gray-600">{question.questionData.categorizationCriteria}</p>
-        
-        <DndContext 
-          sensors={sensors} 
-          collisionDetection={closestCenter} 
+
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Unsorted items */}
             <div className="border rounded-md p-4 bg-gray-50">
               <h4 className="font-medium mb-3">Items to Sort</h4>
-              
+
               <SortableContext items={unsortedItems}>
                 <div id="unsorted" className="min-h-[100px]">
                   {unsortedItems.length === 0 ? (
@@ -204,7 +210,7 @@ export function SortingExercise({
                     unsortedItems.map(itemId => {
                       const item = getItemById(itemId);
                       if (!item) return null;
-                      
+
                       return (
                         <SortableItem
                           key={item.id}
@@ -220,31 +226,31 @@ export function SortingExercise({
                 </div>
               </SortableContext>
             </div>
-            
+
             {/* Categories */}
             <div className="space-y-4">
               {categories.map(category => (
                 <div key={category.id} className="border rounded-md p-4">
                   <div className="flex items-center mb-3">
                     {category.imageUrl && (
-                      <img 
-                        src={category.imageUrl} 
-                        alt={category.name} 
+                      <img
+                        src={category.imageUrl}
+                        alt={category.name}
                         className="h-8 w-8 object-cover rounded-md mr-2"
                       />
                     )}
                     <h4 className="font-medium">{category.name}</h4>
                   </div>
-                  
+
                   {category.description && (
                     <p className="text-sm text-gray-500 mb-3">{category.description}</p>
                   )}
-                  
+
                   <SortableContext items={getItemsInCategory(category.id).map(item => item?.id || '')}>
                     <div id={category.id} className="min-h-[50px]">
                       {getItemsInCategory(category.id).map(item => {
                         if (!item) return null;
-                        
+
                         return (
                           <SortableItem
                             key={item.id}
@@ -265,7 +271,7 @@ export function SortingExercise({
           </div>
         </DndContext>
       </div>
-      
+
       {!readOnly && (
         <div className="mt-6 flex justify-end space-x-2">
           <Button variant="outline" onClick={handleReset}>

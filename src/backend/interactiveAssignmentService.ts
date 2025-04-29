@@ -249,12 +249,34 @@ export const interactiveAssignmentService = {
 
       // Then insert new questions
       if (questions.length > 0) {
-        const questionsToInsert = questions.map((question, index) => ({
-          id: uuidv4(),
-          assignmentId,
-          order: index + 1,
-          ...question
-        }));
+        const questionsToInsert = questions.map((question, index) => {
+          // Create a properly formatted question object with both camelCase and snake_case fields
+          return {
+            id: uuidv4(),
+            assignmentId,
+            assignment_id: assignmentId,
+            question_type: question.questionType || 'MULTIPLE_CHOICE',
+            questionType: question.questionType || 'MULTIPLE_CHOICE',
+            question_text: question.questionText || '',
+            questionText: question.questionText || '',
+            question_order: index + 1,
+            questionOrder: index + 1,
+            order: index + 1,
+            question_data: question.questionData || {},
+            questionData: question.questionData || {},
+            // Add other fields if needed
+            audio_instructions: question.audioInstructions || null,
+            audioInstructions: question.audioInstructions || null,
+            hint_text: question.hintText || null,
+            hintText: question.hintText || null,
+            hint_image_url: question.hintImageUrl || null,
+            hintImageUrl: question.hintImageUrl || null,
+            feedback_correct: question.feedbackCorrect || null,
+            feedbackCorrect: question.feedbackCorrect || null,
+            feedback_incorrect: question.feedbackIncorrect || null,
+            feedbackIncorrect: question.feedbackIncorrect || null
+          };
+        });
 
         const { error: insertError } = await supabase
           .schema(SCHEMA)
@@ -471,7 +493,7 @@ export const interactiveAssignmentService = {
         .single();
 
       if (fetchError) throw fetchError;
-      
+
       return submission;
     } catch (error) {
       console.error('Error grading submission:', error);

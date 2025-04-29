@@ -63,10 +63,10 @@ const SortablePiece = ({ piece, showCorrect }: SortablePieceProps) => {
   );
 };
 
-export function PuzzleExercise({ 
-  question, 
-  readOnly = false, 
-  initialResponse, 
+export function PuzzleExercise({
+  question,
+  readOnly = false,
+  initialResponse,
   onSave,
   showAnswers = false
 }: PuzzleExerciseProps) {
@@ -76,9 +76,15 @@ export function PuzzleExercise({
   const [showPreview, setShowPreview] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
-  
+
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px of movement required before activation
+        delay: 150, // 150ms delay before activation to prevent interference with text inputs
+        tolerance: 5, // 5px of movement allowed during delay
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -102,7 +108,7 @@ export function PuzzleExercise({
 
     const createPuzzlePieces = () => {
       const { pieces: numPieces, difficulty } = question.questionData;
-      
+
       // Determine grid size based on number of pieces
       let rows, cols;
       if (numPieces <= 4) {
@@ -118,28 +124,28 @@ export function PuzzleExercise({
         rows = 5;
         cols = 5;
       }
-      
+
       const img = imageRef.current!;
       const containerWidth = containerRef.current!.clientWidth;
       const containerHeight = containerWidth * (img.height / img.width);
-      
+
       const pieceWidth = containerWidth / cols;
       const pieceHeight = containerHeight / rows;
-      
+
       const newPieces: PuzzlePiece[] = [];
-      
+
       for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
           if (newPieces.length >= numPieces) break;
-          
+
           const id = `piece-${row}-${col}`;
           const correctX = col * pieceWidth;
           const correctY = row * pieceHeight;
-          
+
           // Random position for initial placement
           const randomX = Math.random() * (containerWidth - pieceWidth);
           const randomY = Math.random() * (containerHeight - pieceHeight) + containerHeight + 20; // Place below the puzzle area
-          
+
           newPieces.push({
             id,
             x: randomX,
@@ -153,10 +159,10 @@ export function PuzzleExercise({
           });
         }
       }
-      
+
       // Shuffle pieces
       const shuffledPieces = [...newPieces].sort(() => Math.random() - 0.5);
-      
+
       // Apply initial response if available
       if (initialResponse?.pieces) {
         const responsePieces = initialResponse.pieces;
@@ -169,27 +175,27 @@ export function PuzzleExercise({
           }
         });
       }
-      
+
       setPieces(shuffledPieces);
       updateCompletionPercentage(shuffledPieces);
     };
-    
+
     createPuzzlePieces();
   }, [imageLoaded, question, initialResponse]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    
+
     if (!over || !containerRef.current) return;
-    
+
     const pieceId = active.id as string;
     const piece = pieces.find(p => p.id === pieceId);
-    
+
     if (!piece) return;
-    
+
     // Get the position where the piece was dropped
     const { x, y } = event.over.rect;
-    
+
     // Update the piece position
     const updatedPieces = pieces.map(p => {
       if (p.id === pieceId) {
@@ -197,12 +203,12 @@ export function PuzzleExercise({
         const containerRect = containerRef.current!.getBoundingClientRect();
         const newX = x - containerRect.left;
         const newY = y - containerRect.top;
-        
+
         // Check if the piece is close to its correct position
-        const isCorrect = 
-          Math.abs(newX - p.correctX) < 20 && 
+        const isCorrect =
+          Math.abs(newX - p.correctX) < 20 &&
           Math.abs(newY - p.correctY) < 20;
-        
+
         // If correct, snap to exact position
         return {
           ...p,
@@ -213,7 +219,7 @@ export function PuzzleExercise({
       }
       return p;
     });
-    
+
     setPieces(updatedPieces);
     updateCompletionPercentage(updatedPieces);
   };
@@ -229,7 +235,7 @@ export function PuzzleExercise({
       toast.error('Complete the puzzle before saving');
       return;
     }
-    
+
     if (onSave) {
       onSave({
         pieces: pieces.map(p => ({
@@ -245,15 +251,15 @@ export function PuzzleExercise({
 
   const handleReset = () => {
     if (!containerRef.current) return;
-    
+
     const containerWidth = containerRef.current.clientWidth;
     const containerHeight = containerRef.current.clientHeight;
-    
+
     // Randomize positions
     const updatedPieces = pieces.map(p => {
       const randomX = Math.random() * (containerWidth - p.width);
       const randomY = Math.random() * (containerHeight - p.height) + containerHeight + 20;
-      
+
       return {
         ...p,
         x: randomX,
@@ -261,7 +267,7 @@ export function PuzzleExercise({
         isCorrect: false
       };
     });
-    
+
     setPieces(updatedPieces);
     setCompletionPercentage(0);
   };
@@ -274,7 +280,7 @@ export function PuzzleExercise({
       y: p.correctY,
       isCorrect: true
     }));
-    
+
     setPieces(updatedPieces);
     setCompletionPercentage(100);
   };
@@ -282,73 +288,73 @@ export function PuzzleExercise({
   return (
     <div className="w-full">
       <h3 className="text-lg font-semibold mb-4">{question.questionText}</h3>
-      
+
       <div className="p-4 bg-white border rounded-md">
         <div className="flex justify-between items-center mb-4">
           <div className="text-sm">
             Completion: <span className="font-medium">{completionPercentage}%</span>
           </div>
-          
+
           {question.questionData.previewEnabled && (
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setShowPreview(!showPreview)}
             >
               {showPreview ? 'Hide Preview' : 'Show Preview'}
             </Button>
           )}
         </div>
-        
+
         {showPreview && (
           <div className="mb-4 border rounded-md overflow-hidden">
-            <img 
-              src={question.questionData.imageUrl} 
-              alt="Puzzle preview" 
+            <img
+              src={question.questionData.imageUrl}
+              alt="Puzzle preview"
               className="w-full h-auto"
             />
           </div>
         )}
-        
+
         <div className="relative" style={{ height: '600px' }}>
           {/* Puzzle board */}
-          <div 
-            ref={containerRef} 
+          <div
+            ref={containerRef}
             className="relative border-2 border-gray-300 rounded-md bg-gray-100"
-            style={{ 
-              width: '100%', 
+            style={{
+              width: '100%',
               height: '50%',
               backgroundImage: 'url(/images/puzzle-grid-bg.png)',
               backgroundSize: 'cover'
             }}
           >
-            <img 
-              ref={imageRef} 
-              src={question.questionData.imageUrl} 
-              alt="Hidden reference" 
-              className="hidden" 
+            <img
+              ref={imageRef}
+              src={question.questionData.imageUrl}
+              alt="Hidden reference"
+              className="hidden"
             />
           </div>
-          
+
           {/* Piece tray */}
-          <div 
+          <div
             className="relative mt-4 border-2 border-gray-300 rounded-md bg-gray-200"
             style={{ width: '100%', height: '45%' }}
           >
             <p className="text-center text-sm text-gray-500 mt-2">Drag pieces to the puzzle board</p>
           </div>
-          
+
           {/* Puzzle pieces */}
-          <DndContext 
-            sensors={sensors} 
-            collisionDetection={closestCenter} 
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
             <SortableContext items={pieces.map(p => p.id)}>
               {pieces.map(piece => (
-                <SortablePiece 
-                  key={piece.id} 
-                  piece={piece} 
+                <SortablePiece
+                  key={piece.id}
+                  piece={piece}
                   showCorrect={showAnswers}
                 />
               ))}
@@ -356,7 +362,7 @@ export function PuzzleExercise({
           </DndContext>
         </div>
       </div>
-      
+
       <div className="mt-6 flex justify-end space-x-2">
         {!readOnly && (
           <>

@@ -74,59 +74,110 @@ const SortableItem = ({ id, text, imageUrl, position, correctPosition, showCorre
   );
 };
 
-export function OrderingExercise({ 
-  question, 
-  readOnly = false, 
-  initialResponse, 
+export function OrderingExercise({
+  question,
+  readOnly = false,
+  initialResponse,
   onSave,
   showAnswers = false
 }: OrderingExerciseProps) {
   const [items, setItems] = useState<(OrderingQuestion['items'][0] & { position: number })[]>([]);
-  
+
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px of movement required before activation
+        delay: 150, // 150ms delay before activation to prevent interference with text inputs
+        tolerance: 5, // 5px of movement allowed during delay
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 
   useEffect(() => {
-    if (question.questionData) {
-      // Initialize items from question data
-      const initialItems = [...question.questionData.items]
-        .sort(() => Math.random() - 0.5) // Shuffle items
-        .map((item, index) => ({
-          ...item,
-          position: index
-        }));
-      
-      setItems(initialItems);
-    }
-    
-    // Initialize items from initial response if available
-    if (initialResponse?.orderedItems) {
-      const responseItems = [...question.questionData.items].map(item => {
-        const responseItem = initialResponse.orderedItems.find(ri => ri.id === item.id);
-        return {
-          ...item,
-          position: responseItem?.position || 0
-        };
-      }).sort((a, b) => a.position - b.position);
-      
-      setItems(responseItems);
+    try {
+      // Validate question data
+      if (!question?.questionData) {
+        console.error('Question data is missing');
+        setItems([]);
+        return;
+      }
+
+      // Ensure items array exists
+      const questionItems = question.questionData.items || [];
+      if (!Array.isArray(questionItems)) {
+        console.error('Question items is not an array:', questionItems);
+        setItems([]);
+        return;
+      }
+
+      // If no items, set empty array
+      if (questionItems.length === 0) {
+        console.warn('No items found in question data');
+        setItems([]);
+        return;
+      }
+
+      // Initialize items from initial response if available
+      if (initialResponse?.orderedItems) {
+        try {
+          const responseItems = [...questionItems].map(item => {
+            const responseItem = initialResponse.orderedItems.find(ri => ri.id === item.id);
+            return {
+              ...item,
+              position: responseItem?.position || 0
+            };
+          }).sort((a, b) => a.position - b.position);
+
+          setItems(responseItems);
+        } catch (error) {
+          console.error('Error initializing from response:', error);
+          // Fallback to default initialization
+          const fallbackItems = [...questionItems].map((item, index) => ({
+            ...item,
+            position: index
+          }));
+          setItems(fallbackItems);
+        }
+      } else {
+        // Initialize with shuffled items
+        try {
+          const initialItems = [...questionItems]
+            .sort(() => Math.random() - 0.5) // Shuffle items
+            .map((item, index) => ({
+              ...item,
+              position: index
+            }));
+
+          setItems(initialItems);
+        } catch (error) {
+          console.error('Error initializing shuffled items:', error);
+          // Fallback to ordered initialization
+          const fallbackItems = [...questionItems].map((item, index) => ({
+            ...item,
+            position: index
+          }));
+          setItems(fallbackItems);
+        }
+      }
+    } catch (error) {
+      console.error('Error in useEffect:', error);
+      setItems([]);
     }
   }, [question, initialResponse]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    
+
     if (over && active.id !== over.id) {
       setItems(items => {
         const oldIndex = items.findIndex(item => item.id === active.id);
         const newIndex = items.findIndex(item => item.id === over.id);
-        
+
         const newItems = arrayMove(items, oldIndex, newIndex);
-        
+
         // Update positions
         return newItems.map((item, index) => ({
           ...item,
@@ -142,7 +193,7 @@ export function OrderingExercise({
         id: item.id,
         position: item.position
       }));
-      
+
       onSave({ orderedItems });
     }
   };
@@ -155,18 +206,22 @@ export function OrderingExercise({
         ...item,
         position: index
       }));
-    
+
     setItems(shuffledItems);
   };
 
   return (
     <div className="w-full">
       <h3 className="text-lg font-semibold mb-4">{question.questionText}</h3>
-      
+
       <div className="p-4 bg-white border rounded-md">
         <p className="mb-4 text-gray-600">Arrange the items in the correct order:</p>
-        
-        {readOnly ? (
+
+        {items.length === 0 ? (
+          <div className="p-4 bg-gray-50 border rounded-md text-center">
+            <p className="text-gray-500">No items available for this ordering exercise.</p>
+          </div>
+        ) : readOnly ? (
           <div className="space-y-2">
             {items.map((item) => (
               <SortableItem
@@ -181,9 +236,9 @@ export function OrderingExercise({
             ))}
           </div>
         ) : (
-          <DndContext 
-            sensors={sensors} 
-            collisionDetection={closestCenter} 
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
             <SortableContext items={items.map(item => item.id)}>
@@ -204,8 +259,8 @@ export function OrderingExercise({
           </DndContext>
         )}
       </div>
-      
-      {!readOnly && (
+
+      {!readOnly && items.length > 0 && (
         <div className="mt-6 flex justify-end space-x-2">
           <Button variant="outline" onClick={handleReset}>
             Shuffle

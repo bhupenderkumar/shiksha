@@ -1,0 +1,10 @@
+This is a placeholder file.
+
+The following sound files should be added to this directory:
+- correct.mp3
+- incorrect.mp3
+- celebration.mp3
+- click.mp3
+- complete.mp3
+
+You can download suitable sound files from royalty-free sound libraries like Freesound.org or use sound effect packs designed for educational applications.

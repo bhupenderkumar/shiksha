@@ -9,8 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { CelebrationAnimation } from '@/components/ui/celebration-animation';
+import { ExerciseScoreCard } from '@/components/ui/exercise-scorecard';
 import { toast } from 'react-hot-toast';
-import { ArrowLeft, ArrowRight, Save, CheckCircle, Clock, Award } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, CheckCircle, Clock, Award, XCircle } from 'lucide-react';
+import { playSound, preloadSounds } from '@/utils/soundUtils';
 import {
   InteractiveAssignment,
   InteractiveQuestion,
@@ -42,6 +44,11 @@ export default function AssignmentPlayer({ assignmentId, isPlayMode = false }: A
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState<number | null>(null);
+
+  // Preload sounds when component mounts
+  useEffect(() => {
+    preloadSounds();
+  }, []);
 
   // Fetch assignment data
   useEffect(() => {
@@ -117,6 +124,9 @@ export default function AssignmentPlayer({ assignmentId, isPlayMode = false }: A
 
   // Handle response update
   const handleResponseUpdate = (questionId: string, responseData: any) => {
+    // Play a subtle click sound when a response is updated
+    playSound('click', 0.2);
+
     setResponses(prev => ({
       ...prev,
       [questionId]: {
@@ -133,20 +143,29 @@ export default function AssignmentPlayer({ assignmentId, isPlayMode = false }: A
   const handleNextQuestion = () => {
     if (!assignment || !assignment.questions) return;
 
+    // Play navigation sound
+    playSound('click');
+
     if (currentQuestionIndex < assignment.questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
       // Last question, show completion options
       setShowCelebration(true);
+      playSound('complete');
     }
   };
 
   // Navigate to previous question
   const handlePrevQuestion = () => {
     if (currentQuestionIndex > 0) {
+      // Play navigation sound
+      playSound('click');
       setCurrentQuestionIndex(prev => prev - 1);
     }
   };
+
+  // State to track if detailed results are ready
+  const [resultsReady, setResultsReady] = useState(false);
 
   // Submit assignment
   const handleSubmit = async () => {
@@ -154,6 +173,10 @@ export default function AssignmentPlayer({ assignmentId, isPlayMode = false }: A
 
     try {
       setSubmitting(true);
+      setResultsReady(false); // Reset results ready state
+
+      // Play submission sound
+      playSound('click');
 
       // Calculate time spent
       const endTime = new Date();
@@ -182,23 +205,131 @@ export default function AssignmentPlayer({ assignmentId, isPlayMode = false }: A
 
           setSubmitted(true);
           setScore(submission.score || null);
+
+          // Set results ready immediately
+          setResultsReady(true);
+
+          // Play celebration sound
+          playSound('celebration');
+
           toast.success('Assignment submitted successfully!');
+
+          // Scroll to detailed results after a short delay
+          setTimeout(() => {
+            const detailedResultsElement = document.getElementById('detailed-results');
+            if (detailedResultsElement) {
+              detailedResultsElement.scrollIntoView({ behavior: 'smooth' });
+            }
+          }, 500);
         }
       } else {
         // For anonymous users or play mode without login
         // Just mark as submitted locally without saving to server
         setSubmitted(true);
 
-        // Calculate a simple score based on the number of responses
+        // Evaluate responses locally for play mode
         const totalQuestions = assignment.questions?.length || 0;
-        const answeredQuestions = responsesArray.length;
-        const calculatedScore = Math.round((answeredQuestions / totalQuestions) * 100);
 
+        // Process each response to determine if it's correct
+        const evaluatedResponses: Record<string, InteractiveResponse> = {};
+        let correctCount = 0;
+
+        assignment.questions?.forEach(question => {
+          const response = responses[question.id];
+          if (!response) return;
+
+          // Evaluate correctness based on question type
+          let isCorrect = false;
+
+          switch (question.questionType) {
+            case 'MATCHING':
+              // For matching, check if all pairs match the correct pairs
+              const userPairs = response.responseData?.pairs || [];
+              const correctPairs = question.questionData?.correctPairs || [];
+
+              // Simple check - count matching pairs
+              const matchingPairs = userPairs.filter(userPair =>
+                correctPairs.some(correctPair =>
+                  correctPair.leftId === userPair.leftId &&
+                  correctPair.rightId === userPair.rightId
+                )
+              );
+
+              isCorrect = matchingPairs.length === correctPairs.length;
+              break;
+
+            case 'MULTIPLE_CHOICE':
+              // For multiple choice, check if selected option is correct
+              const selectedOption = response.responseData?.selectedOption;
+              const correctOption = question.questionData?.choices?.find((c: any) => c.isCorrect)?.id;
+              isCorrect = selectedOption === correctOption;
+              break;
+
+            case 'ORDERING':
+              // For ordering, check if items are in correct order
+              const userOrder = response.responseData?.order || [];
+              const correctOrder = question.questionData?.correctOrder || [];
+
+              // Check if arrays are same length and all items match
+              isCorrect = userOrder.length === correctOrder.length &&
+                userOrder.every((item: any, index: number) => item === correctOrder[index]);
+              break;
+
+            case 'COMPLETION':
+              // For completion, check if all blanks are filled correctly
+              const userAnswers = response.responseData?.answers || [];
+              const correctAnswers = question.questionData?.blanks || [];
+
+              // Check if all answers match
+              isCorrect = userAnswers.every((answer: any) => {
+                const correctBlank = correctAnswers.find((b: any) => b.id === answer.blankId);
+                return correctBlank && answer.answer.toLowerCase() === correctBlank.answer.toLowerCase();
+              });
+              break;
+
+            default:
+              // For other types, assume correct if there's a response
+              isCorrect = true;
+          }
+
+          // Update the response with correctness
+          evaluatedResponses[question.id] = {
+            ...response,
+            isCorrect
+          };
+
+          if (isCorrect) correctCount++;
+        });
+
+        // Update responses with evaluated ones
+        setResponses(evaluatedResponses);
+
+        // Calculate score based on correct answers
+        const calculatedScore = Math.round((correctCount / totalQuestions) * 100);
         setScore(calculatedScore);
+
+        // Set results ready immediately
+        setResultsReady(true);
+
+        // Play celebration sound
+        playSound('celebration');
+
         toast.success('Great job completing the assignment!');
+
+        // Scroll to detailed results after a short delay
+        setTimeout(() => {
+          const detailedResultsElement = document.getElementById('detailed-results');
+          if (detailedResultsElement) {
+            detailedResultsElement.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 500);
       }
     } catch (error) {
       console.error('Error submitting assignment:', error);
+
+      // Play error sound
+      playSound('incorrect');
+
       toast.error('Failed to submit assignment');
     } finally {
       setSubmitting(false);
@@ -269,6 +400,21 @@ export default function AssignmentPlayer({ assignmentId, isPlayMode = false }: A
 
   // Render completion screen for play mode
   if (isPlayMode && submitted) {
+    // Calculate correct and incorrect answers
+    const correctAnswers = Object.values(responses).filter(response => response.isCorrect === true).length;
+    const incorrectAnswers = Object.values(responses).filter(response => response.isCorrect === false).length;
+    const totalQuestions = assignment.questions?.length || 0;
+
+    // Log responses for debugging
+    console.log('Responses in completion screen:', responses);
+    console.log('Correct answers:', correctAnswers);
+    console.log('Incorrect answers:', incorrectAnswers);
+
+    // Helper function to get question by ID
+    const getQuestionById = (id: string) => {
+      return assignment.questions?.find(q => q.id === id);
+    };
+
     return (
       <div className="container mx-auto px-4 py-8">
         <Card className="mb-6 overflow-hidden">
@@ -278,24 +424,145 @@ export default function AssignmentPlayer({ assignmentId, isPlayMode = false }: A
           </div>
 
           <CardContent className="p-8">
-            <div className="flex flex-col items-center justify-center py-8">
-              <div className="w-32 h-32 rounded-full bg-green-100 flex items-center justify-center mb-6">
-                <Award className="h-16 w-16 text-green-600" />
-              </div>
+            <div className="flex flex-col items-center justify-center py-4">
+              {/* Use our new ExerciseScoreCard component */}
+              <ExerciseScoreCard
+                score={score || 0}
+                totalQuestions={totalQuestions}
+                correctAnswers={correctAnswers}
+                incorrectAnswers={incorrectAnswers}
+                skippedAnswers={totalQuestions - Object.keys(responses).length}
+                onContinue={() => navigate('/')}
+                onTryAgain={() => {
+                  // Reset the state to try again
+                  setSubmitted(false);
+                  setResponses({});
+                  setCurrentQuestionIndex(0);
+                  setScore(null);
+                  setResultsReady(false);
+                  playSound('click');
+                }}
+                showConfetti={true}
+                className="mb-6 max-w-2xl w-full"
+              />
 
-              <h3 className="text-2xl font-bold mb-2">Your Score: {score || 0}%</h3>
-              <p className="text-gray-500 mb-6">You've successfully completed this assignment</p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl mt-4">
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <h4 className="font-medium mb-2">Assignment</h4>
                   <p>{assignment.title}</p>
                 </div>
 
                 <div className="bg-green-50 p-4 rounded-lg">
-                  <h4 className="font-medium mb-2">Questions Answered</h4>
-                  <p>{Object.keys(responses).length} of {assignment.questions?.length || 0}</p>
+                  <h4 className="font-medium mb-2">Assignment Type</h4>
+                  <p>{assignment.type}</p>
                 </div>
+              </div>
+
+              {/* Direct link to detailed results */}
+              <div className="mt-6 w-full max-w-2xl">
+                <a
+                  href="#detailed-results"
+                  className="flex items-center justify-center p-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <Award className="mr-2 h-5 w-5" />
+                  <span className="font-bold">View Detailed Results</span>
+                </a>
+              </div>
+
+              {/* Scroll indicator */}
+              <div className="flex items-center justify-center mt-6 animate-bounce">
+                <a href="#detailed-results" className="text-blue-600 flex flex-col items-center no-underline hover:underline">
+                  <p className="font-bold">Scroll down for detailed results</p>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                </a>
+              </div>
+
+              {/* Detailed Results Section */}
+              <div id="detailed-results" className="w-full max-w-2xl mt-8 border-2 border-blue-500 p-4 rounded-lg bg-blue-50">
+                <h3 className="text-2xl font-bold mb-4 text-center text-blue-800 uppercase tracking-wide">Detailed Results</h3>
+                <p className="text-center text-blue-600 mb-4">See how you did on each question</p>
+
+                <div className="bg-white border rounded-lg shadow-md overflow-hidden">
+                  {assignment.questions?.map((question, index) => {
+                    const response = responses[question.id];
+                    const isCorrect = response?.isCorrect;
+
+                    return (
+                      <div
+                        key={question.id}
+                        className={`p-4 border-b ${
+                          isCorrect === true ? 'bg-green-50' :
+                          isCorrect === false ? 'bg-red-50' : 'bg-gray-50'
+                        } ${index === assignment.questions!.length - 1 ? 'border-b-0' : ''}`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 mt-1">
+                            {isCorrect === true ? (
+                              <CheckCircle className="h-5 w-5 text-green-500" />
+                            ) : isCorrect === false ? (
+                              <XCircle className="h-5 w-5 text-red-500" />
+                            ) : (
+                              <Clock className="h-5 w-5 text-gray-400" />
+                            )}
+                          </div>
+
+                          <div className="flex-1">
+                            <h4 className="font-medium">
+                              Question {index + 1}: {question.questionText}
+                            </h4>
+
+                            {/* Show response details based on question type */}
+                            {response && (
+                              <div className="mt-2 text-sm">
+                                {isCorrect === true ? (
+                                  <p className="text-green-600">Correct answer! Great job!</p>
+                                ) : isCorrect === false ? (
+                                  <div>
+                                    <p className="text-red-600 mb-1">Incorrect answer</p>
+                                    {question.questionType === 'MATCHING' && (
+                                      <p className="text-gray-600">
+                                        Some matches were incorrect. Review the correct pairs.
+                                      </p>
+                                    )}
+                                    {question.questionType === 'MULTIPLE_CHOICE' && (
+                                      <p className="text-gray-600">
+                                        The correct answer was: {
+                                          question.questionData?.choices?.find(
+                                            (c: any) => c.isCorrect
+                                          )?.text || 'Not available'
+                                        }
+                                      </p>
+                                    )}
+                                    {question.questionType === 'ORDERING' && (
+                                      <p className="text-gray-600">
+                                        The items were not in the correct order.
+                                      </p>
+                                    )}
+                                    {question.questionType === 'COMPLETION' && (
+                                      <p className="text-gray-600">
+                                        Some of the filled blanks were incorrect.
+                                      </p>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <p className="text-gray-600">This question was skipped.</p>
+                                )}
+                              </div>
+                            )}
+
+                            {!response && (
+                              <p className="mt-2 text-sm text-gray-600">
+                                This question was not attempted.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  </div>
               </div>
 
               <div className="mt-8 flex gap-4">
@@ -310,6 +577,8 @@ export default function AssignmentPlayer({ assignmentId, isPlayMode = false }: A
                     setResponses({});
                     setCurrentQuestionIndex(0);
                     setScore(null);
+                    setResultsReady(false);
+                    playSound('click');
                   }}
                 >
                   Try Again
@@ -354,60 +623,221 @@ export default function AssignmentPlayer({ assignmentId, isPlayMode = false }: A
         </CardHeader>
 
         <CardContent>
-          <div className="flex items-center gap-4 mb-6">
-            <div className="flex-1">
-              <Progress value={calculateProgress()} className="h-2" />
-            </div>
-            <div className="text-sm text-gray-500 whitespace-nowrap">
-              Question {currentQuestionIndex + 1} of {assignment.questions?.length || 0}
-            </div>
-          </div>
+          {submitted ? (
+            // Show detailed results when assignment is submitted
+            <div className="w-full">
+              <div id="detailed-results" className="mb-6 border-2 border-blue-500 p-4 rounded-lg bg-blue-50">
+                <h3 className="text-2xl font-bold mb-4 text-center text-blue-800 uppercase tracking-wide">Detailed Results</h3>
+                <p className="text-center text-blue-600 mb-4">See how you did on each question</p>
 
-          {renderQuestion()}
+                {/* Calculate correct and incorrect answers */}
+                {(() => {
+                  const correctAnswers = Object.values(responses).filter(response => response.isCorrect === true).length;
+                  const incorrectAnswers = Object.values(responses).filter(response => response.isCorrect === false).length;
+                  const totalQuestions = assignment.questions?.length || 0;
+
+                  return (
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div className="bg-green-50 p-3 rounded-lg text-center">
+                          <CheckCircle className="w-6 h-6 text-green-500 mx-auto mb-1" />
+                          <p className="text-sm text-gray-600">Correct</p>
+                          <p className="text-xl font-bold text-green-600">{correctAnswers}</p>
+                        </div>
+
+                        <div className="bg-red-50 p-3 rounded-lg text-center">
+                          <XCircle className="w-6 h-6 text-red-500 mx-auto mb-1" />
+                          <p className="text-sm text-gray-600">Incorrect</p>
+                          <p className="text-xl font-bold text-red-600">{incorrectAnswers}</p>
+                        </div>
+
+                        <div className="bg-blue-50 p-3 rounded-lg text-center">
+                          <Award className="w-6 h-6 text-blue-500 mx-auto mb-1" />
+                          <p className="text-sm text-gray-600">Score</p>
+                          <p className="text-xl font-bold text-blue-600">{score || 0}%</p>
+                        </div>
+                      </div>
+
+                      {/* Direct link to detailed results */}
+                      <div className="mb-6">
+                        <a
+                          href="#detailed-results"
+                          className="flex items-center justify-center p-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          <Award className="mr-2 h-5 w-5" />
+                          <span className="font-bold">View Detailed Results</span>
+                        </a>
+                      </div>
+                    </>
+                  );
+                })()}
+
+                {/* List of questions with results */}
+                <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
+                  {assignment.questions?.map((question, index) => {
+                    const response = responses[question.id];
+                    const isCorrect = response?.isCorrect;
+
+                    return (
+                      <div
+                        key={question.id}
+                        className={`p-4 border-b ${
+                          isCorrect === true ? 'bg-green-50' :
+                          isCorrect === false ? 'bg-red-50' : 'bg-gray-50'
+                        } ${index === assignment.questions!.length - 1 ? 'border-b-0' : ''}`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 mt-1">
+                            {isCorrect === true ? (
+                              <CheckCircle className="h-5 w-5 text-green-500" />
+                            ) : isCorrect === false ? (
+                              <XCircle className="h-5 w-5 text-red-500" />
+                            ) : (
+                              <Clock className="h-5 w-5 text-gray-400" />
+                            )}
+                          </div>
+
+                          <div className="flex-1">
+                            <h4 className="font-medium">
+                              Question {index + 1}: {question.questionText}
+                            </h4>
+
+                            {/* Show response details based on question type */}
+                            {response && (
+                              <div className="mt-2 text-sm">
+                                {isCorrect === true ? (
+                                  <p className="text-green-600">Correct answer! Great job!</p>
+                                ) : isCorrect === false ? (
+                                  <div>
+                                    <p className="text-red-600 mb-1">Incorrect answer</p>
+                                    {question.questionType === 'MATCHING' && (
+                                      <p className="text-gray-600">
+                                        Some matches were incorrect. Review the correct pairs.
+                                      </p>
+                                    )}
+                                    {question.questionType === 'MULTIPLE_CHOICE' && (
+                                      <p className="text-gray-600">
+                                        The correct answer was: {
+                                          question.questionData?.choices?.find(
+                                            (c: any) => c.isCorrect
+                                          )?.text || 'Not available'
+                                        }
+                                      </p>
+                                    )}
+                                    {question.questionType === 'ORDERING' && (
+                                      <p className="text-gray-600">
+                                        The items were not in the correct order.
+                                      </p>
+                                    )}
+                                    {question.questionType === 'COMPLETION' && (
+                                      <p className="text-gray-600">
+                                        Some of the filled blanks were incorrect.
+                                      </p>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <p className="text-gray-600">This question was skipped.</p>
+                                )}
+                              </div>
+                            )}
+
+                            {!response && (
+                              <p className="mt-2 text-sm text-gray-600">
+                                This question was not attempted.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  </div>
+              </div>
+
+              <div className="flex justify-center mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/interactive-assignments')}
+                  className="mr-4"
+                >
+                  Back to Assignments
+                </Button>
+                <Button
+                  onClick={() => {
+                    // Reset the state to try again
+                    setSubmitted(false);
+                    setResponses({});
+                    setCurrentQuestionIndex(0);
+                    setScore(null);
+                    setResultsReady(false);
+                    playSound('click');
+                  }}
+                >
+                  Try Again
+                </Button>
+              </div>
+            </div>
+          ) : (
+            // Show the current question when not submitted
+            <>
+              <div className="flex items-center gap-4 mb-6">
+                <div className="flex-1">
+                  <Progress value={calculateProgress()} className="h-2" />
+                </div>
+                <div className="text-sm text-gray-500 whitespace-nowrap">
+                  Question {currentQuestionIndex + 1} of {assignment.questions?.length || 0}
+                </div>
+              </div>
+
+              {renderQuestion()}
+            </>
+          )}
         </CardContent>
 
-        <CardFooter className="flex justify-between">
-          <Button
-            variant="outline"
-            onClick={handlePrevQuestion}
-            disabled={currentQuestionIndex === 0 || submitting}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Previous
-          </Button>
+        {!submitted && (
+          <CardFooter className="flex justify-between">
+            <Button
+              variant="outline"
+              onClick={handlePrevQuestion}
+              disabled={currentQuestionIndex === 0 || submitting}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Previous
+            </Button>
 
-          <div className="flex gap-2">
-            {isPlayMode && !submitted && (
-              <Button
-                variant="outline"
-                onClick={() => navigate('/')}
-                disabled={submitting}
-              >
-                Exit
-              </Button>
-            )}
+            <div className="flex gap-2">
+              {isPlayMode && !submitted && (
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/')}
+                  disabled={submitting}
+                >
+                  Exit
+                </Button>
+              )}
 
-            {currentQuestionIndex < (assignment.questions?.length || 0) - 1 ? (
-              <Button
-                onClick={handleNextQuestion}
-                disabled={submitting}
-                className={isPlayMode ? "bg-blue-600 hover:bg-blue-700" : ""}
-              >
-                Next
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            ) : (
-              <Button
-                onClick={() => setShowCelebration(true)}
-                disabled={submitting || submitted}
-                className={isPlayMode ? "bg-green-600 hover:bg-green-700" : ""}
-              >
-                {isPlayMode ? "Complete" : "Finish"}
-                <CheckCircle className="ml-2 h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        </CardFooter>
+              {currentQuestionIndex < (assignment.questions?.length || 0) - 1 ? (
+                <Button
+                  onClick={handleNextQuestion}
+                  disabled={submitting}
+                  className={isPlayMode ? "bg-blue-600 hover:bg-blue-700" : ""}
+                >
+                  Next
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => setShowCelebration(true)}
+                  disabled={submitting || submitted}
+                  className={isPlayMode ? "bg-green-600 hover:bg-green-700" : ""}
+                >
+                  {isPlayMode ? "Complete" : "Finish"}
+                  <CheckCircle className="ml-2 h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </CardFooter>
+        )}
       </Card>
 
       {/* Celebration animation */}

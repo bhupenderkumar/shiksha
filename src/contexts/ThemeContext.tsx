@@ -1,69 +1,67 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import * as React from 'react';
 import { settingsService } from '@/services/settings.service';
 import { profileService } from '@/services/profileService';
+import { ThemeProvider as BaseThemeProvider, useTheme as useBaseTheme } from '@/components/theme-provider';
 
-type Theme = 'light' | 'dark';
+// Re-export the base ThemeProvider for compatibility
+export const ThemeProvider = BaseThemeProvider;
 
-interface ThemeContextType {
-  theme: Theme;
+// Re-export the base useTheme hook for compatibility
+export const useTheme = useBaseTheme;
+
+// Legacy theme context for components that need the old API
+type LegacyTheme = 'light' | 'dark';
+
+interface LegacyThemeContextType {
+  theme: LegacyTheme;
   toggleTheme: () => void;
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+const LegacyThemeContext = React.createContext<LegacyThemeContextType | undefined>(undefined);
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light');
-  const [user, setUser] = useState<any>(null);
+// Legacy ThemeProvider for backward compatibility
+export function LegacyThemeProvider({ children }: { children: React.ReactNode }) {
+  const { theme: baseTheme, setTheme: setBaseTheme } = useBaseTheme();
+  const [user, setUser] = React.useState<any>(null);
 
-  useEffect(() => {
+  // Convert the base theme to legacy theme format
+  const theme = baseTheme === 'dark' ? 'dark' : 'light';
+
+  React.useEffect(() => {
     const loadUser = async () => {
-      const currentUser = await profileService.getCurrentUser();
-      setUser(currentUser);
+      try {
+        const currentUser = await profileService.getCurrentUser();
+        setUser(currentUser);
+      } catch (error) {
+        console.error('Error loading user:', error);
+      }
     };
     loadUser();
   }, []);
 
-  useEffect(() => {
-    const loadTheme = async () => {
+  // Sync user settings with theme when user changes
+  React.useEffect(() => {
+    const syncThemeWithUserSettings = async () => {
       try {
-        if (!user?.id) {
-          // Use default theme if no user is logged in
-          document.documentElement.className = theme;
-          if (theme === 'dark') {
-            document.documentElement.classList.add('dark');
-          } else {
-            document.documentElement.classList.remove('dark');
-          }
-          return;
-        }
-        const settings = await settingsService.getUserSettings(user.id);
-        if (settings?.theme) {
-          setTheme(settings.theme as Theme);
-          document.documentElement.className = settings.theme;
-          if (settings.theme === 'dark') {
-            document.documentElement.classList.add('dark');
-          } else {
-            document.documentElement.classList.remove('dark');
+        if (user?.id) {
+          const settings = await settingsService.getUserSettings(user.id);
+          if (settings?.theme) {
+            setBaseTheme(settings.theme === 'dark' ? 'dark' : 'light');
           }
         }
       } catch (error) {
-        console.error('Error loading theme:', error);
+        console.error('Error syncing theme with user settings:', error);
       }
     };
 
-    loadTheme();
-  }, [user]);
+    syncThemeWithUserSettings();
+  }, [user, setBaseTheme]);
 
-  const toggleTheme = async () => {
+  // Toggle theme function for legacy components
+  const toggleTheme = React.useCallback(async () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    document.documentElement.className = newTheme;
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    
+    setBaseTheme(newTheme);
+
     try {
       if (user?.id) {
         await settingsService.updateUserSettings(user.id, {
@@ -73,19 +71,25 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error saving theme:', error);
     }
-  };
+  }, [theme, setBaseTheme, user]);
+
+  const contextValue = React.useMemo(() => ({
+    theme,
+    toggleTheme
+  }), [theme, toggleTheme]);
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <LegacyThemeContext.Provider value={contextValue}>
       {children}
-    </ThemeContext.Provider>
+    </LegacyThemeContext.Provider>
   );
 }
 
-export function useTheme() {
-  const context = useContext(ThemeContext);
+// Legacy useTheme hook for backward compatibility
+export function useLegacyTheme() {
+  const context = React.useContext(LegacyThemeContext);
   if (context === undefined) {
-    throw new Error('useTheme must be used within a ThemeProvider');
+    throw new Error('useLegacyTheme must be used within a LegacyThemeProvider');
   }
   return context;
 }
