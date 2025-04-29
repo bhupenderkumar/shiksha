@@ -99,6 +99,9 @@ export function InteractiveAssignmentForm({
   const questionFormRef = React.useRef<any>(null)
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
   const [questionToDelete, setQuestionToDelete] = useState<number | null>(null)
+  const [isDeletingQuestion, setIsDeletingQuestion] = useState(false)
+  const [selectedQuestions, setSelectedQuestions] = useState<number[]>([])
+  const [isMultiDeleteConfirmOpen, setIsMultiDeleteConfirmOpen] = useState(false)
   const [classes, setClasses] = useState<any[]>([])
   const [subjects, setSubjects] = useState<any[]>([])
   const [selectedClassId, setSelectedClassId] = useState<string>('')
@@ -134,6 +137,21 @@ export function InteractiveAssignmentForm({
       setQuestionData({});
     }
   }, [showQuestionDialog, editingQuestionIndex])
+
+  // Reset selected questions when multi-delete dialog closes
+  useEffect(() => {
+    if (!isMultiDeleteConfirmOpen) {
+      // Don't reset selections immediately to avoid UI flicker during dialog close animation
+      const timer = setTimeout(() => {
+        if (!isMultiDeleteConfirmOpen) {
+          // Only reset if the dialog is still closed
+          setSelectedQuestions([]);
+        }
+      }, 300);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isMultiDeleteConfirmOpen])
 
   // Set current question type and question text when editing
   useEffect(() => {
@@ -203,6 +221,12 @@ export function InteractiveAssignmentForm({
   }, [form])
 
   async function onFormSubmit(data: FormValues) {
+    // If we're in the process of deleting a question, don't submit the form
+    if (isDeletingQuestion) {
+      console.log("Form submission prevented because a question is being deleted");
+      return;
+    }
+
     try {
       // Validate that we have at least one question
       if (data.questions.length === 0) {
@@ -327,6 +351,9 @@ export function InteractiveAssignmentForm({
           await onSubmit(data)
           // Note: The parent handler will show its own success message
 
+          // Reset selected questions after successful submission
+          setSelectedQuestions([])
+
           // If this is a new assignment (not an update), redirect to the assignments page
           if (!initialData) {
             console.log("Redirecting to assignments page after successful creation via parent handler")
@@ -392,6 +419,9 @@ export function InteractiveAssignmentForm({
 
       if (result) {
         toast.success(initialData ? "Assignment updated successfully" : "Assignment created successfully")
+
+        // Reset selected questions after successful submission
+        setSelectedQuestions([])
 
         // If this is a new assignment (not an update), redirect to the assignments page
         if (!initialData) {
@@ -752,24 +782,66 @@ export function InteractiveAssignmentForm({
           {/* Question Management Section */}
           <Card className="mb-6">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>
-                Questions
-                {questions.length === 0 && (
-                  <span className="ml-2 text-sm text-red-500 font-normal">
-                    (At least one question is required)
-                  </span>
+              <div className="flex items-center">
+                {questions.length > 0 && (
+                  <div className="flex items-center mr-4">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
+                      checked={selectedQuestions.length === questions.length && questions.length > 0}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          // Select all questions
+                          setSelectedQuestions(questions.map((_, idx) => idx));
+                        } else {
+                          // Deselect all questions
+                          setSelectedQuestions([]);
+                        }
+                      }}
+                    />
+                    <span className="text-sm text-gray-600">
+                      {selectedQuestions.length > 0
+                        ? `${selectedQuestions.length} selected`
+                        : "Select all"}
+                    </span>
+                  </div>
                 )}
-              </CardTitle>
-              <Button
-                type="button"
-                onClick={() => {
-                  setEditingQuestionIndex(null);
-                  setShowQuestionDialog(true);
-                }}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Question
-              </Button>
+                <CardTitle>
+                  Questions
+                  {questions.length === 0 && (
+                    <span className="ml-2 text-sm text-red-500 font-normal">
+                      (At least one question is required)
+                    </span>
+                  )}
+                </CardTitle>
+              </div>
+              <div className="flex space-x-2">
+                {selectedQuestions.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsMultiDeleteConfirmOpen(true);
+                    }}
+                  >
+                    <Trash className="mr-2 h-4 w-4" />
+                    Delete Selected ({selectedQuestions.length})
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setEditingQuestionIndex(null);
+                    setShowQuestionDialog(true);
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Question
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {questions.length === 0 ? (
@@ -780,13 +852,29 @@ export function InteractiveAssignmentForm({
               ) : (
                 <div className="space-y-4">
                   {questions.map((question, index) => (
-                    <Card key={index} className="border border-gray-200">
+                    <Card key={index} className={`border ${selectedQuestions.includes(index) ? 'border-blue-400 bg-blue-50' : 'border-gray-200'}`}>
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="font-medium">Question {index + 1}</h3>
-                            <p className="text-sm text-gray-500">Type: {question.questionType}</p>
-                            <p className="mt-2">{question.questionText}</p>
+                          <div className="flex items-start">
+                            <div className="mr-3 mt-1">
+                              <input
+                                type="checkbox"
+                                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                checked={selectedQuestions.includes(index)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedQuestions([...selectedQuestions, index]);
+                                  } else {
+                                    setSelectedQuestions(selectedQuestions.filter(idx => idx !== index));
+                                  }
+                                }}
+                              />
+                            </div>
+                            <div>
+                              <h3 className="font-medium">Question {index + 1}</h3>
+                              <p className="text-sm text-gray-500">Type: {question.questionType}</p>
+                              <p className="mt-2">{question.questionText}</p>
+                            </div>
                           </div>
                           <div className="flex space-x-2">
                             <Button
@@ -804,7 +892,14 @@ export function InteractiveAssignmentForm({
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => {
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                              title="Delete question (requires confirmation)"
+                              onClick={(e) => {
+                                // Prevent default to avoid any form submission
+                                e.preventDefault();
+                                e.stopPropagation();
+
+                                // Set the question to delete and show confirmation dialog
                                 setQuestionToDelete(index);
                                 setShowDeleteConfirmation(true);
                               }}
@@ -981,31 +1076,199 @@ export function InteractiveAssignmentForm({
           </Dialog>
 
           {/* Delete Confirmation Dialog */}
-          <AlertDialog open={showDeleteConfirmation} onOpenChange={setShowDeleteConfirmation}>
+          <AlertDialog
+            open={showDeleteConfirmation}
+            onOpenChange={(open) => {
+              // Prevent form submission when dialog is opened or closed
+              setIsDeletingQuestion(open);
+              setShowDeleteConfirmation(open);
+
+              if (!open) {
+                // Reset the question to delete when dialog is closed
+                setQuestionToDelete(null);
+
+                // Reset the deleting flag after a short delay
+                setTimeout(() => {
+                  setIsDeletingQuestion(false);
+                }, 100);
+              }
+            }}
+          >
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogTitle>Delete Question</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete the question.
+                  Are you sure you want to delete this question? This action cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => setQuestionToDelete(null)}>Cancel</AlertDialogCancel>
+                <AlertDialogCancel onClick={(e) => {
+                  // Prevent default to avoid any form submission
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}>
+                  Cancel
+                </AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => {
+                  onClick={async (e) => {
+                    // Prevent default to avoid any form submission
+                    e.preventDefault();
+                    e.stopPropagation();
+
                     if (questionToDelete !== null) {
                       try {
                         console.log("Deleting question at index:", questionToDelete);
-                        remove(questionToDelete);
-                        toast.success('Question deleted');
-                        setQuestionToDelete(null);
 
-                        // After deletion, we need to update the order of remaining questions
-                        // This will be handled when the form is submitted
+                        // Set flag to indicate we're in the process of deleting a question
+                        setIsDeletingQuestion(true);
+
+                        // Get the question ID from the form data
+                        const questionToDeleteData = form.getValues().questions[questionToDelete];
+                        const questionId = questionToDeleteData?.id;
+
+                        console.log("Question to delete:", questionToDeleteData);
+                        console.log("Question ID:", questionId);
+
+                        // If we have a question ID, delete it from the backend first
+                        if (questionId) {
+                          const success = await interactiveAssignmentService.deleteQuestion(questionId);
+                          if (!success) {
+                            throw new Error("Failed to delete question from the database");
+                          }
+                        }
+
+                        // Remove the question from the form
+                        remove(questionToDelete);
+
+                        // Update the order of remaining questions
+                        const updatedQuestions = form.getValues().questions;
+                        updatedQuestions.forEach((q, idx) => {
+                          q.order = idx + 1;
+                        });
+
+                        // Set the updated values back to the form
+                        form.setValue('questions', updatedQuestions, {
+                          // Prevent triggering validation or form submission
+                          shouldValidate: false,
+                          shouldDirty: true,
+                          shouldTouch: false
+                        });
+
+                        // Reset state
+                        setQuestionToDelete(null);
+                        setShowDeleteConfirmation(false);
+
+                        // Reset the deleting flag after a short delay
+                        setTimeout(() => {
+                          setIsDeletingQuestion(false);
+                        }, 100);
                       } catch (error) {
                         console.error("Error deleting question:", error);
                         toast.error('Failed to delete question: ' + (error instanceof Error ? error.message : 'Unknown error'));
+                        setIsDeletingQuestion(false);
                       }
+                    }
+                  }}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          {/* Multi-Delete Confirmation Dialog */}
+          <AlertDialog
+            open={isMultiDeleteConfirmOpen}
+            onOpenChange={(open) => {
+              setIsMultiDeleteConfirmOpen(open);
+              if (!open) {
+                // Reset the deleting flag after a short delay
+                setTimeout(() => {
+                  setIsDeletingQuestion(false);
+                }, 100);
+              } else {
+                setIsDeletingQuestion(true);
+              }
+            }}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Selected Questions</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete {selectedQuestions.length} selected question{selectedQuestions.length !== 1 ? 's' : ''}? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={(e) => {
+                  // Prevent default to avoid any form submission
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}>
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={async (e) => {
+                    // Prevent default to avoid any form submission
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    try {
+                      console.log("Deleting selected questions:", selectedQuestions);
+
+                      // Set flag to indicate we're in the process of deleting questions
+                      setIsDeletingQuestion(true);
+
+                      // Sort indices in descending order to avoid index shifting issues when removing
+                      const sortedIndices = [...selectedQuestions].sort((a, b) => b - a);
+
+                      // Get the questions data
+                      const questionsData = form.getValues().questions;
+
+                      // Delete each question from the backend first
+                      for (const index of sortedIndices) {
+                        const questionData = questionsData[index];
+                        const questionId = questionData?.id;
+
+                        if (questionId) {
+                          const success = await interactiveAssignmentService.deleteQuestion(questionId);
+                          if (!success) {
+                            console.error(`Failed to delete question with ID ${questionId}`);
+                          }
+                        }
+
+                        // Remove the question from the form
+                        remove(index);
+                      }
+
+                      // Update the order of remaining questions
+                      const updatedQuestions = form.getValues().questions;
+                      updatedQuestions.forEach((q, idx) => {
+                        q.order = idx + 1;
+                      });
+
+                      // Set the updated values back to the form
+                      form.setValue('questions', updatedQuestions, {
+                        // Prevent triggering validation or form submission
+                        shouldValidate: false,
+                        shouldDirty: true,
+                        shouldTouch: false
+                      });
+
+                      toast.success(`${selectedQuestions.length} question${selectedQuestions.length !== 1 ? 's' : ''} deleted successfully`);
+
+                      // Reset state
+                      setSelectedQuestions([]);
+                      setIsMultiDeleteConfirmOpen(false);
+
+                      // Reset the deleting flag after a short delay
+                      setTimeout(() => {
+                        setIsDeletingQuestion(false);
+                      }, 100);
+                    } catch (error) {
+                      console.error("Error deleting questions:", error);
+                      toast.error('Failed to delete questions: ' + (error instanceof Error ? error.message : 'Unknown error'));
+                      setIsDeletingQuestion(false);
                     }
                   }}
                   className="bg-red-600 hover:bg-red-700"

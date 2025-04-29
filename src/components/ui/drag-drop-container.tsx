@@ -20,12 +20,14 @@ export function DragDropContainer({
   collisionDetection
 }: DragDropContainerProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
-  
+
   // Configure sensors for both mouse/touch input
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8, // 8px of movement required before activation
+        delay: 150, // 150ms delay before activation to prevent interference with text inputs
+        tolerance: 5, // 5px of movement allowed during delay
       },
     }),
     useSensor(TouchSensor, {
