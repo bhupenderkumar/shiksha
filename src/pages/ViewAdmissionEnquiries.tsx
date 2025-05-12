@@ -7,19 +7,19 @@ import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { AttachmentsList } from '@/components/ui/AttachmentsList';
-import { 
-  ArrowLeft, 
-  Calendar, 
-  Clock, 
-  Book, 
-  Users, 
-  Paperclip, 
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  Book,
+  Users,
+  Paperclip,
   Eye,
   AlertCircle,
-  FileText 
+  FileText
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-provider';
 import Layout from '@/components/Layout';
 import { ADMISSION_STATUS } from '@/lib/constants';
 import type { ProspectiveStudent, SearchParams } from '@/types/admission';
@@ -67,8 +67,8 @@ const EnquiryList: React.FC<EnquiryListProps> = ({ enquiries, onViewClick }) => 
                 <Clock className="w-4 h-4 mr-2" />
                 {format(enquiry.lastUpdateDate, 'PPP')}
               </div>
-              <Badge 
-                variant={enquiry.status === ADMISSION_STATUS.NEW ? 'default' : 
+              <Badge
+                variant={enquiry.status === ADMISSION_STATUS.NEW ? 'default' :
                         enquiry.status === ADMISSION_STATUS.IN_PROGRESS ? 'secondary' :
                         enquiry.status === ADMISSION_STATUS.APPROVED ? 'success' : 'destructive'}
                 className="mt-2"

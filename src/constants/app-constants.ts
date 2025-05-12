@@ -16,6 +16,13 @@ export const ROUTES = {
   INTERACTIVE_ASSIGNMENT_CREATE: '/interactive-assignments/create',
   INTERACTIVE_ASSIGNMENT_EDIT: '/interactive-assignments/edit/:id',
   INTERACTIVE_ASSIGNMENT_VIEW: '/interactive-assignments/view/:id',
+  PARENT_FEEDBACK_LIST: '/parent-feedback-list',
+  PARENT_FEEDBACK_FORM: '/parent-feedback-form',
+  PARENT_FEEDBACK_FORM_EDIT: '/parent-feedback-form/:id',
+  PARENT_FEEDBACK_SEARCH: '/parent-feedback-search',
+  PARENT_FEEDBACK: '/parent-feedback',
+  VIEW_ALL_PARENT_FEEDBACK: '/view-all-parent-feedback',
+  ADMIN_FEEDBACK: '/admin-feedback',
 } as const;
 
 export const API_ENDPOINTS = {

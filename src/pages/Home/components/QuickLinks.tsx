@@ -11,12 +11,12 @@ const links = [
     label: "Admission Enquiry",
   },
   {
-    to: "/year-end-feedback",
-    label: "Submit Year-End Feedback",
+    to: "/parent-feedback-submission",
+    label: "Submit Parent Feedback",
   },
   {
-    to: "/view-year-end-feedback",
-    label: "View Feedback Records",
+    to: "/parent-feedback-search",
+    label: "View Teacher Feedback",
   },
 ];
 

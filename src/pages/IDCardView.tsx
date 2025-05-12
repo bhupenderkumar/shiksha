@@ -6,8 +6,9 @@ import { IDCardGenerator } from '@/components/IDCardGenerator';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'react-hot-toast';
-import { Download, Printer, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Download, Printer, AlertCircle, ArrowLeft, FileSpreadsheet, FileDown } from 'lucide-react';
 import { SCHOOL_INFO } from '@/lib/constants';
 import IDCardForm from './IDCardForm';
 
@@ -18,6 +19,8 @@ const IDCardView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [exportingExcel, setExportingExcel] = useState(false);
+  const [downloadingAllExcel, setDownloadingAllExcel] = useState(false);
 
   // Fetch ID card data based on ID parameter
   useEffect(() => {
@@ -78,6 +81,71 @@ const IDCardView: React.FC = () => {
       printButton.click();
     } else {
       window.print();
+    }
+  };
+
+  // Handle Excel export for single ID card
+  const handleExportExcel = async () => {
+    if (idCard && idCardId) {
+      try {
+        setExportingExcel(true);
+
+        // Call the single ID card Excel export function
+        const excelBlob = await idCardService.exportSingleIDCardToExcel(idCardId);
+
+        // Create a download link
+        const url = URL.createObjectURL(excelBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${idCard.studentName.replace(/\s+/g, '_')}_ID_Card.xlsx`;
+        document.body.appendChild(link);
+        link.click();
+
+        // Clean up
+        setTimeout(() => {
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }, 100);
+
+        toast.success('Excel file downloaded successfully');
+      } catch (error) {
+        console.error('Error exporting to Excel:', error);
+        toast.error('Failed to export Excel file');
+      } finally {
+        setExportingExcel(false);
+      }
+    }
+  };
+
+  // Handle downloading all records in Excel format
+  const handleDownloadAllExcel = async () => {
+    try {
+      setDownloadingAllExcel(true);
+      toast.loading('Preparing all records for Excel download...', { id: 'download-all-toast' });
+
+      // Call the Excel export function for all records
+      const excelBlob = await idCardService.exportIDCardsToExcel();
+
+      // Create a download link
+      const url = URL.createObjectURL(excelBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `All_ID_Cards_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 100);
+
+      toast.success('All records downloaded successfully as Excel', { id: 'download-all-toast' });
+    } catch (error) {
+      console.error('Error downloading all records as Excel:', error);
+      toast.error('Failed to download all records', { id: 'download-all-toast' });
+    } finally {
+      setDownloadingAllExcel(false);
     }
   };
 
@@ -242,20 +310,129 @@ const IDCardView: React.FC = () => {
                 </CardContent>
               </Card>
 
-              {/* ID Card Preview */}
+              {/* ID Card Tabs */}
               <div className="mt-8">
-                <h3 className="text-lg font-semibold mb-4">ID Card Preview</h3>
-                <IDCardGenerator data={idCard} idCardId={idCardId} />
+                <Tabs defaultValue="preview" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="preview">ID Card Preview</TabsTrigger>
+                    <TabsTrigger value="data">Tabular Data</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="preview" className="mt-4">
+                    <IDCardGenerator data={idCard} idCardId={idCardId} />
+                  </TabsContent>
+
+                  <TabsContent value="data" className="mt-4">
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-lg">ID Card Data</CardTitle>
+                        <CardDescription>
+                          View all ID card information in tabular format
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="overflow-x-auto">
+                          <table className="w-full border-collapse">
+                            <thead>
+                              <tr className="bg-blue-50 border-b">
+                                <th className="text-left p-3 font-semibold text-blue-800 w-1/3">Field</th>
+                                <th className="text-left p-3 font-semibold text-blue-800 w-2/3">Value</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {/* Student Information */}
+                              <tr className="bg-blue-50/50">
+                                <td colSpan={2} className="p-2 font-semibold text-blue-700">Student Information</td>
+                              </tr>
+                              <tr className="border-b">
+                                <td className="p-3 font-medium">Name</td>
+                                <td className="p-3">{idCard.studentName}</td>
+                              </tr>
+                              <tr className="border-b">
+                                <td className="p-3 font-medium">Class</td>
+                                <td className="p-3">{idCard.className} {idCard.section}</td>
+                              </tr>
+                              {idCard.dateOfBirth && (
+                                <tr className="border-b">
+                                  <td className="p-3 font-medium">Date of Birth</td>
+                                  <td className="p-3">
+                                    {new Date(idCard.dateOfBirth).toLocaleDateString('en-IN', {
+                                      day: '2-digit',
+                                      month: '2-digit',
+                                      year: 'numeric'
+                                    })}
+                                  </td>
+                                </tr>
+                              )}
+
+                              {/* Parent Information */}
+                              <tr className="bg-blue-50/50">
+                                <td colSpan={2} className="p-2 font-semibold text-blue-700">Parent Information</td>
+                              </tr>
+                              <tr className="border-b">
+                                <td className="p-3 font-medium">Father's Name</td>
+                                <td className="p-3">{idCard.fatherName}</td>
+                              </tr>
+                              <tr className="border-b">
+                                <td className="p-3 font-medium">Mother's Name</td>
+                                <td className="p-3">{idCard.motherName}</td>
+                              </tr>
+                              <tr className="border-b">
+                                <td className="p-3 font-medium">Father's Mobile</td>
+                                <td className="p-3">{idCard.fatherMobile}</td>
+                              </tr>
+                              <tr className="border-b">
+                                <td className="p-3 font-medium">Mother's Mobile</td>
+                                <td className="p-3">{idCard.motherMobile}</td>
+                              </tr>
+                              <tr className="border-b">
+                                <td className="p-3 font-medium">Address</td>
+                                <td className="p-3 whitespace-pre-wrap">{idCard.address}</td>
+                              </tr>
+
+                              {/* Metadata */}
+                              <tr className="bg-blue-50/50">
+                                <td colSpan={2} className="p-2 font-semibold text-blue-700">Metadata</td>
+                              </tr>
+                              <tr className="border-b">
+                                <td className="p-3 font-medium">Created Date</td>
+                                <td className="p-3">
+                                  {idCard.createdAt ? idCard.createdAt.toLocaleDateString('en-IN', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric'
+                                  }) : 'N/A'}
+                                </td>
+                              </tr>
+                              <tr className="border-b">
+                                <td className="p-3 font-medium">Download Count</td>
+                                <td className="p-3">{idCard.downloadCount || 0}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                </Tabs>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-center gap-4 mt-6">
+              <div className="flex justify-center gap-4 mt-6 flex-wrap">
                 <Button
                   onClick={handleDownload}
                   className="bg-blue-600 hover:bg-blue-700"
                 >
                   <Download className="mr-2 h-4 w-4" />
-                  Download ID Card
+                  Download PDF
+                </Button>
+                <Button
+                  onClick={handleExportExcel}
+                  disabled={exportingExcel}
+                  variant="secondary"
+                >
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                  {exportingExcel ? 'Exporting...' : 'Export Excel'}
                 </Button>
                 <Button
                   variant="outline"
@@ -264,6 +441,24 @@ const IDCardView: React.FC = () => {
                   <Printer className="mr-2 h-4 w-4" />
                   Print ID Card
                 </Button>
+              </div>
+
+              {/* Download All Records Button */}
+              <div className="mt-8 border-t pt-6">
+                <div className="flex flex-col items-center">
+                  <h3 className="text-lg font-semibold mb-3">Download All Records</h3>
+                  <p className="text-sm text-muted-foreground mb-4 text-center max-w-md">
+                    Need all ID card records? Download the complete dataset in Excel format with all student information and images.
+                  </p>
+                  <Button
+                    onClick={handleDownloadAllExcel}
+                    disabled={downloadingAllExcel}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <FileDown className="mr-2 h-4 w-4" />
+                    {downloadingAllExcel ? 'Preparing Download...' : 'Download All Records (Excel)'}
+                  </Button>
+                </div>
               </div>
 
               {/* Help Section */}

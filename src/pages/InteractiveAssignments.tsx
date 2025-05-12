@@ -5,7 +5,7 @@ import { InteractiveAssignmentCard } from '@/components/InteractiveAssignmentCar
 import { Plus, Book, Eye, Trash, Edit, Share2, Search, Filter, X } from 'lucide-react';
 import { interactiveAssignmentService } from '@/services/interactiveAssignmentService';
 import { useAsync } from '@/hooks/use-async';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-provider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { PageHeader } from '@/components/ui/page-header';

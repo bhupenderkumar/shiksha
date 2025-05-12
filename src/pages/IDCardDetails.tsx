@@ -48,14 +48,17 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'react-hot-toast';
-import { Search, Download, Eye, ArrowUpDown, Edit, Trash2, Phone, MapPin } from 'lucide-react';
+import { Search, Download, Eye, ArrowUpDown, Edit, Trash2, Phone, MapPin, FileDown, FileSpreadsheet } from 'lucide-react';
 import { format } from 'date-fns';
 import IDCardDetailModal from '@/components/IDCardDetailModal';
+import IDCardExportButton from '@/components/IDCardExportButton';
 
 const IDCardDetails: React.FC = () => {
   const navigate = useNavigate();
   const { profile, isAdmin, loading: profileLoading } = useProfileAccess();
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadingExcel, setDownloadingExcel] = useState(false);
   const [idCards, setIdCards] = useState<IDCardData[]>([]);
   const [totalIdCards, setTotalIdCards] = useState(0);
   const [classes, setClasses] = useState<{ id: string; name: string; section: string }[]>([]);
@@ -202,6 +205,86 @@ const IDCardDetails: React.FC = () => {
     }
   };
 
+  // Handle download all ID cards as PDF
+  const handleDownloadAll = async () => {
+    try {
+      setDownloading(true);
+      toast.loading('Preparing ID cards for download...', { id: 'download-toast' });
+
+      // Get current filter parameters
+      const exportParams: IDCardListParams = {
+        search: searchParams.search,
+        classId: searchParams.classId,
+        sortBy: searchParams.sortBy,
+        sortOrder: searchParams.sortOrder
+      };
+
+      // Export all ID cards with the current filters
+      const pdfBlob = await idCardService.exportAllIDCards(exportParams);
+
+      // Create a download link
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `ID_Cards_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 100);
+
+      toast.success('ID cards downloaded successfully', { id: 'download-toast' });
+    } catch (error) {
+      console.error('Error downloading ID cards:', error);
+      toast.error('Failed to download ID cards', { id: 'download-toast' });
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  // Handle download all ID cards as Excel
+  const handleDownloadAllExcel = async () => {
+    try {
+      setDownloadingExcel(true);
+      toast.loading('Preparing Excel file for download...', { id: 'excel-download-toast' });
+
+      // Get current filter parameters
+      const exportParams: IDCardListParams = {
+        search: searchParams.search,
+        classId: searchParams.classId,
+        sortBy: searchParams.sortBy,
+        sortOrder: searchParams.sortOrder
+      };
+
+      // Export all ID cards to Excel with the current filters
+      const excelBlob = await idCardService.exportIDCardsToExcel(exportParams);
+
+      // Create a download link
+      const url = URL.createObjectURL(excelBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `ID_Cards_Excel_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 100);
+
+      toast.success('Excel file downloaded successfully', { id: 'excel-download-toast' });
+    } catch (error) {
+      console.error('Error downloading Excel file:', error);
+      toast.error('Failed to download Excel file', { id: 'excel-download-toast' });
+    } finally {
+      setDownloadingExcel(false);
+    }
+  };
+
   // Calculate total pages for pagination
   const totalPages = Math.ceil(totalIdCards / (searchParams.limit || 10));
 
@@ -261,6 +344,26 @@ const IDCardDetails: React.FC = () => {
   const renderThumbnail = (url: string | File) => {
     if (!url || typeof url !== 'string') return 'N/A';
 
+    // Create a data URL for a placeholder image
+    const createPlaceholderDataUrl = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 40;
+      canvas.height = 40;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        // Fill with light gray
+        ctx.fillStyle = '#f0f0f0';
+        ctx.fillRect(0, 0, 40, 40);
+
+        // Add text
+        ctx.fillStyle = '#999999';
+        ctx.font = '10px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('N/A', 20, 24);
+      }
+      return canvas.toDataURL();
+    };
+
     return (
       <div className="relative w-10 h-10 overflow-hidden rounded-full">
         <img
@@ -268,7 +371,7 @@ const IDCardDetails: React.FC = () => {
           alt="Photo"
           className="object-cover w-full h-full"
           onError={(e) => {
-            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40?text=N/A';
+            (e.target as HTMLImageElement).src = createPlaceholderDataUrl();
           }}
         />
       </div>
@@ -289,9 +392,35 @@ const IDCardDetails: React.FC = () => {
               View and manage all student ID cards
             </CardDescription>
           </div>
-          <div className="bg-blue-50 text-blue-800 px-3 py-1 rounded-md font-medium flex items-center">
-            <span className="text-xs mr-1">Total Records:</span>
-            <span className="text-lg font-bold">{totalIdCards}</span>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              className="flex items-center gap-1 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 border-green-200"
+              onClick={handleDownloadAll}
+              disabled={downloading || totalIdCards === 0}
+            >
+              <FileDown className="h-4 w-4" />
+              {downloading ? 'Preparing PDF...' : 'Download All (PDF)'}
+            </Button>
+            <Button
+              variant="outline"
+              className="flex items-center gap-1 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 border-blue-200"
+              onClick={handleDownloadAllExcel}
+              disabled={downloadingExcel || totalIdCards === 0}
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              {downloadingExcel ? 'Preparing Excel...' : 'Download All (Excel)'}
+            </Button>
+            <IDCardExportButton
+              classId={searchParams.classId}
+              search={searchParams.search}
+              variant="outline"
+              className="flex items-center gap-1 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:text-purple-800 border-purple-200"
+            />
+            <div className="bg-blue-50 text-blue-800 px-3 py-1 rounded-md font-medium flex items-center">
+              <span className="text-xs mr-1">Total Records:</span>
+              <span className="text-lg font-bold">{totalIdCards}</span>
+            </div>
           </div>
         </CardHeader>
         <CardContent>

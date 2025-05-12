@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../lib/auth';
+import { useAuth } from '../lib/auth-provider';
 import { LogIn } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -113,7 +113,7 @@ const Login = () => {
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Don’t have an account? 
+              Don’t have an account?
               <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
                 Register here
               </Link>
@@ -125,7 +125,7 @@ const Login = () => {
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-200"></div>
               </div>
-             
+
             </div>
           </div>
         </div>

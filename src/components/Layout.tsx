@@ -15,10 +15,13 @@ import {
   LogOut,
   MessageSquare,
   CreditCard as IdCard,
-  Puzzle
+  Puzzle,
+  MessageCircle,
+  FileText,
+  ListChecks
 } from 'lucide-react';
 import { Button } from './ui/button';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-provider';
 import { ROUTES } from '@/constants/app-constants';
 import { AnimatedText } from './ui/animated-text';
 import { isAdminOrTeacher } from '@/services/profileService';
@@ -53,6 +56,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { id: 5, icon: Calendar, label: 'Attendance', path: ROUTES.ATTENDANCE },
     { id: 6, icon: CreditCard, label: 'Fees', path: ROUTES.FEES },
     { id: 7, icon: MessageSquare, label: 'Feedback', path: ROUTES.FEEDBACK },
+
+    // Parent Feedback Section
+    { id: 14, icon: FileText, label: 'Create Parent Feedback', path: ROUTES.PARENT_FEEDBACK_LIST, role: 'admin' },
+    { id: 15, icon: MessageCircle, label: 'Parent Submitted Feedback', path: '/parent-submitted-feedback-list', role: 'admin' },
+    { id: 16, icon: ListChecks, label: 'View All Parent Feedback', path: ROUTES.VIEW_ALL_PARENT_FEEDBACK, role: 'admin' },
+    { id: 17, icon: MessageSquare, label: 'Parent Feedback Search', path: ROUTES.PARENT_FEEDBACK_SEARCH },
+    { id: 18, icon: MessageCircle, label: 'Submit Admin Feedback', path: ROUTES.ADMIN_FEEDBACK },
+
     { id: 8, icon: Settings, label: 'Settings', path: ROUTES.SETTINGS },
     { id: 10, icon: Users, label: 'Profile', path: '/profile' },
     { id: 11, icon: IdCard, label: 'ID Card', path: '/id-card' },

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { interactiveAssignmentService } from '@/services/interactiveAssignmentService';
 import { studentProgressService } from '@/services/studentProgressService';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-provider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

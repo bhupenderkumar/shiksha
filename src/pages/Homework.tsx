@@ -5,7 +5,7 @@ import { HomeworkCard } from '@/components/HomeworkCard';
 import { Plus, Book, Eye, Trash, Edit } from 'lucide-react';
 import { homeworkService, HomeworkType } from '@/services/homeworkService';
 import { useAsync } from '@/hooks/use-async';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-provider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { HomeworkForm } from '@/components/forms/homework-form';
 import toast from 'react-hot-toast';
@@ -48,7 +48,7 @@ export default function HomeworkPage() {
     async () => {
       if (!profile) return;
       const data = await homeworkService.getAll(
-        profile.role, 
+        profile.role,
         profile.classId,
         {
           searchTerm: searchParams.searchTerm,
@@ -132,7 +132,7 @@ export default function HomeworkPage() {
           onChange={(e) => debouncedSearch(e.target.value)}
           className="w-full"
         />
-        
+
         {isAdminOrTeacher && (
           <Select
             value={searchParams.status}

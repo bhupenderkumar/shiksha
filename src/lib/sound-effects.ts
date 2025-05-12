@@ -10,6 +10,9 @@ const SOUND_EFFECTS = {
   ERROR: '/sounds/error.mp3',
   POP: '/sounds/pop.mp3',
   CLICK: '/sounds/click.mp3',
+  CORRECT: '/sounds/success.mp3',
+  INCORRECT: '/sounds/error.mp3',
+  COMPLETE: '/sounds/success.mp3',
 };
 
 // Preload sounds for better performance

@@ -1,0 +1,13 @@
+{
+  "name": "shiksha-sample-data-scripts",
+  "version": "1.0.0",
+  "description": "Scripts to generate sample data for Shiksha application",
+  "main": "add-sample-feedback.js",
+  "scripts": {
+    "add-feedback": "node add-sample-feedback.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.31.0",
+    "dotenv": "^16.3.1"
+  }
+}
