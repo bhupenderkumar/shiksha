@@ -7,22 +7,22 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { AdmissionEnquiryForm } from '@/components/admission/AdmissionEnquiryForm';
-import { 
-  ArrowLeft, 
-  Calendar, 
-  Clock, 
-  Book, 
-  Users, 
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  Book,
+  Users,
   AlertCircle,
 } from 'lucide-react';
 import { toast } from "@/components/ui/toast";
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-provider';
 import Layout from '@/components/Layout';
 import { format } from 'date-fns';
 import { ADMISSION_STATUS } from '@/lib/constants';
-import type { 
-  ProspectiveStudent, 
-  AdmissionProcess, 
+import type {
+  ProspectiveStudent,
+  AdmissionProcess,
   AdmissionTimelineStep,
   RequiredDocument,
   ProspectiveStudentData
@@ -189,8 +189,8 @@ const AdmissionEnquiry = () => {
             title="Error Loading Enquiry"
             description={error}
             action={
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => navigate('/admission/enquiries')}
               >
                 Go Back to Enquiries
@@ -241,8 +241,8 @@ const AdmissionEnquiry = () => {
             title="No Data Found"
             description="Could not find the admission enquiry details"
             action={
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => navigate('/admission/enquiries')}
               >
                 View All Enquiries
@@ -277,9 +277,9 @@ const AdmissionEnquiry = () => {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-500">Status</span>
-                <Badge 
+                <Badge
                   variant={
-                    student.status === ADMISSION_STATUS.NEW ? 'default' : 
+                    student.status === ADMISSION_STATUS.NEW ? 'default' :
                     student.status === ADMISSION_STATUS.IN_PROGRESS ? 'secondary' :
                     student.status === ADMISSION_STATUS.APPROVED ? 'success' : 'destructive'
                   }

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Upload, Image } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+import { ImageUploader } from "./ImageUploader";
 
 interface DrawingQuestionFormProps {
   value: any;
@@ -33,11 +34,9 @@ export function DrawingQuestionForm({
     });
   }, [instructions, backgroundImageUrl, canvasWidth, canvasHeight, onChange]);
 
-  // Mock function for image upload - in a real implementation, this would handle file uploads
-  const handleImageUpload = () => {
-    // This is a placeholder - in a real implementation, you would handle file uploads
-    const mockImageUrl = "https://example.com/images/drawing-background.jpg";
-    setBackgroundImageUrl(mockImageUrl);
+  // Handle image upload using the ImageUploader component
+  const handleImageUploaded = (imageUrl: string) => {
+    setBackgroundImageUrl(imageUrl);
   };
 
   return (
@@ -61,9 +60,9 @@ export function DrawingQuestionForm({
                 <div className="flex items-center gap-2">
                   <Image className="h-5 w-5 text-gray-500" />
                   <span className="text-sm truncate flex-1">{backgroundImageUrl.split('/').pop()}</span>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
                     size="sm"
                     onClick={() => setBackgroundImageUrl("")}
                   >
@@ -71,9 +70,9 @@ export function DrawingQuestionForm({
                   </Button>
                 </div>
                 <div className="mt-2 border rounded-md overflow-hidden">
-                  <img 
-                    src={backgroundImageUrl} 
-                    alt="Background" 
+                  <img
+                    src={backgroundImageUrl}
+                    alt="Background"
                     className="max-h-[200px] object-contain mx-auto"
                   />
                 </div>
@@ -86,10 +85,11 @@ export function DrawingQuestionForm({
             </div>
           )}
         </div>
-        <Button type="button" variant="outline" onClick={handleImageUpload}>
-          <Upload className="h-4 w-4 mr-2" />
-          Upload Background Image
-        </Button>
+        <ImageUploader
+          onImageUploaded={handleImageUploaded}
+          placeholder="Upload Background Image"
+          className="w-full"
+        />
       </div>
 
       <div className="space-y-4">
@@ -142,10 +142,10 @@ export function DrawingQuestionForm({
 
       <div className="border rounded-md p-4 bg-gray-50">
         <div className="text-sm text-gray-500 mb-2">Canvas Preview</div>
-        <div 
+        <div
           className="border border-dashed border-gray-300 bg-white"
-          style={{ 
-            width: '100%', 
+          style={{
+            width: '100%',
             height: '200px',
             maxWidth: `${canvasWidth}px`,
             maxHeight: `${canvasHeight}px`,

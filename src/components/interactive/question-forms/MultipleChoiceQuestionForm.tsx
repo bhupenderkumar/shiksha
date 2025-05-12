@@ -6,7 +6,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { FormLabel } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Trash } from "lucide-react";
+import { Plus, Trash, CheckCircle, HelpCircle, Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 
 interface MultipleChoiceQuestionFormProps {
   value: any;
@@ -106,32 +108,81 @@ export function MultipleChoiceQuestionForm({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <FormLabel className="text-base">Allow Multiple Correct Answers</FormLabel>
+        <div className="flex items-center gap-2">
+          <FormLabel className="text-base">Allow Multiple Correct Answers</FormLabel>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full p-0">
+                  <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">
+                  {allowMultiple
+                    ? "Students can select multiple options. You can mark multiple options as correct."
+                    : "Students can select only one option. Only one option can be marked as correct."}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
         <Switch
           checked={allowMultiple}
           onCheckedChange={setAllowMultiple}
         />
       </div>
 
+      <div className="bg-blue-50 border border-blue-200 rounded-md p-3 flex items-start gap-2">
+        <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+        <div className="text-sm text-blue-700">
+          <p className="font-medium">How to mark correct answers:</p>
+          <p>Check the box next to each option that should be considered correct. {allowMultiple
+            ? "You can select multiple correct answers."
+            : "Only one answer can be marked as correct."}
+          </p>
+        </div>
+      </div>
+
       <div className="space-y-2">
-        <FormLabel className="text-base">Options</FormLabel>
+        <div className="flex items-center justify-between">
+          <FormLabel className="text-base">Options</FormLabel>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <CheckCircle className="h-4 w-4 text-green-500" />
+            <span>= Correct Answer</span>
+          </div>
+        </div>
+
         {options.map((option, index) => (
-          <Card key={option.id} className="border border-gray-200">
+          <Card
+            key={option.id}
+            className={`border ${option.isCorrect
+              ? 'border-green-300 bg-green-50'
+              : 'border-gray-200'}`}
+          >
             <CardContent className="p-4">
               <div className="flex items-start gap-2">
-                <Checkbox
-                  id={`option-${index}`}
-                  checked={option.isCorrect}
-                  onCheckedChange={(checked) => toggleOptionCorrect(index, checked === true)}
-                  className="mt-2"
-                />
+                <div className="flex flex-col items-center gap-1">
+                  <Checkbox
+                    id={`option-${index}`}
+                    checked={option.isCorrect}
+                    onCheckedChange={(checked) => toggleOptionCorrect(index, checked === true)}
+                    className={`mt-2 ${option.isCorrect ? 'border-green-500 text-green-500' : ''}`}
+                  />
+                  <span className="text-xs text-muted-foreground">Correct</span>
+                </div>
                 <div className="flex-1">
                   <Input
                     placeholder={`Option ${index + 1}`}
                     value={option.text}
                     onChange={(e) => updateOptionText(index, e.target.value)}
-                    className="mb-2"
+                    className={`mb-2 ${option.isCorrect ? 'border-green-300' : ''}`}
                   />
+                  {option.isCorrect && (
+                    <Badge variant="success" className="bg-green-100 text-green-800 hover:bg-green-100">
+                      <CheckCircle className="h-3 w-3 mr-1" /> Marked as correct
+                    </Badge>
+                  )}
                 </div>
                 <Button
                   type="button"
@@ -160,6 +211,13 @@ export function MultipleChoiceQuestionForm({
       </Button>
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
+
+      {!options.some(opt => opt.isCorrect) && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-sm text-yellow-800">
+          <p className="font-medium">Warning: No correct answer selected</p>
+          <p>Please mark at least one option as correct by checking the box next to it.</p>
+        </div>
+      )}
     </div>
   );
 }

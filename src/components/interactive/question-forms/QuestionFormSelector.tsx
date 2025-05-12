@@ -4,6 +4,8 @@ import { AudioReadingQuestionForm } from "./AudioReadingQuestionForm";
 import { DrawingQuestionForm } from "./DrawingQuestionForm";
 import { MatchingQuestionForm2 } from "./MatchingQuestionForm2";
 import { CompletionQuestionForm } from "./CompletionQuestionForm";
+import { OrderingQuestionForm } from "./OrderingQuestionForm";
+import { PuzzleQuestionForm } from "./PuzzleQuestionForm";
 import { FormLabel } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
@@ -88,6 +90,20 @@ export const QuestionFormSelector = forwardRef<QuestionFormSelectorRef, Question
       case "COMPLETION":
         return (
           <CompletionQuestionForm
+            value={formData}
+            onChange={handleFormChange}
+          />
+        );
+      case "ORDERING":
+        return (
+          <OrderingQuestionForm
+            value={formData}
+            onChange={handleFormChange}
+          />
+        );
+      case "PUZZLE":
+        return (
+          <PuzzleQuestionForm
             value={formData}
             onChange={handleFormChange}
           />

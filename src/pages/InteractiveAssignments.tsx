@@ -5,7 +5,7 @@ import { InteractiveAssignmentCard } from '@/components/InteractiveAssignmentCar
 import { Plus, Book, Eye, Trash, Edit, Share2, Search, Filter, X } from 'lucide-react';
 import { interactiveAssignmentService } from '@/services/interactiveAssignmentService';
 import { useAsync } from '@/hooks/use-async';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-provider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { PageHeader } from '@/components/ui/page-header';
@@ -39,8 +39,8 @@ export function InteractiveAssignments() {
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedType, setSelectedType] = useState<InteractiveAssignmentType | ''>('');
-  const [selectedStatus, setSelectedStatus] = useState<InteractiveAssignmentStatus | ''>('');
+  const [selectedType, setSelectedType] = useState<InteractiveAssignmentType | 'ALL_TYPES'>('ALL_TYPES');
+  const [selectedStatus, setSelectedStatus] = useState<InteractiveAssignmentStatus | 'ALL_STATUSES'>('ALL_STATUSES');
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
     from: undefined,
     to: undefined,
@@ -49,8 +49,8 @@ export function InteractiveAssignments() {
   const { execute: fetchAssignments, loading: fetchLoading } = useAsync(
     async () => {
       const filters = {
-        type: selectedType || undefined,
-        status: selectedStatus || undefined,
+        type: selectedType && selectedType !== 'ALL_TYPES' ? selectedType : undefined,
+        status: selectedStatus && selectedStatus !== 'ALL_STATUSES' ? selectedStatus : undefined,
         searchTerm: searchTerm || undefined,
         dateRange: dateRange.from && dateRange.to ? {
           from: dateRange.from,
@@ -134,8 +134,8 @@ export function InteractiveAssignments() {
 
   const resetFilters = () => {
     setSearchTerm('');
-    setSelectedType('');
-    setSelectedStatus('');
+    setSelectedType('ALL_TYPES');
+    setSelectedStatus('ALL_STATUSES');
     setDateRange({ from: undefined, to: undefined });
   };
 
@@ -168,12 +168,12 @@ export function InteractiveAssignments() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="text-sm font-medium mb-1 block">Assignment Type</label>
-                  <Select value={selectedType} onValueChange={(value) => setSelectedType(value as InteractiveAssignmentType | '')}>
+                  <Select value={selectedType} onValueChange={(value) => setSelectedType(value as InteractiveAssignmentType | 'ALL_TYPES')}>
                     <SelectTrigger>
                       <SelectValue placeholder="All Types" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Types</SelectItem>
+                      <SelectItem value="ALL_TYPES">All Types</SelectItem>
                       <SelectItem value="MATCHING">Matching</SelectItem>
                       <SelectItem value="COMPLETION">Completion</SelectItem>
                       <SelectItem value="DRAWING">Drawing</SelectItem>
@@ -198,12 +198,12 @@ export function InteractiveAssignments() {
 
                 <div>
                   <label className="text-sm font-medium mb-1 block">Status</label>
-                  <Select value={selectedStatus} onValueChange={(value) => setSelectedStatus(value as InteractiveAssignmentStatus | '')}>
+                  <Select value={selectedStatus} onValueChange={(value) => setSelectedStatus(value as InteractiveAssignmentStatus | 'ALL_STATUSES')}>
                     <SelectTrigger>
                       <SelectValue placeholder="All Statuses" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Statuses</SelectItem>
+                      <SelectItem value="ALL_STATUSES">All Statuses</SelectItem>
                       <SelectItem value="DRAFT">Draft</SelectItem>
                       <SelectItem value="PUBLISHED">Published</SelectItem>
                       <SelectItem value="ARCHIVED">Archived</SelectItem>
@@ -252,21 +252,21 @@ export function InteractiveAssignments() {
             {activeTab !== 'all' && ` (${activeTab})`}
           </div>
 
-          {(selectedType || selectedStatus || dateRange.from || searchTerm) && (
+          {((selectedType && selectedType !== 'ALL_TYPES') || (selectedStatus && selectedStatus !== 'ALL_STATUSES') || dateRange.from || searchTerm) && (
             <div className="flex flex-wrap gap-2">
-              {selectedType && (
+              {selectedType && selectedType !== 'ALL_TYPES' && (
                 <Badge variant="outline" className="flex items-center gap-1">
                   Type: {selectedType}
-                  <button onClick={() => setSelectedType('')} className="ml-1">
+                  <button onClick={() => setSelectedType('ALL_TYPES')} className="ml-1">
                     <X size={14} />
                   </button>
                 </Badge>
               )}
 
-              {selectedStatus && (
+              {selectedStatus && selectedStatus !== 'ALL_STATUSES' && (
                 <Badge variant="outline" className="flex items-center gap-1">
                   Status: {selectedStatus}
-                  <button onClick={() => setSelectedStatus('')} className="ml-1">
+                  <button onClick={() => setSelectedStatus('ALL_STATUSES')} className="ml-1">
                     <X size={14} />
                   </button>
                 </Badge>

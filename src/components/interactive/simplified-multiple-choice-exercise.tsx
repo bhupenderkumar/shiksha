@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'react-hot-toast';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle, RefreshCw } from 'lucide-react';
+import { playSound } from '@/utils/soundUtils';
+import { ExerciseScoreCard } from '@/components/ui/exercise-scorecard';
+import { AnswerFeedback } from '@/components/ui/answer-feedback';
+import confetti from 'canvas-confetti';
 
 interface Choice {
   id: string;
@@ -40,6 +44,9 @@ export function SimplifiedMultipleChoiceExercise({
   showAnswers = false
 }: SimplifiedMultipleChoiceExerciseProps) {
   const [selectedChoices, setSelectedChoices] = useState<string[]>([]);
+  const [showScoreCard, setShowScoreCard] = useState(false);
+  const [lastFeedback, setLastFeedback] = useState<{ isCorrect: boolean | null, message: string } | null>(null);
+  const [showFeedback, setShowFeedback] = useState(false);
 
   // Safely extract choices and allowMultiple from questionData
   // Handle both formats: choices array or options array
@@ -84,9 +91,75 @@ export function SimplifiedMultipleChoiceExercise({
     }
   }, [initialResponse]);
 
+  // Calculate score as a percentage
+  const calculateScore = () => {
+    if (!choices || choices.length === 0) return 0;
+
+    const correctChoices = choices.filter((choice: Choice) => choice.isCorrect);
+    const totalCorrectChoices = correctChoices.length;
+
+    if (totalCorrectChoices === 0) return 0;
+
+    let score = 0;
+
+    if (allowMultiple) {
+      // For multiple choice, calculate partial credit
+      const correctlySelected = selectedChoices.filter(id =>
+        correctChoices.some(choice => choice.id === id)
+      ).length;
+
+      const incorrectlySelected = selectedChoices.filter(id =>
+        !correctChoices.some(choice => choice.id === id)
+      ).length;
+
+      // Calculate score based on correct selections minus incorrect selections
+      score = Math.max(0, (correctlySelected / totalCorrectChoices) * 100 - (incorrectlySelected * 20));
+    } else {
+      // For single choice, it's all or nothing
+      score = checkCorrectness() ? 100 : 0;
+    }
+
+    return Math.round(score);
+  };
+
+  // Trigger confetti celebration
+  const triggerCelebration = () => {
+    // Play celebration sound
+    playSound('celebration');
+
+    // Launch confetti
+    const end = Date.now() + 2000;
+    const colors = ['#FFD700', '#FFA500', '#FF4500', '#00FF00', '#1E90FF'];
+
+    (function frame() {
+      confetti({
+        particleCount: 2,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 },
+        colors: colors
+      });
+
+      confetti({
+        particleCount: 2,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 },
+        colors: colors
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    })();
+  };
+
   // Handle choice selection
   const handleChoiceSelect = (choiceId: string) => {
     if (readOnly) return;
+
+    // Play click sound for better feedback
+    playSound('click', 0.3);
 
     let newSelectedChoices: string[];
 
@@ -104,10 +177,53 @@ export function SimplifiedMultipleChoiceExercise({
 
     setSelectedChoices(newSelectedChoices);
 
+    // Check if the choice is correct and provide feedback
+    const selectedChoice = choices.find((choice: Choice) => choice.id === choiceId);
+    const isChoiceCorrect = selectedChoice?.isCorrect === true;
+
+    if (!allowMultiple) {
+      // For single choice, provide immediate feedback
+      if (isChoiceCorrect) {
+        playSound('correct');
+        setLastFeedback({
+          isCorrect: true,
+          message: 'Correct! Great job!'
+        });
+
+        // Show score card after a delay
+        setTimeout(() => {
+          triggerCelebration();
+          setShowScoreCard(true);
+        }, 1000);
+      } else {
+        playSound('incorrect');
+        setLastFeedback({
+          isCorrect: false,
+          message: 'Not quite right. Try again!'
+        });
+      }
+
+      setShowFeedback(true);
+
+      // Hide feedback after a delay
+      setTimeout(() => {
+        setShowFeedback(false);
+      }, 2000);
+    }
+
     // Save the response
     if (onSave) {
       onSave({ selectedChoices: newSelectedChoices });
     }
+  };
+
+  // Handle reset
+  const handleReset = () => {
+    setSelectedChoices([]);
+    setShowFeedback(false);
+    setLastFeedback(null);
+    playSound('click');
+    toast.success('Choices reset. Try again!');
   };
 
   // Check if the answer is correct
@@ -132,8 +248,39 @@ export function SimplifiedMultipleChoiceExercise({
 
   const isCorrect = showAnswers && checkCorrectness();
 
+  // Play celebration and show score card when answers are shown and correct
+  useEffect(() => {
+    if (showAnswers && isCorrect && !showScoreCard) {
+      triggerCelebration();
+
+      // Show score card after a short delay
+      setTimeout(() => {
+        setShowScoreCard(true);
+      }, 500);
+    }
+  }, [showAnswers, isCorrect, showScoreCard]);
+
   return (
     <div className="w-full">
+      {/* Score card overlay */}
+      {showScoreCard && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <ExerciseScoreCard
+            score={calculateScore()}
+            totalQuestions={1}
+            correctAnswers={isCorrect ? 1 : 0}
+            incorrectAnswers={isCorrect ? 0 : 1}
+            onContinue={() => setShowScoreCard(false)}
+            onTryAgain={() => {
+              setShowScoreCard(false);
+              handleReset();
+            }}
+            showConfetti={true}
+            childFriendly={true}
+          />
+        </div>
+      )}
+
       <h3 className="text-lg font-semibold mb-4">{question.questionText}</h3>
 
       {/* Instructions */}
@@ -143,14 +290,29 @@ export function SimplifiedMultipleChoiceExercise({
           : 'Select the correct answer.'}
       </p>
 
+      {/* Feedback message */}
+      {showFeedback && lastFeedback && (
+        <div className="mb-4">
+          <AnswerFeedback
+            isCorrect={lastFeedback.isCorrect}
+            message={lastFeedback.message}
+            autoHide={true}
+            hideDelay={2000}
+            onHide={() => setShowFeedback(false)}
+            playSound={false} // We're already playing sounds in the handler
+          />
+        </div>
+      )}
+
       {/* Score display when showing answers */}
-      {showAnswers && (
+      {showAnswers && !showScoreCard && (
         <div className="mb-4 p-3 rounded-md bg-blue-50 border border-blue-200">
           <p className="font-medium flex items-center">
             {isCorrect
               ? <><CheckCircle className="h-5 w-5 text-green-500 mr-2" /> Correct!</>
               : <><XCircle className="h-5 w-5 text-red-500 mr-2" /> Incorrect</>}
           </p>
+          <p className="text-sm mt-1">Your score: {calculateScore()}%</p>
         </div>
       )}
 
@@ -192,6 +354,46 @@ export function SimplifiedMultipleChoiceExercise({
           );
         })}
       </div>
+
+      {/* Controls */}
+      {!readOnly && allowMultiple && (
+        <div className="mt-6 flex justify-end space-x-2">
+          <Button variant="outline" onClick={handleReset} className="flex items-center">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Reset
+          </Button>
+          <Button
+            onClick={() => {
+              // For multiple choice, check correctness and show feedback
+              const isAllCorrect = checkCorrectness();
+
+              if (isAllCorrect) {
+                triggerCelebration();
+                setShowScoreCard(true);
+              } else {
+                playSound('incorrect');
+                setLastFeedback({
+                  isCorrect: false,
+                  message: 'Not quite right. Try again!'
+                });
+                setShowFeedback(true);
+
+                // Hide feedback after a delay
+                setTimeout(() => {
+                  setShowFeedback(false);
+                }, 2000);
+              }
+
+              // Save the response
+              if (onSave) {
+                onSave({ selectedChoices });
+              }
+            }}
+          >
+            Check Answer
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { interactiveAssignmentService } from '@/services/interactiveAssignmentSe
 import { useEffect, useState } from 'react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { toast } from 'react-hot-toast';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-provider';
 import { z } from 'zod';
 import type { CreateInteractiveAssignmentData, UpdateInteractiveAssignmentData, InteractiveAssignmentType } from '@/types/interactiveAssignment';
 

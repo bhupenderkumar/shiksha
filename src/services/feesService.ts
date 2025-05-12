@@ -216,23 +216,125 @@ export const feesService = {
     return data;
   },
 
-  async getStudentsByClass(classId: string) {
+  /**
+   * Get students by class ID
+   * This method first tries to get students from the IDCard table (which has photos)
+   * and falls back to the student service if needed
+   * @param classId Class ID
+   * @returns Array of students with name and photo URL
+   */
+  async getStudentsByClass(classId: string): Promise<{ id: string; name: string; photo_url?: string | null; admissionNumber?: string }[]> {
     try {
-      const { data, error } = await supabase
+      console.log(`Fetching students for class ID: ${classId}`);
+
+      // First try to get students from IDCard table which has photos
+      const { data: idCardData, error: idCardError } = await supabase
+        .schema(SCHEMA)
+        .from('IDCard')
+        .select('id, student_name, student_photo_url, admission_number')
+        .eq('class_id', classId);
+
+      if (idCardData && idCardData.length > 0) {
+        console.log(`Found ${idCardData.length} students in IDCard table`);
+
+        // Process photo URLs to ensure they're properly formatted
+        return idCardData.map(student => {
+          // Convert photo URL if needed
+          let photoUrl = student.student_photo_url;
+
+          // If it's a relative path, convert to absolute public URL
+          if (photoUrl && !photoUrl.startsWith('http')) {
+            photoUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/File/${photoUrl}`;
+          }
+
+          return {
+            id: student.id,
+            name: student.student_name,
+            photo_url: photoUrl,
+            admissionNumber: student.admission_number
+          };
+        });
+      }
+
+      // If no data in IDCard, try direct query to Student table
+      console.log('No students found in IDCard table, trying Student table directly');
+
+      const { data: studentData, error: studentError } = await supabase
         .schema(SCHEMA)
         .from(STUDENT_TABLE)
         .select(TABLE_COLUMNS.STUDENT_WITH_CLASS)
         .eq('classId', classId)
         .order('name');
 
-      if (error) {
-        console.error(ERROR_MESSAGES.FETCH_STUDENTS, error);
-        throw error;
+      if (studentError) {
+        console.error('Error fetching from Student table:', studentError);
+      } else if (studentData && studentData.length > 0) {
+        console.log(`Found ${studentData.length} students in Student table`);
+        return studentData.map(student => ({
+          id: student.id,
+          name: student.name,
+          photo_url: null, // Student table doesn't have photos
+          admissionNumber: student.admissionNumber
+        }));
       }
-      return data;
+
+      // If all else fails, try using the REST API approach
+      console.log('Trying REST API approach as last resort');
+
+      try {
+        // Build the URL manually to ensure proper encoding
+        const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const apiPath = '/rest/v1/Student';
+        const queryParams = new URLSearchParams({
+          'select': 'id,name,admissionNumber,classId',
+          'classId': `eq.${classId}`,
+          'order': 'name.asc'
+        });
+
+        const url = `${baseUrl}${apiPath}?${queryParams.toString()}`;
+
+        // Create headers with Accept-Profile for schema
+        const headers = {
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+          'Accept-Profile': SCHEMA
+        };
+
+        console.log('Fetching with URL:', url);
+
+        const response = await fetch(url, {
+          method: 'GET',
+          headers
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`Found ${data.length} students using REST API`);
+
+          if (data && data.length > 0) {
+            return data.map((student: any) => ({
+              id: student.id,
+              name: student.name,
+              photo_url: null,
+              admissionNumber: student.admissionNumber
+            }));
+          }
+        } else {
+          const errorText = await response.text();
+          console.error('Error with REST API:', response.status, errorText);
+        }
+      } catch (restError) {
+        console.error('Exception with REST API:', restError);
+      }
+
+      // If we still have no data, return an empty array
+      console.log('No students found for this class with any method');
+      return [];
     } catch (error) {
       console.error(ERROR_MESSAGES.FETCH_STUDENTS, error);
-      throw error;
+      // Return empty array instead of throwing to match parentFeedbackService behavior
+      return [];
     }
   },
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../lib/auth';
+import { useAuth } from '../lib/auth-provider';
 import { supabase } from "@/lib/api-client";
 import { toast } from 'react-hot-toast';
 import { Card, CardContent } from '../components/ui/card';
@@ -53,7 +53,7 @@ export default function SubjectsPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch subjects with related data
       const { data: subjectsData, error: subjectsError } = await supabase
          .schema('school')

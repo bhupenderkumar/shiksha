@@ -28,6 +28,14 @@ import InteractiveAssignments from './pages/InteractiveAssignments';
 import InteractiveAssignmentForm from './pages/InteractiveAssignmentForm';
 import InteractiveAssignmentDetails from './pages/InteractiveAssignmentDetails';
 import InteractiveAssignmentView from './pages/InteractiveAssignmentView';
+import ParentFeedbackForm from './pages/ParentFeedbackForm';
+import ParentFeedbackList from './pages/ParentFeedbackList';
+import ParentFeedbackSearch from './pages/ParentFeedbackSearch';
+import ParentFeedbackSubmission from './pages/ParentFeedbackSubmission';
+import ParentSubmittedFeedbackList from './pages/ParentSubmittedFeedbackList';
+import ParentSubmittedFeedbackDetail from './pages/ParentSubmittedFeedbackDetail';
+import ViewAllParentFeedback from './pages/ViewAllParentFeedback';
+import UpdateParentFeedback from './pages/UpdateParentFeedback';
 import Layout from './components/Layout';
 import PublicLayout from './components/PublicLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -69,6 +77,18 @@ export const router = createBrowserRouter([
       {
         path: 'unauthorized',
         element: <Unauthorized />,
+      },
+      {
+        path: 'parent-feedback-search',
+        element: <ParentFeedbackSearch />,
+      },
+      {
+        path: 'parent-feedback',
+        element: <ParentFeedbackSearch />,
+      },
+      {
+        path: 'parent-feedback-submission',
+        element: <ParentFeedbackSubmission />,
       },
     ],
   },
@@ -163,6 +183,34 @@ export const router = createBrowserRouter([
       {
         path: 'interactive-assignments/view/:id',
         element: <InteractiveAssignmentView />,
+      },
+      {
+        path: 'parent-feedback-list',
+        element: <ParentFeedbackList />,
+      },
+      {
+        path: 'parent-feedback-form',
+        element: <ParentFeedbackForm />,
+      },
+      {
+        path: 'parent-feedback-form/:id',
+        element: <ParentFeedbackForm />,
+      },
+      {
+        path: 'parent-submitted-feedback-list',
+        element: <ParentSubmittedFeedbackList />,
+      },
+      {
+        path: 'parent-submitted-feedback/:id',
+        element: <ParentSubmittedFeedbackDetail />,
+      },
+      {
+        path: 'view-all-parent-feedback',
+        element: <ViewAllParentFeedback />,
+      },
+      {
+        path: 'update-parent-feedback/:id',
+        element: <UpdateParentFeedback />,
       },
     ],
   },

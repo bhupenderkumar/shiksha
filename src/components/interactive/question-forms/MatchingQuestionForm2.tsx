@@ -6,6 +6,8 @@ import { FormLabel } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash, ArrowRight, Upload, Image } from "lucide-react";
+import { ImageUploader } from "./ImageUploader";
+import { supabase } from "@/lib/api-client";
 
 interface MatchingQuestionFormProps {
   value: any;
@@ -49,12 +51,11 @@ export function MatchingQuestionForm2({
     setPairs(newPairs);
   };
 
-  // Mock function for image upload - in a real implementation, this would handle file uploads
-  const handleImageUpload = (index: number, side: 'left' | 'right') => {
-    // This is a placeholder - in a real implementation, you would handle file uploads
-    const mockImageUrl = `https://example.com/images/matching-${side}-${index}.jpg`;
+  // Handle image upload for matching pairs
+  const handleImageUploaded = (index: number, side: 'left' | 'right', imageUrl: string) => {
+    console.log(`Image uploaded for pair ${index}, ${side} side:`, imageUrl);
     const newPairs = [...pairs];
-    newPairs[index] = { ...newPairs[index], [side]: mockImageUrl };
+    newPairs[index] = { ...newPairs[index], [side]: imageUrl };
     setPairs(newPairs);
   };
 
@@ -63,7 +64,7 @@ export function MatchingQuestionForm2({
       <div className="space-y-2">
         <FormLabel className="text-base">Matching Pairs</FormLabel>
         <p className="text-sm text-gray-500">Create pairs of items that students will match together.</p>
-        
+
         {pairs.map((pair, index) => (
           <Card key={pair.id} className="border border-gray-200">
             <CardContent className="p-4">
@@ -85,7 +86,7 @@ export function MatchingQuestionForm2({
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   {pair.leftType === "text" ? (
                     <Input
                       placeholder="Enter left item"
@@ -96,14 +97,14 @@ export function MatchingQuestionForm2({
                     <div className="space-y-2">
                       {pair.left ? (
                         <div className="border rounded-md p-2 flex flex-col items-center">
-                          <img 
-                            src={pair.left} 
-                            alt="Left item" 
+                          <img
+                            src={pair.left}
+                            alt="Left item"
                             className="max-h-[100px] object-contain"
                           />
-                          <Button 
-                            type="button" 
-                            variant="ghost" 
+                          <Button
+                            type="button"
+                            variant="ghost"
                             size="sm"
                             onClick={() => updatePair(index, "left", "")}
                             className="mt-2"
@@ -112,25 +113,20 @@ export function MatchingQuestionForm2({
                           </Button>
                         </div>
                       ) : (
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          className="w-full h-20"
-                          onClick={() => handleImageUpload(index, 'left')}
-                        >
-                          <Upload className="h-4 w-4 mr-2" />
-                          Upload Image
-                        </Button>
+                        <ImageUploader
+                          onImageUploaded={(imageUrl) => handleImageUploaded(index, 'left', imageUrl)}
+                          placeholder="Upload Left Image"
+                        />
                       )}
                     </div>
                   )}
                 </div>
-                
+
                 {/* Arrow */}
                 <div className="flex items-center justify-center py-4">
                   <ArrowRight className="h-5 w-5 text-gray-400" />
                 </div>
-                
+
                 {/* Right Item */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -148,7 +144,7 @@ export function MatchingQuestionForm2({
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   {pair.rightType === "text" ? (
                     <Input
                       placeholder="Enter right item"
@@ -159,14 +155,14 @@ export function MatchingQuestionForm2({
                     <div className="space-y-2">
                       {pair.right ? (
                         <div className="border rounded-md p-2 flex flex-col items-center">
-                          <img 
-                            src={pair.right} 
-                            alt="Right item" 
+                          <img
+                            src={pair.right}
+                            alt="Right item"
                             className="max-h-[100px] object-contain"
                           />
-                          <Button 
-                            type="button" 
-                            variant="ghost" 
+                          <Button
+                            type="button"
+                            variant="ghost"
                             size="sm"
                             onClick={() => updatePair(index, "right", "")}
                             className="mt-2"
@@ -175,21 +171,16 @@ export function MatchingQuestionForm2({
                           </Button>
                         </div>
                       ) : (
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          className="w-full h-20"
-                          onClick={() => handleImageUpload(index, 'right')}
-                        >
-                          <Upload className="h-4 w-4 mr-2" />
-                          Upload Image
-                        </Button>
+                        <ImageUploader
+                          onImageUploaded={(imageUrl) => handleImageUploaded(index, 'right', imageUrl)}
+                          placeholder="Upload Right Image"
+                        />
                       )}
                     </div>
                   )}
                 </div>
               </div>
-              
+
               {/* Remove Button */}
               <Button
                 type="button"

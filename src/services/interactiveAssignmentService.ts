@@ -26,6 +26,211 @@ const INTERACTIVE_RESPONSE_TABLE = 'InteractiveResponse';
 const FILE_TABLE = 'File';
 
 export const interactiveAssignmentService = {
+  // Get a public assignment by ID - no authentication required
+  async getPublicAssignmentById(id: string): Promise<InteractiveAssignment | null> {
+    try {
+      console.log('Getting public assignment by ID:', id);
+
+      // Convert string ID to number if it's a numeric string
+      let numericId: number | string = id;
+      if (/^\d+$/.test(id)) {
+        numericId = parseInt(id, 10);
+        console.log('Converted ID to numeric:', numericId);
+      } else {
+        console.log('ID is not numeric, using as is');
+      }
+
+      // Use the supabase client directly instead of REST API to avoid schema issues
+      const { data: assignment, error: assignmentError } = await supabase
+        .schema(SCHEMA)
+        .from(INTERACTIVE_ASSIGNMENT_TABLE)
+        .select(`
+          *,
+          class:Class (
+            id,
+            name,
+            section
+          ),
+          subject:Subject (
+            id,
+            name,
+            code
+          )
+        `)
+        .eq('id', numericId)
+        .single();
+
+      if (assignmentError) {
+        console.error('Error fetching assignment:', assignmentError);
+        return null;
+      }
+
+      if (!assignment) {
+        console.log('No assignment found with ID:', numericId);
+        return null;
+      }
+
+      console.log('Found assignment:', assignment);
+
+      // Get the questions
+      const { data: questions, error: questionsError } = await supabase
+        .schema(SCHEMA)
+        .from(INTERACTIVE_QUESTION_TABLE)
+        .select('*')
+        .eq('assignmentId', assignment.id)
+        .order('order', { ascending: true });
+
+      if (questionsError) {
+        console.error('Error fetching questions:', questionsError);
+        return null;
+      }
+
+      console.log('Found questions:', questions);
+
+      // Format dates and combine data
+      const formattedAssignment = {
+        ...assignment,
+        dueDate: new Date(assignment.dueDate),
+        createdAt: new Date(assignment.createdAt),
+        updatedAt: new Date(assignment.updatedAt),
+        questions: normalizeInteractiveQuestions(questions || []),
+        attachments: []
+      };
+
+      return formattedAssignment;
+    } catch (error) {
+      console.error('Error fetching public assignment:', error);
+      return null;
+    }
+  },
+
+  // Get a public assignment by shareable link - no authentication required
+  async getPublicAssignmentByShareableLink(token: string): Promise<InteractiveAssignment | null> {
+    try {
+      console.log('Getting public assignment by shareable token:', token);
+
+      // First, try to decrypt the token to get the assignment ID
+      const decrypted = this.decryptAssignmentId(token);
+
+      if (decrypted) {
+        console.log('Successfully decrypted token:', decrypted);
+
+        // Check if the link has expired based on the token
+        if (decrypted.expired) {
+          console.log('Link has expired according to token expiration');
+          toast.error('This link has expired');
+          return null;
+        }
+
+        // Try to get the assignment directly by ID
+        const assignmentId = decrypted.id;
+        console.log('Looking up public assignment with ID:', assignmentId);
+
+        // Get the assignment using the public method
+        const assignment = await this.getPublicAssignmentById(assignmentId);
+        if (assignment) {
+          console.log('Found public assignment by decrypted ID:', assignment);
+          return assignment;
+        }
+      }
+
+      // Fallback: If decryption fails or assignment not found, try to find by token in database
+      console.log('Trying fallback method: searching by token in database');
+
+      // Use the supabase client directly instead of REST API to avoid schema issues
+      const { data: allAssignments, error: allError } = await supabase
+        .schema(SCHEMA)
+        .from(INTERACTIVE_ASSIGNMENT_TABLE)
+        .select(`
+          *,
+          class:Class (
+            id,
+            name,
+            section
+          ),
+          subject:Subject (
+            id,
+            name,
+            code
+          )
+        `);
+
+      if (allError) {
+        console.error('Error fetching all assignments:', allError);
+        return null;
+      }
+
+      if (!allAssignments || allAssignments.length === 0) {
+        console.log('No assignments found in the database');
+        return null;
+      }
+
+      console.log(`Found ${allAssignments.length} assignments in the database`);
+
+      // Try to find an exact match first
+      let foundAssignment = allAssignments.find(a =>
+        a.shareableLink === token
+      );
+
+      if (foundAssignment) {
+        console.log('Found assignment with exact shareableLink match:', foundAssignment);
+      } else {
+        // Try to find a partial match - only match the base64 part before the hyphen
+        const baseToken = token.split('-')[0];
+        console.log('Trying to match with base token part:', baseToken);
+
+        foundAssignment = allAssignments.find(a =>
+          a.shareableLink && (
+            a.shareableLink.includes(token) ||
+            (baseToken && a.shareableLink.includes(baseToken))
+          )
+        );
+
+        if (foundAssignment) {
+          console.log('Found assignment with partial shareableLink match:', foundAssignment);
+        }
+      }
+
+      if (!foundAssignment) {
+        console.error('Assignment not found with any query method');
+        return null;
+      }
+
+      // Check if link has expired based on database expiration date
+      if (foundAssignment.shareableLinkExpiresAt && new Date(foundAssignment.shareableLinkExpiresAt) < new Date()) {
+        console.log('Link has expired:', foundAssignment.shareableLinkExpiresAt);
+        toast.error('This link has expired');
+        return null;
+      }
+
+      // Get questions for the found assignment
+      const { data: questions, error: questionsError } = await supabase
+        .schema(SCHEMA)
+        .from(INTERACTIVE_QUESTION_TABLE)
+        .select('*')
+        .eq('assignmentId', foundAssignment.id)
+        .order('order', { ascending: true });
+
+      if (questionsError) {
+        console.error('Error fetching questions:', questionsError);
+      }
+
+      // Format dates and combine data
+      const formattedAssignment = {
+        ...foundAssignment,
+        dueDate: new Date(foundAssignment.dueDate),
+        createdAt: new Date(foundAssignment.createdAt),
+        updatedAt: new Date(foundAssignment.updatedAt),
+        questions: normalizeInteractiveQuestions(questions || []),
+        attachments: []
+      };
+
+      return formattedAssignment;
+    } catch (error) {
+      console.error('Error getting public assignment by shareable link:', error);
+      return null;
+    }
+  },
   // Get all interactive assignments
   async getAll(
     role: string,
@@ -498,6 +703,33 @@ export const interactiveAssignmentService = {
     }
   },
 
+  // Delete a specific question
+  async deleteQuestion(questionId: string): Promise<boolean> {
+    try {
+      console.log('Deleting question with ID:', questionId);
+      toast.loading('Deleting question...', { id: 'delete-question-toast' });
+
+      const { error } = await supabase
+        .schema(SCHEMA)
+        .from(INTERACTIVE_QUESTION_TABLE)
+        .delete()
+        .eq('id', questionId);
+
+      if (error) {
+        console.error('Error deleting question:', error);
+        toast.error(`Failed to delete question: ${error.message}`, { id: 'delete-question-toast' });
+        return false;
+      }
+
+      toast.success('Question deleted successfully', { id: 'delete-question-toast' });
+      return true;
+    } catch (error) {
+      console.error('Error deleting question:', error);
+      toast.error(`Failed to delete question: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: 'delete-question-toast' });
+      return false;
+    }
+  },
+
   // Add or update questions for an assignment
   async updateQuestions(assignmentId: string, questions: Omit<InteractiveQuestion, 'id' | 'assignmentId'>[]): Promise<boolean> {
     try {
@@ -594,7 +826,7 @@ export const interactiveAssignmentService = {
           console.log('Assignment exists for questions:', existingAssignment);
         }
 
-        // Instead of deleting existing questions, we'll use an upsert approach
+        // We need to handle both updating existing questions and removing deleted ones
         console.log('Getting existing questions for assignment ID:', numericId);
         toast.loading(`Preparing to update questions for assignment ${assignmentId}...`, { id: 'questions-update-toast' });
 
@@ -612,6 +844,37 @@ export const interactiveAssignmentService = {
           console.log('Continuing without existing questions data');
         } else {
           console.log('Existing questions found:', existingQuestions?.length || 0);
+
+          // If we have fewer questions now than before, some were deleted
+          if (existingQuestions && existingQuestions.length > questions.length) {
+            console.log(`Detected ${existingQuestions.length - questions.length} deleted questions`);
+
+            // Create a map of current question orders for quick lookup
+            const currentOrders = new Set(questions.map((_, index) => index + 1));
+
+            // Find questions that need to be deleted (those with orders not in the current set)
+            const questionsToDelete = existingQuestions.filter(q => !currentOrders.has(q.order));
+
+            if (questionsToDelete.length > 0) {
+              console.log('Questions to delete:', questionsToDelete);
+              toast.loading(`Deleting ${questionsToDelete.length} removed questions...`, { id: 'questions-update-toast' });
+
+              // Delete questions that are no longer in the form
+              const { error: deleteError } = await supabase
+                .schema(SCHEMA)
+                .from(INTERACTIVE_QUESTION_TABLE)
+                .delete()
+                .in('id', questionsToDelete.map(q => q.id));
+
+              if (deleteError) {
+                console.error('Error deleting removed questions:', deleteError);
+                toast.error(`Failed to delete removed questions: ${deleteError.message}`, { id: 'questions-update-toast' });
+              } else {
+                console.log('Successfully deleted removed questions');
+                toast.loading(`Successfully deleted ${questionsToDelete.length} removed questions`, { id: 'questions-update-toast' });
+              }
+            }
+          }
         }
 
         toast.loading(`Preparing to save ${questions.length} questions...`, { id: 'questions-update-toast' });
@@ -686,24 +949,40 @@ export const interactiveAssignmentService = {
             questionsToInsert.push(formattedQuestion);
           }
 
-          console.log('Questions to upsert:', questionsToInsert);
+          console.log('Questions to insert:', questionsToInsert);
           toast.loading(`Saving ${questions.length} questions to database...`, { id: 'questions-update-toast' });
 
-          // Use upsert instead of insert to handle both new and existing questions
-          // Try to upsert all questions at once first
+          // First, delete all existing questions for this assignment
+          console.log('Deleting existing questions for assignment ID:', numericId);
+          const { error: deleteError } = await supabase
+            .schema(SCHEMA)
+            .from(INTERACTIVE_QUESTION_TABLE)
+            .delete()
+            .eq('assignmentId', numericId);
+
+          if (deleteError) {
+            console.error('Error deleting existing questions:', deleteError);
+            toast.error(`Failed to delete existing questions: ${deleteError.message}`, { id: 'questions-update-toast' });
+            throw deleteError;
+          }
+
+          console.log('Successfully deleted existing questions');
+          toast.loading(`Inserting ${questions.length} new questions...`, { id: 'questions-update-toast' });
+
+          // Then insert new questions
           let inserted;
           let insertError;
 
           try {
-            console.log('Attempting to upsert all questions at once...');
+            console.log('Attempting to insert all questions at once...');
             const { data, error } = await supabase
               .schema(SCHEMA)
               .from(INTERACTIVE_QUESTION_TABLE)
-              .upsert(questionsToInsert, { onConflict: 'id', ignoreDuplicates: false })
+              .insert(questionsToInsert)
               .select();
 
             if (error) {
-              console.error('Error upserting all questions:', error);
+              console.error('Error inserting all questions:', error);
               console.log('Error message:', error.message);
 
               // If the error mentions a missing column, schema cache issue, or not-null constraint violation,
@@ -735,46 +1014,46 @@ export const interactiveAssignmentService = {
 
                   // Add each field individually to avoid any potential issues
                   minimalQuestion.id = question.id;
-                  minimalQuestion.assignment_id = question.assignmentId; // Use snake_case for database
+                  minimalQuestion.assignment_id = numericId; // Use snake_case for database
 
                   // Ensure question_type is never null (critical for not-null constraint)
                   // Use snake_case for database columns
-                  const questionTypeStr = String(question.questionType || '');
+                  const questionTypeStr = String(question.question_type || '');
                   if (!questionTypeStr || questionTypeStr === 'null' || questionTypeStr === 'undefined') {
                     minimalQuestion.question_type = 'MATCHING';
                   } else {
-                    minimalQuestion.question_type = question.questionType;
+                    minimalQuestion.question_type = question.question_type;
                   }
 
-                  minimalQuestion.question_order = question.order; // Use snake_case for database
+                  minimalQuestion.question_order = question.question_order; // Use snake_case for database
 
                   // Ensure question_text is never null to avoid form validation errors
                   let questionText = '';
-                  if (question.questionText !== null && question.questionText !== undefined) {
-                    questionText = question.questionText;
+                  if (question.question_text !== null && question.question_text !== undefined) {
+                    questionText = question.question_text;
                   }
                   minimalQuestion.question_text = questionText;
 
                   // Only add question_data if it's not empty
-                  if (question.questionData && Object.keys(question.questionData).length > 0) {
-                    minimalQuestion.question_data = question.questionData;
+                  if (question.question_data && Object.keys(question.question_data).length > 0) {
+                    minimalQuestion.question_data = question.question_data;
                   }
 
                   return minimalQuestion;
                 });
 
-                console.log('Attempting to upsert with essential fields only...');
+                console.log('Attempting to insert with essential fields only...');
                 const { data: essentialData, error: essentialError } = await supabase
                   .schema(SCHEMA)
                   .from(INTERACTIVE_QUESTION_TABLE)
-                  .upsert(essentialQuestions, { onConflict: 'id', ignoreDuplicates: false })
+                  .insert(essentialQuestions)
                   .select();
 
                 if (essentialError) {
-                  console.error('Error upserting with essential fields:', essentialError);
+                  console.error('Error inserting with essential fields:', essentialError);
                   insertError = essentialError;
                 } else {
-                  console.log('Successfully upserted with essential fields');
+                  console.log('Successfully inserted with essential fields');
                   inserted = essentialData;
                   toast.success('Questions saved with basic information only. Run the migration to enable all features.', { id: 'questions-update-toast' });
                 }
@@ -783,12 +1062,12 @@ export const interactiveAssignmentService = {
                 insertError = error;
               }
             } else {
-              console.log('Successfully upserted all questions');
+              console.log('Successfully inserted all questions');
               inserted = data;
             }
           } catch (error) {
-            console.error('Exception during upsert:', error);
-            insertError = error instanceof Error ? error : new Error('Unknown error during upsert');
+            console.error('Exception during insert:', error);
+            insertError = error instanceof Error ? error : new Error('Unknown error during insert');
           }
 
           if (insertError) {
@@ -798,7 +1077,7 @@ export const interactiveAssignmentService = {
             throw insertError;
           }
 
-          console.log('Questions upserted successfully:', inserted);
+          console.log('Questions inserted successfully:', inserted);
           toast.loading(`All ${questions.length} questions saved successfully`, { id: 'questions-update-toast' });
         }
 
@@ -1115,22 +1394,43 @@ export const interactiveAssignmentService = {
   // Decrypt a shared link token to get the assignment ID
   decryptAssignmentId(token: string): { id: string, expired: boolean } | null {
     try {
+      console.log('Attempting to decrypt token:', token);
+
       // Split the token to get the base64 payload
       const parts = token.split('-');
-      if (parts.length < 1) return null;
+      if (parts.length < 1) {
+        console.log('Token does not contain expected format (missing hyphen)');
+        return null;
+      }
 
       // Decode the base64 payload
       const base64Payload = parts[0];
-      const jsonPayload = atob(base64Payload);
-      const payload = JSON.parse(jsonPayload);
+      console.log('Base64 payload part:', base64Payload);
 
-      // Check if the link has expired
-      const expired = payload.exp < Date.now();
+      try {
+        const jsonPayload = atob(base64Payload);
+        console.log('Decoded JSON payload:', jsonPayload);
 
-      return {
-        id: payload.id,
-        expired
-      };
+        const payload = JSON.parse(jsonPayload);
+        console.log('Parsed payload:', payload);
+
+        if (!payload.id || !payload.exp) {
+          console.log('Payload is missing required fields (id or exp)');
+          return null;
+        }
+
+        // Check if the link has expired
+        const expired = payload.exp < Date.now();
+        console.log('Token expired status:', expired, 'Expiration:', new Date(payload.exp).toISOString());
+
+        return {
+          id: payload.id,
+          expired
+        };
+      } catch (decodeError) {
+        console.error('Error decoding base64 or parsing JSON:', decodeError);
+        return null;
+      }
     } catch (error) {
       console.error('Error decrypting assignment ID:', error);
       return null;

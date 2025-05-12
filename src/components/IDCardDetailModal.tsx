@@ -253,7 +253,23 @@ const IDCardDetailModal: React.FC<IDCardDetailModalProps> = ({
                           alt="Student"
                           className="w-32 h-32 object-cover rounded-md"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/128?text=No+Photo';
+                            // Create a data URL for a placeholder image
+                            const canvas = document.createElement('canvas');
+                            canvas.width = 128;
+                            canvas.height = 128;
+                            const ctx = canvas.getContext('2d');
+                            if (ctx) {
+                              // Fill with light gray
+                              ctx.fillStyle = '#f0f0f0';
+                              ctx.fillRect(0, 0, 128, 128);
+
+                              // Add text
+                              ctx.fillStyle = '#999999';
+                              ctx.font = '14px Arial';
+                              ctx.textAlign = 'center';
+                              ctx.fillText('No Photo', 64, 64);
+                            }
+                            (e.target as HTMLImageElement).src = canvas.toDataURL();
                           } } />
                       ) : (
                         <div className="w-32 h-32 bg-muted flex items-center justify-center rounded-md">
