@@ -13,7 +13,7 @@ import { ImagePreviewDialog } from '@/components/ui/ImagePreviewDialog';
 import { ImageGrid } from '@/components/ui/ImageGrid';
 import { AttachmentsList } from '@/components/ui/AttachmentsList';
 import { useImagePreview } from '@/hooks/use-image-preview';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-provider';
 import Layout from '@/components/Layout';
 import PublicLayout from '@/components/PublicLayout';
 import { format } from 'date-fns';

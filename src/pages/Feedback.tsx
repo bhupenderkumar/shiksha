@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-provider';
 import { feedbackService, type Feedback as FeedbackType, type FeedbackReply } from '@/services/feedbackService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,10 +32,10 @@ export default function Feedback() {
 
     const loadFeedbacks = async () => {
         if (!user) return;
-        
+
         try {
             setIsLoading(true);
-            const data = user.role === 'PARENT' 
+            const data = user.role === 'PARENT'
                 ? await feedbackService.getByUserId(user.id)
                 : await feedbackService.getAll();
             setFeedbacks(data);
@@ -74,7 +74,7 @@ export default function Feedback() {
 
     const handleReply = async (feedbackId: number) => {
         if (!user || !reply.trim()) return;
-        
+
         try {
             setIsLoading(true);
             await feedbackService.addReply(feedbackId, user.id, reply);
@@ -125,8 +125,8 @@ export default function Feedback() {
     return (
         <div className="container mx-auto p-4 space-y-4">
             <h1 className="text-3xl font-bold mb-6 text-center">Feedback System</h1>
-            
-            
+
+
                 <Dialog open={showForm} onOpenChange={setShowForm}>
                     <DialogTrigger asChild>
                         <Button>Submit New Feedback</Button>
@@ -172,7 +172,7 @@ export default function Feedback() {
                         </form>
                     </DialogContent>
                 </Dialog>
-        
+
 
             <div className="grid gap-4">
                 {isLoading ? (
@@ -193,8 +193,8 @@ export default function Feedback() {
                                     <div className="flex items-center justify-between mb-2">
                                         <h3 className="font-semibold">{feedback.title}</h3>
                                         <span className={`px-2 py-1 rounded-full text-sm flex items-center gap-1 ${
-                                            feedback.status === 'RESOLVED' 
-                                                ? 'bg-green-100 text-green-800' 
+                                            feedback.status === 'RESOLVED'
+                                                ? 'bg-green-100 text-green-800'
                                                 : 'bg-yellow-100 text-yellow-800'
                                         }`}>
                                             {feedback.status === 'RESOLVED' ? (
@@ -211,7 +211,7 @@ export default function Feedback() {
                                     <p className="text-sm text-gray-600">
                                         {format(new Date(feedback.created_at), 'PPpp')}
                                     </p>
-                                    <Dialog open={showDetails && selectedFeedback?.id === feedback.id} 
+                                    <Dialog open={showDetails && selectedFeedback?.id === feedback.id}
                                            onOpenChange={(open) => {
                                                setShowDetails(open);
                                                if (!open) setSelectedFeedback(null);

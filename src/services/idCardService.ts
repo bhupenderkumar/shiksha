@@ -59,16 +59,16 @@ export const idCardService = {
       const classDetails = student.class || { name: 'N/A', section: 'N/A' };
 
       // Upload photos if provided
-      const studentPhotoUrl = data.studentPhoto 
-        ? await this.uploadPhoto(data.studentPhoto, 'student', data.studentId) 
+      const studentPhotoUrl = data.studentPhoto
+        ? await this.uploadPhoto(data.studentPhoto, 'student', data.studentId)
         : undefined;
-      
-      const fatherPhotoUrl = data.fatherPhoto 
-        ? await this.uploadPhoto(data.fatherPhoto, 'father', data.studentId) 
+
+      const fatherPhotoUrl = data.fatherPhoto
+        ? await this.uploadPhoto(data.fatherPhoto, 'father', data.studentId)
         : undefined;
-      
-      const motherPhotoUrl = data.motherPhoto 
-        ? await this.uploadPhoto(data.motherPhoto, 'mother', data.studentId) 
+
+      const motherPhotoUrl = data.motherPhoto
+        ? await this.uploadPhoto(data.motherPhoto, 'mother', data.studentId)
         : undefined;
 
       const now = new Date();
@@ -94,7 +94,7 @@ export const idCardService = {
       };
 
       const { error } = await supabase
-        .from(`${SCHEMA}.${ID_CARD_TABLE}`)
+        .from(ID_CARD_TABLE)
         .insert([idCardData]);
 
       if (error) {
@@ -116,7 +116,7 @@ export const idCardService = {
   async getByStudentId(studentId: string): Promise<IDCardData | null> {
     try {
       const { data, error } = await supabase
-        .from(`${SCHEMA}.${ID_CARD_TABLE}`)
+        .from(ID_CARD_TABLE)
         .select('*')
         .eq('studentId', studentId)
         .order('createdAt', { ascending: false })
@@ -151,7 +151,7 @@ export const idCardService = {
     try {
       // Get existing ID card
       const { data: existingCard, error: fetchError } = await supabase
-        .from(`${SCHEMA}.${ID_CARD_TABLE}`)
+        .from(ID_CARD_TABLE)
         .select('*')
         .eq('id', id)
         .single();
@@ -172,24 +172,24 @@ export const idCardService = {
 
       if (data.studentPhoto) {
         updateData.studentPhotoUrl = await this.uploadPhoto(
-          data.studentPhoto, 
-          'student', 
+          data.studentPhoto,
+          'student',
           existingCard.studentId
         );
       }
 
       if (data.fatherPhoto) {
         updateData.fatherPhotoUrl = await this.uploadPhoto(
-          data.fatherPhoto, 
-          'father', 
+          data.fatherPhoto,
+          'father',
           existingCard.studentId
         );
       }
 
       if (data.motherPhoto) {
         updateData.motherPhotoUrl = await this.uploadPhoto(
-          data.motherPhoto, 
-          'mother', 
+          data.motherPhoto,
+          'mother',
           existingCard.studentId
         );
       }
@@ -197,7 +197,7 @@ export const idCardService = {
       // No need to delete properties that don't exist on updateData
 
       const { data: updatedCard, error } = await supabase
-        .from(`${SCHEMA}.${ID_CARD_TABLE}`)
+        .from(ID_CARD_TABLE)
         .update(updateData)
         .eq('id', id)
         .select()
@@ -225,7 +225,7 @@ export const idCardService = {
     try {
       const filePath = `id-cards/${studentId}/${type}`;
       const uploadedFile = await fileService.uploadFile(file, filePath);
-      
+
       if (!uploadedFile) {
         throw new Error('Failed to upload photo');
       }
@@ -238,6 +238,39 @@ export const idCardService = {
     } catch (error) {
       console.error(`Error uploading ${type} photo:`, error);
       throw error;
+    }
+  },
+
+  /**
+   * Get all students from ID cards by class ID
+   * @param classId Class ID
+   * @returns Array of students with their photos
+   */
+  async getStudentsByClass(classId: string): Promise<any[]> {
+    try {
+      console.log(`Fetching students for class ID: ${classId}`);
+
+      // Use studentService directly
+      console.log('Using studentService to get students...');
+      const students = await studentService.getStudentsByClass(classId);
+
+      if (students && students.length > 0) {
+        console.log(`Found ${students.length} students using studentService`);
+
+        // Map to the expected format
+        return students.map((student: { id: string; name: string; classId?: string }) => ({
+          id: student.id,
+          student_name: student.name,
+          student_photo_url: null, // We don't have photos from this service
+          class_id: student.classId || classId // Use student's classId if available, otherwise use the provided classId
+        }));
+      } else {
+        console.log('No students found for this class');
+        return [];
+      }
+    } catch (error) {
+      console.error('Error fetching students by class:', error);
+      return [];
     }
   }
 };
