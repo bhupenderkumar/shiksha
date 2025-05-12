@@ -5,9 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { FormLabel } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Trash, HelpCircle, Wand2 } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+
+import { Plus, Trash } from "lucide-react";
+import DOMPurify from "dompurify";
 
 interface CompletionQuestionFormProps {
   value: any;
@@ -128,7 +128,10 @@ export function CompletionQuestionForm({
       previewText = previewText.replace(new RegExp(placeholder, 'g'), replacement);
     });
 
-    return <div dangerouslySetInnerHTML={{ __html: previewText }} className="leading-relaxed" />;
+    
+    const sanitizedPreviewText = DOMPurify.sanitize(previewText);
+    return <div dangerouslySetInnerHTML={{ __html: sanitizedPreviewText }} />;
+
   };
 
   // Update the actual position values for blanks based on their placeholders in the text
