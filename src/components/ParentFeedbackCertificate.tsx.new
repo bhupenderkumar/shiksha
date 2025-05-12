@@ -1,0 +1,508 @@
+import React, { useRef, useState } from 'react';
+import { ParentFeedback } from '@/types/parentFeedback';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { SCHOOL_INFO } from '@/lib/constants';
+import { Download, Printer } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { parentFeedbackService } from '@/services/parentFeedbackService';
+
+interface ParentFeedbackCertificateProps {
+  feedback: ParentFeedback;
+  certificateId?: string;
+}
+
+export const ParentFeedbackCertificate: React.FC<ParentFeedbackCertificateProps> = ({
+  feedback,
+  certificateId
+}) => {
+  const certificateRef = useRef<HTMLDivElement>(null);
+  const [downloading, setDownloading] = useState(false);
+  const [printing, setPrinting] = useState(false);
+  const [imageLoadError, setImageLoadError] = useState(false);
+
+  // Check if feedback is valid
+  if (!feedback || !feedback.student_name || !feedback.className) {
+    console.log("Invalid feedback data:", feedback);
+    return (
+      <div className="flex flex-col items-center justify-center p-8 bg-gray-50 border border-gray-200 rounded-lg">
+        <div className="text-center text-gray-500">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <h3 className="text-lg font-medium mb-2">Certificate Unavailable</h3>
+          <p className="mb-4">No valid feedback data found to generate a certificate.</p>
+          <p className="text-sm">Please search for a student with feedback records.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Helper function to show placeholder when image fails to load
+  const showPlaceholder = (imgElement: HTMLImageElement) => {
+    imgElement.style.display = 'none';
+    imgElement.parentElement!.classList.add('flex', 'items-center', 'justify-center', 'bg-gray-100');
+    const fallback = document.createElement('div');
+    fallback.className = 'text-gray-400 text-center';
+    fallback.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg><p class="text-xs mt-1">Photo<br>Unavailable</p>`;
+    imgElement.parentElement!.appendChild(fallback);
+    setImageLoadError(true);
+  };
+
+  const handleDownload = async () => {
+    if (!certificateRef.current) return;
+
+    try {
+      setDownloading(true);
+      toast.loading('Preparing certificate for download...', { id: 'certificate-download' });
+
+      // Create a canvas from the certificate div
+      const canvas = await html2canvas(certificateRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+      });
+
+      // Create a new PDF document
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      // Add the canvas as an image to the PDF
+      const imgData = canvas.toDataURL('image/jpeg', 1.0);
+      pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+
+      // Save the PDF
+      pdf.save(`${feedback.student_name}_${feedback.month}_Certificate.pdf`);
+
+      // Increment download count if certificateId is provided
+      if (certificateId) {
+        await parentFeedbackService.incrementDownloadCount(certificateId);
+      }
+
+      toast.success('Certificate downloaded successfully', { id: 'certificate-download' });
+    } catch (error) {
+      console.error('Error downloading certificate:', error);
+      toast.error('Failed to download certificate', { id: 'certificate-download' });
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handlePrint = async () => {
+    if (!certificateRef.current) return;
+
+    try {
+      setPrinting(true);
+      toast.loading('Preparing certificate for printing...', { id: 'certificate-print' });
+
+      // Create a canvas from the certificate div
+      const canvas = await html2canvas(certificateRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+      });
+
+      // Create a new window with just the image
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        toast.error('Pop-up blocked. Please allow pop-ups and try again.', { id: 'certificate-print' });
+        return;
+      }
+
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>${feedback.student_name} - Certificate</title>
+            <style>
+              body {
+                margin: 0;
+                padding: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+              }
+              img {
+                max-width: 100%;
+                max-height: 100vh;
+              }
+              @media print {
+                body {
+                  height: auto;
+                }
+                img {
+                  width: 100%;
+                  height: auto;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            <img src="${canvas.toDataURL('image/jpeg')}" />
+            <script>
+              window.onload = function() {
+                setTimeout(function() {
+                  window.print();
+                  window.close();
+                }, 500);
+              };
+            </script>
+          </body>
+        </html>
+      `);
+
+      printWindow.document.close();
+      toast.success('Certificate sent to printer', { id: 'certificate-print' });
+    } catch (error) {
+      console.error('Error printing certificate:', error);
+      toast.error('Failed to print certificate', { id: 'certificate-print' });
+    } finally {
+      setPrinting(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center">
+      <div className="mb-4 flex gap-2">
+        <Button
+          onClick={handleDownload}
+          disabled={downloading || imageLoadError}
+          className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700"
+          title={imageLoadError ? "Cannot download certificate due to image loading errors" : "Download certificate as PDF"}
+        >
+          <Download className="h-4 w-4" />
+          {downloading ? 'Downloading...' : 'Download Certificate'}
+        </Button>
+        <Button
+          onClick={handlePrint}
+          disabled={printing || imageLoadError}
+          variant="outline"
+          className="flex items-center gap-1"
+          title={imageLoadError ? "Cannot print certificate due to image loading errors" : "Print certificate"}
+        >
+          <Printer className="h-4 w-4" />
+          {printing ? 'Printing...' : 'Print Certificate'}
+        </Button>
+        {imageLoadError && (
+          <div className="text-xs text-red-500 mt-2 text-center">
+            Some images failed to load. Please try refreshing the page.
+          </div>
+        )}
+      </div>
+
+      <Card className="w-full max-w-4xl border-2 border-blue-200 shadow-lg">
+        <CardContent className="p-0">
+          <div
+            ref={certificateRef}
+            className="certificate bg-white p-8"
+            style={{
+              backgroundImage: 'linear-gradient(to bottom right, rgba(219, 234, 254, 0.3), rgba(191, 219, 254, 0.3))',
+              backgroundSize: 'cover',
+              minHeight: '297mm',
+              width: '100%',
+              position: 'relative',
+              fontFamily: 'Arial, sans-serif',
+              borderRadius: '8px',
+              border: '8px double #4682B4',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Decorative elements */}
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '15px',
+                background: 'linear-gradient(90deg, #4682B4, #87CEEB, #4682B4)',
+                opacity: 0.7,
+              }}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: '15px',
+                background: 'linear-gradient(90deg, #4682B4, #87CEEB, #4682B4)',
+                opacity: 0.7,
+              }}
+            />
+            {/* School Header */}
+            <div className="text-center mb-6 mt-4">
+              <h1 className="text-3xl font-bold text-blue-800 mb-1" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.1)' }}>
+                {SCHOOL_INFO?.name || 'School Name'}
+              </h1>
+              <p className="text-gray-600">{SCHOOL_INFO?.address || 'School Address'}</p>
+              <div className="w-32 h-1 bg-gradient-to-r from-blue-300 via-blue-500 to-blue-300 mx-auto mt-3 rounded-full"></div>
+            </div>
+
+            {/* Certificate Title */}
+            <div className="text-center mb-8">
+              <div className="relative inline-block">
+                <h2 className="text-2xl font-bold text-blue-700 pb-2 px-4 inline-block"
+                    style={{
+                      textShadow: '1px 1px 2px rgba(0,0,0,0.1)',
+                      borderBottom: '2px solid #3B82F6',
+                      borderImage: 'linear-gradient(to right, transparent, #3B82F6, transparent) 1'
+                    }}>
+                  CERTIFICATE OF ACHIEVEMENT
+                </h2>
+                <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-blue-500 to-transparent"></div>
+              </div>
+              <p className="text-gray-600 mt-2 italic">For Outstanding Academic Performance</p>
+            </div>
+
+            {/* Student Information */}
+            <div className="flex justify-between items-start mb-8">
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold mb-4">Student Information</h3>
+                <p className="mb-2"><span className="font-semibold">Name:</span> {feedback.student_name}</p>
+                <p className="mb-2"><span className="font-semibold">Class:</span> {feedback.className} {feedback.classSection}</p>
+                <p className="mb-2"><span className="font-semibold">Month:</span> {feedback.month}</p>
+                <p className="mb-2"><span className="font-semibold">Attendance:</span> {feedback.attendance_percentage}%</p>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-32 h-32 border-2 border-blue-300 overflow-hidden rounded-md mb-2">
+                  {feedback.student_photo_url ? (
+                    <img
+                      src={feedback.student_photo_url}
+                      alt={feedback.student_name}
+                      className="w-full h-full object-cover"
+                      crossOrigin="anonymous"
+                      onError={(e) => {
+                        console.error('Error loading student image:', e);
+                        setImageLoadError(true);
+                        // Try to extract path and create public URL if it's a signed URL
+                        const target = e.target as HTMLImageElement;
+                        const url = target.src;
+                        if (url.includes('supabase.co/storage/v1/object/sign')) {
+                          // Extract the path from the URL
+                          const pathMatch = url.match(/\/File\/(.+?)\?/);
+                          if (pathMatch && pathMatch[1]) {
+                            const filePath = pathMatch[1];
+                            // Create a public URL instead
+                            const publicUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/File/${filePath}`;
+                            target.src = publicUrl;
+                          } else {
+                            // If we can't extract the path, show a fallback
+                            showPlaceholder(target);
+                          }
+                        } else {
+                          // For other errors, show a fallback
+                          showPlaceholder(target);
+                        }
+                      }}
+                    />
+                  ) : (
+                    // Placeholder for when no photo URL is provided
+                    <div className="flex items-center justify-center h-full w-full bg-gray-100">
+                      <div className="text-gray-400 text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <p className="text-xs mt-1">Photo<br/>Unavailable</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <p className="text-sm font-semibold text-center">{feedback.student_name}</p>
+              </div>
+            </div>
+
+            {/* Parent Photos */}
+            <div className="flex justify-end items-center gap-4 mb-6">
+              <div className="flex flex-col items-center">
+                <div className="w-20 h-20 border-2 border-blue-300 overflow-hidden rounded-md">
+                  {feedback.father_photo_url ? (
+                      <img
+                        src={feedback.father_photo_url}
+                        alt="Father"
+                        className="w-full h-full object-cover"
+                        crossOrigin="anonymous"
+                        onError={(e) => {
+                          console.error('Error loading father image:', e);
+                          setImageLoadError(true);
+                          // Try to extract path and create public URL if it's a signed URL
+                          const target = e.target as HTMLImageElement;
+                          const url = target.src;
+                          if (url.includes('supabase.co/storage/v1/object/sign')) {
+                            // Extract the path from the URL
+                            const pathMatch = url.match(/\/File\/(.+?)\?/);
+                            if (pathMatch && pathMatch[1]) {
+                              const filePath = pathMatch[1];
+                              // Create a public URL instead
+                              const publicUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/File/${filePath}`;
+                              target.src = publicUrl;
+                            } else {
+                              // If we can't extract the path, show a fallback
+                              showPlaceholder(target);
+                            }
+                          } else {
+                            // For other errors, show a fallback
+                            showPlaceholder(target);
+                          }
+                        }}
+                      />
+                    ) : (
+                      // Placeholder for when no photo URL is provided
+                      <div className="flex items-center justify-center h-full w-full bg-gray-100">
+                        <div className="text-gray-400 text-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs font-medium text-center mt-1">Father</p>
+                </div>
+                <div className="flex flex-col items-center">
+                  <div className="w-20 h-20 border-2 border-blue-300 overflow-hidden rounded-md">
+                    {feedback.mother_photo_url ? (
+                      <img
+                        src={feedback.mother_photo_url}
+                        alt="Mother"
+                        className="w-full h-full object-cover"
+                        crossOrigin="anonymous"
+                        onError={(e) => {
+                          console.error('Error loading mother image:', e);
+                          setImageLoadError(true);
+                          // Try to extract path and create public URL if it's a signed URL
+                          const target = e.target as HTMLImageElement;
+                          const url = target.src;
+                          if (url.includes('supabase.co/storage/v1/object/sign')) {
+                            // Extract the path from the URL
+                            const pathMatch = url.match(/\/File\/(.+?)\?/);
+                            if (pathMatch && pathMatch[1]) {
+                              const filePath = pathMatch[1];
+                              // Create a public URL instead
+                              const publicUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/File/${filePath}`;
+                              target.src = publicUrl;
+                            } else {
+                              // If we can't extract the path, show a fallback
+                              showPlaceholder(target);
+                            }
+                          } else {
+                            // For other errors, show a fallback
+                            showPlaceholder(target);
+                          }
+                        }}
+                      />
+                    ) : (
+                      // Placeholder for when no photo URL is provided
+                      <div className="flex items-center justify-center h-full w-full bg-gray-100">
+                        <div className="text-gray-400 text-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs font-medium text-center mt-1">Mother</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Feedback Sections */}
+            <div className="mb-8">
+              <h3 className="text-xl font-semibold mb-4 text-blue-700 border-b border-blue-200 pb-2">Performance Feedback</h3>
+
+              <div className="mb-6">
+                <div className="flex items-center mb-2">
+                  <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center mr-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h4 className="text-lg font-semibold text-green-700">Strengths & Achievements</h4>
+                </div>
+                <p className="p-4 bg-green-50 border-l-4 border-green-400 rounded-r-md shadow-sm">{feedback.good_things}</p>
+              </div>
+
+              <div className="mb-6">
+                <div className="flex items-center mb-2">
+                  <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center mr-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-amber-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <h4 className="text-lg font-semibold text-amber-700">Growth Opportunities</h4>
+                </div>
+                <p className="p-4 bg-amber-50 border-l-4 border-amber-400 rounded-r-md shadow-sm">{feedback.need_to_improve}</p>
+              </div>
+
+              <div className="mb-6">
+                <div className="flex items-center mb-2">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center mr-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                  </div>
+                  <h4 className="text-lg font-semibold text-blue-700">Action Plan</h4>
+                </div>
+                <p className="p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-md shadow-sm">{feedback.best_can_do}</p>
+              </div>
+            </div>
+
+            {/* Date and Signature */}
+            <div className="flex justify-between items-end mt-12">
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3 shadow-sm">
+                <p className="font-semibold text-blue-800">Issue Date: {new Date().toLocaleDateString()}</p>
+                <p className="text-xs text-gray-500 mt-1">Valid for Academic Year 2023-24</p>
+              </div>
+              <div className="text-center">
+                <div className="relative">
+                  <img
+                    src="/images/signature.png"
+                    alt="Principal's Signature"
+                    className="h-16 mb-2"
+                    crossOrigin="anonymous"
+                    onError={(e) => {
+                      // If image fails to load, show a fallback border
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      target.parentElement!.classList.add('border-t-2', 'border-black', 'w-48', 'pt-2');
+                      // Don't set imageLoadError for signature as it's not critical
+                    }}
+                  />
+                  <div className="border-t-2 border-black w-48 pt-2">
+                    <p className="font-semibold">Principal's Signature</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* School Seal */}
+            <div className="absolute bottom-20 right-20 opacity-30">
+              <div className="w-32 h-32 border-4 border-blue-300 rounded-full flex items-center justify-center">
+                <div className="text-center">
+                  <p className="text-xs font-bold text-blue-800">SCHOOL SEAL</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="absolute bottom-4 left-0 right-0 text-center text-sm text-gray-500">
+              <p>This certificate is electronically generated and does not require a physical signature.</p>
+              <p className="text-xs mt-1">Certificate ID: {certificateId || 'N/A'}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default ParentFeedbackCertificate;

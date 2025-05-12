@@ -1,6 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AuthProvider } from '@/lib/auth';
-import { ThemeProvider } from '@/lib/theme-provider.tsx';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { CustomCursor } from '@/components/ui/custom-cursor';
 import { AnimatedBackground } from '@/components/ui/animated-background';
@@ -14,7 +12,7 @@ import Fees from './pages/Fees';
 import ClassworkComponent from './pages/Classwork';
 import StudentDashboard from './pages/StudentDashboard';
 import AttendancePage from './pages/Attendance';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-provider';
 import SettingsPage from './pages/Settings';
 import Home from './pages/Home/index';
 import { Toaster } from 'react-hot-toast';
@@ -30,6 +28,7 @@ import AdmissionEnquiry from './pages/AdmissionEnquiry.tsx';
 import YearEndFeedback from './pages/YearEndFeedback';
 import ViewYearEndFeedback from './pages/ViewYearEndFeedback';
 import AdmissionProcess from './pages/AdmissionProcess';
+import DrawingExerciseTestPage from './pages/DrawingExerciseTest';
 import PwaTest from './pages/PwaTest';
 import WhatsAppTest from './pages/WhatsAppTest';
 
@@ -41,39 +40,19 @@ import { InteractiveAssignmentForm } from '@/components/interactive/InteractiveA
 import { InteractiveAssignments } from './pages/InteractiveAssignments';
 import EditInteractiveAssignment from './pages/EditInteractiveAssignment';
 import ViewInteractiveAssignment from './pages/ViewInteractiveAssignment';
-import PlayAssignment from './pages/PlayAssignment';
-import SimplePlayAssignment from './pages/SimplePlayAssignment';
+// PlayAssignment removed as it's not used
+import SimplifiedPlayAssignment from './pages/SimplifiedPlayAssignment';
+import ParentFeedbackPortal from './pages/ParentFeedbackPortal';
+import ParentFeedbackSearch from './pages/ParentFeedbackSearch';
+import ParentFeedbackForm from './pages/ParentFeedbackForm';
+import ParentFeedbackList from './pages/ParentFeedbackList';
+import ViewAllParentFeedback from './pages/ViewAllParentFeedback';
+import UpdateParentFeedback from './pages/UpdateParentFeedback';
+import AdminFeedbackPage from './pages/AdminFeedbackPage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import Unauthorized from './pages/Unauthorized';
 
-// Public routes that don't require authentication
-const PUBLIC_ROUTES = [
-  '/login',
-  '/register',
-  '/forgot-password',
-  '/',
-  '/homework/view/:id',
-  '/homework/:id',
-  '/classwork/:id',
-  '/admission-enquiry',
-  '/admission-enquiry/:id',
-  '/admission-enquiries',
-  '/year-end-feedback',
-  '/year-end-feedback/:id',
-  '/pwa-test',
-  '/whatsapp-test',
-  '/id-card',
-  '/id-card/view',
-  '/test-interactive-assignment',
-  '/konva-test',
-  '/unauthorized',
-  '/interactive-assignments',
-  '/interactive-assignments/create',
-  '/interactive-assignments/edit/:id',
-  '/interactive-assignments/view/:id',
-  '/interactive-assignments/play/:id',
-  '/assignments/play/:id'
-];
+// PUBLIC_ROUTES removed as it's not used
 
 // Private route component
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -89,14 +68,9 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   }
 
   // If not authenticated and trying to access a private route
-  if (!user && !PUBLIC_ROUTES.includes(location.pathname)) {
+  if (!user) {
     // Store the attempted URL for redirect after login
     return <Navigate to="/login" replace state={{ from: location }} />;
-  }
-
-  // If authenticated and trying to access auth pages (except ID card page)
-  if (user && PUBLIC_ROUTES.includes(location.pathname) && location.pathname !== '/id-card') {
-    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;
@@ -109,7 +83,6 @@ function AppRoutes() {
       <Route path="/" element={<Home />} />
       <Route path='/admission-enquiry' element={<AdmissionEnquiry />} />
       <Route path='/admission-enquiry/:id' element={<AdmissionEnquiry />} />
-      <Route path='/admission-enquiries' element={<ViewAdmissionEnquiries />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/pwa-test" element={<PwaTest />} />
@@ -118,147 +91,19 @@ function AppRoutes() {
       <Route path="/test-interactive-assignment" element={<TestInteractiveAssignment />} />
       <Route path="/konva-test" element={<KonvaTestPage />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
-      <Route path="/assignments/play/:id" element={<SimplePlayAssignment />} />
-      <Route path="/interactive-assignments/play/:id" element={<SimplePlayAssignment />} />
-      <Route
-        path="/dashboard"
-        element={
-          <PrivateRoute>
-            <Layout>
-              <Dashboard />
-            </Layout>
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/students"
-        element={
-          <PrivateRoute>
-            <Layout>
-              <Students />
-            </Layout>
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/subjects"
-        element={
-          <PrivateRoute>
-            <Layout>
-              <Subjects />
-            </Layout>
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/homework"
-        element={
-          <PrivateRoute>
-            <Layout>
-              <Homework />
-            </Layout>
-          </PrivateRoute>
-        }
-      />
-      <Route path="/homework/view/:id" element={<HomeworkView />} />
-      <Route path="/homework/:id" element={<HomeworkDetails />} />
-      <Route
-        path="/fees"
-        element={
-          <PrivateRoute>
-            <Layout>
-              <Fees />
-            </Layout>
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/classwork"
-        element={
-          <PrivateRoute>
-            <Layout>
-              <ClassworkComponent />
-            </Layout>
-          </PrivateRoute>
-        }
-      />
-      <Route path="/classwork/:id" element={<ClassworkDetail />} />
-
-      <Route
-        path="/attendance"
-        element={
-          <PrivateRoute>
-            <Layout>
-              <AttendancePage />
-            </Layout>
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/settings"
-        element={
-          <PrivateRoute>
-            <Layout>
-              <SettingsPage />
-            </Layout>
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/feedback"
-        element={
-          <PrivateRoute>
-            <Layout>
-              <Feedback />
-            </Layout>
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/notifications"
-        element={
-          <PrivateRoute>
-            <Layout>
-              <NotificationsPage />
-            </Layout>
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/profile"
-        element={
-          <PrivateRoute>
-            <Layout>
-              <ProfilePage />
-            </Layout>
-          </PrivateRoute>
-        }
-      />
-      <Route path="/admission-enquiry" element={<AdmissionEnquiry />} />
-      <Route path="/admission-enquiry/:id" element={<AdmissionEnquiry />} />
-      <Route
-        path="/admission-enquiries"
-        element={
-          <PrivateRoute>
-            <Layout>
-              <ViewAdmissionEnquiries />
-            </Layout>
-          </PrivateRoute>
-        }
-      />
+      <Route path="/assignments/play/:id" element={<SimplifiedPlayAssignment />} />
+      <Route path="/interactive-assignments/play/:id" element={<SimplifiedPlayAssignment />} />
+      <Route path="/drawing-test" element={<DrawingExerciseTestPage />} />
       <Route path="/year-end-feedback" element={<YearEndFeedback />} />
       <Route path="/year-end-feedback/:id" element={<YearEndFeedback />} />
-      <Route
-        path="/view-year-end-feedback"
-        element={
-          <PrivateRoute>
-            <Layout>
-              <ViewYearEndFeedback />
-            </Layout>
-          </PrivateRoute>
-        }
-      />
+      <Route path="/homework/view/:id" element={<HomeworkView />} />
+      <Route path="/homework/:id" element={<HomeworkDetails />} />
+      <Route path="/classwork/:id" element={<ClassworkDetail />} />
       <Route path="/admission/process/:id" element={<AdmissionProcess />} />
+
+      {/* Public Parent Feedback Routes */}
+      <Route path="/parent-feedback-portal" element={<ParentFeedbackPortal />} />
+      <Route path="/parent-feedback-search" element={<ParentFeedbackSearch />} />
 
       {/* Protected Routes */}
       <Route path="/dashboard" element={
@@ -331,7 +176,6 @@ function AppRoutes() {
           </Layout>
         </PrivateRoute>
       } />
-
       <Route path="/homework/:id/edit" element={
         <PrivateRoute>
           <Layout>
@@ -339,7 +183,6 @@ function AppRoutes() {
           </Layout>
         </PrivateRoute>
       } />
-
       <Route path="/feedback" element={
         <PrivateRoute>
           <Layout>
@@ -368,6 +211,66 @@ function AppRoutes() {
           </Layout>
         </PrivateRoute>
       } />
+      <Route path='/admission-enquiries' element={
+        <PrivateRoute>
+          <Layout>
+            <ViewAdmissionEnquiries />
+          </Layout>
+        </PrivateRoute>
+      } />
+      <Route path="/view-year-end-feedback" element={
+        <PrivateRoute>
+          <Layout>
+            <ViewYearEndFeedback />
+          </Layout>
+        </PrivateRoute>
+      } />
+
+      {/* Protected Parent Feedback Routes */}
+      <Route path="/parent-feedback-list" element={
+        <PrivateRoute>
+          <Layout>
+            <ParentFeedbackList />
+          </Layout>
+        </PrivateRoute>
+      } />
+      <Route path="/parent-feedback-form" element={
+        <PrivateRoute>
+          <Layout>
+            <ParentFeedbackForm />
+          </Layout>
+        </PrivateRoute>
+      } />
+      <Route path="/parent-feedback-form/:id" element={
+        <PrivateRoute>
+          <Layout>
+            <ParentFeedbackForm />
+          </Layout>
+        </PrivateRoute>
+      } />
+      <Route path="/view-all-parent-feedback" element={
+        <PrivateRoute>
+          <Layout>
+            <ViewAllParentFeedback />
+          </Layout>
+        </PrivateRoute>
+      } />
+      <Route path="/update-parent-feedback/:id" element={
+        <PrivateRoute>
+          <Layout>
+            <UpdateParentFeedback />
+          </Layout>
+        </PrivateRoute>
+      } />
+      <Route path="/admin-feedback" element={
+        <PrivateRoute>
+          <Layout>
+            <AdminFeedbackPage />
+          </Layout>
+        </PrivateRoute>
+      } />
+
+      {/* Interactive Assignments Routes */}
       <Route
         path="/interactive-assignments"
         element={
@@ -420,7 +323,6 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      {/* ID Card route removed from protected routes and added to public routes */}
 
       {/* Catch all route */}
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -430,20 +332,15 @@ function AppRoutes() {
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="light" storageKey="ui-theme">
-      <TooltipProvider>
-        <AuthProvider>
-          <Router>
-            <CustomCursor />
-            <AnimatedBackground particleCount={30} />
-            <div className="flex flex-col min-h-screen bg-transparent mt-4 relative z-10">
-              <AppRoutes />
-              <Toaster position="top-right" />
-            </div>
-          </Router>
-        </AuthProvider>
-      </TooltipProvider>
-    </ThemeProvider>
+    <TooltipProvider>
+      {/* Router is now provided in main.tsx */}
+      <CustomCursor />
+      <AnimatedBackground particleCount={30} />
+      <div className="flex flex-col min-h-screen bg-transparent mt-4 relative z-10">
+        <AppRoutes />
+        <Toaster position="top-right" />
+      </div>
+    </TooltipProvider>
   );
 }
 

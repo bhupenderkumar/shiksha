@@ -8,10 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Search, Calendar, Clock, BookOpen, Users, Edit, Trash, Share2 } from "lucide-react";
+import { Loader2, Plus, Search, Calendar, Clock, BookOpen, Users, Edit, Trash, Share2, X, Filter } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "react-hot-toast";
-import { 
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -23,6 +23,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { InteractiveAssignment, InteractiveAssignmentStatus, InteractiveAssignmentType } from "@/types/interactiveAssignment";
 
+// Extended type to include "ALL" as a valid filter value
+type FilterType = InteractiveAssignmentType | "ALL";
+
 export function InteractiveAssignmentsPage() {
   const navigate = useNavigate();
   const { user, role } = useAuth();
@@ -31,7 +34,7 @@ export function InteractiveAssignmentsPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<InteractiveAssignmentStatus>("PUBLISHED");
   const [searchTerm, setSearchTerm] = useState("");
-  const [typeFilter, setTypeFilter] = useState<InteractiveAssignmentType | "">("");
+  const [typeFilter, setTypeFilter] = useState<FilterType>("ALL");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [assignmentToDelete, setAssignmentToDelete] = useState<string | null>(null);
 
@@ -57,7 +60,15 @@ export function InteractiveAssignmentsPage() {
   };
 
   const filterAssignments = () => {
+    console.log("Filtering assignments:", {
+      total: assignments.length,
+      activeTab,
+      searchTerm,
+      typeFilter
+    });
+
     let filtered = assignments.filter(assignment => assignment.status === activeTab);
+    console.log("After status filter:", filtered.length);
 
     if (searchTerm) {
       filtered = filtered.filter(
@@ -65,10 +76,15 @@ export function InteractiveAssignmentsPage() {
           assignment.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
           assignment.description.toLowerCase().includes(searchTerm.toLowerCase())
       );
+      console.log("After search filter:", filtered.length);
     }
 
-    if (typeFilter) {
+    if (typeFilter && typeFilter !== "ALL") {
+      console.log("Type filter value:", typeFilter);
+      console.log("Assignment types:", filtered.map(a => a.type));
+
       filtered = filtered.filter(assignment => assignment.type === typeFilter);
+      console.log("After type filter:", filtered.length);
     }
 
     setFilteredAssignments(filtered);
@@ -171,28 +187,93 @@ export function InteractiveAssignmentsPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-8"
           />
+          {searchTerm && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0"
+              onClick={() => setSearchTerm("")}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </div>
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Filter by type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">All Types</SelectItem>
-            <SelectItem value="MATCHING">Matching</SelectItem>
-            <SelectItem value="MULTIPLE_CHOICE">Multiple Choice</SelectItem>
-            <SelectItem value="DRAWING">Drawing</SelectItem>
-            <SelectItem value="AUDIO_READING">Audio Reading</SelectItem>
-            <SelectItem value="COMPLETION">Completion</SelectItem>
-            <SelectItem value="ORDERING">Ordering</SelectItem>
-            <SelectItem value="SORTING">Sorting</SelectItem>
-            <SelectItem value="PUZZLE">Puzzle</SelectItem>
-            <SelectItem value="IDENTIFICATION">Identification</SelectItem>
-            <SelectItem value="COUNTING">Counting</SelectItem>
-            <SelectItem value="TRACING">Tracing</SelectItem>
-            <SelectItem value="COLORING">Coloring</SelectItem>
-          </SelectContent>
-        </Select>
+
+        <div className="flex gap-2 items-center">
+          <div className="flex items-center">
+            <Filter className="mr-2 h-4 w-4 text-gray-500" />
+            <span className="text-sm text-gray-500 mr-2">Type:</span>
+          </div>
+
+          <Select
+            value={typeFilter}
+            onValueChange={(value) => {
+              console.log("Type filter changed to:", value);
+              setTypeFilter(value as FilterType);
+            }}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="All Types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Types</SelectItem>
+              <SelectItem value="MATCHING">Matching</SelectItem>
+              <SelectItem value="MULTIPLE_CHOICE">Multiple Choice</SelectItem>
+              <SelectItem value="DRAWING">Drawing</SelectItem>
+              <SelectItem value="AUDIO_READING">Audio Reading</SelectItem>
+              <SelectItem value="COMPLETION">Completion</SelectItem>
+              <SelectItem value="ORDERING">Ordering</SelectItem>
+              <SelectItem value="SORTING">Sorting</SelectItem>
+              <SelectItem value="PUZZLE">Puzzle</SelectItem>
+              <SelectItem value="IDENTIFICATION">Identification</SelectItem>
+              <SelectItem value="COUNTING">Counting</SelectItem>
+              <SelectItem value="TRACING">Tracing</SelectItem>
+              <SelectItem value="COLORING">Coloring</SelectItem>
+              <SelectItem value="HANDWRITING">Handwriting</SelectItem>
+              <SelectItem value="LETTER_TRACING">Letter Tracing</SelectItem>
+              <SelectItem value="NUMBER_RECOGNITION">Number Recognition</SelectItem>
+              <SelectItem value="PICTURE_WORD_MATCHING">Picture Word Matching</SelectItem>
+              <SelectItem value="PATTERN_COMPLETION">Pattern Completion</SelectItem>
+              <SelectItem value="CATEGORIZATION">Categorization</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {typeFilter && typeFilter !== "ALL" && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 px-2"
+              onClick={() => setTypeFilter("ALL")}
+            >
+              <X className="h-4 w-4 mr-1" />
+              Clear
+            </Button>
+          )}
+        </div>
       </div>
+
+      {(searchTerm || (typeFilter && typeFilter !== "ALL")) && (
+        <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded-md flex items-center justify-between">
+          <div className="flex items-center">
+            <Filter className="h-4 w-4 text-blue-500 mr-2" />
+            <span className="text-sm text-blue-700">
+              Filters active: {searchTerm ? 'Search' : ''} {searchTerm && typeFilter && typeFilter !== "ALL" ? ' + ' : ''} {typeFilter && typeFilter !== "ALL" ? 'Type' : ''}
+            </span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-blue-700 hover:text-blue-900 hover:bg-blue-100"
+            onClick={() => {
+              setSearchTerm("");
+              setTypeFilter("ALL");
+            }}
+          >
+            <X className="h-3 w-3 mr-1" />
+            Clear all filters
+          </Button>
+        </div>
+      )}
 
       <Tabs defaultValue="PUBLISHED" onValueChange={(value) => setActiveTab(value as InteractiveAssignmentStatus)}>
         <TabsList className="mb-6">
@@ -210,7 +291,7 @@ export function InteractiveAssignmentsPage() {
             <div className="text-center py-12 bg-gray-50 rounded-lg">
               <h3 className="text-lg font-medium text-gray-900 mb-2">No assignments found</h3>
               <p className="text-gray-500 mb-4">
-                {searchTerm || typeFilter
+                {searchTerm || (typeFilter && typeFilter !== "ALL")
                   ? "Try adjusting your search or filters"
                   : `You don't have any ${activeTab.toLowerCase()} assignments yet`}
               </p>

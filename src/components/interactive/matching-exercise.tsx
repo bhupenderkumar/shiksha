@@ -57,7 +57,13 @@ export function MatchingExercise({ question, readOnly = false, initialResponse, 
   const [selectedLeftItem, setSelectedLeftItem] = useState<string | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px of movement required before activation
+        delay: 150, // 150ms delay before activation to prevent interference with text inputs
+        tolerance: 5, // 5px of movement allowed during delay
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -71,20 +77,20 @@ export function MatchingExercise({ question, readOnly = false, initialResponse, 
         content: pair.left,
         type: pair.leftType || 'text'
       }));
-      
+
       const right = question.questionData.pairs.map(pair => ({
         id: pair.id,
         content: pair.right,
         type: pair.rightType || 'text'
       }));
-      
+
       // Shuffle the right items
       const shuffledRight = [...right].sort(() => Math.random() - 0.5);
-      
+
       setLeftItems(left);
       setRightItems(shuffledRight);
     }
-    
+
     // Initialize matches from initial response if available
     if (initialResponse?.pairs) {
       setMatches(initialResponse.pairs);
@@ -93,7 +99,7 @@ export function MatchingExercise({ question, readOnly = false, initialResponse, 
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    
+
     if (over && active.id !== over.id) {
       if (activeColumn === 'left') {
         setLeftItems(items => {
@@ -113,14 +119,14 @@ export function MatchingExercise({ question, readOnly = false, initialResponse, 
 
   const handleItemClick = (id: string, column: 'left' | 'right') => {
     if (readOnly) return;
-    
+
     if (column === 'left') {
       setSelectedLeftItem(id === selectedLeftItem ? null : id);
     } else if (column === 'right' && selectedLeftItem) {
       // Create a match
       const existingMatchIndex = matches.findIndex(match => match.leftId === selectedLeftItem);
       const newMatches = [...matches];
-      
+
       if (existingMatchIndex >= 0) {
         // Update existing match
         newMatches[existingMatchIndex] = { leftId: selectedLeftItem, rightId: id };
@@ -128,7 +134,7 @@ export function MatchingExercise({ question, readOnly = false, initialResponse, 
         // Add new match
         newMatches.push({ leftId: selectedLeftItem, rightId: id });
       }
-      
+
       setMatches(newMatches);
       setSelectedLeftItem(null);
     }
@@ -139,7 +145,7 @@ export function MatchingExercise({ question, readOnly = false, initialResponse, 
       toast.error('Please match all items before saving');
       return;
     }
-    
+
     if (onSave) {
       onSave({ pairs: matches });
     }
@@ -171,21 +177,21 @@ export function MatchingExercise({ question, readOnly = false, initialResponse, 
   return (
     <div className="w-full">
       <h3 className="text-lg font-semibold mb-4">{question.questionText}</h3>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left column */}
         <div>
           <h4 className="text-md font-medium mb-2">Items</h4>
-          <DndContext 
-            sensors={sensors} 
-            collisionDetection={closestCenter} 
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
             onDragStart={() => setActiveColumn('left')}
           >
             <SortableContext items={leftItems.map(item => item.id)}>
               <div className="space-y-2">
                 {leftItems.map(item => (
-                  <div 
+                  <div
                     key={item.id}
                     onClick={() => handleItemClick(item.id, 'left')}
                     className={`
@@ -200,7 +206,7 @@ export function MatchingExercise({ question, readOnly = false, initialResponse, 
                     ) : (
                       <p className="text-center">{item.content}</p>
                     )}
-                    
+
                     {isItemMatched(item.id, 'left') && (
                       <div className="mt-2 text-xs text-center text-green-600">
                         Matched
@@ -212,20 +218,20 @@ export function MatchingExercise({ question, readOnly = false, initialResponse, 
             </SortableContext>
           </DndContext>
         </div>
-        
+
         {/* Right column */}
         <div>
           <h4 className="text-md font-medium mb-2">Matches</h4>
-          <DndContext 
-            sensors={sensors} 
-            collisionDetection={closestCenter} 
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
             onDragStart={() => setActiveColumn('right')}
           >
             <SortableContext items={rightItems.map(item => item.id)}>
               <div className="space-y-2">
                 {rightItems.map(item => (
-                  <div 
+                  <div
                     key={item.id}
                     onClick={() => handleItemClick(item.id, 'right')}
                     className={`
@@ -239,7 +245,7 @@ export function MatchingExercise({ question, readOnly = false, initialResponse, 
                     ) : (
                       <p className="text-center">{item.content}</p>
                     )}
-                    
+
                     {isItemMatched(item.id, 'right') && (
                       <div className="mt-2 text-xs text-center text-green-600">
                         Matched with {
@@ -254,7 +260,7 @@ export function MatchingExercise({ question, readOnly = false, initialResponse, 
           </DndContext>
         </div>
       </div>
-      
+
       {!readOnly && (
         <div className="mt-6 flex justify-end space-x-2">
           <Button variant="outline" onClick={handleReset}>

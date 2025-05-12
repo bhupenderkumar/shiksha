@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { interactiveAssignmentService } from '@/services/interactiveAssignmentService';
+import { anonymousUserService } from '@/services/anonymousUserService';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
@@ -9,6 +10,11 @@ import { Award, CheckCircle, ArrowLeft, ArrowRight } from 'lucide-react';
 import { SimplifiedExerciseRenderer } from '@/components/interactive/simplified-exercise-renderer';
 import { Progress } from '@/components/ui/progress';
 import { InteractiveQuestion, InteractiveResponse } from '@/types/interactiveAssignment';
+import { useAnonymousUser } from '@/contexts/AnonymousUserContext';
+import UserRegistrationModal from '@/components/anonymous-user/UserRegistrationModal';
+import UserProfileHeader from '@/components/anonymous-user/UserProfileHeader';
+import CompletedAssignmentsSidebar from '@/components/anonymous-user/CompletedAssignmentsSidebar';
+import SimpleMathExercise from '@/components/anonymous-user/SimpleMathExercise';
 
 export default function SimplePlayAssignment() {
   const { id } = useParams<{ id: string }>();

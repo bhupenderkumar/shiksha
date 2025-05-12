@@ -4,6 +4,8 @@ import { ID_CARD_TABLE, SCHEMA, STORAGE_BUCKET, CLASS_TABLE } from '@/lib/consta
 import { Database } from '@/types/supabase';
 import { IDCardData, IDCardRow, ClassOption, PhotoType } from '@/types/idCard';
 import { toast } from 'react-hot-toast';
+import jsPDF from 'jspdf';
+import ExcelJS from 'exceljs';
 
 // Constants
 const FILE_CONFIG = {
@@ -95,6 +97,474 @@ export const idCardService = {
 
   async checkStorageLimit(): Promise<boolean> {
     return checkStorageUsage();
+  },
+
+  /**
+   * Export ID cards to Excel format with standard tabular layout
+   * @param params Optional filter parameters
+   * @returns Promise that resolves with the Excel file as a Blob
+   */
+  /**
+   * Export a single ID card to Excel format
+   * @param idCardId ID of the card to export
+   * @returns Promise that resolves with the Excel file as a Blob
+   */
+  async exportSingleIDCardToExcel(idCardId: string): Promise<Blob> {
+    try {
+      const idCard = await this.getIDCardById(idCardId);
+
+      if (!idCard) {
+        throw new Error('ID card not found');
+      }
+
+      // Create a new workbook
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'School Management System';
+      workbook.created = new Date();
+
+      // Add a worksheet
+      const worksheet = workbook.addWorksheet('ID Card Details');
+
+      // Define the headers and data in a two-column format (Field, Value)
+      const data = [
+        ['Field', 'Value'],
+        ['Student Name', idCard.studentName],
+        ['Class', `${idCard.className || ''} ${idCard.section || ''}`.trim()],
+        ['Date of Birth', idCard.dateOfBirth ? new Date(idCard.dateOfBirth).toLocaleDateString('en-IN', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        }) : 'Not Available'],
+        ['Father Name', idCard.fatherName],
+        ['Mother Name', idCard.motherName],
+        ['Father Mobile', idCard.fatherMobile],
+        ['Mother Mobile', idCard.motherMobile],
+        ['Address', idCard.address],
+        ['Created Date', idCard.createdAt ? idCard.createdAt.toLocaleDateString('en-IN', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        }) : ''],
+        ['Download Count', idCard.downloadCount || 0]
+      ];
+
+      // Add all rows at once
+      worksheet.addRows(data);
+
+      // Style the header row
+      const headerRow = worksheet.getRow(1);
+      headerRow.font = { bold: true };
+      headerRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD3D3D3' } // Light gray background
+      };
+
+      // Style the field names column
+      for (let i = 2; i <= data.length; i++) {
+        const cell = worksheet.getCell(`A${i}`);
+        cell.font = { bold: true };
+      }
+
+      // Set column widths
+      worksheet.getColumn(1).width = 20; // Field column
+      worksheet.getColumn(2).width = 40; // Value column
+
+      // Add borders to all cells
+      for (let i = 1; i <= worksheet.rowCount; i++) {
+        const row = worksheet.getRow(i);
+        row.eachCell({ includeEmpty: true }, cell => {
+          cell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+          };
+        });
+      }
+
+      // Add a second worksheet with tabular format
+      const tabularSheet = workbook.addWorksheet('Tabular View');
+
+      // Define the headers
+      const headers = [
+        'Student Name',
+        'Class',
+        'Date of Birth',
+        'Father Name',
+        'Mother Name',
+        'Father Mobile',
+        'Mother Mobile',
+        'Address',
+        'Created Date',
+        'Download Count'
+      ];
+
+      // Add the header row
+      tabularSheet.addRow(headers);
+
+      // Style the header row
+      const tabularHeaderRow = tabularSheet.getRow(1);
+      tabularHeaderRow.font = { bold: true };
+      tabularHeaderRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD3D3D3' } // Light gray background
+      };
+
+      // Set column widths
+      tabularSheet.columns = [
+        { width: 25 }, // Student Name
+        { width: 15 }, // Class
+        { width: 15 }, // Date of Birth
+        { width: 25 }, // Father Name
+        { width: 25 }, // Mother Name
+        { width: 15 }, // Father Mobile
+        { width: 15 }, // Mother Mobile
+        { width: 40 }, // Address
+        { width: 15 }, // Created Date
+        { width: 12 }  // Download Count
+      ];
+
+      // Add data row
+      tabularSheet.addRow([
+        idCard.studentName,
+        `${idCard.className || ''} ${idCard.section || ''}`.trim(),
+        idCard.dateOfBirth ? new Date(idCard.dateOfBirth).toLocaleDateString('en-IN', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        }) : '',
+        idCard.fatherName,
+        idCard.motherName,
+        idCard.fatherMobile,
+        idCard.motherMobile,
+        idCard.address,
+        idCard.createdAt ? idCard.createdAt.toLocaleDateString('en-IN', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        }) : '',
+        idCard.downloadCount || 0
+      ]);
+
+      // Add borders to all cells
+      for (let i = 1; i <= tabularSheet.rowCount; i++) {
+        const row = tabularSheet.getRow(i);
+        row.eachCell({ includeEmpty: true }, cell => {
+          cell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+          };
+        });
+      }
+
+      // Increment download count
+      await this.incrementDownloadCount(idCardId);
+
+      // Generate Excel file
+      const buffer = await workbook.xlsx.writeBuffer();
+
+      // Return as blob
+      return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    } catch (error) {
+      console.error('Error exporting ID card to Excel:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Export multiple ID cards to Excel format with standard tabular layout including images
+   * @param params Optional filter parameters
+   * @returns Promise that resolves with the Excel file as a Blob
+   */
+  async exportIDCardsToExcel(params: IDCardListParams = {}): Promise<Blob> {
+    try {
+      // Get all ID cards without pagination
+      const exportParams: IDCardListParams = {
+        ...params,
+        page: 1,
+        limit: 1000 // Set a high limit to get all records
+      };
+
+      const { idCards } = await this.getAllIDCards(exportParams);
+
+      if (idCards.length === 0) {
+        throw new Error('No ID cards found to export');
+      }
+
+      // Create a new workbook
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'School Management System';
+      workbook.created = new Date();
+
+      // Add a worksheet
+      const worksheet = workbook.addWorksheet('ID Cards');
+
+      // Define the headers
+      const headers = [
+        'Student Photo',
+        'Student Name',
+        'Class',
+        'Date of Birth',
+        'Father Photo',
+        'Father Name',
+        'Father Mobile',
+        'Mother Photo',
+        'Mother Name',
+        'Mother Mobile',
+        'Address',
+        'Created Date',
+        'Download Count'
+      ];
+
+      // Add the header row
+      worksheet.addRow(headers);
+
+      // Style the header row
+      const headerRow = worksheet.getRow(1);
+      headerRow.font = { bold: true };
+      headerRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD3D3D3' } // Light gray background
+      };
+
+      // Set row height for header
+      headerRow.height = 30;
+
+      // Set column widths
+      worksheet.columns = [
+        { width: 15 }, // Student Photo
+        { width: 25 }, // Student Name
+        { width: 15 }, // Class
+        { width: 15 }, // Date of Birth
+        { width: 15 }, // Father Photo
+        { width: 25 }, // Father Name
+        { width: 15 }, // Father Mobile
+        { width: 15 }, // Mother Photo
+        { width: 25 }, // Mother Name
+        { width: 15 }, // Mother Mobile
+        { width: 40 }, // Address
+        { width: 15 }, // Created Date
+        { width: 12 }  // Download Count
+      ];
+
+      // Add data rows with images
+      for (let i = 0; i < idCards.length; i++) {
+        const idCard = idCards[i];
+        const rowIndex = i + 2; // +2 because header is row 1 and Excel is 1-indexed
+
+        // Create a row for data
+        const dataRow = worksheet.addRow([
+          '', // Placeholder for student photo
+          idCard.studentName,
+          `${idCard.className || ''} ${idCard.section || ''}`.trim(),
+          idCard.dateOfBirth ? new Date(idCard.dateOfBirth).toLocaleDateString('en-IN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          }) : '',
+          '', // Placeholder for father photo
+          idCard.fatherName,
+          idCard.fatherMobile,
+          '', // Placeholder for mother photo
+          idCard.motherName,
+          idCard.motherMobile,
+          idCard.address,
+          idCard.createdAt ? idCard.createdAt.toLocaleDateString('en-IN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          }) : '',
+          idCard.downloadCount || 0
+        ]);
+
+        // Set row height to accommodate images
+        dataRow.height = 75;
+
+        // Add student photo if available
+        if (typeof idCard.studentPhoto === 'string' && idCard.studentPhoto) {
+          try {
+            const img = await this.loadImage(idCard.studentPhoto);
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Set canvas dimensions
+            canvas.width = 100;
+            canvas.height = 120;
+
+            // Draw image on canvas
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, 100, 120);
+
+              // Convert to base64
+              const imageBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
+
+              // Add image to Excel
+              const studentPhotoId = workbook.addImage({
+                base64: imageBase64,
+                extension: 'jpeg',
+              });
+
+              worksheet.addImage(studentPhotoId, {
+                tl: { col: 0, row: rowIndex - 1 },
+                br: { col: 1, row: rowIndex }
+              });
+            }
+          } catch (error) {
+            console.error('Error adding student photo to Excel:', error);
+            // Continue without the image
+          }
+        }
+
+        // Add father photo if available
+        if (typeof idCard.fatherPhoto === 'string' && idCard.fatherPhoto) {
+          try {
+            const img = await this.loadImage(idCard.fatherPhoto);
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Set canvas dimensions
+            canvas.width = 100;
+            canvas.height = 120;
+
+            // Draw image on canvas
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, 100, 120);
+
+              // Convert to base64
+              const imageBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
+
+              // Add image to Excel
+              const fatherPhotoId = workbook.addImage({
+                base64: imageBase64,
+                extension: 'jpeg',
+              });
+
+              worksheet.addImage(fatherPhotoId, {
+                tl: { col: 4, row: rowIndex - 1 },
+                br: { col: 5, row: rowIndex }
+              });
+            }
+          } catch (error) {
+            console.error('Error adding father photo to Excel:', error);
+            // Continue without the image
+          }
+        }
+
+        // Add mother photo if available
+        if (typeof idCard.motherPhoto === 'string' && idCard.motherPhoto) {
+          try {
+            const img = await this.loadImage(idCard.motherPhoto);
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Set canvas dimensions
+            canvas.width = 100;
+            canvas.height = 120;
+
+            // Draw image on canvas
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, 100, 120);
+
+              // Convert to base64
+              const imageBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
+
+              // Add image to Excel
+              const motherPhotoId = workbook.addImage({
+                base64: imageBase64,
+                extension: 'jpeg',
+              });
+
+              worksheet.addImage(motherPhotoId, {
+                tl: { col: 7, row: rowIndex - 1 },
+                br: { col: 8, row: rowIndex }
+              });
+            }
+          } catch (error) {
+            console.error('Error adding mother photo to Excel:', error);
+            // Continue without the image
+          }
+        }
+      }
+
+      // Add borders to all cells
+      for (let i = 1; i <= worksheet.rowCount; i++) {
+        const row = worksheet.getRow(i);
+        row.eachCell({ includeEmpty: true }, cell => {
+          cell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+          };
+        });
+      }
+
+      // Format the date columns
+      for (let i = 2; i <= worksheet.rowCount; i++) {
+        // Date of Birth column (4)
+        const dobCell = worksheet.getCell(`D${i}`);
+        if (dobCell.value) {
+          dobCell.numFmt = 'dd/mm/yyyy';
+        }
+
+        // Created Date column (12)
+        const createdDateCell = worksheet.getCell(`L${i}`);
+        if (createdDateCell.value) {
+          createdDateCell.numFmt = 'dd/mm/yyyy';
+        }
+      }
+
+      // Add auto filter
+      worksheet.autoFilter = {
+        from: { row: 1, column: 1 },
+        to: { row: 1, column: headers.length }
+      };
+
+      // Freeze the header row
+      worksheet.views = [
+        { state: 'frozen', xSplit: 0, ySplit: 1, activeCell: 'A2' }
+      ];
+
+      // Add a summary row at the bottom
+      worksheet.addRow([]);
+      const summaryRow = worksheet.addRow([
+        `Total Records: ${idCards.length}`,
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''
+      ]);
+      summaryRow.font = { bold: true };
+
+      // Generate Excel file
+      const buffer = await workbook.xlsx.writeBuffer();
+
+      // Increment download count for all ID cards
+      for (const idCard of idCards) {
+        if (idCard.id) {
+          await this.incrementDownloadCount(idCard.id);
+        }
+      }
+
+      // Return as blob
+      return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    } catch (error) {
+      console.error('Error exporting ID cards to Excel:', error);
+      throw error;
+    }
   },
 
   async saveIDCardData(data: IDCardData): Promise<string> {
@@ -331,6 +801,234 @@ export const idCardService = {
       console.error('Error incrementing download count:', error);
       // Don't show toast for this error as it's not critical
     }
+  },
+
+  /**
+   * Export all ID cards as a PDF with photos
+   * @param params Optional filter parameters
+   * @returns Promise that resolves when the export is complete
+   */
+  async exportAllIDCards(params: IDCardListParams = {}): Promise<Blob> {
+    try {
+      // Get all ID cards without pagination
+      const exportParams: IDCardListParams = {
+        ...params,
+        page: 1,
+        limit: 1000 // Set a high limit to get all records
+      };
+
+      const { idCards } = await this.getAllIDCards(exportParams);
+
+      if (idCards.length === 0) {
+        throw new Error('No ID cards found to export');
+      }
+
+      // Create a new PDF document
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      // Add title
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(16);
+      pdf.text('ID Card Records', 105, 15, { align: 'center' });
+
+      // Add date
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(10);
+      pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, 105, 22, { align: 'center' });
+
+      // Add horizontal line
+      pdf.setDrawColor(0, 0, 0);
+      pdf.setLineWidth(0.5);
+      pdf.line(15, 25, 195, 25);
+
+      let yPos = 35;
+      const pageHeight = pdf.internal.pageSize.height;
+
+      // Process each ID card
+      for (let i = 0; i < idCards.length; i++) {
+        const idCard = idCards[i];
+
+        // Check if we need a new page
+        if (yPos > pageHeight - 60) {
+          pdf.addPage();
+          yPos = 20;
+        }
+
+        // Add student name as header
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(12);
+        pdf.text(`${i + 1}. ${idCard.studentName}`, 15, yPos);
+        yPos += 7;
+
+        // Add class info
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(10);
+        pdf.text(`Class: ${idCard.className || ''} ${idCard.section || ''}`, 20, yPos);
+        yPos += 5;
+
+        // Add date of birth if available
+        if (idCard.dateOfBirth) {
+          const dob = new Date(idCard.dateOfBirth).toLocaleDateString('en-IN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          });
+          pdf.text(`Date of Birth: ${dob}`, 20, yPos);
+          yPos += 5;
+        }
+
+        // Add parent info
+        pdf.text(`Father: ${idCard.fatherName} | Mobile: ${idCard.fatherMobile}`, 20, yPos);
+        yPos += 5;
+        pdf.text(`Mother: ${idCard.motherName} | Mobile: ${idCard.motherMobile}`, 20, yPos);
+        yPos += 5;
+
+        // Add address
+        pdf.text(`Address: ${idCard.address}`, 20, yPos);
+        yPos += 5;
+
+        // Add photos if available
+        const photoStartY = yPos;
+        let maxPhotoHeight = 0;
+
+        // Add student photo if available
+        if (typeof idCard.studentPhoto === 'string' && idCard.studentPhoto) {
+          try {
+            const img = await this.loadImage(idCard.studentPhoto);
+            const imgWidth = 30;
+            const imgHeight = 30 * (img.height / img.width);
+            pdf.addImage(img, 'JPEG', 20, yPos, imgWidth, imgHeight);
+            maxPhotoHeight = Math.max(maxPhotoHeight, imgHeight);
+          } catch (error) {
+            console.error('Error loading student photo:', error);
+            // Continue without the image
+          }
+        }
+
+        // Add father photo if available
+        if (typeof idCard.fatherPhoto === 'string' && idCard.fatherPhoto) {
+          try {
+            const img = await this.loadImage(idCard.fatherPhoto);
+            const imgWidth = 30;
+            const imgHeight = 30 * (img.height / img.width);
+            pdf.addImage(img, 'JPEG', 60, yPos, imgWidth, imgHeight);
+            maxPhotoHeight = Math.max(maxPhotoHeight, imgHeight);
+          } catch (error) {
+            console.error('Error loading father photo:', error);
+            // Continue without the image
+          }
+        }
+
+        // Add mother photo if available
+        if (typeof idCard.motherPhoto === 'string' && idCard.motherPhoto) {
+          try {
+            const img = await this.loadImage(idCard.motherPhoto);
+            const imgWidth = 30;
+            const imgHeight = 30 * (img.height / img.width);
+            pdf.addImage(img, 'JPEG', 100, yPos, imgWidth, imgHeight);
+            maxPhotoHeight = Math.max(maxPhotoHeight, imgHeight);
+          } catch (error) {
+            console.error('Error loading mother photo:', error);
+            // Continue without the image
+          }
+        }
+
+        // If no photos were loaded successfully, add a note
+        if (maxPhotoHeight === 0) {
+          pdf.setFont('helvetica', 'italic');
+          pdf.setFontSize(8);
+          pdf.text('Photos not available', 20, yPos + 10);
+          maxPhotoHeight = 10; // Set a minimum height
+        }
+
+        // Update yPos based on photos
+        yPos = photoStartY + maxPhotoHeight + 10;
+
+        // Add separator line
+        pdf.setDrawColor(200, 200, 200);
+        pdf.setLineWidth(0.2);
+        pdf.line(15, yPos - 5, 195, yPos - 5);
+
+        // Increment download count for this ID card
+        await this.incrementDownloadCount(idCard.id || '');
+      }
+
+      // Add footer with count
+      pdf.setFont('helvetica', 'italic');
+      pdf.setFontSize(10);
+      pdf.text(`Total Records: ${idCards.length}`, 105, pdf.internal.pageSize.height - 10, { align: 'center' });
+
+      // Return the PDF as a blob
+      return pdf.output('blob');
+    } catch (error) {
+      console.error('Error exporting ID cards:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Helper function to load an image from URL
+   * @param url Image URL
+   * @returns Promise that resolves with the image data
+   */
+  async loadImage(url: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+      // Create a placeholder image in case of error
+      const createPlaceholder = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 100;
+        canvas.height = 100;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          // Fill with light gray
+          ctx.fillStyle = '#f0f0f0';
+          ctx.fillRect(0, 0, 100, 100);
+
+          // Add text
+          ctx.fillStyle = '#999999';
+          ctx.font = '14px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText('No Photo', 50, 50);
+        }
+
+        const placeholderImg = new Image();
+        placeholderImg.src = canvas.toDataURL();
+        placeholderImg.onload = () => resolve(placeholderImg);
+      };
+
+      // Try to load the actual image
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.onload = () => resolve(img);
+      img.onerror = () => {
+        // On error, create and return a placeholder image
+        createPlaceholder();
+      };
+
+      // Handle Supabase signed URLs by trying to get a public URL
+      if (url.includes('supabase.co/storage/v1/object/sign')) {
+        // Extract the path from the URL
+        const pathMatch = url.match(/\/File\/(.+?)\?/);
+        if (pathMatch && pathMatch[1]) {
+          const filePath = pathMatch[1];
+          // Create a public URL instead
+          const publicUrlData = supabase.storage
+            .from(FILE_CONFIG.BUCKET)
+            .getPublicUrl(filePath);
+
+          img.src = publicUrlData.data.publicUrl;
+        } else {
+          // If we can't extract the path, use the original URL
+          img.src = url;
+        }
+      } else {
+        img.src = url;
+      }
+    });
   },
 
   async deleteIDCard(id: string): Promise<void> {

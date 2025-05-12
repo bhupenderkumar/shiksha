@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
-import { ThemeProvider } from './components/providers/theme-provider';
-import { AuthProvider } from './lib/auth';
+import { BrowserRouter as Router } from 'react-router-dom';
+import { ThemeProvider } from './components/theme-provider';
+import { ClassAuthProvider } from './lib/class-auth-provider';
 import App from './App';
 import './styles/globals.css';
 
@@ -49,10 +50,12 @@ if (root) {
   ReactDOM.createRoot(root).render(
     <React.StrictMode>
       <ThemeProvider defaultTheme="light" storageKey="ui-theme">
-        <AuthProvider>
-          <GTMScript />
-          <App />
-        </AuthProvider>
+        <ClassAuthProvider>
+          <Router>
+            <GTMScript />
+            <App />
+          </Router>
+        </ClassAuthProvider>
       </ThemeProvider>
     </React.StrictMode>
   );

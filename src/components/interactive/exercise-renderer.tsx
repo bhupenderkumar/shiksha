@@ -1,7 +1,7 @@
 import React from 'react';
 import { InteractiveQuestion, InteractiveResponse } from '@/types/interactiveAssignment';
 import MatchingExercise from './matching-exercise';
-import CompletionExercise from './completion-exercise';
+import SimplifiedCompletionExercise from './simplified-completion-exercise';
 import DrawingExercise from './drawing-exercise';
 import MultipleChoiceExercise from './multiple-choice-exercise';
 import OrderingExercise from './ordering-exercise';
@@ -66,7 +66,7 @@ export function ExerciseRenderer({
 
       case 'COMPLETION':
         return (
-          <CompletionExercise
+          <SimplifiedCompletionExercise
             question={{
               id: question.id,
               questionText: question.questionText,

@@ -128,7 +128,35 @@ const adaptCompletionQuestion = (apiQuestion: ApiCompletionQuestion) => {
 
 // Adapter function for ordering questions
 const adaptOrderingQuestion = (apiQuestion: ApiOrderingQuestion) => {
-  return apiQuestion; // No adaptation needed
+  console.log('adaptOrderingQuestion called with:', apiQuestion);
+
+  // Handle null or undefined input
+  if (!apiQuestion) {
+    console.error('apiQuestion is null or undefined');
+    return {
+      items: []
+    };
+  }
+
+  // Ensure items is an array
+  if (!apiQuestion.items || !Array.isArray(apiQuestion.items)) {
+    console.error('apiQuestion.items is not an array:', apiQuestion.items);
+    return {
+      items: []
+    };
+  }
+
+  // Ensure each item has the required properties
+  const validItems = apiQuestion.items.map(item => ({
+    id: item.id || `item-${Math.random().toString(36).substr(2, 9)}`,
+    text: item.text || '',
+    correctPosition: typeof item.correctPosition === 'number' ? item.correctPosition : 0,
+    imageUrl: item.imageUrl
+  }));
+
+  return {
+    items: validItems
+  };
 };
 
 // Adapter function for drawing questions

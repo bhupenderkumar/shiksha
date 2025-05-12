@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-provider';
 import { supabase } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -91,15 +91,15 @@ export default function StudentsPage() {
                 </div>
               </div>
               <div className="mt-4 flex space-x-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={() => navigate(`/students/${student.id}`)}
                 >
                   View Details
                 </Button>
-                <Button 
-                  variant="destructive" 
+                <Button
+                  variant="destructive"
                   size="sm"
                   onClick={async () => {
                     if (window.confirm('Are you sure you want to delete this student?')) {
@@ -107,7 +107,7 @@ export default function StudentsPage() {
                         .from('students')
                         .delete()
                         .eq('id', student.id);
-                      
+
                       if (error) {
                         toast.error('Failed to delete student');
                       } else {

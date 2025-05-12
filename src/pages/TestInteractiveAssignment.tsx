@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AudioInstructions } from '@/components/ui/audio-instructions';
 import { CelebrationFeedback } from '@/components/ui/celebration-feedback';
 import { ShareableLink } from '@/components/ui/shareable-link';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-provider';
 import { toast } from 'react-hot-toast';
 
 export default function TestInteractiveAssignment() {
@@ -15,16 +15,16 @@ export default function TestInteractiveAssignment() {
   const [testAssignmentId, setTestAssignmentId] = useState<string | null>(null);
   const [shareableLink, setShareableLink] = useState<string | null>(null);
   const [showCelebration, setShowCelebration] = useState(false);
-  
+
   // Sample audio URL - replace with your actual audio file
   const sampleAudioUrl = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
-  
+
   const createTestAssignment = async () => {
     if (!user) {
       toast.error('You must be logged in to create an assignment');
       return;
     }
-    
+
     setLoading(true);
     try {
       const assignment = await interactiveAssignmentService.create({
@@ -56,7 +56,7 @@ export default function TestInteractiveAssignment() {
           }
         ]
       }, user.id);
-      
+
       if (assignment) {
         setTestAssignmentId(assignment.id);
         toast.success('Test assignment created successfully');
@@ -68,13 +68,13 @@ export default function TestInteractiveAssignment() {
       setLoading(false);
     }
   };
-  
+
   const generateShareableLink = async () => {
     if (!testAssignmentId) {
       toast.error('Create a test assignment first');
       return;
     }
-    
+
     setLoading(true);
     try {
       const link = await interactiveAssignmentService.generateShareableLink(testAssignmentId);
@@ -89,13 +89,13 @@ export default function TestInteractiveAssignment() {
       setLoading(false);
     }
   };
-  
+
   const testProgressTracking = async () => {
     if (!testAssignmentId || !user) {
       toast.error('Create a test assignment first and ensure you are logged in');
       return;
     }
-    
+
     setLoading(true);
     try {
       // Update student progress
@@ -108,20 +108,20 @@ export default function TestInteractiveAssignment() {
         timeSpent: 300, // 5 minutes in seconds
         attempts: 1
       });
-      
+
       // Update analytics
       await progressTrackingService.updateStudentAnalytics(
         'your-student-id', // Replace with an actual student ID
         'MATCHING'
       );
-      
+
       // Check for milestones
       await progressTrackingService.checkAndCreateMilestones(
         'your-student-id', // Replace with an actual student ID
         testAssignmentId,
         'MATCHING'
       );
-      
+
       toast.success('Progress tracking test completed successfully');
       setShowCelebration(true);
     } catch (error) {
@@ -131,24 +131,24 @@ export default function TestInteractiveAssignment() {
       setLoading(false);
     }
   };
-  
+
   return (
     <div className="container mx-auto py-8 space-y-8">
       <h1 className="text-3xl font-bold">Interactive Assignment Test Page</h1>
-      
+
       <Card>
         <CardHeader>
           <CardTitle>Create Test Assignment</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p>Click the button below to create a test assignment with sample data.</p>
-          <Button 
-            onClick={createTestAssignment} 
+          <Button
+            onClick={createTestAssignment}
             disabled={loading || !!testAssignmentId}
           >
             Create Test Assignment
           </Button>
-          
+
           {testAssignmentId && (
             <div className="p-2 bg-green-50 border border-green-200 rounded">
               <p>Test assignment created with ID: {testAssignmentId}</p>
@@ -156,22 +156,22 @@ export default function TestInteractiveAssignment() {
           )}
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardHeader>
           <CardTitle>Test Audio Instructions Component</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <AudioInstructions 
+          <AudioInstructions
             audioUrl={sampleAudioUrl}
             label="Listen to the instructions"
             childFriendly={true}
             onComplete={() => toast.success('Audio completed!')}
           />
-          
+
           <div className="mt-4">
             <h3 className="text-lg font-medium mb-2">Child-friendly version:</h3>
-            <AudioInstructions 
+            <AudioInstructions
               audioUrl={sampleAudioUrl}
               label="Listen to the story"
               childFriendly={true}
@@ -181,31 +181,31 @@ export default function TestInteractiveAssignment() {
           </div>
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardHeader>
           <CardTitle>Test Shareable Link Component</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button 
-            onClick={generateShareableLink} 
+          <Button
+            onClick={generateShareableLink}
             disabled={loading || !testAssignmentId || !!shareableLink}
           >
             Generate Shareable Link
           </Button>
-          
+
           {shareableLink && (
             <div className="mt-4">
-              <ShareableLink 
+              <ShareableLink
                 link={shareableLink}
                 title="Test Assignment Link"
                 description="Share this link with students to access the test assignment"
                 expiryDate={new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)} // 30 days from now
               />
-              
+
               <div className="mt-4">
                 <h3 className="text-lg font-medium mb-2">Compact version:</h3>
-                <ShareableLink 
+                <ShareableLink
                   link={shareableLink}
                   compact={true}
                 />
@@ -214,23 +214,23 @@ export default function TestInteractiveAssignment() {
           )}
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardHeader>
           <CardTitle>Test Progress Tracking</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p>Click the button below to test the progress tracking functionality.</p>
-          <Button 
-            onClick={testProgressTracking} 
+          <Button
+            onClick={testProgressTracking}
             disabled={loading || !testAssignmentId}
           >
             Test Progress Tracking
           </Button>
         </CardContent>
       </Card>
-      
-      <CelebrationFeedback 
+
+      <CelebrationFeedback
         show={showCelebration}
         message="Great job!"
         subMessage="You've successfully tested the celebration component!"

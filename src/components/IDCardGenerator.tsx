@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Download, Printer } from 'lucide-react';
+import { Download, Printer, FileSpreadsheet } from 'lucide-react';
 import { IDCardData } from '@/types/idCard';
 import { idCardService } from '@/backend/idCardService';
 import { toast } from 'react-hot-toast';
@@ -16,6 +16,7 @@ interface IDCardGeneratorProps {
 
 export const IDCardGenerator: React.FC<IDCardGeneratorProps> = ({ data, idCardId }) => {
   const [downloading, setDownloading] = useState(false);
+  const [exportingExcel, setExportingExcel] = useState(false);
 
   // Add print styles
   useEffect(() => {
@@ -108,6 +109,36 @@ export const IDCardGenerator: React.FC<IDCardGeneratorProps> = ({ data, idCardId
     }
   };
 
+  const handleExportExcel = async () => {
+    try {
+      setExportingExcel(true);
+
+      // Call the single ID card Excel export function
+      const excelBlob = await idCardService.exportSingleIDCardToExcel(idCardId);
+
+      // Create a download link
+      const url = URL.createObjectURL(excelBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${data.studentName.replace(/\s+/g, '_')}_ID_Card.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 100);
+
+      toast.success('Excel file downloaded successfully');
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      toast.error('Failed to export Excel file');
+    } finally {
+      setExportingExcel(false);
+    }
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -116,7 +147,7 @@ export const IDCardGenerator: React.FC<IDCardGeneratorProps> = ({ data, idCardId
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <h2 className="text-lg sm:text-xl font-bold">ID Card Preview</h2>
-        <div className="flex w-full sm:w-auto space-x-2">
+        <div className="flex w-full sm:w-auto space-x-2 flex-wrap sm:flex-nowrap">
           <Button
             onClick={handleDownload}
             disabled={downloading}
@@ -127,9 +158,19 @@ export const IDCardGenerator: React.FC<IDCardGeneratorProps> = ({ data, idCardId
             {downloading ? 'Generating...' : 'Download PDF'}
           </Button>
           <Button
+            onClick={handleExportExcel}
+            disabled={exportingExcel}
+            variant="secondary"
+            className="print:hidden flex-1 sm:flex-none text-xs sm:text-sm py-1 sm:py-2 h-auto"
+            data-excel-button
+          >
+            <FileSpreadsheet className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            {exportingExcel ? 'Exporting...' : 'Export Excel'}
+          </Button>
+          <Button
             variant="outline"
             onClick={handlePrint}
-            className="print:hidden flex-1 sm:flex-none text-xs sm:text-sm py-1 sm:py-2 h-auto"
+            className="print:hidden flex-1 sm:flex-none text-xs sm:text-sm py-1 sm:py-2 h-auto mt-2 sm:mt-0"
             data-print-button
           >
             <Printer className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
@@ -182,7 +223,23 @@ export const IDCardGenerator: React.FC<IDCardGeneratorProps> = ({ data, idCardId
                     alt="Student"
                     className="w-24 sm:w-32 h-32 sm:h-40 object-cover rounded-sm"
                     onError={(e) => {
-                      e.currentTarget.src = 'https://via.placeholder.com/128x160?text=No+Photo';
+                      // Create a data URL for a placeholder image
+                      const canvas = document.createElement('canvas');
+                      canvas.width = 128;
+                      canvas.height = 160;
+                      const ctx = canvas.getContext('2d');
+                      if (ctx) {
+                        // Fill with light gray
+                        ctx.fillStyle = '#f0f0f0';
+                        ctx.fillRect(0, 0, 128, 160);
+
+                        // Add text
+                        ctx.fillStyle = '#999999';
+                        ctx.font = '14px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('No Photo', 64, 80);
+                      }
+                      e.currentTarget.src = canvas.toDataURL();
                     }}
                   />
                 </div>
@@ -278,7 +335,23 @@ export const IDCardGenerator: React.FC<IDCardGeneratorProps> = ({ data, idCardId
                         alt="Father"
                         className="w-20 sm:w-24 h-24 sm:h-32 object-cover rounded-sm"
                         onError={(e) => {
-                          e.currentTarget.src = 'https://via.placeholder.com/96x128?text=No+Photo';
+                          // Create a data URL for a placeholder image
+                          const canvas = document.createElement('canvas');
+                          canvas.width = 96;
+                          canvas.height = 128;
+                          const ctx = canvas.getContext('2d');
+                          if (ctx) {
+                            // Fill with light gray
+                            ctx.fillStyle = '#f0f0f0';
+                            ctx.fillRect(0, 0, 96, 128);
+
+                            // Add text
+                            ctx.fillStyle = '#999999';
+                            ctx.font = '12px Arial';
+                            ctx.textAlign = 'center';
+                            ctx.fillText('No Photo', 48, 64);
+                          }
+                          e.currentTarget.src = canvas.toDataURL();
                         }}
                       />
                     </div>
@@ -291,7 +364,23 @@ export const IDCardGenerator: React.FC<IDCardGeneratorProps> = ({ data, idCardId
                         alt="Mother"
                         className="w-20 sm:w-24 h-24 sm:h-32 object-cover rounded-sm"
                         onError={(e) => {
-                          e.currentTarget.src = 'https://via.placeholder.com/96x128?text=No+Photo';
+                          // Create a data URL for a placeholder image
+                          const canvas = document.createElement('canvas');
+                          canvas.width = 96;
+                          canvas.height = 128;
+                          const ctx = canvas.getContext('2d');
+                          if (ctx) {
+                            // Fill with light gray
+                            ctx.fillStyle = '#f0f0f0';
+                            ctx.fillRect(0, 0, 96, 128);
+
+                            // Add text
+                            ctx.fillStyle = '#999999';
+                            ctx.font = '12px Arial';
+                            ctx.textAlign = 'center';
+                            ctx.fillText('No Photo', 48, 64);
+                          }
+                          e.currentTarget.src = canvas.toDataURL();
                         }}
                       />
                     </div>

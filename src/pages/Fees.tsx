@@ -31,7 +31,7 @@ const Fees = () => {
   const { profile, isAdminOrTeacher, loading: profileLoading } = useProfileAccess();
   const [fees, setFees] = useState<Fee[]>([]);
   const [classes, setClasses] = useState<{ id: string; name: string; section: string; }[]>([]);
-  const [students, setStudents] = useState<{ id: string; name: string; admissionNumber: string; }[]>([]);
+  const [students, setStudents] = useState<{ id: string; name: string; admissionNumber?: string; photo_url?: string | null; }[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingFee, setEditingFee] = useState<Fee | null>(null);
@@ -83,11 +83,22 @@ const Fees = () => {
 
   const fetchStudents = async (classId: string) => {
     try {
+      setLoading(true);
+      console.log(`Fetching students for class ID: ${classId}`);
       const data = await feesService.getStudentsByClass(classId);
+      console.log(`Found ${data.length} students`);
+
       setStudents(data);
+
+      if (data.length === 0) {
+        toast.warning(`No students found for this class. Please check if students are assigned to this class.`);
+      }
     } catch (error) {
       console.error('Error fetching students:', error);
-      toast.error('Failed to fetch students');
+      toast.error('Failed to fetch students. Please try again or select a different class.');
+      setStudents([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -337,7 +348,7 @@ const Fees = () => {
                 <Label>Student</Label>
                 <Select
                   value={formData.studentId}
-                  onValueChange={(value) => 
+                  onValueChange={(value) =>
                     setFormData(prev => ({ ...prev, studentId: value }))
                   }
                   disabled={!filter.classId}
@@ -346,13 +357,43 @@ const Fees = () => {
                     <SelectValue placeholder="Select Student" />
                   </SelectTrigger>
                   <SelectContent>
-                    {students.map((student) => (
-                      <SelectItem key={student.id} value={student.id}>
-                        {student.name} ({student.admissionNumber})
-                      </SelectItem>
-                    ))}
+                    {students.length === 0 ? (
+                      <div className="p-2 text-center text-sm text-gray-500">
+                        No students found for this class
+                      </div>
+                    ) : (
+                      students.map((student) => (
+                        <SelectItem key={student.id} value={student.id} className="flex items-center gap-2">
+                          <div className="flex items-center gap-2">
+                            {student.photo_url ? (
+                              <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0 bg-gray-100">
+                                <img
+                                  src={student.photo_url}
+                                  alt={student.name}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    // If image fails to load, replace with placeholder
+                                    e.currentTarget.onerror = null;
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                  crossOrigin="anonymous"
+                                />
+                              </div>
+                            ) : null}
+                            <span>
+                              {student.name} {student.admissionNumber ? `(${student.admissionNumber})` : ''}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
+                {filter.classId && students.length === 0 && (
+                  <p className="text-xs text-red-500 mt-1">
+                    No students found for this class. Please select a different class.
+                  </p>
+                )}
               </div>
             </>
 
@@ -360,7 +401,7 @@ const Fees = () => {
               <Label>Fee Type</Label>
               <Select
                 value={formData.feeType}
-                onValueChange={(value) => 
+                onValueChange={(value) =>
                   setFormData(prev => ({ ...prev, feeType: value as FeeType }))
                 }
               >
@@ -382,7 +423,7 @@ const Fees = () => {
               <Input
                 type="number"
                 value={formData.amount}
-                onChange={(e) => 
+                onChange={(e) =>
                   setFormData(prev => ({ ...prev, amount: Number(e.target.value) }))
                 }
                 min={0}
@@ -395,7 +436,7 @@ const Fees = () => {
               <Input
                 type="date"
                 value={formData.dueDate}
-                onChange={(e) => 
+                onChange={(e) =>
                   setFormData(prev => ({ ...prev, dueDate: e.target.value }))
                 }
                 required
@@ -406,7 +447,7 @@ const Fees = () => {
               <Label>Status</Label>
               <Select
                 value={formData.status}
-                onValueChange={(value) => 
+                onValueChange={(value) =>
                   setFormData(prev => ({ ...prev, status: value as FeeStatus }))
                 }
               >

@@ -6,8 +6,18 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { toast } from "react-hot-toast";
 import { ROUTES } from "@/constants/app-constants";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Trash } from "lucide-react";
 import { InteractiveAssignmentType } from "@/types/interactiveAssignment";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function EditInteractiveAssignment() {
   const { id } = useParams<{ id: string }>();
@@ -15,6 +25,7 @@ export default function EditInteractiveAssignment() {
   const [assignment, setAssignment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -230,6 +241,23 @@ export default function EditInteractiveAssignment() {
     navigate(ROUTES.INTERACTIVE_ASSIGNMENTS);
   };
 
+  const handleDelete = async () => {
+    if (!id) return;
+
+    try {
+      const success = await interactiveAssignmentService.delete(id);
+      if (success) {
+        toast.success("Assignment deleted successfully");
+        navigate(ROUTES.INTERACTIVE_ASSIGNMENTS);
+      }
+    } catch (error) {
+      console.error("Error deleting assignment:", error);
+      toast.error("Failed to delete assignment");
+    } finally {
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[400px]">
@@ -256,12 +284,22 @@ export default function EditInteractiveAssignment() {
 
   return (
     <div className="container mx-auto p-6">
-      <div className="flex items-center mb-6">
-        <Button variant="ghost" onClick={() => navigate(ROUTES.INTERACTIVE_ASSIGNMENTS)} className="mr-4">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Assignments
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center">
+          <Button variant="ghost" onClick={() => navigate(ROUTES.INTERACTIVE_ASSIGNMENTS)} className="mr-4">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Assignments
+          </Button>
+          <h1 className="text-2xl font-bold">Edit Interactive Assignment</h1>
+        </div>
+        <Button
+          variant="outline"
+          className="text-red-500 hover:text-red-700"
+          onClick={() => setIsDeleteDialogOpen(true)}
+        >
+          <Trash className="h-4 w-4 mr-2" />
+          Delete Assignment
         </Button>
-        <h1 className="text-2xl font-bold">Edit Interactive Assignment</h1>
       </div>
 
       {assignment && (
@@ -271,6 +309,25 @@ export default function EditInteractiveAssignment() {
           onCancel={handleCancel}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the assignment and all associated submissions.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

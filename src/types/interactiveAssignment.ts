@@ -386,6 +386,7 @@ export interface OrderingResponse {
 
 export interface DrawingResponse {
   drawingData: string; // Base64 encoded image data
+  completionPercentage?: number; // Percentage of completion (0-100)
 }
 
 export interface ColoringResponse {
