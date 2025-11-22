@@ -68,6 +68,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { id: 10, icon: Users, label: 'Profile', path: '/profile' },
     { id: 11, icon: IdCard, label: 'ID Card', path: '/id-card' },
     { id: 12, icon: IdCard, label: 'ID Card Details', path: '/idcarddetails', role: 'admin' },
+    { id: 19, icon: IdCard, label: 'View All ID Cards', path: '/id-cards', role: 'admin' },
   ];
 
   const variants = {
