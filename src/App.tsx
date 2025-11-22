@@ -51,7 +51,6 @@ const ViewAllParentFeedback = lazy(() => import('./pages/ViewAllParentFeedback')
 const UpdateParentFeedback = lazy(() => import('./pages/UpdateParentFeedback'));
 const AdminFeedbackPage = lazy(() => import('./pages/AdminFeedbackPage'));
 const Unauthorized = lazy(() => import('./pages/Unauthorized'));
-const ViewAllIDCards = lazy(() => import('./pages/ViewAllIDCards'));
 
 // Private route component
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -88,7 +87,7 @@ function AppRoutes() {
         <Route path="/pwa-test" element={<PwaTest />} />
         <Route path="/whatsapp-test" element={<WhatsAppTest />} />
         <Route path="/id-card" element={<IDCardView />} />
-        <Route path="/id-cards" element={<ViewAllIDCards />} />
+        <Route path="/id-cards" element={<IDCardDetails />} />
         <Route path="/test-interactive-assignment" element={<TestInteractiveAssignment />} />
         <Route path="/konva-test" element={<KonvaTestPage />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
