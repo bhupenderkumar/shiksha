@@ -24,10 +24,9 @@ import ViewAdmissionEnquiries from './pages/ViewAdmissionEnquiries';
 import IDCardForm from './pages/IDCardForm';
 import IDCardDetails from './pages/IDCardDetails';
 import IDCardView from './pages/IDCardView';
-import InteractiveAssignments from './pages/InteractiveAssignments';
+import IDCardTableView from './pages/IDCardTableView';
+import { InteractiveAssignments } from './pages/InteractiveAssignments';
 import InteractiveAssignmentForm from './pages/InteractiveAssignmentForm';
-import InteractiveAssignmentDetails from './pages/InteractiveAssignmentDetails';
-import InteractiveAssignmentView from './pages/InteractiveAssignmentView';
 import ParentFeedbackForm from './pages/ParentFeedbackForm';
 import ParentFeedbackList from './pages/ParentFeedbackList';
 import ParentFeedbackSearch from './pages/ParentFeedbackSearch';
@@ -73,6 +72,10 @@ export const router = createBrowserRouter([
       {
         path: 'id-card',
         element: <IDCardView />,
+      },
+      {
+        path: 'id-cards-table',
+        element: <IDCardTableView />,
       },
       {
         path: 'unauthorized',
@@ -173,16 +176,8 @@ export const router = createBrowserRouter([
         element: <InteractiveAssignmentForm />,
       },
       {
-        path: 'interactive-assignments/:id',
-        element: <InteractiveAssignmentDetails />,
-      },
-      {
         path: 'interactive-assignments/edit/:id',
         element: <InteractiveAssignmentForm />,
-      },
-      {
-        path: 'interactive-assignments/view/:id',
-        element: <InteractiveAssignmentView />,
       },
       {
         path: 'parent-feedback-list',
