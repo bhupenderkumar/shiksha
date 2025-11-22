@@ -1,43 +1,26 @@
 import { supabase } from '@/lib/api-client';
 import { v4 as uuidv4 } from 'uuid';
 import { fileService } from './fileService';
-import { SCHEMA } from '@/lib/constants';
-import { toast } from 'react-hot-toast';
-import { classService } from './classService';
+import { ID_CARD_TABLE } from '@/lib/constants';
 import { studentService } from './student.service';
 
-// Constants
-const ID_CARD_TABLE = 'IDCard';
+import { Database } from '@/database.types';
 
 // Types
-export interface IDCardData {
-  id?: string;
-  studentId: string;
-  studentName: string;
-  className: string;
-  classSection: string;
-  fatherName: string;
-  motherName: string;
-  fatherMobile: string;
-  motherMobile: string;
-  address: string;
-  studentPhotoUrl?: string;
-  fatherPhotoUrl?: string;
-  motherPhotoUrl?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+export type IDCardData = Database['school']['Tables']['IDCard']['Row'];
+export type IDCardInsert = Database['school']['Tables']['IDCard']['Insert'];
+export type IDCardUpdate = Database['school']['Tables']['IDCard']['Update'];
 
 export interface IDCardFormData {
   studentId: string;
-  fatherName: string;
-  motherName: string;
-  fatherMobile: string;
-  motherMobile: string;
+  father_name: string;
+  mother_name: string;
+  father_mobile: string;
+  mother_mobile: string;
   address: string;
-  studentPhoto?: File;
-  fatherPhoto?: File;
-  motherPhoto?: File;
+  student_photo_url?: File;
+  father_photo_url?: File;
+  mother_photo_url?: File;
 }
 
 // Service for managing ID card operations
@@ -48,64 +31,58 @@ export const idCardService = {
    * @returns Created ID card
    */
   async create(data: IDCardFormData): Promise<IDCardData> {
-    try {
-      // Get student details
-      const student = await studentService.findOne(data.studentId);
-      if (!student) {
-        throw new Error('Student not found');
-      }
+    // Get student details
+    const student = await studentService.findOne(data.studentId);
+    if (!student) {
+      throw new Error('Student not found');
+    }
 
-      // Get class details
-      const classDetails = student.class || { name: 'N/A', section: 'N/A' };
+    // Upload photos if provided
+    const student_photo_url = data.student_photo_url
+      ? await this.uploadPhoto(data.student_photo_url, 'student', data.studentId)
+      : undefined;
 
-      // Upload photos if provided
-      const studentPhotoUrl = data.studentPhoto
-        ? await this.uploadPhoto(data.studentPhoto, 'student', data.studentId)
-        : undefined;
+    const father_photo_url = data.father_photo_url
+      ? await this.uploadPhoto(data.father_photo_url, 'father', data.studentId)
+      : undefined;
 
-      const fatherPhotoUrl = data.fatherPhoto
-        ? await this.uploadPhoto(data.fatherPhoto, 'father', data.studentId)
-        : undefined;
+    const mother_photo_url = data.mother_photo_url
+      ? await this.uploadPhoto(data.mother_photo_url, 'mother', data.studentId)
+      : undefined;
 
-      const motherPhotoUrl = data.motherPhoto
-        ? await this.uploadPhoto(data.motherPhoto, 'mother', data.studentId)
-        : undefined;
+    const now = new Date().toISOString();
 
-      const now = new Date();
-      const idCardId = uuidv4();
+    // Create ID card record
+    const idCardData: IDCardInsert = {
+      id: data.studentId,
+      student_name: student.name,
+      class_id: student.classId,
+      father_name: data.father_name,
+      mother_name: data.mother_name,
+      father_mobile: data.father_mobile,
+      mother_mobile: data.mother_mobile,
+      address: data.address,
+      student_photo_url: student_photo_url ?? null,
+      father_photo_url: father_photo_url ?? null,
+      mother_photo_url: mother_photo_url ?? null,
+      created_at: now,
+      date_of_birth: student.dateOfBirth ? new Date(student.dateOfBirth).toISOString() : null,
+    };
 
-      // Create ID card record
-      const idCardData: IDCardData = {
-        id: idCardId,
-        studentId: data.studentId,
-        studentName: student.name,
-        className: classDetails.name,
-        classSection: classDetails.section,
-        fatherName: data.fatherName,
-        motherName: data.motherName,
-        fatherMobile: data.fatherMobile,
-        motherMobile: data.motherMobile,
-        address: data.address,
-        studentPhotoUrl,
-        fatherPhotoUrl,
-        motherPhotoUrl,
-        createdAt: now,
-        updatedAt: now
-      };
+    const { data: newCard, error } = await supabase
+      .from(ID_CARD_TABLE)
+      .insert([idCardData])
+      .select()
+      .single();
 
-      const { error } = await supabase
-        .from(ID_CARD_TABLE)
-        .insert([idCardData]);
-
-      if (error) {
-        throw error;
-      }
-
-      return idCardData;
-    } catch (error) {
+    if (error) {
       console.error('Error creating ID card:', error);
       throw error;
     }
+    if (!newCard) {
+        throw new Error('Failed to create ID card: The operation returned no data.');
+    }
+    return newCard;
   },
 
   /**
@@ -114,31 +91,24 @@ export const idCardService = {
    * @returns ID card data
    */
   async getByStudentId(studentId: string): Promise<IDCardData | null> {
-    try {
-      const { data, error } = await supabase
-        .from(ID_CARD_TABLE)
-        .select('*')
-        .eq('studentId', studentId)
-        .order('createdAt', { ascending: false })
-        .limit(1)
-        .single();
+    const { data, error } = await supabase
+      .from(ID_CARD_TABLE)
+      .select('*')
+      .eq('id', studentId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // No data found
-          return null;
-        }
-        throw error;
-      }
-
-      return data as IDCardData;
-    } catch (error: any) {
-      console.error('Error fetching ID card:', error);
-      if (error?.code === 'PGRST116') {
+    if (error) {
+      // PGRST116 means no rows were found, which is not an error in this case.
+      if (error.code === 'PGRST116') {
         return null;
       }
+      console.error('Error fetching ID card:', error);
       throw error;
     }
+
+    return data;
   },
 
   /**
@@ -148,70 +118,67 @@ export const idCardService = {
    * @returns Updated ID card
    */
   async update(id: string, data: Partial<IDCardFormData>): Promise<IDCardData> {
-    try {
-      // Get existing ID card
-      const { data: existingCard, error: fetchError } = await supabase
-        .from(ID_CARD_TABLE)
-        .select('*')
-        .eq('id', id)
-        .single();
+    const { data: existingCard, error: fetchError } = await supabase
+      .from(ID_CARD_TABLE)
+      .select('id')
+      .eq('id', id)
+      .single();
 
-      if (fetchError) {
-        throw fetchError;
-      }
+    if (fetchError) {
+      console.error('Error fetching existing card for update:', fetchError);
+      throw fetchError;
+    }
+    if (!existingCard) {
+      throw new Error(`ID card with id ${id} not found.`);
+    }
 
-      // Upload new photos if provided
-      const updateData: Partial<IDCardData> = {
-        fatherName: data.fatherName,
-        motherName: data.motherName,
-        fatherMobile: data.fatherMobile,
-        motherMobile: data.motherMobile,
-        address: data.address,
-        updatedAt: new Date()
-      };
+    const updateData: IDCardUpdate = {};
+    if (data.father_name) updateData.father_name = data.father_name;
+    if (data.mother_name) updateData.mother_name = data.mother_name;
+    if (data.father_mobile) updateData.father_mobile = data.father_mobile;
+    if (data.mother_mobile) updateData.mother_mobile = data.mother_mobile;
+    if (data.address) updateData.address = data.address;
 
-      if (data.studentPhoto) {
-        updateData.studentPhotoUrl = await this.uploadPhoto(
-          data.studentPhoto,
-          'student',
-          existingCard.studentId
-        );
-      }
+    if (data.student_photo_url) {
+      updateData.student_photo_url = await this.uploadPhoto(
+        data.student_photo_url,
+        'student',
+        existingCard.id
+      );
+    }
 
-      if (data.fatherPhoto) {
-        updateData.fatherPhotoUrl = await this.uploadPhoto(
-          data.fatherPhoto,
-          'father',
-          existingCard.studentId
-        );
-      }
+    if (data.father_photo_url) {
+      updateData.father_photo_url = await this.uploadPhoto(
+        data.father_photo_url,
+        'father',
+        existingCard.id
+      );
+    }
 
-      if (data.motherPhoto) {
-        updateData.motherPhotoUrl = await this.uploadPhoto(
-          data.motherPhoto,
-          'mother',
-          existingCard.studentId
-        );
-      }
+    if (data.mother_photo_url) {
+      updateData.mother_photo_url = await this.uploadPhoto(
+        data.mother_photo_url,
+        'mother',
+        existingCard.id
+      );
+    }
 
-      // No need to delete properties that don't exist on updateData
+    const { data: updatedCard, error } = await supabase
+      .from(ID_CARD_TABLE)
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
 
-      const { data: updatedCard, error } = await supabase
-        .from(ID_CARD_TABLE)
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      return updatedCard as IDCardData;
-    } catch (error) {
+    if (error) {
       console.error('Error updating ID card:', error);
       throw error;
     }
+    if (!updatedCard) {
+      throw new Error('Failed to update ID card: The operation returned no data.');
+    }
+
+    return updatedCard;
   },
 
   /**
@@ -222,55 +189,32 @@ export const idCardService = {
    * @returns Photo URL
    */
   async uploadPhoto(file: File, type: 'student' | 'father' | 'mother', studentId: string): Promise<string> {
-    try {
-      const filePath = `id-cards/${studentId}/${type}`;
-      const uploadedFile = await fileService.uploadFile(file, filePath);
+    const filePath = `id-cards/${studentId}/${type}`;
+    const uploadedFile = await fileService.uploadFile(file, filePath);
 
-      if (!uploadedFile) {
-        throw new Error('Failed to upload photo');
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('File')
-        .getPublicUrl(uploadedFile.path);
-
-      return publicUrl;
-    } catch (error) {
-      console.error(`Error uploading ${type} photo:`, error);
-      throw error;
+    if (!uploadedFile) {
+      throw new Error('Failed to upload photo');
     }
+
+    return fileService.getViewUrl(uploadedFile.path);
   },
 
   /**
-   * Get all students from ID cards by class ID
-   * @param classId Class ID
-   * @returns Array of students with their photos
+   * Get all ID cards
+   * @returns Array of all ID cards
    */
-  async getStudentsByClass(classId: string): Promise<any[]> {
-    try {
-      console.log(`Fetching students for class ID: ${classId}`);
+  async getAll(): Promise<IDCardData[]> {
+    const { data, error } = await supabase
+      .from(ID_CARD_TABLE)
+      .select('*')
+      .order('created_at', { ascending: false });
 
-      // Use studentService directly
-      console.log('Using studentService to get students...');
-      const students = await studentService.getStudentsByClass(classId);
-
-      if (students && students.length > 0) {
-        console.log(`Found ${students.length} students using studentService`);
-
-        // Map to the expected format
-        return students.map((student: { id: string; name: string; classId?: string }) => ({
-          id: student.id,
-          student_name: student.name,
-          student_photo_url: null, // We don't have photos from this service
-          class_id: student.classId || classId // Use student's classId if available, otherwise use the provided classId
-        }));
-      } else {
-        console.log('No students found for this class');
-        return [];
-      }
-    } catch (error) {
-      console.error('Error fetching students by class:', error);
-      return [];
+    if (error) {
+      console.error('Error fetching all ID cards:', error);
+      throw error;
     }
-  }
+
+    return data || [];
+  },
+
 };

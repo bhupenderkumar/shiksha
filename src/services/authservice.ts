@@ -31,7 +31,6 @@ export const signUp = async (
 
     // Additional logic for creating a user profile in the database
     const { error: profileError } = await supabase
-      .schema(SCHEMA) // Use SCHEMA constant
       .from('Profile')
       .insert([
         {
