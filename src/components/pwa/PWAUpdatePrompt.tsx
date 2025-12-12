@@ -112,4 +112,3 @@ export const PWAUpdatePrompt: React.FC = () => {
   );
 };
 
-export default PWAUpdatePrompt;
