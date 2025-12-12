@@ -1,30 +1,10 @@
-import { Alert } from "@/components/ui/alert";
-import { useGoogleMaps } from "@/hooks/useGoogleMaps";
-import { Loader2, MapPin, Phone, Mail, Clock, Navigation } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, Navigation } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { SCHOOL_INFO } from "@/constants/schoolInfo";
 import { Button } from "@/components/ui/button";
 
 export function MapSection() {
-  const { isLoading, error } = useGoogleMaps('school-map', {
-    maxRetries: 15,
-    retryInterval: 300,
-    timeout: 15000
-  });
-
-  if (error) {
-    return (
-      <section className="py-24 bg-[#0a0a0a]">
-        <div className="container mx-auto px-4">
-          <Alert variant="destructive">
-            <p>Failed to load map: {error.message}</p>
-          </Alert>
-        </div>
-      </section>
-    );
-  }
-
   const contactItems = [
     { icon: MapPin, label: "Address", value: SCHOOL_INFO.address, color: "from-blue-500 to-cyan-500" },
     { icon: Phone, label: "Phone", value: SCHOOL_INFO.phone, href: `tel:${SCHOOL_INFO.phone}`, color: "from-green-500 to-emerald-500" },
@@ -143,26 +123,25 @@ export function MapSection() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="lg:col-span-2"
           >
-            {isLoading ? (
-              <div className="h-[500px] w-full rounded-3xl bg-zinc-900/80 border border-zinc-800 flex items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                  <Loader2 className="h-10 w-10 animate-spin text-blue-400" />
-                  <p className="text-zinc-400">Loading map...</p>
-                </div>
+            <div className="relative rounded-3xl overflow-hidden border border-zinc-800 shadow-2xl shadow-blue-500/10">
+              {/* Embedded Google Map - showing school location with marker */}
+              <iframe
+                src="https://www.google.com/maps/embed/v1/place?key=AIzaSyD7IJF39_HZvW9Bhno1guh95uAfY79WpaA&q=The+First+Step+Public+School,Saurabh+Vihar,Jaitpur,Delhi&zoom=17"
+                width="100%"
+                height="500"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="First Step Pre School - House No 164, H Block Saurabh Vihar, Jaitpur, Badarpur, Delhi"
+                className="rounded-3xl"
+              />
+              
+              {/* Overlay gradient */}
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/10" />
               </div>
-            ) : (
-              <div className="relative rounded-3xl overflow-hidden border border-zinc-800 shadow-2xl shadow-blue-500/10">
-                <div 
-                  id="school-map"
-                  className="h-[500px] w-full"
-                />
-                
-                {/* Overlay gradient */}
-                <div className="absolute inset-0 pointer-events-none">
-                  <div className="absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/10" />
-                </div>
-              </div>
-            )}
+            </div>
           </motion.div>
         </div>
       </div>

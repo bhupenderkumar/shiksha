@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { ThemeProvider } from './components/theme-provider';
 import { ClassAuthProvider } from './lib/class-auth-provider';
+import { PWAUpdatePrompt } from './components/pwa/PWAUpdatePrompt';
 import App from './App';
 import './styles/globals.css';
 
@@ -26,24 +27,6 @@ const GTMScript: React.FC = () => {
   return null;
 }
 
-// Service Worker Registration for PWA
-const registerServiceWorker = () => {
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js')
-        .then(registration => {
-          console.log('Service Worker registered with scope:', registration.scope);
-        })
-        .catch(error => {
-          console.error('Service Worker registration failed:', error);
-        });
-    });
-  }
-};
-
-// Register the service worker
-registerServiceWorker();
-
 const root = document.getElementById('root');
 
 if (root) {
@@ -54,6 +37,7 @@ if (root) {
           <Router>
             <GTMScript />
             <App />
+            <PWAUpdatePrompt />
           </Router>
         </ClassAuthProvider>
       </ThemeProvider>

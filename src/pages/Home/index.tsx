@@ -7,7 +7,6 @@ import { AchievementsSection } from "./components/AchievementsSection";
 import { QuickLinks } from "./components/QuickLinks";
 import { TestimonialsSection } from "./components/TestimonialsSection";
 import { MapSection } from "./components/MapSection";
-import { PWAPrompt } from "@/components/ui/pwa-prompt";
 
 export default function Home() {
   useEffect(() => {
@@ -21,8 +20,6 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen bg-[#0a0a0a]">
-      <PWAPrompt />
-      
       {/* Hero */}
       <HeroSection />
       
