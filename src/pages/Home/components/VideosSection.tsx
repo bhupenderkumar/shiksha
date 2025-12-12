@@ -1,8 +1,7 @@
 import { motion } from "framer-motion";
 import { useYouTubeVideos } from "@/hooks/useYouTubeVideos";
 import { Alert } from "@/components/ui/alert";
-import { Loader2 } from "lucide-react";
-import { LightingContainer, LightingEffect } from "@/components/ui/lighting-effect";
+import { Loader2, Play, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function VideosSection() {
@@ -10,8 +9,8 @@ export function VideosSection() {
 
   if (error) {
     return (
-      <section className="py-12 px-4">
-        <div className="container mx-auto">
+      <section className="py-24 bg-[#0a0a0a]">
+        <div className="container mx-auto px-4">
           <Alert variant="destructive">
             <p>Failed to load videos: {error.message}</p>
           </Alert>
@@ -22,10 +21,10 @@ export function VideosSection() {
 
   if (isLoading) {
     return (
-      <section className="py-12 px-4">
+      <section className="py-24 bg-[#0a0a0a]">
         <div className="container mx-auto text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-          <p className="text-muted-foreground mt-2">Loading videos...</p>
+          <Loader2 className="h-10 w-10 animate-spin mx-auto text-red-500" />
+          <p className="text-zinc-400 mt-4">Loading videos...</p>
         </div>
       </section>
     );
@@ -33,8 +32,8 @@ export function VideosSection() {
 
   if (videos.length === 0) {
     return (
-      <section className="py-12 px-4">
-        <div className="container mx-auto">
+      <section className="py-24 bg-[#0a0a0a]">
+        <div className="container mx-auto px-4">
           <Alert>
             <p>No videos available at the moment.</p>
           </Alert>
@@ -44,71 +43,92 @@ export function VideosSection() {
   }
 
   return (
-    <LightingContainer>
-      <section className="relative py-12 bg-gradient-to-b from-background via-primary/5 to-background overflow-hidden">
-        {/* Lighting effects */}
-        <LightingEffect
-          variant="glow"
-          color="secondary"
-          size="xl"
-          position="center"
-          className="opacity-20"
+    <section className="relative py-24 bg-[#0a0a0a] overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0">
+        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] rounded-full"
+          style={{
+            background: 'radial-gradient(circle, rgba(239,68,68,0.08) 0%, transparent 70%)',
+          }}
         />
-        <LightingEffect
-          variant="beam"
-          color="primary"
-          size="lg"
-          position="top"
-          className="opacity-10"
-        />
+      </div>
 
-        <div className="container mx-auto px-4 relative z-10">
-          <h2 className="text-4xl font-bold text-center mb-16 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-            Latest School Activities
+      <div className="container mx-auto px-4 relative z-10">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-medium mb-6">
+            <Video className="w-4 h-4" />
+            School Activities
+          </span>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+            Watch Our{" "}
+            <span className="bg-gradient-to-r from-red-400 to-pink-400 bg-clip-text text-transparent">
+              Latest Videos
+            </span>
           </h2>
+          <p className="text-xl text-zinc-400 max-w-2xl mx-auto">
+            Explore our school events, activities, and celebrations
+          </p>
+        </motion.div>
 
-          <div className="flex overflow-x-auto space-x-6 pb-4">
-            {videos.map((video) => (
+        {/* Videos horizontal scroll */}
+        <div className="relative">
+          <div className="flex overflow-x-auto gap-6 pb-4 snap-x snap-mandatory scrollbar-hide">
+            {videos.map((video, index) => (
               <motion.div
                 key={video.id.videoId}
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.3 }}
-                className={cn(
-                  "video-item min-w-[300px] overflow-hidden group relative",
-                  "bg-white/80 backdrop-blur-sm",
-                  "rounded-3xl shadow-xl",
-                  "border-2 border-primary/20",
-                  "transform transition-all duration-300",
-                  "hover:scale-105 hover:rotate-1",
-                  "hover:border-primary/40 hover:shadow-2xl hover:shadow-primary/20"
-                )}
+                initial={{ opacity: 0, x: 30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1, duration: 0.5 }}
+                className="group flex-shrink-0 w-[350px] snap-start"
               >
-                <iframe
-                  width="100%"
-                  height="200"
-                  src={`https://www.youtube.com/embed/${video.id.videoId}`}
-                  title={video.snippet.title}
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                ></iframe>
-                <div className="p-4">
-                  <h3 className={cn(
-                    "text-lg font-black line-clamp-2",
-                    "bg-gradient-to-r from-primary to-purple-600",
-                    "bg-clip-text text-transparent",
-                    "group-hover:scale-105 transform transition-all duration-300",
-                    "drop-shadow-sm"
-                  )}>
-                    {video.snippet.title}
-                  </h3>
+                <div className={cn(
+                  "rounded-2xl overflow-hidden",
+                  "bg-zinc-900 border border-zinc-800",
+                  "hover:border-zinc-700 transition-all duration-300",
+                  "hover:shadow-2xl hover:shadow-red-500/10"
+                )}>
+                  {/* Video thumbnail with play overlay */}
+                  <div className="relative">
+                    <iframe
+                      width="100%"
+                      height="200"
+                      src={`https://www.youtube.com/embed/${video.id.videoId}`}
+                      title={video.snippet.title}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  {/* Video info */}
+                  <div className="p-5">
+                    <h3 className="text-white font-semibold line-clamp-2 group-hover:text-red-400 transition-colors">
+                      {video.snippet.title}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-3 text-zinc-500 text-sm">
+                      <Play className="w-4 h-4" />
+                      <span>Watch on YouTube</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
               </motion.div>
             ))}
           </div>
+          
+          {/* Fade edges */}
+          <div className="absolute left-0 top-0 bottom-4 w-8 bg-gradient-to-r from-[#0a0a0a] to-transparent pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-4 w-8 bg-gradient-to-l from-[#0a0a0a] to-transparent pointer-events-none" />
         </div>
-      </section>
-    </LightingContainer>
+      </div>
+    </section>
   );
 }

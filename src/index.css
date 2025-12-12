@@ -66,6 +66,19 @@
     @apply bg-background text-foreground;
   }
 
+  /* Dark landing page override - forces dark background on body for landing page */
+  body.dark-landing {
+    background-color: #0a0a0a !important;
+    margin: 0;
+    padding: 0;
+  }
+  
+  html:has(body.dark-landing) {
+    background-color: #0a0a0a !important;
+    margin: 0;
+    padding: 0;
+  }
+
   /* Add white glow effect for dark mode text */
   .dark * {
     text-shadow: 0 0 1px rgba(255, 255, 255, 0.2);
@@ -177,4 +190,56 @@ header .container .flex .text-xl .bg-clip-text::after {
 /* Ensure sidebar toggle is visible on all screens */
 button.p-2 {
   display: block;
+}
+
+/* Blob animation for hero section */
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+.animate-blob {
+  animation: blob 7s infinite;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+.animation-delay-6000 {
+  animation-delay: 6s;
+}
+
+/* Gradient text animation */
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
 }

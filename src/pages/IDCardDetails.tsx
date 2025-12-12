@@ -48,8 +48,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'react-hot-toast';
-import { Search, Download, Eye, ArrowUpDown, Edit, Trash2, Phone, MapPin, FileDown, FileSpreadsheet } from 'lucide-react';
+import { Search, Eye, ArrowUpDown, Edit, Trash2, Phone, MapPin, FileDown, FileSpreadsheet, CheckSquare } from 'lucide-react';
 import { format } from 'date-fns';
+import { Checkbox } from '@/components/ui/checkbox';
 import IDCardDetailModal from '@/components/IDCardDetailModal';
 import IDCardExportButton from '@/components/IDCardExportButton';
 
@@ -59,6 +60,9 @@ const IDCardDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
   const [downloadingExcel, setDownloadingExcel] = useState(false);
+  const [downloadingSelected, setDownloadingSelected] = useState(false);
+  const [downloadingSelectedExcel, setDownloadingSelectedExcel] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [idCards, setIdCards] = useState<IDCardData[]>([]);
   const [totalIdCards, setTotalIdCards] = useState(0);
   const [classes, setClasses] = useState<{ id: string; name: string; section: string }[]>([]);
@@ -144,6 +148,38 @@ const IDCardDetails: React.FC = () => {
   const handlePageChange = (page: number) => {
     setSearchParams(prev => ({ ...prev, page }));
   };
+
+  // Handle individual checkbox selection
+  const handleSelectIdCard = (id: string, checked: boolean) => {
+    setSelectedIds(prev => {
+      const newSet = new Set(prev);
+      if (checked) {
+        newSet.add(id);
+      } else {
+        newSet.delete(id);
+      }
+      return newSet;
+    });
+  };
+
+  // Handle select all checkbox
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = idCards.map(card => card.id).filter((id): id is string => !!id);
+      setSelectedIds(new Set(allIds));
+    } else {
+      setSelectedIds(new Set());
+    }
+  };
+
+  // Check if all current page items are selected
+  const isAllSelected = idCards.length > 0 && idCards.every(card => card.id && selectedIds.has(card.id));
+  const isSomeSelected = idCards.some(card => card.id && selectedIds.has(card.id));
+
+  // Clear selection when page/filter changes
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [searchParams.page, searchParams.classId, searchParams.search]);
 
   // State for modal and delete dialog
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -285,6 +321,84 @@ const IDCardDetails: React.FC = () => {
     }
   };
 
+  // Handle download selected ID cards as PDF
+  const handleDownloadSelected = async () => {
+    if (selectedIds.size === 0) {
+      toast.error('Please select at least one ID card to download');
+      return;
+    }
+
+    try {
+      setDownloadingSelected(true);
+      toast.loading(`Preparing ${selectedIds.size} ID card(s) for download...`, { id: 'download-selected-toast' });
+
+      // Export selected ID cards
+      const pdfBlob = await idCardService.exportSelectedIDCards(Array.from(selectedIds));
+
+      // Create a download link
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Selected_ID_Cards_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 100);
+
+      toast.success(`${selectedIds.size} ID card(s) downloaded successfully`, { id: 'download-selected-toast' });
+      // Clear selection after successful download
+      setSelectedIds(new Set());
+    } catch (error) {
+      console.error('Error downloading selected ID cards:', error);
+      toast.error('Failed to download selected ID cards', { id: 'download-selected-toast' });
+    } finally {
+      setDownloadingSelected(false);
+    }
+  };
+
+  // Handle download selected ID cards as Excel
+  const handleDownloadSelectedExcel = async () => {
+    if (selectedIds.size === 0) {
+      toast.error('Please select at least one ID card to download');
+      return;
+    }
+
+    try {
+      setDownloadingSelectedExcel(true);
+      toast.loading(`Preparing Excel file for ${selectedIds.size} ID card(s)...`, { id: 'excel-selected-download-toast' });
+
+      // Export selected ID cards to Excel
+      const excelBlob = await idCardService.exportSelectedIDCardsToExcel(Array.from(selectedIds));
+
+      // Create a download link
+      const url = URL.createObjectURL(excelBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Selected_ID_Cards_Excel_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 100);
+
+      toast.success(`Excel file for ${selectedIds.size} ID card(s) downloaded successfully`, { id: 'excel-selected-download-toast' });
+      // Clear selection after successful download
+      setSelectedIds(new Set());
+    } catch (error) {
+      console.error('Error downloading Excel file for selected ID cards:', error);
+      toast.error('Failed to download Excel file', { id: 'excel-selected-download-toast' });
+    } finally {
+      setDownloadingSelectedExcel(false);
+    }
+  };
+
   // Calculate total pages for pagination
   const totalPages = Math.ceil(totalIdCards / (searchParams.limit || 10));
 
@@ -392,7 +506,42 @@ const IDCardDetails: React.FC = () => {
               View and manage all student ID cards
             </CardDescription>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Selected count and download buttons */}
+            {selectedIds.size > 0 && (
+              <>
+                <div className="bg-amber-50 text-amber-800 px-3 py-1 rounded-md font-medium flex items-center">
+                  <CheckSquare className="h-4 w-4 mr-1" />
+                  <span className="text-sm">{selectedIds.size} selected</span>
+                </div>
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-1 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800 border-amber-200"
+                  onClick={handleDownloadSelected}
+                  disabled={downloadingSelected}
+                >
+                  <FileDown className="h-4 w-4" />
+                  {downloadingSelected ? 'Preparing...' : 'Download Selected (PDF)'}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-1 bg-orange-50 text-orange-700 hover:bg-orange-100 hover:text-orange-800 border-orange-200"
+                  onClick={handleDownloadSelectedExcel}
+                  disabled={downloadingSelectedExcel}
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  {downloadingSelectedExcel ? 'Preparing...' : 'Download Selected (Excel)'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-500 hover:text-gray-700"
+                  onClick={() => setSelectedIds(new Set())}
+                >
+                  Clear Selection
+                </Button>
+              </>
+            )}
             <Button
               variant="outline"
               className="flex items-center gap-1 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 border-green-200"
@@ -467,9 +616,18 @@ const IDCardDetails: React.FC = () => {
               <Table>
                 <caption className="mt-2 text-sm text-muted-foreground text-left">
                   Total of {totalIdCards} ID card{totalIdCards !== 1 ? 's' : ''} in the database.
+                  {selectedIds.size > 0 && ` (${selectedIds.size} selected)`}
                 </caption>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-[50px]">
+                      <Checkbox
+                        checked={isAllSelected}
+                        onCheckedChange={handleSelectAll}
+                        aria-label="Select all"
+                        className={isSomeSelected && !isAllSelected ? 'opacity-50' : ''}
+                      />
+                    </TableHead>
                     <TableHead className="w-[50px]">Photo</TableHead>
                     <TableHead>
                       <div
@@ -517,7 +675,21 @@ const IDCardDetails: React.FC = () => {
                 </TableHeader>
                 <TableBody>
                   {idCards.map((idCard) => (
-                    <TableRow key={idCard.id}>
+                    <TableRow 
+                      key={idCard.id}
+                      className={idCard.id && selectedIds.has(idCard.id) ? 'bg-amber-50' : ''}
+                    >
+                      <TableCell>
+                        <Checkbox
+                          checked={idCard.id ? selectedIds.has(idCard.id) : false}
+                          onCheckedChange={(checked) => {
+                            if (idCard.id) {
+                              handleSelectIdCard(idCard.id, checked as boolean);
+                            }
+                          }}
+                          aria-label={`Select ${idCard.studentName}`}
+                        />
+                      </TableCell>
                       <TableCell>
                         {renderThumbnail(idCard.studentPhoto)}
                       </TableCell>
