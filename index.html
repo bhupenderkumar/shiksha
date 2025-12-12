@@ -8,12 +8,11 @@
     <link rel="preload" href="/assets/images/logo.PNG" as="image" />
     
     <!-- PWA Meta Tags -->
-    <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#4f46e5" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Shiksha" />
-    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     
     <!-- SEO Meta Tags -->
     <title>First Step Public School - Best School in Badarpur, Delhi</title>
@@ -64,8 +63,19 @@
       }
     }
     </script>
+    <style>
+      /* Prevent white flash on page load */
+      html, body {
+        background-color: #0a0a0a !important;
+        margin: 0;
+        padding: 0;
+      }
+      #root {
+        background-color: #0a0a0a;
+      }
+    </style>
   </head>
-  <body>
+  <body style="background-color: #0a0a0a; margin: 0; padding: 0;">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

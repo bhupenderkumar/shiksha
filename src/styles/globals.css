@@ -5,6 +5,25 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent white flash on load for landing page */
+html {
+  background-color: #0a0a0a;
+}
+
+body {
+  background-color: #0a0a0a;
+}
+
+/* Dark landing page styles */
+.dark-landing,
+.dark-landing * {
+  text-shadow: none !important;
+}
+
+.dark-landing {
+  background-color: #0a0a0a !important;
+}
+
 @layer components {
   /* Custom Scrollbar Styles */
   .scrollbar::-webkit-scrollbar {

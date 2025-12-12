@@ -1,7 +1,7 @@
-import axios from 'axios';
-
-const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyD7IJF39_HZvW9Bhno1guh95uAfY79WpaA';
-const PLACE_ID = 'ChIJQZ8W_lnmDDkRKKD9jMgstPA'; // First Step Public School's Place ID
+// API key for Google Maps - used by useGoogleMaps hook for map display
+const _API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyD7IJF39_HZvW9Bhno1guh95uAfY79WpaA';
+// Place ID kept for reference if backend proxy is implemented later
+const _PLACE_ID = 'ChIJQZ8W_lnmDDkRKKD9jMgstPA'; // First Step Public School's Place ID
 
 // Generate 28 mock reviews with Indian names and context
 const mockReviews = Array.from({ length: 28 }, (_, i) => {
@@ -35,49 +35,25 @@ const mockReviews = Array.from({ length: 28 }, (_, i) => {
 
 
 export const fetchPlaceDetails = async () => {
-  try {
-    // Get real photos from Google Places API
-    const response = await axios.get(
-      `https://cors-anywhere.herokuapp.com/https://maps.googleapis.com/maps/api/place/details/json?place_id=${PLACE_ID}&fields=photos,formatted_address,formatted_phone_number&key=${API_KEY}`
-    );
+  // Calculate average rating from mock reviews
+  const averageRating = mockReviews.reduce((acc, review) => acc + review.rating, 0) / mockReviews.length;
 
-    // Calculate average rating from mock reviews
-    const averageRating = mockReviews.reduce((acc, review) => acc + review.rating, 0) / mockReviews.length;
-
-    return {
-      rating: parseFloat(averageRating.toFixed(1)),
-      reviews: mockReviews,
-      user_ratings_total: mockReviews.length,
-      photos: response.data.result.photos || [],
-      formatted_address: response.data.result.formatted_address || "The First Step Public School, Saurabh Vihar, Jaitpur, New Delhi, Delhi 110044",
-      formatted_phone_number: response.data.result.formatted_phone_number || "+91-9717267473"
-    };
-  } catch (error) {
-    console.error('Error fetching place details:', error);
-    // Return mock data if API fails
-    return {
-      rating: 4.5,
-      reviews: mockReviews,
-      user_ratings_total: mockReviews.length,
-      photos: [],
-      formatted_address: "The First Step Public School, Saurabh Vihar, Jaitpur, New Delhi, Delhi 110044",
-      formatted_phone_number: "+91-9717267473"
-    };
-  }
+  // Return mock/fallback data directly since CORS proxy is unreliable
+  // For production, consider using a backend proxy or Google's JS SDK
+  return {
+    rating: parseFloat(averageRating.toFixed(1)),
+    reviews: mockReviews,
+    user_ratings_total: mockReviews.length,
+    photos: [],
+    formatted_address: "The First Step Public School, Saurabh Vihar, Jaitpur, New Delhi, Delhi 110044",
+    formatted_phone_number: "+91-9717267473"
+  };
 };
 
-export const fetchPlacePhotos = async (photoReference: string) => {
-  try {
-    const response = await axios.get(
-      `https://cors-anywhere.herokuapp.com/https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${photoReference}&key=${API_KEY}`,
-      { responseType: 'blob' }
-    );
-    return URL.createObjectURL(response.data);
-  } catch (error) {
-    console.error('Error fetching photo:', error);
-    // Return a fallback image URL
-    return `https://source.unsplash.com/800x600/?school,education`;
-  }
+export const fetchPlacePhotos = async (_photoReference: string) => {
+  // Return fallback images directly since CORS proxy is unreliable
+  // For production, consider using a backend proxy or Google's JS SDK
+  return `https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&h=600&fit=crop`;
 };
 
 const SCHOOL_LOCATION = {

@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent white flash on page load */
+html, body {
+  background-color: #0a0a0a;
+}
+
 @layer base {
   :root {
     --background: 210 40% 98%;
@@ -79,23 +84,14 @@
     padding: 0;
   }
 
-  /* Add white glow effect for dark mode text */
+  /* Ensure no white artifacts on landing page */
+  body.dark-landing * {
+    text-shadow: none !important;
+  }
+
+  /* Remove text shadows - they cause white glow artifacts */
   .dark * {
-    text-shadow: 0 0 1px rgba(255, 255, 255, 0.2);
-  }
-  
-  .dark h1, 
-  .dark h2, 
-  .dark h3, 
-  .dark h4,
-  .dark h5,
-  .dark h6 {
-    text-shadow: 0 0 2px rgba(255, 255, 255, 0.3);
-  }
-  
-  .dark button,
-  .dark a {
-    text-shadow: 0 0 2px rgba(255, 255, 255, 0.25);
+    text-shadow: none;
   }
 
   /* Override any gray text colors in dark mode */
@@ -237,6 +233,68 @@ button.p-2 {
 .animate-gradient {
   background-size: 200% 200%;
   animation: gradient-shift 3s ease infinite;
+}
+
+/* Floating animation for emojis */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-10px) rotate(5deg);
+  }
+  75% {
+    transform: translateY(5px) rotate(-5deg);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Pulse glow for buttons */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(139, 92, 246, 0.6);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Sparkle effect */
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+}
+
+.animate-sparkle {
+  animation: sparkle 1.5s ease-in-out infinite;
+}
+
+/* Rainbow border animation */
+@keyframes rainbow-border {
+  0% { border-color: #f43f5e; }
+  16% { border-color: #f97316; }
+  33% { border-color: #eab308; }
+  50% { border-color: #22c55e; }
+  66% { border-color: #3b82f6; }
+  83% { border-color: #8b5cf6; }
+  100% { border-color: #f43f5e; }
+}
+
+.animate-rainbow-border {
+  animation: rainbow-border 5s linear infinite;
 }
 
 /* Smooth scroll behavior */

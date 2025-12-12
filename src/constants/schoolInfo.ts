@@ -1,6 +1,7 @@
 export const SCHOOL_INFO = {
-  name: "First Step Public School",
-  address: "Saurabh Vihar, Delhi",
+  name: "First Step Pre School and Play School",
+  fullName: "First Step Pre School and Play School | First Step Primary School",
+  address: "House No-164, H Block, Saurabh Vihar, Jaitpur, Badarpur, Delhi - 110044",
   phone: "+91-9717267473",
   email: "firststeppublicschool22@gmail.com",
   website: "www.myfirststepschool.com",
@@ -17,11 +18,12 @@ export const SCHOOL_INFO = {
     ifscCode: "110010132",
     branch: "Ashok Enclave II , Faridabad"
   },
-  googlePlaceId: "YOUR_GOOGLE_PLACE_ID", // Replace this with your actual Google Place ID
+  googlePlaceId: "ChIJQZ8W_lnmDDkRKKD9jMgstPA",
   location: {
-    lat: 28.6139, // Replace with your actual latitude
-    lng: 77.2090, // Replace with your actual longitude
+    lat: 28.5086264,
+    lng: 77.3246508,
   },
+  googleMapsUrl: "https://www.google.com/maps/place/The+First+Step+Public+School/@28.5086264,77.3246508,17z",
   socialMedia: {
     facebook: "https://facebook.com/firststepschool",
     twitter: "https://twitter.com/firststepschool",
