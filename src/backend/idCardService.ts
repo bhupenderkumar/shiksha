@@ -355,7 +355,6 @@ export const idCardService = {
       // Add data rows with images
       for (let i = 0; i < idCards.length; i++) {
         const idCard = idCards[i];
-        const rowIndex = i + 2; // +2 because header is row 1 and Excel is 1-indexed
 
         // Create a row for data
         const dataRow = worksheet.addRow([
@@ -382,112 +381,101 @@ export const idCardService = {
           idCard.downloadCount || 0
         ]);
 
+        // Get the actual row number from the worksheet
+        const actualRowNumber = dataRow.number;
+
         // Set row height to accommodate images
         dataRow.height = 75;
 
-        // Add student photo if available
+        // Load all images for this row first, then add them
+        // This ensures images are properly associated with their row
+        let studentImageBase64: string | null = null;
+        let fatherImageBase64: string | null = null;
+        let motherImageBase64: string | null = null;
+
+        // Load student photo
         if (typeof idCard.studentPhoto === 'string' && idCard.studentPhoto) {
           try {
             const img = await this.loadImage(idCard.studentPhoto);
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-
-            // Set canvas dimensions
             canvas.width = 100;
             canvas.height = 120;
-
-            // Draw image on canvas
             if (ctx) {
               ctx.drawImage(img, 0, 0, 100, 120);
-
-              // Convert to base64
-              const imageBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
-
-              // Add image to Excel
-              const studentPhotoId = workbook.addImage({
-                base64: imageBase64,
-                extension: 'jpeg',
-              });
-
-              worksheet.addImage(studentPhotoId, {
-                tl: { col: 0, row: rowIndex - 1 },
-                br: { col: 1, row: rowIndex }
-              });
+              studentImageBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
             }
           } catch (error) {
-            console.error('Error adding student photo to Excel:', error);
-            // Continue without the image
+            console.error('Error loading student photo:', error);
           }
         }
 
-        // Add father photo if available
+        // Load father photo
         if (typeof idCard.fatherPhoto === 'string' && idCard.fatherPhoto) {
           try {
             const img = await this.loadImage(idCard.fatherPhoto);
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-
-            // Set canvas dimensions
             canvas.width = 100;
             canvas.height = 120;
-
-            // Draw image on canvas
             if (ctx) {
               ctx.drawImage(img, 0, 0, 100, 120);
-
-              // Convert to base64
-              const imageBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
-
-              // Add image to Excel
-              const fatherPhotoId = workbook.addImage({
-                base64: imageBase64,
-                extension: 'jpeg',
-              });
-
-              worksheet.addImage(fatherPhotoId, {
-                tl: { col: 4, row: rowIndex - 1 },
-                br: { col: 5, row: rowIndex }
-              });
+              fatherImageBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
             }
           } catch (error) {
-            console.error('Error adding father photo to Excel:', error);
-            // Continue without the image
+            console.error('Error loading father photo:', error);
           }
         }
 
-        // Add mother photo if available
+        // Load mother photo
         if (typeof idCard.motherPhoto === 'string' && idCard.motherPhoto) {
           try {
             const img = await this.loadImage(idCard.motherPhoto);
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-
-            // Set canvas dimensions
             canvas.width = 100;
             canvas.height = 120;
-
-            // Draw image on canvas
             if (ctx) {
               ctx.drawImage(img, 0, 0, 100, 120);
-
-              // Convert to base64
-              const imageBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
-
-              // Add image to Excel
-              const motherPhotoId = workbook.addImage({
-                base64: imageBase64,
-                extension: 'jpeg',
-              });
-
-              worksheet.addImage(motherPhotoId, {
-                tl: { col: 7, row: rowIndex - 1 },
-                br: { col: 8, row: rowIndex }
-              });
+              motherImageBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
             }
           } catch (error) {
-            console.error('Error adding mother photo to Excel:', error);
-            // Continue without the image
+            console.error('Error loading mother photo:', error);
           }
+        }
+
+        // Now add all images for this row using the actual row number
+        if (studentImageBase64) {
+          const studentPhotoId = workbook.addImage({
+            base64: studentImageBase64,
+            extension: 'jpeg',
+          });
+          worksheet.addImage(studentPhotoId, {
+            tl: { col: 0, row: actualRowNumber - 1 },
+            br: { col: 1, row: actualRowNumber }
+          });
+        }
+
+        if (fatherImageBase64) {
+          const fatherPhotoId = workbook.addImage({
+            base64: fatherImageBase64,
+            extension: 'jpeg',
+          });
+          worksheet.addImage(fatherPhotoId, {
+            tl: { col: 4, row: actualRowNumber - 1 },
+            br: { col: 5, row: actualRowNumber }
+          });
+        }
+
+        if (motherImageBase64) {
+          const motherPhotoId = workbook.addImage({
+            base64: motherImageBase64,
+            extension: 'jpeg',
+          });
+          worksheet.addImage(motherPhotoId, {
+            tl: { col: 7, row: actualRowNumber - 1 },
+            br: { col: 8, row: actualRowNumber }
+          });
         }
       }
 
@@ -966,6 +954,457 @@ export const idCardService = {
       return pdf.output('blob');
     } catch (error) {
       console.error('Error exporting ID cards:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Export selected ID cards as a PDF with photos (no images - text only for faster export)
+   * @param idCardIds Array of ID card IDs to export
+   * @returns Promise that resolves with the PDF blob
+   */
+  async exportSelectedIDCards(idCardIds: string[]): Promise<Blob> {
+    try {
+      if (idCardIds.length === 0) {
+        throw new Error('No ID cards selected to export');
+      }
+
+      // Fetch all selected ID cards
+      const idCards: IDCardData[] = [];
+      for (const id of idCardIds) {
+        const idCard = await this.getIDCardById(id);
+        if (idCard) {
+          idCards.push(idCard);
+        }
+      }
+
+      if (idCards.length === 0) {
+        throw new Error('No ID cards found to export');
+      }
+
+      // Create a new PDF document
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      // Add title
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(16);
+      pdf.text('Selected ID Card Records', 105, 15, { align: 'center' });
+
+      // Add date
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(10);
+      pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, 105, 22, { align: 'center' });
+      pdf.text(`Total Selected: ${idCards.length}`, 105, 28, { align: 'center' });
+
+      // Add horizontal line
+      pdf.setDrawColor(0, 0, 0);
+      pdf.setLineWidth(0.5);
+      pdf.line(15, 32, 195, 32);
+
+      let yPos = 42;
+      const pageHeight = pdf.internal.pageSize.height;
+
+      // Process each ID card with photos
+      for (let i = 0; i < idCards.length; i++) {
+        const idCard = idCards[i];
+
+        // Check if we need a new page (need more space for photos)
+        if (yPos > pageHeight - 80) {
+          pdf.addPage();
+          yPos = 20;
+        }
+
+        // Add student name as header with background
+        pdf.setFillColor(240, 240, 240);
+        pdf.rect(15, yPos - 5, 180, 8, 'F');
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(12);
+        pdf.text(`${i + 1}. ${idCard.studentName}`, 18, yPos);
+        yPos += 10;
+
+        // Add details in a structured format
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(10);
+
+        // Class and DOB on same line
+        const classText = `Class: ${idCard.className || ''} ${idCard.section || ''}`.trim();
+        const dobText = idCard.dateOfBirth 
+          ? `DOB: ${new Date(idCard.dateOfBirth).toLocaleDateString('en-IN', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric'
+            })}`
+          : '';
+        pdf.text(classText, 20, yPos);
+        if (dobText) {
+          pdf.text(dobText, 100, yPos);
+        }
+        yPos += 6;
+
+        // Father info
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Father:', 20, yPos);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`${idCard.fatherName} | Mobile: ${idCard.fatherMobile}`, 40, yPos);
+        yPos += 6;
+
+        // Mother info
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Mother:', 20, yPos);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`${idCard.motherName} | Mobile: ${idCard.motherMobile}`, 40, yPos);
+        yPos += 6;
+
+        // Address
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Address:', 20, yPos);
+        pdf.setFont('helvetica', 'normal');
+        const addressLines = pdf.splitTextToSize(idCard.address || 'N/A', 140);
+        pdf.text(addressLines, 45, yPos);
+        yPos += (addressLines.length * 5) + 5;
+
+        // Add photos section
+        const photoStartY = yPos;
+        let maxPhotoHeight = 0;
+
+        // Add student photo if available
+        if (typeof idCard.studentPhoto === 'string' && idCard.studentPhoto) {
+          try {
+            const img = await this.loadImage(idCard.studentPhoto);
+            const imgWidth = 25;
+            const imgHeight = 25 * (img.height / img.width);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(8);
+            pdf.text('Student', 20, yPos);
+            pdf.addImage(img, 'JPEG', 20, yPos + 2, imgWidth, imgHeight);
+            maxPhotoHeight = Math.max(maxPhotoHeight, imgHeight + 5);
+          } catch (error) {
+            console.error('Error loading student photo:', error);
+          }
+        }
+
+        // Add father photo if available
+        if (typeof idCard.fatherPhoto === 'string' && idCard.fatherPhoto) {
+          try {
+            const img = await this.loadImage(idCard.fatherPhoto);
+            const imgWidth = 25;
+            const imgHeight = 25 * (img.height / img.width);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(8);
+            pdf.text('Father', 55, yPos);
+            pdf.addImage(img, 'JPEG', 55, yPos + 2, imgWidth, imgHeight);
+            maxPhotoHeight = Math.max(maxPhotoHeight, imgHeight + 5);
+          } catch (error) {
+            console.error('Error loading father photo:', error);
+          }
+        }
+
+        // Add mother photo if available
+        if (typeof idCard.motherPhoto === 'string' && idCard.motherPhoto) {
+          try {
+            const img = await this.loadImage(idCard.motherPhoto);
+            const imgWidth = 25;
+            const imgHeight = 25 * (img.height / img.width);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(8);
+            pdf.text('Mother', 90, yPos);
+            pdf.addImage(img, 'JPEG', 90, yPos + 2, imgWidth, imgHeight);
+            maxPhotoHeight = Math.max(maxPhotoHeight, imgHeight + 5);
+          } catch (error) {
+            console.error('Error loading mother photo:', error);
+          }
+        }
+
+        // Update yPos based on photos
+        if (maxPhotoHeight > 0) {
+          yPos = photoStartY + maxPhotoHeight + 10;
+        } else {
+          yPos += 5;
+        }
+
+        // Add separator line
+        pdf.setDrawColor(200, 200, 200);
+        pdf.setLineWidth(0.2);
+        pdf.line(15, yPos, 195, yPos);
+        yPos += 8;
+
+        // Increment download count for this ID card
+        await this.incrementDownloadCount(idCard.id || '');
+      }
+
+      // Add footer with count
+      pdf.setFont('helvetica', 'italic');
+      pdf.setFontSize(10);
+      pdf.text(`Total Records: ${idCards.length}`, 105, pdf.internal.pageSize.height - 10, { align: 'center' });
+
+      // Return the PDF as a blob
+      return pdf.output('blob');
+    } catch (error) {
+      console.error('Error exporting selected ID cards:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Export selected ID cards to Excel format with photos
+   * @param idCardIds Array of ID card IDs to export
+   * @returns Promise that resolves with the Excel file as a Blob
+   */
+  async exportSelectedIDCardsToExcel(idCardIds: string[]): Promise<Blob> {
+    try {
+      if (idCardIds.length === 0) {
+        throw new Error('No ID cards selected to export');
+      }
+
+      // Fetch all selected ID cards
+      const idCards: IDCardData[] = [];
+      for (const id of idCardIds) {
+        const idCard = await this.getIDCardById(id);
+        if (idCard) {
+          idCards.push(idCard);
+        }
+      }
+
+      if (idCards.length === 0) {
+        throw new Error('No ID cards found to export');
+      }
+
+      // Create a new workbook
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'School Management System';
+      workbook.created = new Date();
+
+      // Add a worksheet
+      const worksheet = workbook.addWorksheet('Selected ID Cards');
+
+      // Define the headers (with photo columns)
+      const headers = [
+        'S.No',
+        'Student Photo',
+        'Student Name',
+        'Class',
+        'Date of Birth',
+        'Father Photo',
+        'Father Name',
+        'Father Mobile',
+        'Mother Photo',
+        'Mother Name',
+        'Mother Mobile',
+        'Address',
+        'Created Date'
+      ];
+
+      // Add the header row
+      worksheet.addRow(headers);
+
+      // Style the header row
+      const headerRow = worksheet.getRow(1);
+      headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      headerRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4472C4' } // Blue background
+      };
+      headerRow.height = 30;
+      headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+
+      // Set column widths
+      worksheet.columns = [
+        { width: 8 },   // S.No
+        { width: 15 },  // Student Photo
+        { width: 25 },  // Student Name
+        { width: 15 },  // Class
+        { width: 15 },  // Date of Birth
+        { width: 15 },  // Father Photo
+        { width: 25 },  // Father Name
+        { width: 15 },  // Father Mobile
+        { width: 15 },  // Mother Photo
+        { width: 25 },  // Mother Name
+        { width: 15 },  // Mother Mobile
+        { width: 40 },  // Address
+        { width: 15 }   // Created Date
+      ];
+
+      // Add data rows with images
+      for (let i = 0; i < idCards.length; i++) {
+        const idCard = idCards[i];
+
+        const dataRow = worksheet.addRow([
+          i + 1,
+          '', // Placeholder for student photo
+          idCard.studentName,
+          `${idCard.className || ''} ${idCard.section || ''}`.trim(),
+          idCard.dateOfBirth ? new Date(idCard.dateOfBirth).toLocaleDateString('en-IN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          }) : '',
+          '', // Placeholder for father photo
+          idCard.fatherName,
+          idCard.fatherMobile,
+          '', // Placeholder for mother photo
+          idCard.motherName,
+          idCard.motherMobile,
+          idCard.address,
+          idCard.createdAt ? idCard.createdAt.toLocaleDateString('en-IN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          }) : ''
+        ]);
+
+        // Get the actual row number from the worksheet
+        const actualRowNumber = dataRow.number;
+
+        // Set row height to accommodate images
+        dataRow.height = 75;
+
+        // Alternate row colors
+        if (i % 2 === 1) {
+          dataRow.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFF2F2F2' } // Light gray
+          };
+        }
+
+        // Load all images for this row first, then add them
+        // This ensures images are properly associated with their row
+        let studentImageBase64: string | null = null;
+        let fatherImageBase64: string | null = null;
+        let motherImageBase64: string | null = null;
+
+        // Load student photo
+        if (typeof idCard.studentPhoto === 'string' && idCard.studentPhoto) {
+          try {
+            const img = await this.loadImage(idCard.studentPhoto);
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 100;
+            canvas.height = 120;
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, 100, 120);
+              studentImageBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
+            }
+          } catch (error) {
+            console.error('Error loading student photo:', error);
+          }
+        }
+
+        // Load father photo
+        if (typeof idCard.fatherPhoto === 'string' && idCard.fatherPhoto) {
+          try {
+            const img = await this.loadImage(idCard.fatherPhoto);
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 100;
+            canvas.height = 120;
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, 100, 120);
+              fatherImageBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
+            }
+          } catch (error) {
+            console.error('Error loading father photo:', error);
+          }
+        }
+
+        // Load mother photo
+        if (typeof idCard.motherPhoto === 'string' && idCard.motherPhoto) {
+          try {
+            const img = await this.loadImage(idCard.motherPhoto);
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 100;
+            canvas.height = 120;
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, 100, 120);
+              motherImageBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
+            }
+          } catch (error) {
+            console.error('Error loading mother photo:', error);
+          }
+        }
+
+        // Now add all images for this row using the actual row number
+        if (studentImageBase64) {
+          const studentPhotoId = workbook.addImage({
+            base64: studentImageBase64,
+            extension: 'jpeg',
+          });
+          worksheet.addImage(studentPhotoId, {
+            tl: { col: 1, row: actualRowNumber - 1 },
+            br: { col: 2, row: actualRowNumber }
+          });
+        }
+
+        if (fatherImageBase64) {
+          const fatherPhotoId = workbook.addImage({
+            base64: fatherImageBase64,
+            extension: 'jpeg',
+          });
+          worksheet.addImage(fatherPhotoId, {
+            tl: { col: 5, row: actualRowNumber - 1 },
+            br: { col: 6, row: actualRowNumber }
+          });
+        }
+
+        if (motherImageBase64) {
+          const motherPhotoId = workbook.addImage({
+            base64: motherImageBase64,
+            extension: 'jpeg',
+          });
+          worksheet.addImage(motherPhotoId, {
+            tl: { col: 8, row: actualRowNumber - 1 },
+            br: { col: 9, row: actualRowNumber }
+          });
+        }
+
+        // Increment download count
+        await this.incrementDownloadCount(idCard.id || '');
+      }
+
+      // Add borders to all cells
+      for (let i = 1; i <= worksheet.rowCount; i++) {
+        const row = worksheet.getRow(i);
+        row.eachCell({ includeEmpty: true }, cell => {
+          cell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+          };
+        });
+      }
+
+      // Add auto filter
+      worksheet.autoFilter = {
+        from: { row: 1, column: 1 },
+        to: { row: 1, column: headers.length }
+      };
+
+      // Freeze the header row
+      worksheet.views = [
+        { state: 'frozen', xSplit: 0, ySplit: 1, activeCell: 'A2' }
+      ];
+
+      // Add a summary row
+      const summaryRowIndex = worksheet.rowCount + 2;
+      worksheet.getCell(`A${summaryRowIndex}`).value = `Total Selected Records: ${idCards.length}`;
+      worksheet.getCell(`A${summaryRowIndex}`).font = { bold: true };
+      worksheet.mergeCells(`A${summaryRowIndex}:C${summaryRowIndex}`);
+
+      worksheet.getCell(`D${summaryRowIndex}`).value = `Generated on: ${new Date().toLocaleDateString()}`;
+      worksheet.mergeCells(`D${summaryRowIndex}:F${summaryRowIndex}`);
+
+      // Generate buffer and return as blob
+      const buffer = await workbook.xlsx.writeBuffer();
+      return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    } catch (error) {
+      console.error('Error exporting selected ID cards to Excel:', error);
       throw error;
     }
   },

@@ -1,79 +1,128 @@
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
-import { LightingContainer, LightingEffect } from "@/components/ui/lighting-effect";
+import { ArrowRight, ClipboardList, MessageSquare, Eye, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const links = [
   {
     to: "/admission-enquiry",
     label: "Admission Enquiry",
+    description: "Start your child's journey with us. Apply now for the upcoming academic session.",
+    icon: ClipboardList,
+    gradient: "from-blue-500 to-cyan-500",
   },
   {
     to: "/parent-feedback-submission",
     label: "Submit Parent Feedback",
+    description: "Share your valuable feedback and help us improve our services.",
+    icon: MessageSquare,
+    gradient: "from-purple-500 to-pink-500",
   },
   {
     to: "/parent-feedback-search",
     label: "View Teacher Feedback",
+    description: "Check your child's academic progress and teacher remarks.",
+    icon: Eye,
+    gradient: "from-emerald-500 to-teal-500",
   },
 ];
 
 export function QuickLinks() {
   return (
-    <LightingContainer>
-      <section className="relative py-16 bg-gradient-to-b from-background via-primary/5 to-background overflow-hidden">
-        {/* Lighting effects */}
-        <LightingEffect
-          variant="glow"
-          color="secondary"
-          size="xl"
-          position="center"
-          className="opacity-20"
+    <section className="relative py-24 bg-[#0a0a0a] overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] rounded-full"
+          style={{
+            background: 'radial-gradient(circle, rgba(99,102,241,0.05) 0%, transparent 70%)',
+          }}
         />
-        <LightingEffect
-          variant="beam"
-          color="primary"
-          size="lg"
-          position="top"
-          className="opacity-10"
-        />
+      </div>
 
-        <div className="container mx-auto px-4 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl font-bold mb-6 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-              Quick Links
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Access important features and information quickly
-            </p>
-          </motion.div>
+      <div className="container mx-auto px-4 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm font-medium mb-6">
+            <Zap className="w-4 h-4" />
+            Quick Actions
+          </span>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+            Get Started{" "}
+            <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+              Today
+            </span>
+          </h2>
+          <p className="text-xl text-zinc-400 max-w-2xl mx-auto">
+            Access important features and connect with us instantly
+          </p>
+        </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {links.map((link) => (
-              <Link key={link.to} to={link.to}>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-between group relative overflow-hidden",
-                    "hover:bg-primary hover:text-white transition-colors duration-300"
-                  )}
-                >
-                  <span className="relative z-10">{link.label}</span>
-                  <ArrowRight className="ml-2 relative z-10 group-hover:translate-x-1 transition-transform" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </Button>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          {links.map((link, index) => (
+            <motion.div
+              key={link.to}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1, duration: 0.5 }}
+            >
+              <Link to={link.to} className="block group h-full">
+                <div className={cn(
+                  "relative h-full p-8 rounded-3xl",
+                  "bg-zinc-900/80 border border-zinc-800",
+                  "hover:border-zinc-700 transition-all duration-500",
+                  "overflow-hidden"
+                )}>
+                  {/* Gradient background on hover */}
+                  <div className={cn(
+                    "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500",
+                    "bg-gradient-to-br",
+                    link.gradient
+                  )} style={{ opacity: 0.05 }} />
+                  
+                  {/* Icon */}
+                  <div className={cn(
+                    "w-16 h-16 rounded-2xl flex items-center justify-center mb-6",
+                    "bg-gradient-to-br",
+                    link.gradient
+                  )}>
+                    <link.icon className="w-8 h-8 text-white" />
+                  </div>
+                  
+                  {/* Content */}
+                  <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-white transition-colors">
+                    {link.label}
+                  </h3>
+                  <p className="text-zinc-400 mb-6 leading-relaxed group-hover:text-zinc-300 transition-colors">
+                    {link.description}
+                  </p>
+                  
+                  {/* Arrow CTA */}
+                  <div className="flex items-center gap-2 text-white font-medium">
+                    <span className={cn(
+                      "bg-gradient-to-r bg-clip-text text-transparent",
+                      link.gradient
+                    )}>
+                      Get Started
+                    </span>
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center",
+                      "bg-white/5 group-hover:bg-white/10 transition-colors"
+                    )}>
+                      <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+                    </div>
+                  </div>
+                </div>
               </Link>
-            ))}
-          </div>
+            </motion.div>
+          ))}
         </div>
-      </section>
-    </LightingContainer>
+      </div>
+    </section>
   );
 }
