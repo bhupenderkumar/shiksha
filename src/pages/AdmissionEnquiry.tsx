@@ -18,6 +18,7 @@ import {
 import { toast } from "@/components/ui/toast";
 import { useAuth } from '@/lib/auth-provider';
 import Layout from '@/components/Layout';
+import PublicLayout from '@/components/PublicLayout';
 import { format } from 'date-fns';
 import { ADMISSION_STATUS } from '@/lib/constants';
 import type {
@@ -173,17 +174,21 @@ const AdmissionEnquiry = () => {
   };
 
   if (loading) {
+    const Wrapper = user ? Layout : PublicLayout;
     return (
-      <Layout>
-        <LoadingSpinner />
-      </Layout>
+      <Wrapper>
+        <div className="min-h-screen flex items-center justify-center">
+          <LoadingSpinner />
+        </div>
+      </Wrapper>
     );
   }
 
   if (error) {
+    const Wrapper = user ? Layout : PublicLayout;
     return (
-      <Layout>
-        <div className="p-4">
+      <Wrapper>
+        <div className="p-4 min-h-screen">
           <EmptyState
             icon={<AlertCircle className="w-12 h-12 text-red-500" />}
             title="Error Loading Enquiry"
@@ -191,26 +196,27 @@ const AdmissionEnquiry = () => {
             action={
               <Button
                 variant="outline"
-                onClick={() => navigate('/admission/enquiries')}
+                onClick={() => navigate(user ? '/admission/enquiries' : '/')}
               >
-                Go Back to Enquiries
+                Go Back
               </Button>
             }
           />
         </div>
-      </Layout>
+      </Wrapper>
     );
   }
 
-  // For new admission
+  // For new admission - use PublicLayout if user is not logged in
   if (!id) {
+    const Wrapper = user ? Layout : PublicLayout;
     return (
-      <Layout>
-        <div className="container mx-auto p-4 space-y-6">
+      <Wrapper>
+        <div className="container mx-auto p-4 space-y-6 min-h-screen bg-background">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
-              onClick={() => navigate('/admission/enquiries')}
+              onClick={() => navigate(user ? '/admission/enquiries' : '/')}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
@@ -227,7 +233,7 @@ const AdmissionEnquiry = () => {
             </CardContent>
           </Card>
         </div>
-      </Layout>
+      </Wrapper>
     );
   }
 
