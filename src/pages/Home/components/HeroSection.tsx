@@ -130,7 +130,7 @@ export function HeroSection() {
         
         {/* Animated colorful mesh gradient */}
         <motion.div 
-          className="absolute top-[-20%] left-[-10%] w-[80%] h-[80%] rounded-full"
+          className="absolute top-[-20%] left-[-10%] w-[80%] h-[80%] rounded-full pointer-events-none"
           animate={{
             scale: [1, 1.15, 1],
             x: [0, 30, 0],
@@ -143,7 +143,7 @@ export function HeroSection() {
           }}
         />
         <motion.div 
-          className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] rounded-full"
+          className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] rounded-full pointer-events-none"
           animate={{
             scale: [1.1, 1, 1.1],
             x: [0, -30, 0],
@@ -156,7 +156,7 @@ export function HeroSection() {
           }}
         />
         <motion.div 
-          className="absolute top-[40%] left-[40%] w-[50%] h-[50%] rounded-full"
+          className="absolute top-[40%] left-[40%] w-[50%] h-[50%] rounded-full pointer-events-none"
           animate={{
             scale: [1, 1.2, 1],
             rotate: [0, 180, 360],
@@ -168,7 +168,7 @@ export function HeroSection() {
           }}
         />
         <motion.div 
-          className="absolute top-[20%] right-[20%] w-[40%] h-[40%] rounded-full"
+          className="absolute top-[20%] right-[20%] w-[40%] h-[40%] rounded-full pointer-events-none"
           animate={{
             scale: [1.1, 0.9, 1.1],
             x: [0, -40, 0],
@@ -364,38 +364,21 @@ export function HeroSection() {
             transition={{ duration: 0.5, delay: 0.6 }}
             className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 mb-14 md:mb-16 px-4"
           >
-            <motion.div
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.98 }}
+            <Link
+              to="/admission-enquiry"
+              className="w-full sm:w-auto inline-flex items-center justify-center bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-semibold px-7 py-5 md:py-6 text-sm md:text-base rounded-full shadow-lg shadow-violet-500/20 transition-all duration-300 group border-0 hover:scale-[1.03] active:scale-[0.98]"
             >
-              <Button
-                size="lg"
-                asChild
-                className="w-full sm:w-auto bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-semibold px-7 py-5 md:py-6 text-sm md:text-base rounded-full shadow-lg shadow-violet-500/20 transition-all duration-300 group border-0"
-              >
-                <Link to="/admission-enquiry">
-                  <Rocket className="mr-2 h-4 w-4 group-hover:rotate-12 transition-transform" />
-                  Start Admission
-                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </Button>
-            </motion.div>
-            <motion.div
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.98 }}
+              <Rocket className="mr-2 h-4 w-4 group-hover:rotate-12 transition-transform" />
+              Start Admission
+              <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+            <Link
+              to="/login"
+              className="w-full sm:w-auto inline-flex items-center justify-center border border-zinc-700 bg-zinc-900/50 text-zinc-100 hover:bg-zinc-800 hover:border-zinc-600 font-semibold px-7 py-5 md:py-6 text-sm md:text-base rounded-full transition-all duration-300 group backdrop-blur-sm hover:scale-[1.03] active:scale-[0.98]"
             >
-              <Button
-                size="lg"
-                variant="outline"
-                asChild
-                className="w-full sm:w-auto border border-zinc-700 bg-zinc-900/50 text-zinc-100 hover:bg-zinc-800 hover:border-zinc-600 font-semibold px-7 py-5 md:py-6 text-sm md:text-base rounded-full transition-all duration-300 group backdrop-blur-sm"
-              >
-                <Link to="/login">
-                  <Play className="mr-2 h-4 w-4 fill-current group-hover:scale-110 transition-transform" />
-                  Portal Login
-                </Link>
-              </Button>
-            </motion.div>
+              <Play className="mr-2 h-4 w-4 fill-current group-hover:scale-110 transition-transform" />
+              Portal Login
+            </Link>
           </motion.div>
 
           {/* Stats with modern glass cards */}

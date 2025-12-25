@@ -57,7 +57,41 @@ export function MapSection() {
             className="space-y-4"
           >
             {contactItems.map((item, index) => {
-              const Content = (
+              const CardContent = (
+                <div className="flex items-center gap-4">
+                  <div className={cn(
+                    "w-12 h-12 rounded-xl flex items-center justify-center",
+                    "bg-gradient-to-br",
+                    item.color
+                  )}>
+                    <item.icon className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-sm text-zinc-500 mb-1">{item.label}</div>
+                    <div className="text-white font-medium">{item.value}</div>
+                  </div>
+                </div>
+              );
+
+              return item.href ? (
+                <motion.a
+                  key={item.label}
+                  href={item.href}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className={cn(
+                    "group p-5 rounded-2xl block",
+                    "bg-zinc-900/80 border border-zinc-800",
+                    "hover:border-zinc-700 transition-all duration-300",
+                    "cursor-pointer"
+                  )}
+                  whileHover={{ x: 5 }}
+                >
+                  {CardContent}
+                </motion.a>
+              ) : (
                 <motion.div
                   key={item.label}
                   initial={{ opacity: 0, y: 20 }}
@@ -67,33 +101,12 @@ export function MapSection() {
                   className={cn(
                     "group p-5 rounded-2xl",
                     "bg-zinc-900/80 border border-zinc-800",
-                    "hover:border-zinc-700 transition-all duration-300",
-                    item.href && "cursor-pointer"
+                    "hover:border-zinc-700 transition-all duration-300"
                   )}
                   whileHover={{ x: 5 }}
                 >
-                  <div className="flex items-center gap-4">
-                    <div className={cn(
-                      "w-12 h-12 rounded-xl flex items-center justify-center",
-                      "bg-gradient-to-br",
-                      item.color
-                    )}>
-                      <item.icon className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <div className="text-sm text-zinc-500 mb-1">{item.label}</div>
-                      <div className="text-white font-medium">{item.value}</div>
-                    </div>
-                  </div>
+                  {CardContent}
                 </motion.div>
-              );
-
-              return item.href ? (
-                <a key={item.label} href={item.href}>
-                  {Content}
-                </a>
-              ) : (
-                <div key={item.label}>{Content}</div>
               );
             })}
 
