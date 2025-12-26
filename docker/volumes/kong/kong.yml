@@ -1,0 +1,151 @@
+# Kong Declarative Configuration for Shiksha Supabase
+# API Gateway routing for all Supabase services
+
+_format_version: "2.1"
+_transform: true
+
+###
+# Service definitions
+###
+
+services:
+  # Auth service - GoTrue
+  - name: auth-v1
+    url: http://auth:9999/
+    routes:
+      - name: auth-v1-route
+        strip_path: true
+        paths:
+          - /auth/v1/
+        plugins:
+          - name: cors
+          - name: key-auth
+            config:
+              hide_credentials: false
+
+  # REST API - PostgREST
+  - name: rest-v1
+    url: http://rest:3000/
+    routes:
+      - name: rest-v1-route
+        strip_path: true
+        paths:
+          - /rest/v1/
+        plugins:
+          - name: cors
+          - name: key-auth
+            config:
+              hide_credentials: false
+
+  # GraphQL (powered by pg_graphql extension)
+  - name: graphql-v1
+    url: http://rest:3000/rpc/graphql
+    routes:
+      - name: graphql-v1-route
+        strip_path: true
+        paths:
+          - /graphql/v1
+        plugins:
+          - name: cors
+          - name: key-auth
+            config:
+              hide_credentials: false
+
+  # Realtime - Websockets
+  - name: realtime-v1
+    url: http://realtime:4000/socket/
+    routes:
+      - name: realtime-v1-route
+        strip_path: true
+        paths:
+          - /realtime/v1/
+        plugins:
+          - name: cors
+          - name: key-auth
+            config:
+              hide_credentials: false
+
+  # Storage API
+  - name: storage-v1
+    url: http://storage:5000/
+    routes:
+      - name: storage-v1-route
+        strip_path: true
+        paths:
+          - /storage/v1/
+        plugins:
+          - name: cors
+          - name: key-auth
+            config:
+              hide_credentials: false
+
+  # Meta - Postgres metadata API
+  - name: meta
+    url: http://meta:8080/
+    routes:
+      - name: meta-route
+        strip_path: true
+        paths:
+          - /pg/
+        plugins:
+          - name: key-auth
+            config:
+              hide_credentials: false
+
+###
+# Consumers for API keys
+###
+
+consumers:
+  - username: anon
+    keyauth_credentials:
+      - key: ${ANON_KEY}
+    acls:
+      - group: anon
+
+  - username: service_role
+    keyauth_credentials:
+      - key: ${SERVICE_ROLE_KEY}
+    acls:
+      - group: admin
+
+###
+# Plugins (global)
+###
+
+plugins:
+  - name: cors
+    config:
+      origins:
+        - "*"
+      methods:
+        - GET
+        - HEAD
+        - PUT
+        - PATCH
+        - POST
+        - DELETE
+        - OPTIONS
+        - TRACE
+        - CONNECT
+      headers:
+        - Accept
+        - Accept-Encoding
+        - Accept-Language
+        - Authorization
+        - Content-Type
+        - apikey
+        - x-client-info
+      exposed_headers:
+        - Content-Length
+        - Content-Range
+        - X-Supabase-Api-Version
+      credentials: true
+      max_age: 3600
+      preflight_continue: false
+
+  - name: request-transformer
+    config:
+      add:
+        headers:
+          - x-forwarded-for:$(connection.client_ip)

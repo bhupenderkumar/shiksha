@@ -7,6 +7,7 @@
 
 import { supabase } from '@/lib/api-client';
 import { ID_CARD_TABLE, SCHEMA, CLASS_TABLE, STORAGE_BUCKET } from '@/lib/constants';
+import { isSupabaseSignedUrl, isSupabaseStorageUrl, extractFilePathFromUrl } from '@/lib/supabase-helpers';
 import { IDCardData } from '@/types/idCard';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
@@ -182,12 +183,11 @@ async function downloadImage(url: string): Promise<Blob | null> {
   }
 
   try {
-    // Check if this is a Supabase signed URL
-    if (url.includes('supabase.co/storage/v1/object/sign')) {
+    // Check if this is a Supabase signed URL (works with both cloud and self-hosted)
+    if (isSupabaseSignedUrl(url)) {
       // Extract the path from the URL
-      const pathMatch = url.match(/\/File\/(.+?)\?/);
-      if (pathMatch && pathMatch[1]) {
-        const filePath = decodeURIComponent(pathMatch[1]);
+      const filePath = extractFilePathFromUrl(url, STORAGE_BUCKET);
+      if (filePath) {
         // Create a public URL instead
         const { data } = supabase.storage
           .from(STORAGE_BUCKET)
@@ -204,16 +204,13 @@ async function downloadImage(url: string): Promise<Blob | null> {
       console.error(`Failed to download image: ${url}, Status: ${response.status}`);
 
       // If we still have issues, try one more approach for Supabase URLs
-      if (url.includes('supabase.co')) {
+      if (isSupabaseStorageUrl(url)) {
         // Try to download the image directly using the storage download API
-        const pathMatch = url.match(/\/([^/]+)\/([^?]+)/);
-        if (pathMatch && pathMatch[1] && pathMatch[2]) {
-          const bucket = pathMatch[1];
-          const path = decodeURIComponent(pathMatch[2]);
-
+        const filePath = extractFilePathFromUrl(url, STORAGE_BUCKET);
+        if (filePath) {
           const { data, error } = await supabase.storage
-            .from(bucket)
-            .download(path);
+            .from(STORAGE_BUCKET)
+            .download(filePath);
 
           if (data && !error) {
             return data;

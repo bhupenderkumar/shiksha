@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/api-client';
 import { v4 as uuidv4 } from 'uuid';
 import { ID_CARD_TABLE, SCHEMA, STORAGE_BUCKET, CLASS_TABLE } from '@/lib/constants';
+import { isSupabaseSignedUrl } from '@/lib/supabase-helpers';
 import { Database } from '@/types/supabase';
 import { IDCardData, IDCardRow, ClassOption, PhotoType } from '@/types/idCard';
 import { toast } from 'react-hot-toast';
@@ -1448,8 +1449,8 @@ export const idCardService = {
         createPlaceholder();
       };
 
-      // Handle Supabase signed URLs by trying to get a public URL
-      if (url.includes('supabase.co/storage/v1/object/sign')) {
+      // Handle Supabase signed URLs by trying to get a public URL (works with both cloud and self-hosted)
+      if (isSupabaseSignedUrl(url)) {
         // Extract the path from the URL
         const pathMatch = url.match(/\/File\/(.+?)\?/);
         if (pathMatch && pathMatch[1]) {

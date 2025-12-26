@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../lib/auth-provider';
 import { supabase } from "@/lib/api-client";
+import { SCHEMA } from '@/lib/constants';
 import { toast } from 'react-hot-toast';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -144,7 +145,7 @@ export default function SubjectsPage() {
     }
 
     try {
-      const { error } = await supabase.from('subjects').delete().eq('id', id);
+      const { error } = await supabase.schema(SCHEMA).from('Subject').delete().eq('id', id);
       if (error) throw error;
       toast.success('Subject deleted successfully');
       loadData();

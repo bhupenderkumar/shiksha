@@ -1,0 +1,16 @@
+# Docker environment files
+.env
+!.env.example
+
+# Backup files
+backups/
+
+# PostgreSQL data
+volumes/db/data/
+
+# Storage data
+volumes/storage/
+
+# Logs
+logs/
+*.log

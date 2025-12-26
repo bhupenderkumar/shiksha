@@ -3,6 +3,7 @@ import { ParentFeedback } from '@/types/parentFeedback';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { SCHOOL_INFO } from '@/lib/constants';
+import { isSupabaseSignedUrl } from '@/lib/supabase-helpers';
 import { Download, Printer } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import html2canvas from 'html2canvas';
@@ -98,8 +99,8 @@ export const ParentFeedbackCertificate: React.FC<ParentFeedbackCertificateProps>
       return url;
     }
 
-    // If it's a signed URL, extract the path and create a public URL
-    if (url.includes('supabase.co/storage/v1/object/sign')) {
+    // If it's a signed URL (works with both cloud and self-hosted), extract the path and create a public URL
+    if (isSupabaseSignedUrl(url)) {
       console.log('Converting signed URL to public URL');
       const pathMatch = url.match(/\/File\/(.+?)\?/);
       if (pathMatch && pathMatch[1]) {

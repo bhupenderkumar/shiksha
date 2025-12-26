@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/api-client';
 import { SCHEMA } from '@/lib/constants';
+import { isSupabaseSignedUrl } from '@/lib/supabase-helpers';
 import {
   ParentFeedback,
   ParentFeedbackFormData,
@@ -35,8 +36,8 @@ export const parentFeedbackService = {
         return url;
       }
 
-      // If it's a signed URL, extract the path and create a public URL
-      if (url.includes('supabase.co/storage/v1/object/sign')) {
+      // If it's a signed URL (works with both cloud and self-hosted), extract the path and create a public URL
+      if (isSupabaseSignedUrl(url)) {
         // Extract the path from the URL
         const pathMatch = url.match(/\/File\/(.+?)\?/);
         if (pathMatch && pathMatch[1]) {
@@ -417,8 +418,8 @@ export const parentFeedbackService = {
 
       // Convert to public URLs to avoid JWT expiration issues
       if (studentPhotoUrl) {
-        // If it's a signed URL, convert to public URL
-        if (studentPhotoUrl.includes('supabase.co/storage/v1/object/sign')) {
+        // If it's a signed URL, convert to public URL (works with both cloud and self-hosted)
+        if (isSupabaseSignedUrl(studentPhotoUrl)) {
           // Extract the path from the URL
           const pathMatch = studentPhotoUrl.match(/\/File\/(.+?)\?/);
           if (pathMatch && pathMatch[1]) {
@@ -437,8 +438,8 @@ export const parentFeedbackService = {
       }
 
       if (fatherPhotoUrl) {
-        // If it's a signed URL, convert to public URL
-        if (fatherPhotoUrl.includes('supabase.co/storage/v1/object/sign')) {
+        // If it's a signed URL, convert to public URL (works with both cloud and self-hosted)
+        if (isSupabaseSignedUrl(fatherPhotoUrl)) {
           // Extract the path from the URL
           const pathMatch = fatherPhotoUrl.match(/\/File\/(.+?)\?/);
           if (pathMatch && pathMatch[1]) {
@@ -457,8 +458,8 @@ export const parentFeedbackService = {
       }
 
       if (motherPhotoUrl) {
-        // If it's a signed URL, convert to public URL
-        if (motherPhotoUrl.includes('supabase.co/storage/v1/object/sign')) {
+        // If it's a signed URL, convert to public URL (works with both cloud and self-hosted)
+        if (isSupabaseSignedUrl(motherPhotoUrl)) {
           // Extract the path from the URL
           const pathMatch = motherPhotoUrl.match(/\/File\/(.+?)\?/);
           if (pathMatch && pathMatch[1]) {

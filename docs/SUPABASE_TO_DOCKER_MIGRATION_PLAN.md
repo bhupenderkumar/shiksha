@@ -345,41 +345,67 @@ These files check for `supabase.co` domain in URLs:
 
 - [ ] Set up VPS/server for Docker hosting
 - [ ] Install Docker and Docker Compose
-- [ ] Clone Supabase self-hosted repository
-- [ ] Configure docker-compose.yml with proper settings
+- [x] ~~Clone Supabase self-hosted repository~~ → Custom docker-compose.yml created
+- [x] Configure docker-compose.yml with proper settings → See [docker/docker-compose.yml](../docker/docker-compose.yml)
 - [ ] Set up reverse proxy (Nginx/Caddy) with SSL
+
+**Files Created:**
+- [docker/docker-compose.yml](../docker/docker-compose.yml) - Full Docker Compose configuration
+- [docker/.env.example](../docker/.env.example) - Environment variables template
+- [docker/volumes/kong/kong.yml](../docker/volumes/kong/kong.yml) - Kong API Gateway configuration
+- [docker/scripts/start.sh](../docker/scripts/start.sh) - Startup script
+- [docker/scripts/stop.sh](../docker/scripts/stop.sh) - Stop script
+- [docker/scripts/generate-keys.js](../docker/scripts/generate-keys.js) - API key generator
 
 ### Phase 2: Database Migration (Day 3-4)
 
 - [ ] Export existing data from Supabase cloud using `pg_dump`
-- [ ] Create `school` schema in self-hosted PostgreSQL
+- [x] Create `school` schema in self-hosted PostgreSQL → See [docker/volumes/db/init/01-init-schema.sql](../docker/volumes/db/init/01-init-schema.sql)
 - [ ] Run all migration files in order
 - [ ] Import existing data
 - [ ] Verify data integrity
-- [ ] Create `execute_sql` RPC function
+- [x] Create `execute_sql` RPC function → See [docker/migrations/00_execute_sql_function.sql](../docker/migrations/00_execute_sql_function.sql)
 - [ ] Regenerate TypeScript types
+
+**Files Created:**
+- [docker/volumes/db/init/01-init-schema.sql](../docker/volumes/db/init/01-init-schema.sql) - Schema initialization
+- [docker/volumes/db/init/02-init-storage.sql](../docker/volumes/db/init/02-init-storage.sql) - Storage buckets initialization
+- [docker/migrations/00_execute_sql_function.sql](../docker/migrations/00_execute_sql_function.sql) - execute_sql RPC function
+- [docker/scripts/migrate-database.sh](../docker/scripts/migrate-database.sh) - Database migration script
 
 ### Phase 3: Storage Migration (Day 5)
 
-- [ ] Create storage buckets: `shiksha-files`, `admission-documents`
-- [ ] Configure bucket permissions (public read for some)
+- [x] Create storage buckets: `shiksha-files`, `admission-documents` → Automated in init script
+- [x] Configure bucket permissions (public read for some) → See [docker/volumes/db/init/02-init-storage.sql](../docker/volumes/db/init/02-init-storage.sql)
 - [ ] Migrate existing files from Supabase Storage
-- [ ] Update any hardcoded URLs
+- [x] Update any hardcoded URLs → Helper functions added
+
+**Files Created:**
+- [docker/scripts/migrate-storage.sh](../docker/scripts/migrate-storage.sh) - Storage migration script
 
 ### Phase 4: Code Updates (Day 6-7)
 
-- [ ] Update environment variables
-- [ ] Fix missing `.schema(SCHEMA)` bugs
-- [ ] Update hardcoded `supabase.co` domain checks
+- [x] Update environment variables → See [.env.sample](../.env.sample) updated
+- [x] Fix missing `.schema(SCHEMA)` bugs → Fixed in [src/pages/Subjects.tsx](../src/pages/Subjects.tsx), [src/pages/students/new.tsx](../src/pages/students/new.tsx)
+- [x] Update hardcoded `supabase.co` domain checks → Helper functions in [src/lib/supabase-helpers.ts](../src/lib/supabase-helpers.ts)
 - [ ] Test authentication flow
 - [ ] Test file uploads/downloads
 - [ ] Test all CRUD operations
+
+**Files Updated:**
+- [src/lib/supabase-helpers.ts](../src/lib/supabase-helpers.ts) - Added `isSupabaseStorageUrl`, `isSupabaseSignedUrl`, `convertToPublicStorageUrl` helpers
+- [src/pages/Subjects.tsx](../src/pages/Subjects.tsx) - Fixed missing schema in delete query
+- [src/pages/students/new.tsx](../src/pages/students/new.tsx) - Fixed missing schema in insert query
+- [src/scripts/exportIDCards.ts](../src/scripts/exportIDCards.ts) - Updated to use helper functions
+- [src/services/parentFeedbackService.ts](../src/services/parentFeedbackService.ts) - Updated to use helper functions
+- [src/backend/idCardService.ts](../src/backend/idCardService.ts) - Updated to use helper functions
+- [src/components/ParentFeedbackCertificate.tsx](../src/components/ParentFeedbackCertificate.tsx) - Updated to use helper functions
 
 ### Phase 5: Testing & Go-Live (Day 8-10)
 
 - [ ] Full application testing
 - [ ] Performance testing
-- [ ] Set up automated backups
+- [x] Set up automated backups → Included in docker-compose.yml
 - [ ] Configure monitoring
 - [ ] Update DNS to point to self-hosted
 - [ ] Monitor for issues

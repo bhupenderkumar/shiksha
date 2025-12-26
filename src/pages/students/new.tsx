@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { useAuth } from '../../lib/auth';
-import { supabase } from '../../lib/supabase';
+import { useAuth } from '@/lib/auth-provider';
+import { supabase } from '@/lib/api-client';
+import { SCHEMA, STUDENT_TABLE } from '@/lib/constants';
 import { useNavigate } from 'react-router-dom';
 import {
   Card,
@@ -30,7 +31,7 @@ export default function NewStudentPage() {
         toast.error('User profile not found');
         return;
       }
-      const { error } = await supabase.from('students').insert([
+      const { error } = await supabase.schema(SCHEMA).from(STUDENT_TABLE).insert([
         {
           user_id: profile.id,
           full_name: fullName,

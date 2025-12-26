@@ -70,3 +70,131 @@ export function generateSupabaseRestHeaders(apiKey: string): Record<string, stri
  *   .then(data => console.log(data))
  *   .catch(error => console.error('Error:', error));
  */
+
+/**
+ * Get the Supabase URL from environment
+ * Works with both cloud (*.supabase.co) and self-hosted instances
+ */
+export function getSupabaseUrl(): string {
+  return import.meta.env.VITE_SUPABASE_URL || '';
+}
+
+/**
+ * Check if a URL is a Supabase storage URL (cloud or self-hosted)
+ * Replaces hardcoded 'supabase.co' checks to work with Docker/self-hosted
+ * 
+ * @param url - URL to check
+ * @returns true if the URL is a Supabase storage URL
+ */
+export function isSupabaseStorageUrl(url: string): boolean {
+  if (!url) return false;
+  
+  const supabaseUrl = getSupabaseUrl();
+  
+  // Check if it's a cloud Supabase URL
+  if (url.includes('supabase.co')) {
+    return true;
+  }
+  
+  // Check if it matches our configured Supabase URL (for self-hosted)
+  if (supabaseUrl && url.includes(new URL(supabaseUrl).host)) {
+    return true;
+  }
+  
+  // Check for standard Supabase storage URL patterns
+  return url.includes('/storage/v1/object/');
+}
+
+/**
+ * Check if a URL is a Supabase signed URL (cloud or self-hosted)
+ * 
+ * @param url - URL to check
+ * @returns true if the URL is a signed Supabase storage URL
+ */
+export function isSupabaseSignedUrl(url: string): boolean {
+  if (!url) return false;
+  
+  // Check for signed URL pattern in the URL
+  return url.includes('/storage/v1/object/sign') && (
+    url.includes('supabase.co') || 
+    isSupabaseStorageUrl(url)
+  );
+}
+
+/**
+ * Convert a signed Supabase URL to a public URL
+ * Works with both cloud and self-hosted instances
+ * 
+ * @param url - Signed URL to convert
+ * @param bucket - Storage bucket name (defaults to 'File')
+ * @returns Public URL or original URL if conversion fails
+ */
+export function convertToPublicStorageUrl(url: string | null, bucket: string = 'File'): string | null {
+  if (!url) return null;
+  
+  const supabaseUrl = getSupabaseUrl();
+  
+  try {
+    // If it's already a public URL, return it as is
+    if (url.includes('/storage/v1/object/public/')) {
+      return url;
+    }
+    
+    // If it's a signed URL, extract the path and create a public URL
+    if (isSupabaseSignedUrl(url)) {
+      // Extract the path from the URL - handles both File and other buckets
+      const pathMatch = url.match(new RegExp(`\\/${bucket}\\/(.+?)\\?`));
+      if (pathMatch && pathMatch[1]) {
+        const filePath = decodeURIComponent(pathMatch[1]);
+        return `${supabaseUrl}/storage/v1/object/public/${bucket}/${filePath}`;
+      }
+    }
+    
+    // If it's a relative path, convert to absolute public URL
+    if (!url.startsWith('http')) {
+      return `${supabaseUrl}/storage/v1/object/public/${bucket}/${url}`;
+    }
+    
+    // Return the original URL if we couldn't convert it
+    return url;
+  } catch (error) {
+    console.error('Error converting URL:', error);
+    return url;
+  }
+}
+
+/**
+ * Extract file path from a Supabase storage URL
+ * 
+ * @param url - Supabase storage URL
+ * @param bucket - Storage bucket name
+ * @returns Extracted file path or null
+ */
+export function extractFilePathFromUrl(url: string, bucket: string = 'File'): string | null {
+  if (!url) return null;
+  
+  try {
+    // Handle signed URLs
+    const signedMatch = url.match(new RegExp(`\\/${bucket}\\/(.+?)\\?`));
+    if (signedMatch && signedMatch[1]) {
+      return decodeURIComponent(signedMatch[1]);
+    }
+    
+    // Handle public URLs
+    const publicMatch = url.match(new RegExp(`\\/object\\/public\\/${bucket}\\/(.+)$`));
+    if (publicMatch && publicMatch[1]) {
+      return decodeURIComponent(publicMatch[1]);
+    }
+    
+    // Handle direct bucket path
+    const directMatch = url.match(new RegExp(`\\/${bucket}\\/(.+)$`));
+    if (directMatch && directMatch[1]) {
+      return decodeURIComponent(directMatch[1]);
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error extracting file path:', error);
+    return null;
+  }
+}
