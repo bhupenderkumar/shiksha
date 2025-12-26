@@ -40,6 +40,10 @@ import {
   User,
   UserCircle,
   X,
+  UserCheck,
+  UserX,
+  ToggleLeft,
+  ToggleRight,
 } from 'lucide-react';
 import { PageAnimation } from '@/components/ui/page-animation';
 import { AnimatedText } from '@/components/ui/animated-text';
@@ -49,8 +53,8 @@ import { useProfileAccess } from '@/services/profileService';
 import { Navigate } from 'react-router-dom';
 
 const formClasses = {
-  select: "w-full px-3 py-2 bg-background text-foreground border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary appearance-none cursor-pointer",
-  input: "w-full px-3 py-2 bg-background text-foreground border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary",
+  select: "w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary",
+  input: "w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary",
   label: "block text-sm font-medium text-foreground mb-1",
   card: "backdrop-blur-sm bg-card/80 hover:bg-card/90 transition-all border border-border",
 };
@@ -200,6 +204,7 @@ export default function StudentsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedClassFilter, setSelectedClassFilter] = useState<string>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('active');
   const [formData, setFormData] = useState({
     admissionNumber: '',
     name: '',
@@ -221,6 +226,9 @@ export default function StudentsPage() {
   } | null>(null);
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
   const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
+
+  // Check if current user is admin
+  const isAdmin = profile?.role?.toUpperCase() === 'ADMIN';
 
   // Fetch classes on mount
   useEffect(() => {
@@ -258,22 +266,30 @@ export default function StudentsPage() {
     fetchStudents();
   }, [selectedClassFilter]);
 
-  // Filter students by search query
+  // Filter students by search query and active status
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredStudents(students);
-      return;
+    let filtered = students;
+
+    // Filter by active status
+    if (activeFilter === 'active') {
+      filtered = filtered.filter(student => student.isActive !== false);
+    } else if (activeFilter === 'inactive') {
+      filtered = filtered.filter(student => student.isActive === false);
     }
 
-    const query = searchQuery.toLowerCase();
-    const filtered = students.filter(student =>
-      student.name.toLowerCase().includes(query) ||
-      student.admissionNumber?.toLowerCase().includes(query) ||
-      student.parentName?.toLowerCase().includes(query) ||
-      student.contactNumber?.includes(query)
-    );
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(student =>
+        student.name.toLowerCase().includes(query) ||
+        student.admissionNumber?.toLowerCase().includes(query) ||
+        student.parentName?.toLowerCase().includes(query) ||
+        student.contactNumber?.includes(query)
+      );
+    }
+
     setFilteredStudents(filtered);
-  }, [searchQuery, students]);
+  }, [searchQuery, students, activeFilter]);
 
   const fetchStudents = async () => {
     setLoading(true);
@@ -350,6 +366,20 @@ export default function StudentsPage() {
     }
   };
 
+  const handleToggleActive = async (student: Student) => {
+    try {
+      setLoading(true);
+      await studentService.setActive(student.id, !student.isActive);
+      toast.success(`Student ${student.isActive ? 'deactivated' : 'activated'} successfully`);
+      fetchStudents();
+    } catch (error) {
+      console.error('Error toggling student status:', error);
+      toast.error('Failed to update student status');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDialogClose = () => {
     setIsDialogOpen(false);
     setEditingStudent(null);
@@ -396,7 +426,7 @@ export default function StudentsPage() {
         {/* Filters Section */}
         <Card className="mb-6 bg-card/50 backdrop-blur-sm border-border/50">
           <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Class Filter */}
               <div>
                 <Label className="block text-sm font-medium mb-2">Filter by Class</Label>
@@ -411,6 +441,20 @@ export default function StudentsPage() {
                       {cls.name} {cls.section ? `- ${cls.section}` : ''}
                     </option>
                   ))}
+                </select>
+              </div>
+
+              {/* Active Status Filter */}
+              <div>
+                <Label className="block text-sm font-medium mb-2">Status</Label>
+                <select
+                  value={activeFilter}
+                  onChange={(e) => setActiveFilter(e.target.value as 'all' | 'active' | 'inactive')}
+                  className={formClasses.select}
+                >
+                  <option value="active">Active Students</option>
+                  <option value="inactive">Inactive Students</option>
+                  <option value="all">All Students</option>
                 </select>
               </div>
 
@@ -434,6 +478,9 @@ export default function StudentsPage() {
               Showing {filteredStudents.length} of {students.length} students
               {selectedClassFilter !== 'all' && (
                 <span> in {classes.find(c => c.id === selectedClassFilter)?.name}</span>
+              )}
+              {activeFilter !== 'all' && (
+                <span> ({activeFilter})</span>
               )}
             </div>
           </CardContent>
@@ -463,9 +510,11 @@ export default function StudentsPage() {
               <StudentCard
                 key={student.id}
                 student={student}
+                isAdmin={isAdmin}
                 onView={() => setViewingStudent(student)}
                 onEdit={() => handleEdit(student)}
                 onDelete={() => setStudentToDelete(student)}
+                onToggleActive={() => handleToggleActive(student)}
               />
             ))}
           </div>
@@ -535,23 +584,34 @@ export default function StudentsPage() {
 // StudentCard Component
 const StudentCard = ({
   student,
+  isAdmin,
   onView,
   onEdit,
-  onDelete
+  onDelete,
+  onToggleActive
 }: {
   student: Student;
+  isAdmin: boolean;
   onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onToggleActive: () => void;
 }) => (
-  <Card className={formClasses.card}>
+  <Card className={`${formClasses.card} ${student.isActive === false ? 'opacity-60' : ''}`}>
     <CardContent className="p-6">
       <div className="space-y-3">
         {/* Header with name and class badge */}
         <div className="flex justify-between items-start">
-          <div>
-            <h3 className="text-lg font-semibold">{student.name}</h3>
-            <p className="text-xs text-muted-foreground">Adm. No: {student.admissionNumber}</p>
+          <div className="flex items-center gap-2">
+            <div>
+              <h3 className="text-lg font-semibold">{student.name}</h3>
+              <p className="text-xs text-muted-foreground">Adm. No: {student.admissionNumber}</p>
+            </div>
+            {student.isActive === false && (
+              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                Inactive
+              </span>
+            )}
           </div>
           <span className="px-2 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary">
             {student.class?.name} {student.class?.section}
@@ -577,7 +637,7 @@ const StudentCard = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex space-x-2 pt-2 border-t border-border/50">
+        <div className="flex flex-wrap gap-2 pt-2 border-t border-border/50">
           <Button variant="outline" size="sm" onClick={onView} className="flex-1">
             <Eye className="h-3 w-3 mr-1" />
             View
@@ -586,9 +646,25 @@ const StudentCard = ({
             <Edit className="h-3 w-3 mr-1" />
             Edit
           </Button>
-          <Button variant="destructive" size="sm" onClick={onDelete}>
-            <Trash className="h-3 w-3" />
-          </Button>
+          {isAdmin && (
+            <>
+              <Button 
+                variant={student.isActive === false ? "default" : "secondary"} 
+                size="sm" 
+                onClick={onToggleActive}
+                title={student.isActive === false ? 'Activate Student' : 'Deactivate Student'}
+              >
+                {student.isActive === false ? (
+                  <UserCheck className="h-3 w-3" />
+                ) : (
+                  <UserX className="h-3 w-3" />
+                )}
+              </Button>
+              <Button variant="destructive" size="sm" onClick={onDelete} title="Delete Student">
+                <Trash className="h-3 w-3" />
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </CardContent>

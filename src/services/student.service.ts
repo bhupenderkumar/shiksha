@@ -32,12 +32,14 @@ export interface CreateStudentData {
   parentEmail: string; // Keep this as it's in the schema
   bloodGroup?: string;
   classId: string;
+  isActive?: boolean;
 }
 
 export interface Student extends CreateStudentData {
   id: string;
   createdAt: Date;
   updatedAt: Date;
+  isActive: boolean;
   class?: {
     id: string;
     name: string;
@@ -234,6 +236,36 @@ class StudentService {
       await supabaseAdmin.auth.admin.deleteUser(id);
     } catch (error) {
       console.error(ERROR_MESSAGES.DELETE_STUDENT, error);
+      throw error;
+    }
+  }
+
+  // Set student active/inactive status (soft delete alternative)
+  async setActive(id: string, isActive: boolean): Promise<Student> {
+    try {
+      const { data, error } = await supabase
+        .schema(SCHEMA)
+        .from(STUDENT_TABLE)
+        .update({ isActive, updatedAt: new Date() })
+        .eq('id', id)
+        .select(`*, class:Class (id, name, section)`)
+        .single();
+
+      if (error) throw error;
+      return data as Student;
+    } catch (error) {
+      console.error('Error updating student active status:', error);
+      throw error;
+    }
+  }
+
+  // Toggle student active status
+  async toggleActive(id: string): Promise<Student> {
+    try {
+      const student = await this.findOne(id);
+      return this.setActive(id, !student.isActive);
+    } catch (error) {
+      console.error('Error toggling student active status:', error);
       throw error;
     }
   }
