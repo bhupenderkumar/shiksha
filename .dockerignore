@@ -1,0 +1,15 @@
+node_modules
+dist
+dev-dist
+.git
+.github
+.vscode
+*.log
+*.md
+docker
+backups
+.env*
+!.env.example
+coverage
+.nyc_output
+*.local
