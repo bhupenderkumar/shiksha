@@ -222,13 +222,13 @@ export function PuzzleQuestionForm({
               </div>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-3 flex items-start gap-2">
-              <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-blue-700">
+            <Alert variant="info" className="flex items-start gap-2">
+              <Info className="h-5 w-5 flex-shrink-0 mt-0.5" />
+              <div className="text-sm">
                 <p className="font-medium">How to mark correct pieces:</p>
                 <p>Click on each piece that should be considered correct. Students will receive points for correctly placing these pieces.</p>
               </div>
-            </div>
+            </Alert>
 
             {imageUrl ? (
               <div className="space-y-4">
@@ -245,10 +245,10 @@ export function PuzzleQuestionForm({
                 {renderPieceGrid()}
                 
                 {correctPieces.length === 0 && (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-sm text-yellow-800">
+                  <Alert variant="warning">
                     <p className="font-medium">Warning: No correct pieces selected</p>
                     <p>Please mark at least one piece as correct by clicking on it.</p>
-                  </div>
+                  </Alert>
                 )}
               </div>
             ) : (

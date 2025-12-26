@@ -31,12 +31,12 @@ import { UserProfile } from '@/services/profileService';
 
 const NotificationCard = ({ notification, onUpdate, onDelete }) => {
   const typeColors = {
-    GENERAL: 'bg-gray-100',
-    HOMEWORK: 'bg-blue-100',
-    ATTENDANCE: 'bg-green-100',
-    FEE: 'bg-yellow-100',
-    EXAM: 'bg-purple-100',
-    EMERGENCY: 'bg-red-100',
+    GENERAL: 'bg-gray-100 dark:bg-gray-800',
+    HOMEWORK: 'bg-blue-100 dark:bg-blue-900/40',
+    ATTENDANCE: 'bg-green-100 dark:bg-green-900/40',
+    FEE: 'bg-yellow-100 dark:bg-yellow-900/40',
+    EXAM: 'bg-purple-100 dark:bg-purple-900/40',
+    EMERGENCY: 'bg-red-100 dark:bg-red-900/40',
   };
 
   return (

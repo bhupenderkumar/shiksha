@@ -1,5 +1,6 @@
 import React from 'react';
 import { normalizeInteractiveQuestion } from '@/utils/columnNameUtils';
+import { Alert } from '@/components/ui/alert';
 
 interface QuestionDataDebuggerProps {
   question: any;
@@ -17,7 +18,7 @@ export function QuestionDataDebugger({ question, showDebug = false }: QuestionDa
   const normalizedQuestion = normalizeInteractiveQuestion(question);
   
   return (
-    <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md text-xs">
+    <Alert variant="warning" className="mt-2 text-xs">
       <h4 className="font-semibold mb-1">Question Data Structure:</h4>
       <ul className="list-disc list-inside space-y-1">
         <li>ID: {question.id}</li>
@@ -53,11 +54,11 @@ export function QuestionDataDebugger({ question, showDebug = false }: QuestionDa
       {/* Show raw data in collapsed details section */}
       <details className="mt-2">
         <summary className="cursor-pointer text-blue-600">Show Raw Data</summary>
-        <pre className="mt-1 p-2 bg-gray-100 rounded-md overflow-x-auto text-xs">
+        <pre className="mt-1 p-2 bg-gray-100 dark:bg-gray-800 rounded-md overflow-x-auto text-xs">
           {JSON.stringify(question, null, 2)}
         </pre>
       </details>
-    </div>
+    </Alert>
   );
 }
 

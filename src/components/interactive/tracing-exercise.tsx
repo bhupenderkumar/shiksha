@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+import { Alert } from '@/components/ui/alert';
 import { toast } from 'react-hot-toast';
 import { TracingQuestion } from '@/types/interactiveAssignment';
 import { Paintbrush, Eraser, RotateCcw, Download, Check } from 'lucide-react';
@@ -461,12 +462,12 @@ export function TracingExercise({
         </div>
         
         {showAnswers && completionPercentage >= 80 && accuracy >= 70 && (
-          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md flex items-center">
-            <Check className="h-5 w-5 text-green-500 mr-2" />
-            <span className="text-green-700">
+          <Alert variant="success" className="mt-4 flex items-center">
+            <Check className="h-5 w-5 mr-2" />
+            <span>
               Great job! Your tracing is accurate and complete.
             </span>
-          </div>
+          </Alert>
         )}
       </div>
       

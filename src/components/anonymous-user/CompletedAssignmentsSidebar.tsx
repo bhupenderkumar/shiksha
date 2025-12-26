@@ -85,7 +85,7 @@ export function CompletedAssignmentsSidebar({ className = '' }: CompletedAssignm
                           : 'Interactive Assignment'}
                       </p>
                     </div>
-                    <div className="bg-green-100 text-green-800 text-sm font-medium px-2 py-1 rounded">
+                    <div className="bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300 text-sm font-medium px-2 py-1 rounded">
                       {assignment.score}%
                     </div>
                   </div>

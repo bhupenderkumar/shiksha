@@ -34,7 +34,7 @@ export default function DemoIndex() {
               <CardTitle className="flex items-center">
                 {demo.title}
                 {demo.isNew && (
-                  <span className="ml-2 px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                  <span className="ml-2 px-2 py-1 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300 rounded-full">
                     New
                   </span>
                 )}

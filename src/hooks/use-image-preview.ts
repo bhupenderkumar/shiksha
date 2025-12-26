@@ -75,24 +75,33 @@ export const useImagePreview = (
       updateImageUrl(attachment.id, viewUrl);
       return viewUrl;
     } catch (error) {
-      console.error('Error getting view URL:', error);
+      console.error('Error getting view URL, trying public URL:', error);
       
-      // Increment failed attempts
-      setFailedAttempts(prev => ({
-        ...prev,
-        [attachment.id]: (prev[attachment.id] || 0) + 1
-      }));
+      // Try to get public URL as fallback
+      try {
+        const publicUrl = await fileService.getPublicUrl(attachment.filePath);
+        updateImageUrl(attachment.id, publicUrl);
+        return publicUrl;
+      } catch (publicError) {
+        console.error('Error getting public URL:', publicError);
+        
+        // Increment failed attempts
+        setFailedAttempts(prev => ({
+          ...prev,
+          [attachment.id]: (prev[attachment.id] || 0) + 1
+        }));
 
-      // Only show toast on first attempt
-      if (!failedAttempts[attachment.id]) {
-        toast.error('Some images failed to load', { id: 'image-load-error' });
+        // Only show toast on first attempt
+        if (!failedAttempts[attachment.id]) {
+          toast.error('Some images failed to load', { id: 'image-load-error' });
+        }
+
+        setLoadingStates(prev => ({
+          ...prev,
+          [attachment.id]: false
+        }));
+        return null;
       }
-
-      setLoadingStates(prev => ({
-        ...prev,
-        [attachment.id]: false
-      }));
-      return null;
     }
   }, [loadedUrls, updateImageUrl, failedAttempts]);
 

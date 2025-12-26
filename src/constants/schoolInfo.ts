@@ -1,6 +1,7 @@
 export const SCHOOL_INFO = {
-  name: "First Step Pre School and Play School",
-  fullName: "First Step Pre School and Play School | First Step Primary School",
+  name: "First Step Public School",
+  fullName: "First Step Public School",
+  tagline: "Nurturing Minds, Building Futures",
   address: "House No-164, H Block, Saurabh Vihar, Jaitpur, Badarpur, Delhi - 110044",
   phone: "+91-9717267473",
   email: "firststeppublicschool22@gmail.com",
@@ -11,12 +12,14 @@ export const SCHOOL_INFO = {
   accountantName: "Mr. Nikita Sharma",
   accountantSignature: "/signatures/accountant.png",
   establishedYear: 2005,
+  registrationNo: "CBSE/DEL/2005/001234", // Add school registration number
+  affiliationNo: "2130456", // CBSE affiliation number
   bankDetails: {
     bankName: "ALLAHABAD BANK",
     accountName: "First Step Public School",
     accountNumber: "ALLA0212897",
     ifscCode: "110010132",
-    branch: "Ashok Enclave II , Faridabad"
+    branch: "Ashok Enclave II, Faridabad"
   },
   googlePlaceId: "ChIJQZ8W_lnmDDkRKKD9jMgstPA",
   location: {

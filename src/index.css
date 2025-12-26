@@ -72,6 +72,17 @@ html, body {
     @apply bg-background text-foreground;
   }
 
+  /* Fix native select and option styling for dark mode */
+  .dark select {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+  
+  .dark select option {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+
   /* Dark landing page override - forces dark background on body for landing page */
   body.dark-landing {
     background-color: #0a0a0a !important;
@@ -189,11 +200,11 @@ html, body {
   }
   
   .dark .bg-blue-50 {
-    @apply bg-blue-950;
+    @apply bg-primary/10;
   }
   
   .dark .bg-blue-100 {
-    @apply bg-blue-900;
+    @apply bg-primary/20;
   }
   
   /* Override gradient backgrounds in dark mode */
@@ -333,6 +344,44 @@ html, body {
   .dark .text-orange-600 {
     @apply text-orange-400;
   }
+
+  .dark .text-orange-700 {
+    @apply text-orange-400;
+  }
+
+  .dark .border-orange-200 {
+    @apply border-orange-700;
+  }
+
+  /* Override amber colors */
+  .dark .bg-amber-50 {
+    @apply bg-amber-900/20;
+  }
+  
+  .dark .bg-amber-100 {
+    @apply bg-amber-900/50;
+  }
+  
+  .dark .text-amber-800 {
+    @apply text-amber-300;
+  }
+  
+  .dark .text-amber-700 {
+    @apply text-amber-400;
+  }
+
+  .dark .border-amber-200,
+  .dark .border-amber-100 {
+    @apply border-amber-700;
+  }
+
+  .dark .hover\:bg-amber-100:hover {
+    @apply bg-amber-900/30;
+  }
+
+  .dark .hover\:bg-orange-100:hover {
+    @apply bg-orange-900/30;
+  }
   
   /* Alert-specific styles for dark mode */
   .dark .bg-green-50.border-green-200,
@@ -352,7 +401,7 @@ html, body {
   
   .dark .bg-blue-50.border-blue-200,
   .dark [class*="bg-blue-50"][class*="border-blue-"] {
-    @apply bg-blue-900/30 border-blue-700;
+    @apply bg-primary/15 border-primary/30;
   }
   
   /* Badge overrides for dark mode */
@@ -373,7 +422,9 @@ html, body {
   
   .dark .bg-blue-50.text-blue-700,
   .dark [class*="bg-blue-50"][class*="text-blue-"] {
-    @apply bg-blue-900/40 text-blue-300 border-blue-700;
+    background-color: hsl(var(--primary) / 0.2);
+    color: hsl(var(--primary));
+    border-color: hsl(var(--primary) / 0.4);
   }
   
   /* Green text/border overrides */
@@ -390,14 +441,14 @@ html, body {
   }
 
   /* Comprehensive badge/pill overrides for dark mode */
-  /* Blue badges */
+  /* Blue badges - using primary color */
   .dark .rounded-full.bg-blue-50,
   .dark [class*="rounded-full"][class*="bg-blue-50"],
   .dark .rounded-md.bg-blue-50,
   .dark [class*="rounded"][class*="bg-blue-50"][class*="text-blue-"] {
-    background-color: rgb(30 58 138 / 0.4) !important;
-    color: rgb(147 197 253) !important;
-    border-color: rgb(30 64 175) !important;
+    background-color: hsl(var(--primary) / 0.2) !important;
+    color: hsl(var(--primary)) !important;
+    border-color: hsl(var(--primary) / 0.4) !important;
   }
 
   /* Red badges */
@@ -525,7 +576,7 @@ html, body {
 
   /* Text color overrides for badge text that might be missed */
   .dark .text-blue-800 {
-    color: rgb(147 197 253) !important;
+    color: hsl(var(--primary)) !important;
   }
 
   .dark .text-red-800 {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { parentFeedbackService } from '@/services/parentFeedbackService';
 import { classService } from '@/services/classService';
 import { idCardService } from '@/services/idCardService';
@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'react-hot-toast';
-import { Search, AlertCircle, Loader2, User, MessageSquare, PenSquare } from 'lucide-react';
+import { Search, AlertCircle, Loader2, User, MessageSquare, PenSquare, ArrowLeft, Phone, Mail, MapPin } from 'lucide-react';
 import { SCHOOL_INFO } from '@/lib/constants';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -218,22 +218,55 @@ const ParentFeedbackSearch: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Card className="max-w-4xl mx-auto mb-8">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">{SCHOOL_INFO?.name || 'School'}</CardTitle>
-          <CardDescription>Student Feedback & Certificate Portal</CardDescription>
-          <div className="mt-4">
+    <div className="min-h-screen bg-gradient-to-b from-zinc-900 via-zinc-900 to-black">
+      {/* Hero Header */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-emerald-600/20 blur-3xl" />
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full bg-teal-600/20 blur-3xl" />
+        </div>
+        <div className="relative container mx-auto px-4 py-12">
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/')}
+            className="text-zinc-400 hover:text-white hover:bg-zinc-800 mb-6"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Home
+          </Button>
+          
+          <div className="text-center max-w-2xl mx-auto">
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium mb-6">
+              📋 Student Progress
+            </span>
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              {SCHOOL_INFO?.name || 'School'}
+            </h1>
+            <p className="text-zinc-400 text-lg mb-4">
+              Student Feedback &{" "}
+              <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+                Certificate Portal
+              </span>
+            </p>
             <Button
               variant="outline"
               onClick={() => setIsModalOpen(true)}
-              className="text-blue-600 border-blue-200 hover:bg-blue-50"
+              className="text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
             >
               Submit Your Feedback About Your Child
             </Button>
           </div>
-        </CardHeader>
-        <CardContent>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-8">
+        <Card className="max-w-4xl mx-auto mb-8 bg-zinc-900/80 border-zinc-800">
+          <CardHeader className="text-center">
+            <CardTitle className="text-xl font-bold text-white">Search Student Feedback</CardTitle>
+            <CardDescription className="text-zinc-400">Select class and student to view feedback and certificate</CardDescription>
+          </CardHeader>
+          <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div>
               <Label htmlFor="class">Class</Label>
@@ -537,6 +570,7 @@ const ParentFeedbackSearch: React.FC = () => {
           month: month !== 'all' ? month : undefined
         }}
       />
+      </div>
     </div>
   );
 };

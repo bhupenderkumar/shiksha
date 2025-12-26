@@ -18,7 +18,11 @@ import {
   Puzzle,
   MessageCircle,
   FileText,
-  ListChecks
+  ListChecks,
+  GraduationCap,
+  LayoutDashboard,
+  ClipboardList,
+  Star
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { useAuth } from '@/lib/auth-provider';
@@ -48,14 +52,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const menuItems = [
     { id: 1, icon: Home, label: 'Dashboard', path: ROUTES.DASHBOARD },
+    { id: 20, icon: LayoutDashboard, label: 'Student Dashboard', path: '/student-dashboard' },
     { id: 9, icon: Bell, label: 'Notifications', path: '/notifications' },
-    { id: 2, icon: Users, label: 'Students', path: ROUTES.STUDENTS, role: 'admin' },
+    { id: 2, icon: Users, label: 'Students', path: ROUTES.STUDENTS },
+    { id: 21, icon: GraduationCap, label: 'Subjects', path: '/subjects' },
     { id: 3, icon: BookOpen, label: 'Homework', path: ROUTES.HOMEWORK },
     { id: 4, icon: BookOpen, label: 'Classwork', path: ROUTES.CLASSWORK },
     { id: 13, icon: Puzzle, label: 'Interactive Assignments', path: ROUTES.INTERACTIVE_ASSIGNMENTS },
     { id: 5, icon: Calendar, label: 'Attendance', path: ROUTES.ATTENDANCE },
     { id: 6, icon: CreditCard, label: 'Fees', path: ROUTES.FEES },
     { id: 7, icon: MessageSquare, label: 'Feedback', path: ROUTES.FEEDBACK },
+
+    // Year End Feedback Section
+    { id: 22, icon: Star, label: 'Year End Feedback', path: '/year-end-feedback' },
+    { id: 23, icon: Star, label: 'View Year End Feedback', path: '/view-year-end-feedback', role: 'admin' },
+
+    // Admission Section
+    { id: 24, icon: ClipboardList, label: 'Admission Enquiries', path: '/admission-enquiries', role: 'admin' },
 
     // Parent Feedback Section
     { id: 14, icon: FileText, label: 'Create Parent Feedback', path: ROUTES.PARENT_FEEDBACK_LIST, role: 'admin' },
@@ -173,19 +186,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Main Layout */}
         <div className="flex flex-1 pt-16">
-          {/* Sidebar Overlay */}
-          <AnimatePresence mode="wait">
-            {isSidebarOpen && (
-              <motion.div
-                key="sidebar-overlay"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/50 z-40 md:hidden"
-                onClick={() => setIsSidebarOpen(false)}
-              />
+          {/* Sidebar Overlay - Only visible on mobile */}
+          <div
+            className={cn(
+              "fixed top-16 left-0 right-0 bottom-0 bg-black/50 z-30 transition-opacity duration-200",
+              "md:hidden md:pointer-events-none md:opacity-0",
+              isSidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
             )}
-          </AnimatePresence>
+            onClick={() => setIsSidebarOpen(false)}
+          />
 
           {/* Sidebar */}
           <aside

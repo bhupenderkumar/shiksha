@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Alert } from '@/components/ui/alert';
 import { toast } from 'react-hot-toast';
 import { RefreshCw, ArrowUp, ArrowDown, CheckCircle, XCircle, GripVertical, Award } from 'lucide-react';
 import { OrderingQuestion, OrderingResponse } from '@/types/interactiveAssignment';
@@ -485,11 +486,11 @@ export function SimplifiedOrderingExercise({
 
       {/* Score display when showing answers */}
       {showAnswers && items.length > 0 && (
-        <div className="mb-4 p-3 rounded-md bg-blue-50 border border-blue-200">
+        <Alert variant="info" className="mb-4">
           <p className="font-medium">
             Your score: {calculateScore()}%
           </p>
-        </div>
+        </Alert>
       )}
 
       {/* No items message */}

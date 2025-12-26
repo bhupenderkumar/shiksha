@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useProfile } from '@/services/profileService';
 import { feesService, Fee } from '@/services/feesService';
 import { Card } from '@/components/ui/card';
+import { Alert } from '@/components/ui/alert';
 import { format } from 'date-fns';
 import { studentService } from '@/services/student.service';
 import { motion } from 'framer-motion';
@@ -61,9 +62,9 @@ const ProfilePage = () => {
   if (error) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        <Alert variant="destructive">
           Error loading profile: {error.message}
-        </div>
+        </Alert>
       </div>
     );
   }
@@ -71,9 +72,9 @@ const ProfilePage = () => {
   if (!profile) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 text-yellow-700 dark:text-yellow-400 px-4 py-3 rounded">
+        <Alert variant="warning">
           No profile found
-        </div>
+        </Alert>
       </div>
     );
   }

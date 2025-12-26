@@ -94,8 +94,6 @@ function AppRoutes() {
         <Route path="/assignments/play/:id" element={<SimplifiedPlayAssignment />} />
         <Route path="/interactive-assignments/play/:id" element={<SimplifiedPlayAssignment />} />
         <Route path="/drawing-test" element={<DrawingExerciseTestPage />} />
-        <Route path="/year-end-feedback" element={<YearEndFeedback />} />
-        <Route path="/year-end-feedback/:id" element={<YearEndFeedback />} />
         <Route path="/homework/view/:id" element={<HomeworkView />} />
         <Route path="/homework/:id" element={<HomeworkDetails />} />
         <Route path="/classwork/:id" element={<ClassworkDetail />} />
@@ -222,6 +220,20 @@ function AppRoutes() {
           <PrivateRoute>
             <Layout>
               <ViewYearEndFeedback />
+            </Layout>
+          </PrivateRoute>
+        } />
+        <Route path="/year-end-feedback" element={
+          <PrivateRoute>
+            <Layout>
+              <YearEndFeedback />
+            </Layout>
+          </PrivateRoute>
+        } />
+        <Route path="/year-end-feedback/:id" element={
+          <PrivateRoute>
+            <Layout>
+              <YearEndFeedback />
             </Layout>
           </PrivateRoute>
         } />

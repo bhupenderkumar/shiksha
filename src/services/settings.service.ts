@@ -12,8 +12,8 @@ import { toast } from 'react-hot-toast'; // Import toast
 const DEFAULT_SCHOOL_NAME = 'Default School';
 const DEFAULT_ADDRESS = 'Default Address';
 const DEFAULT_PHONE = '000-000-0000';
-const DEFAULT_EMAIL = 'default@school.com';
-const DEFAULT_WEBSITE = 'http://defaultschool.com';
+const DEFAULT_EMAIL = 'admin@myfirststepschool.com';
+const DEFAULT_WEBSITE = 'http://myfirststepschool.com';
 const DEFAULT_DESCRIPTION = 'Default Description';
 const DEFAULT_THEME = 'light';
 const SCHOOL_SETTINGS_ROW_ID = 1; // The settings table should only have one row

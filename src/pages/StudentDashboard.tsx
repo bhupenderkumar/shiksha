@@ -4,6 +4,7 @@ import { getStudentDashboardData } from '@/services/dashboardService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Calendar } from '@/components/ui/calendar';
 import { Bell, Book, CheckCircle, Clock } from 'lucide-react';
 
 const StatCard = ({ stat }) => (

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Alert } from '@/components/ui/alert';
 import { toast } from 'react-hot-toast';
 import { RefreshCw, Plus, Minus, CheckCircle, XCircle } from 'lucide-react';
 import { CountingQuestion, CountingResponse } from '@/types/interactiveAssignment';
@@ -148,7 +149,7 @@ export function SimplifiedCountingExercise({
               {Array.from({ length: count }).map((_, index) => (
                 <div
                   key={index}
-                  className="w-8 h-8 flex items-center justify-center bg-blue-100 rounded-full font-bold text-blue-800"
+                  className="w-8 h-8 flex items-center justify-center bg-blue-100 dark:bg-blue-900/40 rounded-full font-bold text-blue-800 dark:text-blue-300"
                 >
                   {index + 1}
                 </div>
@@ -159,11 +160,11 @@ export function SimplifiedCountingExercise({
         
         {/* Show correct answer */}
         {showAnswers && !isCorrect && (
-          <div className="mb-4 p-3 rounded-md bg-red-50 border border-red-200">
-            <p className="text-red-700">
+          <Alert variant="destructive" className="mb-4">
+            <p>
               The correct answer is: {correctCount}
             </p>
-          </div>
+          </Alert>
         )}
         
         {/* Controls */}

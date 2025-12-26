@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Alert } from '@/components/ui/alert';
 import { toast } from 'react-hot-toast';
 import { Paintbrush, Eraser, RotateCcw, Check } from 'lucide-react';
 
@@ -134,11 +135,11 @@ export function SimplifiedColoringExercise({
       
       {/* Score display when showing answers */}
       {showAnswers && (
-        <div className="mb-4 p-3 rounded-md bg-blue-50 border border-blue-200">
+        <Alert variant={isCorrect ? "success" : "info"} className="mb-4">
           <p className="font-medium">
             {isCorrect ? 'Correct! All regions are colored correctly.' : 'Some regions are not colored correctly.'}
           </p>
-        </div>
+        </Alert>
       )}
       
       {/* Color palette */}

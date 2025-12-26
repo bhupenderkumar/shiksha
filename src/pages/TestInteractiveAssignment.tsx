@@ -3,6 +3,7 @@ import { interactiveAssignmentService } from '@/services/interactiveAssignmentSe
 import { progressTrackingService } from '@/services/progressTrackingService';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert } from '@/components/ui/alert';
 import { AudioInstructions } from '@/components/ui/audio-instructions';
 import { CelebrationFeedback } from '@/components/ui/celebration-feedback';
 import { ShareableLink } from '@/components/ui/shareable-link';
@@ -150,9 +151,9 @@ export default function TestInteractiveAssignment() {
           </Button>
 
           {testAssignmentId && (
-            <div className="p-2 bg-green-50 border border-green-200 rounded">
+            <Alert variant="success">
               <p>Test assignment created with ID: {testAssignmentId}</p>
-            </div>
+            </Alert>
           )}
         </CardContent>
       </Card>

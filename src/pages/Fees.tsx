@@ -220,7 +220,7 @@ const Fees = () => {
         </Button>
       </div>
 
-      <Card className="p-4 mb-4 bg-pink-100">
+      <Card className="p-4 mb-4">
         <div className="flex items-center gap-2 mb-2">
           <Filter className="h-4 w-4" />
           <h2 className="text-lg font-semibold">Filters</h2>

@@ -1,6 +1,7 @@
 // String Constants
 const DEFAULT_PASSWORD_PREFIX = 'Welcome@';
 const STUDENT_ROLE = 'STUDENT';
+const SCHOOL_EMAIL_DOMAIN = 'myfirststepschool.com';
 const ERROR_MESSAGES = {
   FETCH_STUDENTS: 'Error fetching students:',
   FETCH_STUDENT: 'Error fetching student:',
@@ -97,15 +98,30 @@ class StudentService {
     }
   }
 
+  async getAllStudents(): Promise<Student[]> {
+    return this.findMany();
+  }
+
+  // Generate school email from student name and admission number
+  private generateStudentEmail(name: string, admissionNumber: string): string {
+    const sanitizedName = name.toLowerCase().replace(/\s+/g, '.').replace(/[^a-z.]/g, '');
+    return `${sanitizedName}.${admissionNumber.toLowerCase()}@${SCHOOL_EMAIL_DOMAIN}`;
+  }
+
   async create(studentData: CreateStudentData) {
     try {
-      // Create auth user for parent
+      // Generate school email for the student
+      const studentEmail = this.generateStudentEmail(studentData.name, studentData.admissionNumber);
+      
+      // Create auth user with school email
       const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-        email: studentData.parentEmail,
+        email: studentEmail,
         password: `${DEFAULT_PASSWORD_PREFIX}${studentData.admissionNumber}`,
         email_confirm: true,
         user_metadata: {
-          full_name: studentData.parentName,
+          full_name: studentData.name,
+          parent_name: studentData.parentName,
+          parent_email: studentData.parentEmail,
           role: STUDENT_ROLE,
           admission_number: studentData.admissionNumber
         }
@@ -121,7 +137,8 @@ class StudentService {
           id: authData.user.id,
           user_id: authData.user.id,
           role: STUDENT_ROLE,
-          full_name: studentData.name
+          full_name: studentData.name,
+          email: studentEmail
         }]);
 
       if (profileError) {
@@ -157,7 +174,7 @@ class StudentService {
       return {
         student,
         credentials: {
-          email: studentData.parentEmail,
+          email: studentEmail,
           password: `${DEFAULT_PASSWORD_PREFIX}${studentData.admissionNumber}`,
           username: studentData.name.toLowerCase().replace(/\s+/g, '.')
         }

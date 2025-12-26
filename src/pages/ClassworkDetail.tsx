@@ -215,9 +215,9 @@ const ClassworkDetail = () => {
 
             <div className="space-y-6">
               {classworkDetails?.status && (
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <h3 className="text-lg font-semibold text-indigo-900 mb-3">Status</h3>
-                  <Badge className="px-3 py-1 rounded-full bg-blue-100 text-blue-800">
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+                  <h3 className="text-lg font-semibold text-indigo-900 dark:text-indigo-300 mb-3">Status</h3>
+                  <Badge className="px-3 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
                     {classworkDetails.status}
                   </Badge>
                 </div>
