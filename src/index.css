@@ -2,9 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Prevent white flash on page load */
+/* Background is controlled by theme class */
 html, body {
-  background-color: #0a0a0a;
+  @apply bg-background text-foreground;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 @layer base {
@@ -94,17 +95,465 @@ html, body {
     text-shadow: none;
   }
 
-  /* Override any gray text colors in dark mode */
-  .dark .text-gray-600,
-  .dark .text-gray-500,
-  .dark .text-gray-400,
-  .dark .text-gray-300 {
-    @apply text-foreground;
+  /* Override gray text colors in dark mode to use theme-aware colors */
+  .dark .text-gray-900 {
+    @apply text-gray-100;
+  }
+  
+  .dark .text-gray-800 {
+    @apply text-gray-200;
+  }
+  
+  .dark .text-gray-700 {
+    @apply text-gray-300;
+  }
+  
+  .dark .text-gray-600 {
+    @apply text-gray-400;
+  }
+  
+  .dark .text-gray-500 {
+    @apply text-gray-400;
+  }
+  
+  /* Override gray backgrounds in dark mode */
+  .dark .bg-gray-50 {
+    @apply bg-gray-800;
+  }
+  
+  .dark .bg-gray-100 {
+    @apply bg-gray-700;
+  }
+  
+  .dark .bg-white {
+    @apply bg-gray-800;
+  }
+  
+  /* Override border colors in dark mode */
+  .dark .border-gray-200,
+  .dark .border-gray-300 {
+    @apply border-gray-700;
   }
   
   .dark .text-muted-foreground {
     color: hsl(var(--muted-foreground));
     opacity: 0.9;
+  }
+  
+  /* Override shadow colors in dark mode */
+  .dark .shadow-indigo-100 {
+    --tw-shadow-color: rgba(79, 70, 229, 0.1);
+  }
+  
+  /* Override indigo text colors in dark mode for better readability */
+  .dark .text-indigo-900 {
+    @apply text-indigo-200;
+  }
+  
+  .dark .text-indigo-800 {
+    @apply text-indigo-300;
+  }
+  
+  .dark .text-indigo-700 {
+    @apply text-indigo-300;
+  }
+  
+  .dark .text-indigo-600 {
+    @apply text-indigo-400;
+  }
+  
+  /* Override blue text colors in dark mode */
+  .dark .text-blue-900 {
+    @apply text-blue-200;
+  }
+  
+  .dark .text-blue-800 {
+    @apply text-blue-300;
+  }
+  
+  .dark .text-blue-700 {
+    @apply text-blue-300;
+  }
+  
+  .dark .text-blue-600 {
+    @apply text-blue-400;
+  }
+  
+  /* Override indigo backgrounds in dark mode */
+  .dark .bg-indigo-50 {
+    @apply bg-indigo-950;
+  }
+  
+  .dark .bg-indigo-100 {
+    @apply bg-indigo-900;
+  }
+  
+  .dark .bg-blue-50 {
+    @apply bg-blue-950;
+  }
+  
+  .dark .bg-blue-100 {
+    @apply bg-blue-900;
+  }
+  
+  /* Override gradient backgrounds in dark mode */
+  .dark .from-blue-50 {
+    --tw-gradient-from: rgb(23 37 84) var(--tw-gradient-from-position);
+  }
+  
+  .dark .to-indigo-50 {
+    --tw-gradient-to: rgb(30 27 75) var(--tw-gradient-to-position);
+  }
+  
+  .dark .from-indigo-50 {
+    --tw-gradient-from: rgb(30 27 75) var(--tw-gradient-from-position);
+  }
+  
+  /* Override border colors for indigo/blue in dark mode */
+  .dark .border-blue-100,
+  .dark .border-blue-200 {
+    @apply border-blue-800;
+  }
+  
+  .dark .border-indigo-100,
+  .dark .border-indigo-200 {
+    @apply border-indigo-800;
+  }
+  
+  /* Override yellow/warning colors in dark mode */
+  .dark .bg-yellow-50 {
+    @apply bg-yellow-900/20;
+  }
+  
+  .dark .border-yellow-200 {
+    @apply border-yellow-700;
+  }
+  
+  .dark .text-yellow-700 {
+    @apply text-yellow-400;
+  }
+  
+  /* Override hover states in dark mode */
+  .dark .hover\:bg-blue-50:hover {
+    @apply bg-blue-900/50;
+  }
+  
+  .dark .hover\:bg-indigo-50:hover {
+    @apply bg-indigo-900/50;
+  }
+  
+  .dark .hover\:bg-gray-50:hover {
+    @apply bg-gray-700;
+  }
+  
+  /* Override text colors that are commonly used */
+  .dark .text-blue-800 {
+    @apply text-blue-300;
+  }
+  
+  .dark .text-blue-700 {
+    @apply text-blue-400;
+  }
+  
+  .dark .text-blue-600 {
+    @apply text-blue-400;
+  }
+  
+  /* Override badge and status colors */
+  .dark .bg-blue-100 {
+    @apply bg-blue-900/50;
+  }
+  
+  .dark .bg-green-50 {
+    @apply bg-green-900/20;
+  }
+  
+  .dark .bg-green-100 {
+    @apply bg-green-900/50;
+  }
+  
+  .dark .text-green-800 {
+    @apply text-green-300;
+  }
+  
+  .dark .text-green-700 {
+    @apply text-green-400;
+  }
+  
+  .dark .bg-red-50 {
+    @apply bg-red-900/20;
+  }
+  
+  .dark .bg-red-100 {
+    @apply bg-red-900/50;
+  }
+  
+  .dark .text-red-800 {
+    @apply text-red-300;
+  }
+  
+  .dark .text-red-700 {
+    @apply text-red-400;
+  }
+  
+  .dark .border-red-200 {
+    @apply border-red-800;
+  }
+  
+  /* Override purple colors */
+  .dark .bg-purple-50 {
+    @apply bg-purple-900/20;
+  }
+  
+  .dark .bg-purple-100 {
+    @apply bg-purple-900/50;
+  }
+  
+  .dark .text-purple-800 {
+    @apply text-purple-300;
+  }
+  
+  .dark .text-purple-600 {
+    @apply text-purple-400;
+  }
+  
+  /* Override orange/amber colors */
+  .dark .bg-orange-50 {
+    @apply bg-orange-900/20;
+  }
+  
+  .dark .bg-orange-100 {
+    @apply bg-orange-900/50;
+  }
+  
+  .dark .text-orange-800 {
+    @apply text-orange-300;
+  }
+  
+  .dark .text-orange-600 {
+    @apply text-orange-400;
+  }
+  
+  /* Alert-specific styles for dark mode */
+  .dark .bg-green-50.border-green-200,
+  .dark [class*="bg-green-50"][class*="border-green-"] {
+    @apply bg-green-900/30 border-green-700;
+  }
+  
+  .dark .bg-yellow-50.border-yellow-200,
+  .dark [class*="bg-yellow-50"][class*="border-yellow-"] {
+    @apply bg-yellow-900/30 border-yellow-700;
+  }
+  
+  .dark .bg-red-50.border-red-200,
+  .dark [class*="bg-red-50"][class*="border-red-"] {
+    @apply bg-red-900/30 border-red-700;
+  }
+  
+  .dark .bg-blue-50.border-blue-200,
+  .dark [class*="bg-blue-50"][class*="border-blue-"] {
+    @apply bg-blue-900/30 border-blue-700;
+  }
+  
+  /* Badge overrides for dark mode */
+  .dark .bg-green-50.text-green-700,
+  .dark [class*="bg-green-50"][class*="text-green-"] {
+    @apply bg-green-900/40 text-green-300 border-green-700;
+  }
+  
+  .dark .bg-yellow-50.text-yellow-700,
+  .dark [class*="bg-yellow-50"][class*="text-yellow-"] {
+    @apply bg-yellow-900/40 text-yellow-300 border-yellow-700;
+  }
+  
+  .dark .bg-red-50.text-red-700,
+  .dark [class*="bg-red-50"][class*="text-red-"] {
+    @apply bg-red-900/40 text-red-300 border-red-700;
+  }
+  
+  .dark .bg-blue-50.text-blue-700,
+  .dark [class*="bg-blue-50"][class*="text-blue-"] {
+    @apply bg-blue-900/40 text-blue-300 border-blue-700;
+  }
+  
+  /* Green text/border overrides */
+  .dark .text-green-600 {
+    @apply text-green-400;
+  }
+  
+  .dark .border-green-200 {
+    @apply border-green-700;
+  }
+  
+  .dark .hover\:bg-green-50:hover {
+    @apply bg-green-900/30;
+  }
+
+  /* Comprehensive badge/pill overrides for dark mode */
+  /* Blue badges */
+  .dark .rounded-full.bg-blue-50,
+  .dark [class*="rounded-full"][class*="bg-blue-50"],
+  .dark .rounded-md.bg-blue-50,
+  .dark [class*="rounded"][class*="bg-blue-50"][class*="text-blue-"] {
+    background-color: rgb(30 58 138 / 0.4) !important;
+    color: rgb(147 197 253) !important;
+    border-color: rgb(30 64 175) !important;
+  }
+
+  /* Red badges */
+  .dark .rounded-full.bg-red-50,
+  .dark [class*="rounded-full"][class*="bg-red-50"],
+  .dark .rounded-md.bg-red-50,
+  .dark [class*="rounded"][class*="bg-red-50"][class*="text-red-"] {
+    background-color: rgb(127 29 29 / 0.4) !important;
+    color: rgb(252 165 165) !important;
+    border-color: rgb(153 27 27) !important;
+  }
+
+  /* Green badges */
+  .dark .rounded-full.bg-green-50,
+  .dark [class*="rounded-full"][class*="bg-green-50"],
+  .dark .rounded-md.bg-green-50,
+  .dark [class*="rounded"][class*="bg-green-50"][class*="text-green-"] {
+    background-color: rgb(20 83 45 / 0.4) !important;
+    color: rgb(134 239 172) !important;
+    border-color: rgb(22 101 52) !important;
+  }
+
+  /* Yellow/Amber badges */
+  .dark .rounded-full.bg-yellow-50,
+  .dark [class*="rounded-full"][class*="bg-yellow-50"],
+  .dark .rounded-md.bg-yellow-50,
+  .dark [class*="rounded"][class*="bg-yellow-50"][class*="text-yellow-"] {
+    background-color: rgb(113 63 18 / 0.4) !important;
+    color: rgb(253 224 71) !important;
+    border-color: rgb(133 77 14) !important;
+  }
+
+  /* Purple badges */
+  .dark .rounded-full.bg-purple-50,
+  .dark [class*="rounded-full"][class*="bg-purple-50"],
+  .dark .rounded-md.bg-purple-50,
+  .dark [class*="rounded"][class*="bg-purple-50"][class*="text-purple-"] {
+    background-color: rgb(88 28 135 / 0.4) !important;
+    color: rgb(216 180 254) !important;
+    border-color: rgb(107 33 168) !important;
+  }
+
+  /* Orange badges */
+  .dark .rounded-full.bg-orange-50,
+  .dark [class*="rounded-full"][class*="bg-orange-50"],
+  .dark .rounded-md.bg-orange-50,
+  .dark [class*="rounded"][class*="bg-orange-50"][class*="text-orange-"] {
+    background-color: rgb(124 45 18 / 0.4) !important;
+    color: rgb(253 186 116) !important;
+    border-color: rgb(154 52 18) !important;
+  }
+
+  /* Pink badges */
+  .dark .rounded-full.bg-pink-50,
+  .dark [class*="rounded-full"][class*="bg-pink-50"],
+  .dark .rounded-md.bg-pink-50,
+  .dark [class*="rounded"][class*="bg-pink-50"][class*="text-pink-"] {
+    background-color: rgb(131 24 67 / 0.4) !important;
+    color: rgb(249 168 212) !important;
+    border-color: rgb(157 23 77) !important;
+  }
+
+  /* Indigo badges */
+  .dark .rounded-full.bg-indigo-50,
+  .dark [class*="rounded-full"][class*="bg-indigo-50"],
+  .dark .rounded-md.bg-indigo-50,
+  .dark [class*="rounded"][class*="bg-indigo-50"][class*="text-indigo-"] {
+    background-color: rgb(49 46 129 / 0.4) !important;
+    color: rgb(165 180 252) !important;
+    border-color: rgb(67 56 202) !important;
+  }
+
+  /* Cyan/Teal badges */
+  .dark .rounded-full.bg-cyan-50,
+  .dark [class*="rounded-full"][class*="bg-cyan-50"],
+  .dark .rounded-md.bg-cyan-50,
+  .dark [class*="rounded"][class*="bg-cyan-50"][class*="text-cyan-"] {
+    background-color: rgb(21 94 117 / 0.4) !important;
+    color: rgb(103 232 249) !important;
+    border-color: rgb(14 116 144) !important;
+  }
+
+  /* Slate/Gray badges */
+  .dark .rounded-full.bg-slate-50,
+  .dark [class*="rounded-full"][class*="bg-slate-50"],
+  .dark .rounded-md.bg-slate-50,
+  .dark [class*="rounded"][class*="bg-slate-50"][class*="text-slate-"] {
+    background-color: rgb(51 65 85 / 0.4) !important;
+    color: rgb(203 213 225) !important;
+    border-color: rgb(71 85 105) !important;
+  }
+
+  /* Additional border color overrides for badges */
+  .dark .border-blue-100 {
+    border-color: rgb(30 64 175) !important;
+  }
+
+  .dark .border-red-100 {
+    border-color: rgb(153 27 27) !important;
+  }
+
+  .dark .border-green-100 {
+    border-color: rgb(22 101 52) !important;
+  }
+
+  .dark .border-yellow-100 {
+    border-color: rgb(133 77 14) !important;
+  }
+
+  .dark .border-purple-100 {
+    border-color: rgb(107 33 168) !important;
+  }
+
+  .dark .border-orange-100 {
+    border-color: rgb(154 52 18) !important;
+  }
+
+  .dark .border-pink-100 {
+    border-color: rgb(157 23 77) !important;
+  }
+
+  .dark .border-indigo-100 {
+    border-color: rgb(67 56 202) !important;
+  }
+
+  /* Text color overrides for badge text that might be missed */
+  .dark .text-blue-800 {
+    color: rgb(147 197 253) !important;
+  }
+
+  .dark .text-red-800 {
+    color: rgb(252 165 165) !important;
+  }
+
+  .dark .text-green-800 {
+    color: rgb(134 239 172) !important;
+  }
+
+  .dark .text-yellow-800 {
+    color: rgb(253 224 71) !important;
+  }
+
+  .dark .text-purple-800 {
+    color: rgb(216 180 254) !important;
+  }
+
+  .dark .text-orange-800 {
+    color: rgb(253 186 116) !important;
+  }
+
+  .dark .text-pink-800 {
+    color: rgb(249 168 212) !important;
+  }
+
+  .dark .text-indigo-800 {
+    color: rgb(165 180 252) !important;
   }
 }
 

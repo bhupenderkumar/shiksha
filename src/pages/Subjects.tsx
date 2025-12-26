@@ -190,9 +190,9 @@ export default function SubjectsPage() {
                 <Book className="h-8 w-8 text-primary" />
                 <div>
                   <h3 className="text-lg font-semibold">{subject.name}</h3>
-                  <p className="text-sm text-gray-500">Code: {subject.code}</p>
-                  <p className="text-sm text-gray-500">Class: {subject.class?.name}</p>
-                  <p className="text-sm text-gray-500">Teacher: {subject.teacher?.name}</p>
+                  <p className="text-sm text-muted-foreground">Code: {subject.code}</p>
+                  <p className="text-sm text-muted-foreground">Class: {subject.class?.name}</p>
+                  <p className="text-sm text-muted-foreground">Teacher: {subject.teacher?.name}</p>
                 </div>
               </div>
               {(profile?.role === 'admin' || profile?.role === 'teacher') && (
@@ -230,9 +230,9 @@ export default function SubjectsPage() {
       </div>
 
       {isDialogOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-card rounded-lg p-6 w-full max-w-md border border-border shadow-lg">
+            <h2 className="text-xl font-bold mb-4 text-foreground">
               {editingSubject ? 'Edit Subject' : 'Add New Subject'}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">

@@ -18,7 +18,7 @@ const StudentDashboard = lazy(() => import('./pages/StudentDashboard'));
 const AttendancePage = lazy(() => import('./pages/Attendance'));
 const SettingsPage = lazy(() => import('./pages/Settings'));
 const Home = lazy(() => import('./pages/Home/index'));
-const Toaster = lazy(() => import('react-hot-toast').then(module => ({ default: module.Toaster })));
+const Toaster = lazy(() => import('@/components/ui/toast').then(module => ({ default: module.Toaster })));
 const ClassworkDetail = lazy(() => import('./pages/ClassworkDetail'));
 const Feedback = lazy(() => import('./pages/Feedback'));
 const Register = lazy(() => import('./pages/Register'));
@@ -340,7 +340,7 @@ function App() {
       <div className="flex flex-col min-h-screen bg-transparent mt-4 relative z-10">
         <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center"><div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div></div>}>
           <AppRoutes />
-          <Toaster position="top-right" />
+          <Toaster />
         </Suspense>
       </div>
     </TooltipProvider>

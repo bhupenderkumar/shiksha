@@ -212,26 +212,46 @@ const AdmissionEnquiry = () => {
     const Wrapper = user ? Layout : PublicLayout;
     return (
       <Wrapper>
-        <div className="container mx-auto p-4 space-y-6 min-h-screen bg-background">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              onClick={() => navigate(user ? '/admission/enquiries' : '/')}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            <h1 className="text-2xl font-bold">New Admission Enquiry</h1>
+        <div className="min-h-screen bg-gradient-to-b from-zinc-900 via-zinc-900 to-black">
+          {/* Hero Header */}
+          <div className="relative overflow-hidden">
+            <div className="absolute inset-0">
+              <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-violet-600/20 blur-3xl" />
+              <div className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full bg-fuchsia-600/20 blur-3xl" />
+            </div>
+            <div className="relative container mx-auto px-4 py-12">
+              <Button
+                variant="ghost"
+                onClick={() => navigate(user ? '/admission/enquiries' : '/')}
+                className="text-zinc-400 hover:text-white hover:bg-zinc-800 mb-6"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Home
+              </Button>
+              
+              <div className="text-center max-w-2xl mx-auto">
+                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 text-sm font-medium mb-6">
+                  ✨ Start Your Journey
+                </span>
+                <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                  Admission{" "}
+                  <span className="bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
+                    Enquiry
+                  </span>
+                </h1>
+                <p className="text-zinc-400 text-lg">
+                  Fill out the form below to begin your child's educational journey with us.
+                </p>
+              </div>
+            </div>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Student Information</CardTitle>
-            </CardHeader>
-            <CardContent>
+          {/* Form Section */}
+          <div className="container mx-auto px-4 pb-12">
+            <div className="max-w-3xl mx-auto">
               <AdmissionEnquiryForm onSubmit={handleSubmit} />
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </Wrapper>
     );

@@ -35,7 +35,8 @@ export const anonymousUserService = {
       // Check if user with this mobile number already exists
       if (mobileNumber) {
         const { data: existingUser } = await supabase
-          .from(`${SCHEMA}.${ANONYMOUS_USER_TABLE}`)
+          .schema(SCHEMA as any)
+          .from(ANONYMOUS_USER_TABLE)
           .select('*')
           .eq('mobile_number', mobileNumber)
           .single();
@@ -43,7 +44,8 @@ export const anonymousUserService = {
         if (existingUser) {
           // Update the existing user's name and last_active
           const { data: updatedUser, error } = await supabase
-            .from(`${SCHEMA}.${ANONYMOUS_USER_TABLE}`)
+            .schema(SCHEMA as any)
+            .from(ANONYMOUS_USER_TABLE)
             .update({
               name,
               last_active: new Date().toISOString()
@@ -59,7 +61,8 @@ export const anonymousUserService = {
 
       // Create a new user
       const { data: newUser, error } = await supabase
-        .from(`${SCHEMA}.${ANONYMOUS_USER_TABLE}`)
+        .schema(SCHEMA as any)
+        .from(ANONYMOUS_USER_TABLE)
         .insert({
           name,
           mobile_number: mobileNumber || null
@@ -81,7 +84,8 @@ export const anonymousUserService = {
   async getUserById(id: string): Promise<AnonymousUser | null> {
     try {
       const { data, error } = await supabase
-        .from(`${SCHEMA}.${ANONYMOUS_USER_TABLE}`)
+        .schema(SCHEMA as any)
+        .from(ANONYMOUS_USER_TABLE)
         .select('*')
         .eq('id', id)
         .single();
@@ -100,7 +104,8 @@ export const anonymousUserService = {
   async updateLastActive(userId: string): Promise<void> {
     try {
       await supabase
-        .from(`${SCHEMA}.${ANONYMOUS_USER_TABLE}`)
+        .schema(SCHEMA as any)
+        .from(ANONYMOUS_USER_TABLE)
         .update({
           last_active: new Date().toISOString()
         })
@@ -117,7 +122,8 @@ export const anonymousUserService = {
     try {
       // Check if progress already exists
       const { data: existingProgress } = await supabase
-        .from(`${SCHEMA}.${ANONYMOUS_USER_PROGRESS_TABLE}`)
+        .schema(SCHEMA as any)
+        .from(ANONYMOUS_USER_PROGRESS_TABLE)
         .select('*')
         .eq('user_id', userId)
         .eq('assignment_id', assignmentId)
@@ -132,7 +138,8 @@ export const anonymousUserService = {
 
       // Create new progress entry
       const { data, error } = await supabase
-        .from(`${SCHEMA}.${ANONYMOUS_USER_PROGRESS_TABLE}`)
+        .schema(SCHEMA as any)
+        .from(ANONYMOUS_USER_PROGRESS_TABLE)
         .insert({
           user_id: userId,
           assignment_id: assignmentId,
@@ -160,7 +167,8 @@ export const anonymousUserService = {
   ): Promise<void> {
     try {
       await supabase
-        .from(`${SCHEMA}.${ANONYMOUS_USER_PROGRESS_TABLE}`)
+        .schema(SCHEMA as any)
+        .from(ANONYMOUS_USER_PROGRESS_TABLE)
         .update({
           responses
         })
@@ -182,7 +190,8 @@ export const anonymousUserService = {
   ): Promise<void> {
     try {
       await supabase
-        .from(`${SCHEMA}.${ANONYMOUS_USER_PROGRESS_TABLE}`)
+        .schema(SCHEMA as any)
+        .from(ANONYMOUS_USER_PROGRESS_TABLE)
         .update({
           completed: true,
           completed_at: new Date().toISOString(),
@@ -202,7 +211,8 @@ export const anonymousUserService = {
   async getCompletedAssignments(userId: string): Promise<AnonymousUserProgress[]> {
     try {
       const { data, error } = await supabase
-        .from(`${SCHEMA}.${ANONYMOUS_USER_PROGRESS_TABLE}`)
+        .schema(SCHEMA as any)
+        .from(ANONYMOUS_USER_PROGRESS_TABLE)
         .select(`
           *,
           assignment:assignment_id (

@@ -355,7 +355,7 @@ class StudentService {
         console.log('Method 4: Fallback to direct database query');
 
         // Execute a direct database query
-        const { data, error } = await supabase.from('school.Student').select('*').eq('classId', classId);
+        const { data, error } = await supabase.schema(SCHEMA as any).from(STUDENT_TABLE).select('*').eq('classId', classId);
 
         if (error) {
           console.error('Error with direct query:', error);
