@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_KEY = 'AIzaSyC1eS7zgQrBrIUC6CiRJ3K4RXG2JQJeaDw';
+const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 const PLACE_ID = 'ChIJQZ8W_lnmDDkRKKD9jMgstPA';
 
 export const fetchPlaceDetails = async () => {

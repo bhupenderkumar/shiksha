@@ -1,5 +1,5 @@
 // API key for Google Maps - used by useGoogleMaps hook for map display
-const _API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyD7IJF39_HZvW9Bhno1guh95uAfY79WpaA';
+const _API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 // Place ID kept for reference if backend proxy is implemented later
 const _PLACE_ID = 'ChIJQZ8W_lnmDDkRKKD9jMgstPA'; // First Step Public School's Place ID
 
