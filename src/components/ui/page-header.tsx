@@ -9,7 +9,7 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, subtitle, icon, action }: PageHeaderProps) {
   return (
-    <div className="flex items-center justify-between mb-8 bg-white rounded-lg p-6 shadow-sm">
+    <div className="flex items-center justify-between mb-8 bg-card rounded-lg p-6 shadow-sm border border-border">
       <div className="flex items-center space-x-4">
         {icon && (
           <div className="text-primary text-3xl animate-float">
@@ -17,11 +17,11 @@ export function PageHeader({ title, subtitle, icon, action }: PageHeaderProps) {
           </div>
         )}
         <div>
-          <h1 className="text-3xl font-display text-primary-600">
+          <h1 className="text-3xl font-display text-foreground">
             {title}
           </h1>
           {subtitle && (
-            <p className="text-gray-500 font-handwriting mt-1">
+            <p className="text-muted-foreground font-handwriting mt-1">
               {subtitle}
             </p>
           )}

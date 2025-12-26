@@ -42,64 +42,65 @@ const FILE_CONFIG = {
   ALLOWED_TYPES: ['application/pdf', 'image/jpeg', 'image/png']
 } as const;
 
-// Database interfaces
+// Database interfaces - using camelCase to match DB schema
 type DocumentVerificationStatus = 'pending' | 'verified' | 'rejected';
 
 interface DbProspectiveStudent {
   id: string;
-  student_name: string;
-  parent_name: string;
+  studentName: string;
+  parentName: string;
   email: string;
-  contact_number: string;
-  grade_applying: string;
+  contactNumber: string;
+  gradeApplying: string;
   gender: string;
-  date_of_birth: string | null;
+  dateOfBirth: string | null;
   address: string | null;
   status: string;
-  applied_date: string;
-  last_update_date: string;
-  created_at: string;
-  updated_at: string;
+  appliedDate: string | null;
+  lastUpdateDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+  schoolId: string;
 }
 
 interface DbAdmissionProcess {
   id: string;
-  prospective_student_id: string;
-  documents_required: DocumentStatus;
-  interview_date: string | null;
-  assigned_class_id: string | null;
-  created_at: string;
-  updated_at: string;
+  prospectiveStudentId: string;
+  documentsRequired: DocumentStatus;
+  interviewDate: string | null;
+  assignedClassId: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface DbAdmissionNote {
   id: string;
-  prospective_student_id: string;
+  prospectiveStudentId: string;
   content: string;
-  created_by: string;
-  created_at: string;
+  createdBy: string;
+  createdAt: string;
 }
 
 interface DbAdmissionCommunication {
   id: string;
-  prospective_student_id: string;
-  communication_type: string;
+  prospectiveStudentId: string;
+  communicationType: string;
   notes: string | null;
-  staff_id: string;
-  communication_date: string;
-  created_at: string;
-  updated_at: string;
+  staffId: string;
+  communicationDate: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface DbFile {
   id: string;
-  file_name: string;
-  file_path: string;
-  file_type: string;
-  file_size: number;
-  uploaded_by: string;
-  created_at: string;
-  updated_at: string;
+  fileName: string;
+  filePath: string;
+  fileType: string;
+  fileSize: number;
+  uploadedBy: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface DbResponse<T> {
@@ -129,29 +130,29 @@ const toISOString = (date: Date | undefined): string => {
 const mapDbStudentToFrontend = (dbStudent: DbProspectiveStudent): ProspectiveStudent => {
   return {
     id: dbStudent.id,
-    studentName: dbStudent.student_name,
-    parentName: dbStudent.parent_name,
+    studentName: dbStudent.studentName,
+    parentName: dbStudent.parentName,
     email: dbStudent.email,
-    contactNumber: dbStudent.contact_number,
-    gradeApplying: dbStudent.grade_applying,
+    contactNumber: dbStudent.contactNumber,
+    gradeApplying: dbStudent.gradeApplying,
     gender: dbStudent.gender as Gender,
-    dateOfBirth: formatDate(dbStudent.date_of_birth),
+    dateOfBirth: formatDate(dbStudent.dateOfBirth),
     address: dbStudent.address || '',
     status: dbStudent.status as EnquiryStatus,
-    appliedDate: formatDate(dbStudent.applied_date),
-    lastUpdateDate: formatDate(dbStudent.last_update_date)
+    appliedDate: formatDate(dbStudent.appliedDate),
+    lastUpdateDate: formatDate(dbStudent.lastUpdateDate)
   };
 };
 
 const mapDbProcessToFrontend = (dbProcess: DbAdmissionProcess): AdmissionProcess => {
   return {
     id: dbProcess.id,
-    prospectiveStudentId: dbProcess.prospective_student_id,
-    documentsRequired: dbProcess.documents_required,
-    interviewDate: formatOptionalDate(dbProcess.interview_date),
-    assignedClassId: dbProcess.assigned_class_id || undefined,
-    createdAt: formatDate(dbProcess.created_at),
-    updatedAt: formatDate(dbProcess.updated_at)
+    prospectiveStudentId: dbProcess.prospectiveStudentId,
+    documentsRequired: dbProcess.documentsRequired,
+    interviewDate: formatOptionalDate(dbProcess.interviewDate),
+    assignedClassId: dbProcess.assignedClassId || undefined,
+    createdAt: formatDate(dbProcess.createdAt),
+    updatedAt: formatDate(dbProcess.updatedAt)
   };
 };
 
@@ -174,21 +175,23 @@ export const admissionService = {
     const id = uuidv4();
     const now = new Date().toISOString();
     
+    // Database uses camelCase column names
     const dbData = {
       id,
-      student_name: data.studentName,
-      parent_name: data.parentName,
+      studentName: data.studentName,
+      parentName: data.parentName,
       email: data.email,
-      contact_number: data.contactNumber,
-      grade_applying: data.gradeApplying,
+      contactNumber: data.contactNumber,
+      gradeApplying: data.gradeApplying,
       gender: data.gender,
-      date_of_birth: data.dateOfBirth?.toISOString() || null,
-      address: data.address || null,
+      dateOfBirth: data.dateOfBirth?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
+      address: data.address || '',
       status: ADMISSION_STATUS.NEW,
-      applied_date: now,
-      last_update_date: now,
-      created_at: now,
-      updated_at: now
+      appliedDate: now,
+      lastUpdateDate: now,
+      createdAt: now,
+      updatedAt: now,
+      schoolId: '00000000-0000-0000-0000-000000000001' // Default school ID
     };
 
     const { data: newEnquiry, error } = await supabase
@@ -208,37 +211,40 @@ export const admissionService = {
       .from(TABLES.ADMISSION_PROCESS)
       .insert([{
         id: uuidv4(),
-        prospective_student_id: id,
-        documents_required: REQUIRED_DOCUMENTS.reduce((acc, doc) => ({
+        prospectiveStudentId: id,
+        documentsRequired: REQUIRED_DOCUMENTS.reduce((acc, doc) => ({
           ...acc,
           [doc]: { status: 'pending', url: null }
         }), {}),
-        interview_date: null,
-        assigned_class_id: null,
-        created_at: now,
-        updated_at: now
+        interviewDate: null,
+        assignedClassId: null,
+        createdAt: now,
+        updatedAt: now
       }]);
 
     if (processError) {
-      throw new Error(`Failed to create admission process: ${processError.message}`);
+      // Log but don't fail - the main enquiry was created
+      console.warn(`Failed to create admission process: ${processError.message}`);
     }
 
     return mapDbStudentToFrontend(newEnquiry);
   },
 
   async updateEnquiry(id: string, data: Partial<ProspectiveStudentData>): Promise<ProspectiveStudent> {
-    const dbData = {
-      student_name: data.studentName,
-      parent_name: data.parentName,
-      email: data.email,
-      contact_number: data.contactNumber,
-      grade_applying: data.gradeApplying,
-      gender: data.gender,
-      date_of_birth: data.dateOfBirth?.toISOString(),
-      address: data.address,
-      last_update_date: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+    const now = new Date().toISOString();
+    const dbData: Record<string, unknown> = {
+      lastUpdateDate: now,
+      updatedAt: now
     };
+    
+    if (data.studentName) dbData.studentName = data.studentName;
+    if (data.parentName) dbData.parentName = data.parentName;
+    if (data.email) dbData.email = data.email;
+    if (data.contactNumber) dbData.contactNumber = data.contactNumber;
+    if (data.gradeApplying) dbData.gradeApplying = data.gradeApplying;
+    if (data.gender) dbData.gender = data.gender;
+    if (data.dateOfBirth) dbData.dateOfBirth = data.dateOfBirth.toISOString().split('T')[0];
+    if (data.address) dbData.address = data.address;
 
     const { data: updatedEnquiry, error } = await supabase
       .schema(SCHEMA)
@@ -262,8 +268,8 @@ export const admissionService = {
       .from(TABLES.PROSPECTIVE_STUDENT)
       .update({ 
         status, 
-        last_update_date: now,
-        updated_at: now 
+        lastUpdateDate: now,
+        updatedAt: now 
       })
       .eq('id', id);
 

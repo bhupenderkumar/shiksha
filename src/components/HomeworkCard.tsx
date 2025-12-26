@@ -89,15 +89,15 @@ export function HomeworkCard({ homework, onEdit, onDelete, onView, isStudent, at
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'COMPLETED':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300';
       case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300';
       case 'OVERDUE':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300';
       case 'SUBMITTED':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
     }
   };
 
@@ -106,13 +106,13 @@ export function HomeworkCard({ homework, onEdit, onDelete, onView, isStudent, at
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
-            <h3 className="text-lg font-semibold truncate" title={homework.title}>
+            <h3 className="text-lg font-semibold truncate text-foreground" title={homework.title}>
               {homework.title}
             </h3>
-            <p className="text-sm text-gray-500 truncate" title={`${homework.class?.name} - ${homework.class?.section}`}>
+            <p className="text-sm text-muted-foreground truncate" title={`${homework.class?.name} - ${homework.class?.section}`}>
               {homework.class?.name} - {homework.class?.section}
             </p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               Due: {format(new Date(homework.dueDate), 'PPP')}
             </p>
             <Badge className={getStatusColor(homework.status)}>{homework.status}</Badge>

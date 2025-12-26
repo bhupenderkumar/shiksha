@@ -71,7 +71,7 @@ const ProfilePage = () => {
   if (!profile) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded">
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 text-yellow-700 dark:text-yellow-400 px-4 py-3 rounded">
           No profile found
         </div>
       </div>
@@ -81,7 +81,7 @@ const ProfilePage = () => {
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <h1 className="text-3xl font-bold text-gray-900">{profile.full_name}</h1>
+        <h1 className="text-3xl font-bold text-foreground">{profile.full_name}</h1>
         <Button
           onClick={handleDownloadProfile}
           disabled={downloading}
@@ -97,7 +97,7 @@ const ProfilePage = () => {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-        <Card className="overflow-hidden bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <Card className="overflow-hidden bg-card shadow-lg hover:shadow-xl transition-shadow duration-300">
           <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5 text-primary" />
@@ -107,7 +107,7 @@ const ProfilePage = () => {
           <CardContent className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="space-y-2">
-                <p className="text-sm text-gray-500">Full Name</p>
+                <p className="text-sm text-muted-foreground">Full Name</p>
                 <p className="font-medium">{profile.full_name}</p>
               </div>
               <div className="space-y-2">

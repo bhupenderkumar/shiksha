@@ -1,4 +1,4 @@
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "@/components/ui/toast";
 import { ThemeProvider } from "@/components/theme-provider";
 
 interface RootLayoutProps {
@@ -14,7 +14,7 @@ export function RootLayout({ children }: RootLayoutProps) {
       disableTransitionOnChange
     >
       {children}
-      <Toaster position="bottom-right" />
+      <Toaster />
     </ThemeProvider>
   );
 }

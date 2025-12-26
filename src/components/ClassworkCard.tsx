@@ -81,13 +81,13 @@ export function ClassworkCard({ classwork, onEdit, onDelete, isStudent, attachme
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
-            <h3 className="text-lg font-semibold truncate" title={classwork.title}>
+            <h3 className="text-lg font-semibold truncate text-foreground" title={classwork.title}>
               {classwork.title}
             </h3>
-            <p className="text-sm text-gray-500 truncate" title={`${classwork.class?.name} - ${classwork.class?.section}`}>
+            <p className="text-sm text-muted-foreground truncate" title={`${classwork.class?.name} - ${classwork.class?.section}`}>
               {classwork.class?.name} - {classwork.class?.section}
             </p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               {new Date(classwork.date).toLocaleDateString()}
             </p>
           </div>
@@ -117,12 +117,12 @@ export function ClassworkCard({ classwork, onEdit, onDelete, isStudent, attachme
       </CardHeader>
       <CardContent>
         <div className={showFullDescription ? "" : "line-clamp-3"}>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             {classwork.description}
           </p>
         </div>
         {classwork.description.split('\n').length > descriptionLineLimit && (
-          <button onClick={toggleDescription} className="text-blue-500 text-sm hover:underline focus:outline-none">
+          <button onClick={toggleDescription} className="text-primary text-sm hover:underline focus:outline-none">
             {showFullDescription ? "Show Less" : "Show More"}
           </button>
         )}

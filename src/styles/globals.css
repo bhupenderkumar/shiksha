@@ -5,16 +5,17 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Prevent white flash on load for landing page */
+/* Apply background based on theme class */
 html {
-  background-color: #0a0a0a;
+  @apply bg-background;
 }
 
 body {
-  background-color: #0a0a0a;
+  @apply bg-background text-foreground;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Dark landing page styles */
+/* Dark landing page styles - only for landing page */
 .dark-landing,
 .dark-landing * {
   text-shadow: none !important;
