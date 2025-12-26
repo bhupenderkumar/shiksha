@@ -297,8 +297,8 @@ export default function SimplifiedPlayAssignment() {
 
             <CardContent className="p-8">
               <div className="flex flex-col items-center justify-center py-8">
-                <div className="w-32 h-32 rounded-full bg-green-100 flex items-center justify-center mb-6">
-                  <Award className="h-16 w-16 text-green-600" />
+                <div className="w-32 h-32 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center mb-6">
+                  <Award className="h-16 w-16 text-green-600 dark:text-green-400" />
                 </div>
 
                 <h3 className="text-2xl font-bold mb-2">Your Score: {score || 0}%</h3>

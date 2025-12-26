@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Alert } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'react-hot-toast';
 import { Loader2, Send, User, Phone, Mail } from 'lucide-react';
@@ -194,14 +195,14 @@ const ParentFeedbackSubmissionModal: React.FC<ParentFeedbackSubmissionModalProps
                 Thank you for sharing your feedback about your child's progress.
               </DialogDescription>
             </DialogHeader>
-            <div className="bg-green-50 border border-green-200 rounded-md p-4 my-4">
+            <Alert variant="success" className="my-4">
               <p className="text-center">
                 {isUpdate
                   ? 'Your feedback has been updated and will be reviewed by our teachers. Thank you for helping us improve our teaching methods.'
                   : 'Your feedback has been received and will be reviewed by our teachers. This helps us better understand your child\'s needs and improve our teaching methods.'
                 }
               </p>
-            </div>
+            </Alert>
             <DialogFooter className="flex justify-center gap-4 sm:justify-center">
               <Button onClick={handleClose}>Close</Button>
               <Button

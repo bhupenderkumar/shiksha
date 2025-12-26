@@ -510,13 +510,13 @@ const IDCardDetails: React.FC = () => {
             {/* Selected count and download buttons */}
             {selectedIds.size > 0 && (
               <>
-                <div className="bg-amber-50 text-amber-800 px-3 py-1 rounded-md font-medium flex items-center">
+                <div className="bg-amber-50 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 px-3 py-1 rounded-md font-medium flex items-center">
                   <CheckSquare className="h-4 w-4 mr-1" />
                   <span className="text-sm">{selectedIds.size} selected</span>
                 </div>
                 <Button
                   variant="outline"
-                  className="flex items-center gap-1 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800 border-amber-200"
+                  className="flex items-center gap-1 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:hover:bg-amber-900/50 dark:border-amber-700"
                   onClick={handleDownloadSelected}
                   disabled={downloadingSelected}
                 >
@@ -525,7 +525,7 @@ const IDCardDetails: React.FC = () => {
                 </Button>
                 <Button
                   variant="outline"
-                  className="flex items-center gap-1 bg-orange-50 text-orange-700 hover:bg-orange-100 hover:text-orange-800 border-orange-200"
+                  className="flex items-center gap-1 bg-orange-50 text-orange-700 hover:bg-orange-100 hover:text-orange-800 border-orange-200 dark:bg-orange-900/40 dark:text-orange-300 dark:hover:bg-orange-900/50 dark:border-orange-700"
                   onClick={handleDownloadSelectedExcel}
                   disabled={downloadingSelectedExcel}
                 >
@@ -544,7 +544,7 @@ const IDCardDetails: React.FC = () => {
             )}
             <Button
               variant="outline"
-              className="flex items-center gap-1 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 border-green-200"
+              className="flex items-center gap-1 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 border-green-200 dark:bg-green-900/40 dark:text-green-300 dark:hover:bg-green-900/50 dark:border-green-700"
               onClick={handleDownloadAll}
               disabled={downloading || totalIdCards === 0}
             >
@@ -553,7 +553,7 @@ const IDCardDetails: React.FC = () => {
             </Button>
             <Button
               variant="outline"
-              className="flex items-center gap-1 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 border-blue-200"
+              className="flex items-center gap-1 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:hover:bg-blue-900/50 dark:border-blue-700"
               onClick={handleDownloadAllExcel}
               disabled={downloadingExcel || totalIdCards === 0}
             >
@@ -564,9 +564,9 @@ const IDCardDetails: React.FC = () => {
               classId={searchParams.classId}
               search={searchParams.search}
               variant="outline"
-              className="flex items-center gap-1 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:text-purple-800 border-purple-200"
+              className="flex items-center gap-1 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:text-purple-800 border-purple-200 dark:bg-purple-900/40 dark:text-purple-300 dark:hover:bg-purple-900/50 dark:border-purple-700"
             />
-            <div className="bg-blue-50 text-blue-800 px-3 py-1 rounded-md font-medium flex items-center">
+            <div className="bg-blue-50 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 px-3 py-1 rounded-md font-medium flex items-center">
               <span className="text-xs mr-1">Total Records:</span>
               <span className="text-lg font-bold">{totalIdCards}</span>
             </div>

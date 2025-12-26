@@ -378,9 +378,9 @@ const AdmissionEnquiry = () => {
                     className="flex flex-col items-center"
                   >
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      step.completed ? 'bg-green-100 text-green-600' :
-                      step.current ? 'bg-blue-100 text-blue-600' :
-                      'bg-gray-100 text-gray-400'
+                      step.completed ? 'bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400' :
+                      step.current ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400' :
+                      'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500'
                     }`}>
                       {step.completed ? (
                         <div className="w-2 h-2 rounded-full bg-green-600" />

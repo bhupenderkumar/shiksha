@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { Alert } from '@/components/ui/alert';
 import { toast } from 'react-hot-toast';
 import { Play, Pause, RotateCcw, CheckCircle, XCircle } from 'lucide-react';
 import { AudioReadingQuestion, AudioReadingResponse } from '@/types/interactiveAssignment';
@@ -218,11 +219,11 @@ export function SimplifiedAudioReadingExercise({
       
       {/* Score display when showing answers */}
       {showAnswers && comprehensionQuestions.length > 0 && (
-        <div className="mb-4 p-3 rounded-md bg-blue-50 border border-blue-200">
+        <Alert variant="info" className="mb-4">
           <p className="font-medium">
             Your score: {calculateScore()}%
           </p>
-        </div>
+        </Alert>
       )}
       
       {/* Audio player */}
@@ -301,7 +302,7 @@ export function SimplifiedAudioReadingExercise({
                             key={option}
                             className={`
                               flex items-start space-x-2 p-2 rounded
-                              ${isOptionCorrect ? 'bg-green-100' : ''}
+                              ${isOptionCorrect ? 'bg-green-100 dark:bg-green-900/40' : ''}
                             `}
                           >
                             <RadioGroupItem value={option} id={`${question.id}-${option}`} />

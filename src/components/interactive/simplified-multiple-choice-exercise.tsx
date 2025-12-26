@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Alert } from '@/components/ui/alert';
 import { toast } from 'react-hot-toast';
 import { CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import { playSound } from '@/utils/soundUtils';
@@ -306,14 +307,14 @@ export function SimplifiedMultipleChoiceExercise({
 
       {/* Score display when showing answers */}
       {showAnswers && !showScoreCard && (
-        <div className="mb-4 p-3 rounded-md bg-blue-50 border border-blue-200">
+        <Alert variant={isCorrect ? "success" : "info"} className="mb-4">
           <p className="font-medium flex items-center">
             {isCorrect
               ? <><CheckCircle className="h-5 w-5 text-green-500 mr-2" /> Correct!</>
               : <><XCircle className="h-5 w-5 text-red-500 mr-2" /> Incorrect</>}
           </p>
           <p className="text-sm mt-1">Your score: {calculateScore()}%</p>
-        </div>
+        </Alert>
       )}
 
       {/* Choices */}

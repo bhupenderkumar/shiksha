@@ -6,6 +6,7 @@ import { toast } from "react-hot-toast";
 import { ROUTES } from "@/constants/app-constants";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/alert";
 import { ArrowLeft, Edit, Trash, Share2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -93,13 +94,13 @@ export default function ViewInteractiveAssignment() {
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case "DRAFT":
-        return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
+        return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100 dark:bg-yellow-900/40 dark:text-yellow-300 dark:hover:bg-yellow-900/50";
       case "PUBLISHED":
-        return "bg-green-100 text-green-800 hover:bg-green-100";
+        return "bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900/40 dark:text-green-300 dark:hover:bg-green-900/50";
       case "ARCHIVED":
-        return "bg-gray-100 text-gray-800 hover:bg-gray-100";
+        return "bg-gray-100 text-gray-800 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600";
       default:
-        return "bg-blue-100 text-blue-800 hover:bg-blue-100";
+        return "bg-blue-100 text-blue-800 hover:bg-blue-100 dark:bg-blue-900/40 dark:text-blue-300 dark:hover:bg-blue-900/50";
     }
   };
 
@@ -124,9 +125,9 @@ export default function ViewInteractiveAssignment() {
             Back to Assignments
           </Button>
         </div>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+        <Alert variant="destructive">
           <p>{error}</p>
-        </div>
+        </Alert>
       </div>
     );
   }

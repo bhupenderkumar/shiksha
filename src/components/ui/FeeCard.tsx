@@ -22,9 +22,9 @@ const FeeCard: React.FC<FeeCardProps> = ({ fee, onDownloadReceipt, onEdit }) => 
           </p>
         </div>
         <div className={`px-2 py-1 rounded text-sm ${
-          fee.status === FeeStatus.PAID ? 'bg-green-100 text-green-800' :
-          fee.status === FeeStatus.PENDING ? 'bg-yellow-100 text-yellow-800' :
-          'bg-red-100 text-red-800'
+          fee.status === FeeStatus.PAID ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' :
+          fee.status === FeeStatus.PENDING ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300' :
+          'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'
         }`}>
           {fee.status}
         </div>

@@ -107,9 +107,9 @@ export function CompletionExercise({
               {readOnly || showAnswers ? (
                 <span
                   className={`px-2 py-1 border rounded ${
-                    isCorrect ? 'bg-green-100 border-green-300' :
-                    isIncorrect ? 'bg-red-100 border-red-300' :
-                    'bg-gray-100 border-gray-300'
+                    isCorrect ? 'bg-green-100 border-green-300 dark:bg-green-900/40 dark:border-green-700' :
+                    isIncorrect ? 'bg-red-100 border-red-300 dark:bg-red-900/40 dark:border-red-700' :
+                    'bg-gray-100 border-gray-300 dark:bg-gray-700 dark:border-gray-600'
                   }`}
                 >
                   {answer || '______'}
@@ -165,9 +165,9 @@ export function CompletionExercise({
             {readOnly || showAnswers ? (
               <span
                 className={`px-2 py-1 border rounded ${
-                  isCorrect ? 'bg-green-100 border-green-300' :
-                  isIncorrect ? 'bg-red-100 border-red-300' :
-                  'bg-gray-100 border-gray-300'
+                  isCorrect ? 'bg-green-100 border-green-300 dark:bg-green-900/40 dark:border-green-700' :
+                  isIncorrect ? 'bg-red-100 border-red-300 dark:bg-red-900/40 dark:border-red-700' :
+                  'bg-gray-100 border-gray-300 dark:bg-gray-700 dark:border-gray-600'
                 }`}
               >
                 {answer || '______'}

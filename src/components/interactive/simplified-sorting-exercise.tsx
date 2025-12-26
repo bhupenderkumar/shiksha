@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Alert } from '@/components/ui/alert';
 import { toast } from 'react-hot-toast';
 import { RefreshCw, CheckCircle, XCircle } from 'lucide-react';
 import { SortingQuestion, SortingResponse } from '@/types/interactiveAssignment';
@@ -155,11 +156,11 @@ export function SimplifiedSortingExercise({
       
       {/* Score display when showing answers */}
       {showAnswers && (
-        <div className="mb-4 p-3 rounded-md bg-blue-50 border border-blue-200">
+        <Alert variant="info" className="mb-4">
           <p className="font-medium">
             Your score: {calculateScore()}%
           </p>
-        </div>
+        </Alert>
       )}
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

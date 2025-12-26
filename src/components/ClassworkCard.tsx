@@ -55,8 +55,19 @@ export function ClassworkCard({ classwork, onEdit, onDelete, isStudent, attachme
       const urlPromises = attachments
         .filter(att => isImage(att.fileName))
         .map(async (att) => {
-          const viewUrl = await fileService.getViewUrl(att.filePath);
-          return [att.filePath, viewUrl] as [string, string];
+          try {
+            const viewUrl = await fileService.getViewUrl(att.filePath);
+            return [att.filePath, viewUrl] as [string, string];
+          } catch (error) {
+            console.error('Error getting view URL, falling back to public URL:', error);
+            // Fallback to public URL on error
+            try {
+              const publicUrl = await fileService.getPublicUrl(att.filePath);
+              return [att.filePath, publicUrl] as [string, string];
+            } catch {
+              return [att.filePath, ''] as [string, string];
+            }
+          }
         });
 
       const urls = Object.fromEntries(await Promise.all(urlPromises));
@@ -146,10 +157,15 @@ export function ClassworkCard({ classwork, onEdit, onDelete, isStudent, attachme
                         alt={file.fileName}
                         className="w-full h-full object-cover cursor-pointer"
                         onClick={() => handleImageClick(file.filePath)}
-                        onError={(e) => {
+                        onError={async (e) => {
                           console.error('Image load error, falling back to public URL');
                           const img = e.target as HTMLImageElement;
-                          img.src = fileService.getPublicUrl(file.filePath);
+                          try {
+                            const publicUrl = await fileService.getPublicUrl(file.filePath);
+                            img.src = publicUrl;
+                          } catch (error) {
+                            console.error('Failed to get public URL:', error);
+                          }
                         }}
                       />
                     </div>
@@ -190,12 +206,12 @@ export function ClassworkCard({ classwork, onEdit, onDelete, isStudent, attachme
                 src={previewImage}
                 alt="Preview"
                 className="max-w-full max-h-[80vh] object-contain"
-                onError={(e) => {
-                  console.error('Preview load error, falling back to public URL');
+                onError={async (e) => {
+                  console.error('Preview load error, attempting to reload');
                   const img = e.target as HTMLImageElement;
-                  if (previewImage) {
-                    img.src = fileService.getPublicUrl(previewImage);
-                  }
+                  // The previewImage already contains a signed URL, so if it fails
+                  // we should not try to use it as a file path
+                  img.style.display = 'none';
                 }}
               />
             </div>

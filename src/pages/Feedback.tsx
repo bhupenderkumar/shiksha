@@ -194,8 +194,8 @@ export default function Feedback() {
                                         <h3 className="font-semibold">{feedback.title}</h3>
                                         <span className={`px-2 py-1 rounded-full text-sm flex items-center gap-1 ${
                                             feedback.status === 'RESOLVED'
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-yellow-100 text-yellow-800'
+                                                ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'
+                                                : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300'
                                         }`}>
                                             {feedback.status === 'RESOLVED' ? (
                                                 <CheckCircle2 className="w-4 h-4" />

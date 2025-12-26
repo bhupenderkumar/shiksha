@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Alert } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'react-hot-toast';
 import { Loader2, ArrowLeft, Send, User, Phone, Mail, Calendar } from 'lucide-react';
@@ -107,11 +108,11 @@ const ParentFeedbackSubmission: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col items-center">
-            <div className="bg-green-50 border border-green-200 rounded-md p-4 mb-6 w-full">
+            <Alert variant="success" className="mb-6 w-full">
               <p className="text-center">
                 Your feedback has been received and will be reviewed by our teachers. This helps us better understand your child's needs and improve our teaching methods.
               </p>
-            </div>
+            </Alert>
             <div className="flex gap-4">
               <Button
                 variant="outline"

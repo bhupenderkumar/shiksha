@@ -16,25 +16,25 @@ const statusConfig = {
   PRESENT: {
     icon: CheckCircle,
     color: 'text-green-500',
-    bgColor: 'bg-green-100',
+    bgColor: 'bg-green-100 dark:bg-green-900/40',
     label: 'Present'
   },
   ABSENT: {
     icon: XCircle,
     color: 'text-red-500',
-    bgColor: 'bg-red-100',
+    bgColor: 'bg-red-100 dark:bg-red-900/40',
     label: 'Absent'
   },
   LATE: {
     icon: Clock,
     color: 'text-yellow-500',
-    bgColor: 'bg-yellow-100',
+    bgColor: 'bg-yellow-100 dark:bg-yellow-900/40',
     label: 'Late'
   },
   EXCUSED: {
     icon: AlertCircle,
     color: 'text-blue-500',
-    bgColor: 'bg-blue-100',
+    bgColor: 'bg-blue-100 dark:bg-blue-900/40',
     label: 'Excused'
   }
 };

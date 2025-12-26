@@ -175,10 +175,10 @@ const ViewYearEndFeedback = () => {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-gray-900">Year End Feedbacks</h2>
               <div className="flex items-center space-x-2">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300">
                   Submitted
                 </span>
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300">
                   Pending
                 </span>
               </div>
@@ -209,8 +209,8 @@ const ViewYearEndFeedback = () => {
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                           ${feedback.feedback_status === 'SUBMITTED' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-yellow-100 text-yellow-800'}`}
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' 
+                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300'}`}
                       >
                         {feedback.feedback_status}
                       </span>
@@ -269,8 +269,8 @@ const ViewYearEndFeedback = () => {
                       <span
                         className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
                           ${selectedFeedback?.feedback_status === 'SUBMITTED' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-yellow-100 text-yellow-800'}`}
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' 
+                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300'}`}
                       >
                         {selectedFeedback?.feedback_status}
                       </span>
@@ -407,8 +407,8 @@ const ViewYearEndFeedback = () => {
                             Status: 
                             <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                               ${selectedFeedback.feedback_status === 'SUBMITTED' 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-yellow-100 text-yellow-800'}`}>
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' 
+                                : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300'}`}>
                               {selectedFeedback.feedback_status}
                             </span>
                           </p>

@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { FormLabel } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { Alert } from "@/components/ui/alert";
 import { Plus, Trash, CheckCircle, HelpCircle, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
@@ -133,16 +134,16 @@ export function MultipleChoiceQuestionForm({
         />
       </div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-md p-3 flex items-start gap-2">
-        <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
-        <div className="text-sm text-blue-700">
+      <Alert variant="info" className="flex items-start gap-2">
+        <Info className="h-5 w-5 flex-shrink-0 mt-0.5" />
+        <div className="text-sm">
           <p className="font-medium">How to mark correct answers:</p>
           <p>Check the box next to each option that should be considered correct. {allowMultiple
             ? "You can select multiple correct answers."
             : "Only one answer can be marked as correct."}
           </p>
         </div>
-      </div>
+      </Alert>
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
@@ -179,7 +180,7 @@ export function MultipleChoiceQuestionForm({
                     className={`mb-2 ${option.isCorrect ? 'border-green-300' : ''}`}
                   />
                   {option.isCorrect && (
-                    <Badge variant="success" className="bg-green-100 text-green-800 hover:bg-green-100">
+                    <Badge variant="success" className="bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900/40 dark:text-green-300">
                       <CheckCircle className="h-3 w-3 mr-1" /> Marked as correct
                     </Badge>
                   )}
@@ -213,10 +214,10 @@ export function MultipleChoiceQuestionForm({
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
       {!options.some(opt => opt.isCorrect) && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-sm text-yellow-800">
+        <Alert variant="warning">
           <p className="font-medium">Warning: No correct answer selected</p>
           <p>Please mark at least one option as correct by checking the box next to it.</p>
-        </div>
+        </Alert>
       )}
     </div>
   );

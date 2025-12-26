@@ -33,6 +33,7 @@ import { classService } from '@/services/classService';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 import PublicLayout from '@/components/PublicLayout';
+import { useAuth } from '@/lib/auth-provider';
 
 interface Student {
   id: string;
@@ -109,6 +110,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 const YearEndFeedback = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [students, setStudents] = useState<Student[]>([]);
   const [classes, setClasses] = useState<{ id: string; name: string; }[]>([]);
@@ -379,23 +381,23 @@ const YearEndFeedback = () => {
     }
   };
 
-  return (
-    <PublicLayout>
-      <PageAnimation>
-        <div className="container mx-auto px-4 py-8">
-          <PageHeader 
-            title="Year-End Feedback"
-            description="Submit year-end feedback for student evaluation and progression"
-          />
+  // Content to render (without layout wrapper)
+  const content = (
+    <PageAnimation>
+      <div className="container mx-auto px-4 py-8">
+        <PageHeader 
+          title="Year-End Feedback"
+          description="Submit year-end feedback for student evaluation and progression"
+        />
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}>
-              <Card className="p-6 space-y-8">
-                {/* Class and Student Selection */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="class_id"
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <Card className="p-6 space-y-8">
+              {/* Class and Student Selection */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <FormField
+                  control={form.control}
+                  name="class_id"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Class Selection</FormLabel>
@@ -818,8 +820,15 @@ const YearEndFeedback = () => {
           </Form>
         </div>
       </PageAnimation>
-    </PublicLayout>
   );
+
+  // If user is authenticated, return content directly (Layout is handled by the route)
+  // If not authenticated, wrap in PublicLayout for public access
+  if (user) {
+    return content;
+  }
+
+  return <PublicLayout>{content}</PublicLayout>;
 };
 
 export default YearEndFeedback;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Alert } from '@/components/ui/alert';
 import { toast } from 'react-hot-toast';
 import { RefreshCw, CheckCircle, XCircle, Award, ArrowRight } from 'lucide-react';
 import { ExerciseScoreCard } from '@/components/ui/exercise-scorecard';
@@ -225,11 +226,11 @@ export function SimplifiedMatchingExercise({
 
       {/* Score display when showing answers */}
       {showAnswers && !showScoreCard && (
-        <div className="mb-4 p-3 rounded-md bg-blue-50 border border-blue-200">
+        <Alert variant="info" className="mb-4">
           <p className="font-medium">
             Your score: {calculateScore()}%
           </p>
-        </div>
+        </Alert>
       )}
 
       {/* Last pair feedback */}

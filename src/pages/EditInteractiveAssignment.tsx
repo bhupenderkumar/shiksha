@@ -6,6 +6,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { toast } from "react-hot-toast";
 import { ROUTES } from "@/constants/app-constants";
 import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/alert";
 import { ArrowLeft, Trash } from "lucide-react";
 import { InteractiveAssignmentType } from "@/types/interactiveAssignment";
 import {
@@ -275,9 +276,9 @@ export default function EditInteractiveAssignment() {
             Back to Assignments
           </Button>
         </div>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+        <Alert variant="destructive">
           <p>{error}</p>
-        </div>
+        </Alert>
       </div>
     );
   }
