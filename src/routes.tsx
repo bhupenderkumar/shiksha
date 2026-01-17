@@ -35,12 +35,249 @@ import ParentSubmittedFeedbackList from './pages/ParentSubmittedFeedbackList';
 import ParentSubmittedFeedbackDetail from './pages/ParentSubmittedFeedbackDetail';
 import ViewAllParentFeedback from './pages/ViewAllParentFeedback';
 import UpdateParentFeedback from './pages/UpdateParentFeedback';
+import PublicHomeworkShare from './pages/PublicHomeworkShare';
+import PublicClassworkShare from './pages/PublicClassworkShare';
+import PublicBirthdayPage from './pages/PublicBirthdayPage';
+import BirthdaysPage from './pages/BirthdaysPage';
 import Layout from './components/Layout';
 import PublicLayout from './components/PublicLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import Unauthorized from './pages/Unauthorized';
 
 export const router = createBrowserRouter([
+  // Public Birthday Page - Independent route (no layout wrapper)
+  {
+    path: '/birthday/:studentId',
+    element: <PublicBirthdayPage />,
+  },
+  // Public Share Routes - Independent routes (no layout wrapper)
+  {
+    path: '/share/homework/:token',
+    element: <PublicHomeworkShare />,
+  },
+  {
+    path: '/share/classwork/:token',
+    element: <PublicClassworkShare />,
+  },
+  // Birthdays listing page - Protected route with Layout
+  {
+    path: '/birthdays',
+    element: (
+      <ProtectedRoute>
+        <Layout><BirthdaysPage /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  // Dashboard and other protected routes
+  {
+    path: '/dashboard',
+    element: (
+      <ProtectedRoute>
+        <Layout><Dashboard /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/homework',
+    element: (
+      <ProtectedRoute>
+        <Layout><Homework /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/homework/:id',
+    element: (
+      <ProtectedRoute>
+        <Layout><HomeworkDetails /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/homework/edit/:id',
+    element: (
+      <ProtectedRoute>
+        <Layout><HomeworkEdit /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/homework/view/:id',
+    element: (
+      <ProtectedRoute>
+        <Layout><HomeworkView /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/classwork',
+    element: (
+      <ProtectedRoute>
+        <Layout><Classwork /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/classwork/:id',
+    element: (
+      <ProtectedRoute>
+        <Layout><ClassworkDetail /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/classwork/edit/:id',
+    element: (
+      <ProtectedRoute>
+        <Layout><ClassworkEdit /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/classwork/view/:id',
+    element: (
+      <ProtectedRoute>
+        <Layout><ClassworkView /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/students',
+    element: (
+      <ProtectedRoute>
+        <Layout><Students /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/subjects',
+    element: (
+      <ProtectedRoute>
+        <Layout><Subjects /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/attendance',
+    element: (
+      <ProtectedRoute>
+        <Layout><Attendance /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/fees',
+    element: (
+      <ProtectedRoute>
+        <Layout><Fees /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/settings',
+    element: (
+      <ProtectedRoute>
+        <Layout><Settings /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/idcarddetails',
+    element: (
+      <ProtectedRoute>
+        <Layout><IDCardDetails /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admission-enquiries',
+    element: (
+      <ProtectedRoute>
+        <Layout><ViewAdmissionEnquiries /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/interactive-assignments',
+    element: (
+      <ProtectedRoute>
+        <Layout><InteractiveAssignments /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/interactive-assignments/create',
+    element: (
+      <ProtectedRoute>
+        <Layout><InteractiveAssignmentForm /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/interactive-assignments/edit/:id',
+    element: (
+      <ProtectedRoute>
+        <Layout><InteractiveAssignmentForm /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/parent-feedback-list',
+    element: (
+      <ProtectedRoute>
+        <Layout><ParentFeedbackList /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/parent-feedback-form',
+    element: (
+      <ProtectedRoute>
+        <Layout><ParentFeedbackForm /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/parent-feedback-form/:id',
+    element: (
+      <ProtectedRoute>
+        <Layout><ParentFeedbackForm /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/parent-submitted-feedback-list',
+    element: (
+      <ProtectedRoute>
+        <Layout><ParentSubmittedFeedbackList /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/parent-submitted-feedback/:id',
+    element: (
+      <ProtectedRoute>
+        <Layout><ParentSubmittedFeedbackDetail /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/view-all-parent-feedback',
+    element: (
+      <ProtectedRoute>
+        <Layout><ViewAllParentFeedback /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/update-parent-feedback/:id',
+    element: (
+      <ProtectedRoute>
+        <Layout><UpdateParentFeedback /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  // Public routes with PublicLayout
   {
     path: '/',
     element: <PublicLayout><Outlet /></PublicLayout>,
@@ -92,120 +329,6 @@ export const router = createBrowserRouter([
       {
         path: 'parent-feedback-submission',
         element: <ParentFeedbackSubmission />,
-      },
-    ],
-  },
-  {
-    path: '/',
-    element: (
-      <ProtectedRoute>
-        <Layout><Outlet /></Layout>
-      </ProtectedRoute>
-    ),
-    children: [
-      {
-        path: 'dashboard',
-        element: <Dashboard />,
-      },
-      {
-        path: 'homework',
-        element: <Homework />,
-      },
-      {
-        path: 'homework/:id',
-        element: <HomeworkDetails />,
-      },
-      {
-        path: 'homework/edit/:id',
-        element: <HomeworkEdit />,
-      },
-      {
-        path: 'homework/view/:id',
-        element: <HomeworkView />,
-      },
-      {
-        path: 'classwork',
-        element: <Classwork />,
-      },
-      {
-        path: 'classwork/:id',
-        element: <ClassworkDetail />,
-      },
-      {
-        path: 'classwork/edit/:id',
-        element: <ClassworkEdit />,
-      },
-      {
-        path: 'classwork/view/:id',
-        element: <ClassworkView />,
-      },
-      {
-        path: 'students',
-        element: <Students />,
-      },
-      {
-        path: 'subjects',
-        element: <Subjects />,
-      },
-      {
-        path: 'attendance',
-        element: <Attendance />,
-      },
-      {
-        path: 'fees',
-        element: <Fees />,
-      },
-      {
-        path: 'settings',
-        element: <Settings />,
-      },
-      {
-        path: 'idcarddetails',
-        element: <IDCardDetails />,
-      },
-      {
-        path: 'admission-enquiries',
-        element: <ViewAdmissionEnquiries />,
-      },
-      {
-        path: 'interactive-assignments',
-        element: <InteractiveAssignments />,
-      },
-      {
-        path: 'interactive-assignments/create',
-        element: <InteractiveAssignmentForm />,
-      },
-      {
-        path: 'interactive-assignments/edit/:id',
-        element: <InteractiveAssignmentForm />,
-      },
-      {
-        path: 'parent-feedback-list',
-        element: <ParentFeedbackList />,
-      },
-      {
-        path: 'parent-feedback-form',
-        element: <ParentFeedbackForm />,
-      },
-      {
-        path: 'parent-feedback-form/:id',
-        element: <ParentFeedbackForm />,
-      },
-      {
-        path: 'parent-submitted-feedback-list',
-        element: <ParentSubmittedFeedbackList />,
-      },
-      {
-        path: 'parent-submitted-feedback/:id',
-        element: <ParentSubmittedFeedbackDetail />,
-      },
-      {
-        path: 'view-all-parent-feedback',
-        element: <ViewAllParentFeedback />,
-      },
-      {
-        path: 'update-parent-feedback/:id',
-        element: <UpdateParentFeedback />,
       },
     ],
   },

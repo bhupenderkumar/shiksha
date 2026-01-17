@@ -105,8 +105,20 @@ export const useImagePreview = (
     }
   }, [loadedUrls, updateImageUrl, failedAttempts]);
 
-  const handleImageClick = useCallback(async (filePath: string, id: string, index: number) => {
+  const handleImageClick = useCallback(async (urlOrPath: string, id: string, index: number) => {
     setSelectedImageIndex(index);
+    
+    // If urlOrPath is already a valid URL (e.g., pre-loaded signed URL), use it directly
+    if (urlOrPath && (urlOrPath.startsWith('http://') || urlOrPath.startsWith('https://') || urlOrPath.startsWith('blob:'))) {
+      setPreviewImage(urlOrPath);
+      // Also cache it in loadedUrls for future use
+      if (!loadedUrls[id]) {
+        setLoadedUrls(prev => ({ ...prev, [id]: urlOrPath }));
+      }
+      return;
+    }
+    
+    // Otherwise, try to load from cache or fetch new URL
     const attachment = attachments.find(a => a.id === id);
     if (!attachment) return;
 
@@ -116,7 +128,7 @@ export const useImagePreview = (
       const url = await loadImageUrl(attachment);
       if (url) setPreviewImage(url);
     }
-  }, [attachments, loadedUrls, loadImageUrl, failedAttempts]);
+  }, [attachments, loadedUrls, loadImageUrl]);
 
   useEffect(() => {
     if (imageAttachments.length > 0) {

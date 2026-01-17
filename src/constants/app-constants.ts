@@ -23,6 +23,8 @@ export const ROUTES = {
   PARENT_FEEDBACK: '/parent-feedback',
   VIEW_ALL_PARENT_FEEDBACK: '/view-all-parent-feedback',
   ADMIN_FEEDBACK: '/admin-feedback',
+  BIRTHDAYS: '/birthdays',
+  BIRTHDAY_DETAIL: '/birthday/:studentId',
 } as const;
 
 export const API_ENDPOINTS = {

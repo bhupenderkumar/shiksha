@@ -12,6 +12,18 @@ interface FileData {
   documentType?: string;
 }
 
+// Entity type mapping to database column names
+type EntityType = 'homework' | 'classwork' | 'fee' | 'admission' | 'grievance' | 'homeworkSubmission';
+
+const entityColumnMap: Record<EntityType, string> = {
+  homework: 'homeworkId',
+  classwork: 'classworkId',
+  fee: 'feeId',
+  admission: 'admissionId',
+  grievance: 'grievanceId',
+  homeworkSubmission: 'homeworkSubmissionId',
+};
+
 // Service for managing file operations in the database
 export const fileTableService = {
   /**
@@ -44,6 +56,61 @@ export const fileTableService = {
     if (error) {
       console.error('Error deleting file:', error);
       throw new Error('Failed to delete file');
+    }
+  },
+
+  /**
+   * Get files by entity type and ID (generalized method)
+   * @param entityType Type of entity ('homework' | 'classwork' | 'fee' | 'admission' | 'grievance' | 'homeworkSubmission')
+   * @param entityId ID of the entity
+   * @returns Array of file objects
+   */
+  async getFilesByEntityId(entityType: EntityType, entityId: string) {
+    const columnName = entityColumnMap[entityType];
+    if (!columnName) {
+      throw new Error(`Unknown entity type: ${entityType}`);
+    }
+
+    const { data, error } = await supabase
+      .schema('school')
+      .from('File')
+      .select('*')
+      .eq(columnName, entityId);
+
+    if (error) {
+      console.error(`Error fetching files by ${entityType} ID:`, error);
+      throw new Error(`Failed to fetch files for ${entityType}`);
+    }
+    return data;
+  },
+
+  /**
+   * Delete files by entity type and ID (generalized method)
+   * @param entityType Type of entity ('homework' | 'classwork' | 'fee' | 'admission' | 'grievance' | 'homeworkSubmission')
+   * @param entityId ID of the entity
+   * @param fileIdsToDelete Optional array of specific file IDs to delete. If not provided, deletes all files for the entity.
+   */
+  async deleteFilesByEntityId(entityType: EntityType, entityId: string, fileIdsToDelete?: string[]) {
+    const columnName = entityColumnMap[entityType];
+    if (!columnName) {
+      throw new Error(`Unknown entity type: ${entityType}`);
+    }
+
+    let query = supabase
+      .schema('school')
+      .from('File')
+      .delete()
+      .eq(columnName, entityId);
+
+    if (fileIdsToDelete && fileIdsToDelete.length > 0) {
+      query = query.in('id', fileIdsToDelete);
+    }
+
+    const { error } = await query;
+
+    if (error) {
+      console.error(`Error deleting files for ${entityType}:`, error);
+      throw new Error(`Failed to delete files for ${entityType}`);
     }
   },
 
@@ -181,3 +248,6 @@ export const fileTableService = {
     }
   },
 };
+
+// Export the EntityType for use in other modules
+export type { EntityType };

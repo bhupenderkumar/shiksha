@@ -18,6 +18,7 @@ export const CLASS_TABLE = 'Class';
 export const CLASSWORK_TABLE = 'Classwork';
 export const DASHBOARD_TABLE = 'Dashboard';
 export const FEE_TABLE = 'Fee';
+export const FEE_PAYMENTS_TABLE = 'fee_payments';
 export const FEEDBACK_TABLE = 'feedback';
 export const HOMEWORK_TABLE = 'Homework';
 export const NOTIFICATION_TABLE = 'Notification';
@@ -92,6 +93,11 @@ export const DOCUMENT_VERIFICATION_STATUS = {
   REJECTED: 'rejected'
 } as const;
 
+// Share-related table names
+export const SHAREABLE_LINK_TABLE = 'ShareableLink';
+export const CONTENT_QUERY_TABLE = 'ContentQuery';
+export const QUERY_REPLY_TABLE = 'QueryReply';
+
 export const PUBLIC_ROUTES = [
   '/',
   '/login',
@@ -100,8 +106,12 @@ export const PUBLIC_ROUTES = [
   '/homework/:id',
   '/classwork/:id',
   '/admission-enquiry',
-  '/id-card'
+  '/id-card',
+  '/share/homework/:token',
+  '/share/classwork/:token',
+  '/birthday/:studentId'
 ] as const;
+
 
 // Environment variables should be used instead of hardcoding API keys
 export const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;

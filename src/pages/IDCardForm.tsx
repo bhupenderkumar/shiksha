@@ -4,7 +4,7 @@ import ReactConfetti from 'react-confetti';
 import { useWindowSize } from 'react-use';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { idCardService } from '@/backend/idCardService';
+import { idCardService } from '@/services/idCardService';
 import { IDCardData, ClassOption, PhotoType } from '@/types/idCard';
 import { Button } from '@/components/ui/button';
 import {

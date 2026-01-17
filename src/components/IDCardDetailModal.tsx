@@ -22,7 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { IDCardData, ClassOption } from '@/types/idCard';
-import { idCardService } from '@/backend/idCardService';
+import { idCardService } from '@/services/idCardService';
 import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
 import { Download, Edit, Save, X, Eye, Trash2 } from 'lucide-react';

@@ -78,6 +78,7 @@ interface UpdateFileData extends FileData {
 interface UpdateHomeworkData extends Partial<Omit<CreateHomeworkData, 'uploadedBy' | 'attachments'>> {
   uploadedBy?: string;
   attachments?: UpdateFileData[];
+  filesToDelete?: string[]; // IDs of files to be deleted
 }
 
 // Helper function to validate ISO date string
@@ -246,8 +247,13 @@ export const homeworkService = {
    */
   async update(id: string, data: UpdateHomeworkData, userId: string) {
     try {
-      const { attachments, uploadedBy, ...homeworkData } = data;
+      const { attachments, uploadedBy, filesToDelete, ...homeworkData } = data;
       const now = new Date().toISOString();
+
+      // Delete files that were removed by user
+      if (filesToDelete && filesToDelete.length > 0) {
+        await Promise.all(filesToDelete.map(fileId => fileTableService.deleteFile(fileId)));
+      }
 
       if (homeworkData.dueDate) {
         homeworkData.dueDate = typeof homeworkData.dueDate === 'string' && isValidISOString(homeworkData.dueDate)
@@ -323,7 +329,7 @@ export const homeworkService = {
    */
   async delete(id: string) {
     try {
-      const files = await fileTableService.getFilesByHomeworkId(id);
+      const files = await fileTableService.getFilesByEntityId('homework', id);
       const fileIdsToDelete = files.map(file => file.id);
 
       await Promise.all(fileIdsToDelete.map(fileId => {

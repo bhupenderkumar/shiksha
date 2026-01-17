@@ -15,7 +15,7 @@ const STATUS = {
 const TEACHER_ROLE = 'TEACHER';
 
 import { supabase } from '@/lib/api-client';
-import { DASHBOARD_TABLE, SCHEMA, STUDENT_TABLE, STAFF_TABLE, CLASS_TABLE, HOMEWORK_TABLE, ATTENDANCE_TABLE, FEE_TABLE, CLASSWORK_TABLE } from '../lib/constants'; // Import constants
+import { DASHBOARD_TABLE, SCHEMA, STUDENT_TABLE, STAFF_TABLE, CLASS_TABLE, HOMEWORK_TABLE, ATTENDANCE_TABLE, FEE_TABLE, FEE_PAYMENTS_TABLE, CLASSWORK_TABLE, ID_CARD_TABLE } from '../lib/constants'; // Import constants
 import { isAdmin, isTeacher, profileService } from './profileService'; // Import profile service
 import { studentService } from './student.service';
 
@@ -27,6 +27,8 @@ export interface DashboardSummary {
   averageAttendance: number;
   totalFeeCollected: number;
   totalPendingFees: number;
+  currentMonthFeeCollected: number;
+  currentMonthPending: number;
   upcomingDeadlines: Deadline[];
   moduleStats: {
     attendance: number;
@@ -82,7 +84,7 @@ export async function getDashboardSummary(userId: string): Promise<DashboardSumm
       { data: classes, error: classesError },
       { data: homeworks, error: homeworksError },
       { data: attendance, error: attendanceError },
-      { data: fees, error: feesError },
+      { data: feePayments, error: feePaymentsError },
       { data: classwork, error: classworkError }
     ] = await Promise.all([
       supabase.schema(SCHEMA as any).from(STUDENT_TABLE).select('*'),
@@ -90,16 +92,18 @@ export async function getDashboardSummary(userId: string): Promise<DashboardSumm
       supabase.schema(SCHEMA as any).from(CLASS_TABLE).select('*'),
       supabase.schema(SCHEMA as any).from(HOMEWORK_TABLE).select('*'),
       supabase.schema(SCHEMA as any).from(ATTENDANCE_TABLE).select('*'),
-      supabase.schema(SCHEMA as any).from(FEE_TABLE).select('*'),
+      // Use fee_payments table for accurate fee tracking
+      supabase.schema(SCHEMA as any).from(FEE_PAYMENTS_TABLE).select('*'),
       supabase.schema(SCHEMA as any).from(CLASSWORK_TABLE).select('*')
     ]);
 
-    if (studentsError || teachersError || classesError || homeworksError || attendanceError || feesError || classworkError) {
-      console.error('❌ Error fetching dashboard data:', studentsError || teachersError || classesError || homeworksError || attendanceError || feesError || classworkError);
+    if (studentsError || teachersError || classesError || homeworksError || attendanceError || feePaymentsError || classworkError) {
+      console.error('❌ Error fetching dashboard data:', studentsError || teachersError || classesError || homeworksError || attendanceError || feePaymentsError || classworkError);
       throw new Error(ERROR_MESSAGES.FETCH_DASHBOARD);
     }
 
     console.log('📈 Processing dashboard metrics');
+    console.log('💰 Fee payments data:', feePayments?.length, 'records');
 
     // Basic Stats
     const totalStudents = students?.length || 0;
@@ -114,16 +118,49 @@ export async function getDashboardSummary(userId: string): Promise<DashboardSumm
       ? Math.round((presentAttendance / totalAttendance) * 100) 
       : 0;
 
-    // Fee Stats
-    const totalFeeCollected = fees?.reduce((acc, fee) => acc + (fee.status === STATUS.PAID ? fee.amount : 0), 0) || 0;
-    const totalPendingFees = fees?.reduce((acc, fee) => acc + (fee.status === STATUS.PENDING ? fee.amount : 0), 0) || 0;
+    // Fee Stats from fee_payments table
+    // payment_status: 'completed', 'partial', 'pending'
+    const totalFeeCollected = feePayments?.reduce((acc, payment) => {
+      return acc + (Number(payment.amount_received) || 0);
+    }, 0) || 0;
+    
+    const totalPendingFees = feePayments?.reduce((acc, payment) => {
+      // Sum up balance_remaining for all payments that are not fully completed
+      if (payment.payment_status === 'pending' || payment.payment_status === 'partial') {
+        return acc + (Number(payment.balance_remaining) || 0);
+      }
+      return acc;
+    }, 0) || 0;
+    
+    // Current month fee stats
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+    
+    const currentMonthPayments = feePayments?.filter(payment => {
+      const paymentDate = payment.payment_date;
+      if (!paymentDate) return false;
+      const pDate = new Date(paymentDate);
+      return pDate.getMonth() === currentMonth && pDate.getFullYear() === currentYear;
+    }) || [];
+    
+    const currentMonthFeeCollected = currentMonthPayments.reduce((acc, payment) => {
+      return acc + (Number(payment.amount_received) || 0);
+    }, 0);
+    
+    const currentMonthPending = currentMonthPayments.reduce((acc, payment) => {
+      if (payment.payment_status === 'pending' || payment.payment_status === 'partial') {
+        return acc + (Number(payment.balance_remaining) || 0);
+      }
+      return acc;
+    }, 0);
 
     // Module Stats
     const moduleStats = {
       attendance: attendance?.length || 0,
       homework: homeworks?.length || 0,
       classwork: classes?.length || 0,
-      fees: fees?.length || 0
+      fees: feePayments?.length || 0
     };
 
     // Get upcoming deadlines
@@ -143,7 +180,7 @@ export async function getDashboardSummary(userId: string): Promise<DashboardSumm
     const performanceMetrics = {
       studentPerformance: calculatePerformanceMetrics(homeworks),
       attendanceTrend: calculateAttendanceTrend(attendance),
-      feeCollection: calculateFeeCollectionTrend(fees)
+      feeCollection: calculateFeeCollectionTrend(feePayments)
     };
 
     // Define quick links based on role
@@ -159,6 +196,8 @@ export async function getDashboardSummary(userId: string): Promise<DashboardSumm
       averageAttendance,
       totalFeeCollected,
       totalPendingFees,
+      currentMonthFeeCollected,
+      currentMonthPending,
       moduleStats,
       upcomingDeadlines: deadlines || [],
       quickLinks,
@@ -223,8 +262,8 @@ const calculateAttendanceTrend = (attendance: any[]) => {
   });
 };
 
-const calculateFeeCollectionTrend = (fees: any[]) => {
-  // Calculate last 6 months fee collection trend
+const calculateFeeCollectionTrend = (feePayments: any[]) => {
+  // Calculate last 6 months fee collection trend using fee_payments table
   const months = Array.from({ length: 6 }, (_, i) => {
     const d = new Date();
     d.setMonth(d.getMonth() - i);
@@ -232,12 +271,16 @@ const calculateFeeCollectionTrend = (fees: any[]) => {
   }).reverse();
   
   return months.map(month => {
-    const monthFees = fees?.filter(f => 
-      new Date(f.paid_at).getMonth() === month.getMonth() &&
-      new Date(f.paid_at).getFullYear() === month.getFullYear()
-    ) || [];
+    // Filter by payment_date from fee_payments table
+    const monthPayments = feePayments?.filter(payment => {
+      const paymentDate = payment.payment_date;
+      if (!paymentDate) return false;
+      const pDate = new Date(paymentDate);
+      return pDate.getMonth() === month.getMonth() &&
+             pDate.getFullYear() === month.getFullYear();
+    }) || [];
     
-    return monthFees.reduce((acc, fee) => acc + (fee.amount || 0), 0);
+    return monthPayments.reduce((acc, payment) => acc + (Number(payment.amount_received) || 0), 0);
   });
 };
 
@@ -297,26 +340,50 @@ export async function getStudentDashboardData(email: string) {
 
     console.log('👤 Found student:', student);
 
+    // First, try to find the student's IDCard to get fee payments
+    const { data: idCard, error: idCardError } = await supabase
+      .schema(SCHEMA as any)
+      .from(ID_CARD_TABLE)
+      .select('id')
+      .or(`student_email.eq.${email},parent_email.eq.${email}`)
+      .single();
+
+    console.log('🎫 IDCard lookup:', idCard, idCardError);
+
     // Fetch all required data in parallel
     console.log('🔄 Fetching student data in parallel');
+    const queries: Promise<any>[] = [
+      supabase.schema(SCHEMA as any).from(HOMEWORK_TABLE).select('*').eq('studentId', student.id),
+      supabase.schema(SCHEMA as any).from(ATTENDANCE_TABLE).select('*').eq('studentId', student.id),
+      supabase.schema(SCHEMA as any).from(CLASSWORK_TABLE).select('*').eq('studentId', student.id)
+    ];
+
+    // If we have an IDCard, fetch fee payments for that student
+    if (idCard?.id) {
+      queries.push(
+        supabase.schema(SCHEMA as any).from(FEE_PAYMENTS_TABLE).select('*').eq('student_id', idCard.id)
+      );
+    } else {
+      // Fallback: try to fetch from Fee table using studentId
+      queries.push(
+        supabase.schema(SCHEMA as any).from(FEE_TABLE).select('*').eq('studentId', student.id)
+      );
+    }
+
     const [
       { data: homeworks, error: homeworksError },
       { data: attendance, error: attendanceError },
-      { data: fees, error: feesError },
-      { data: classwork, error: classworkError }
-    ] = await Promise.all([
-      supabase.schema(SCHEMA as any).from(HOMEWORK_TABLE).select('*').eq('studentId', student.id),
-      supabase.schema(SCHEMA as any).from(ATTENDANCE_TABLE).select('*').eq('studentId', student.id),
-      supabase.schema(SCHEMA as any).from(FEE_TABLE).select('*').eq('studentId', student.id),
-      supabase.schema(SCHEMA as any).from(CLASSWORK_TABLE).select('*').eq('studentId', student.id)
-    ]);
+      { data: classwork, error: classworkError },
+      { data: feeData, error: feeError }
+    ] = await Promise.all(queries);
 
-    if (homeworksError || attendanceError || feesError || classworkError) {
-      console.error('❌ Error fetching student data:', homeworksError || attendanceError || feesError || classworkError);
+    if (homeworksError || attendanceError || classworkError || feeError) {
+      console.error('❌ Error fetching student data:', homeworksError || attendanceError || classworkError || feeError);
       throw new Error(ERROR_MESSAGES.FETCH_STUDENT_DATA);
     }
 
     console.log('📊 Processing student metrics');
+    console.log('💰 Fee data for student:', feeData?.length, 'records');
 
     // Calculate metrics
     const attendancePercentage = Math.round(
@@ -332,9 +399,19 @@ export async function getStudentDashboardData(email: string) {
       (homeworks?.length || 1))
     );
 
-    const pendingFees = fees
-      ?.filter(fee => fee.status === STATUS.PENDING)
-      .reduce((sum, fee) => sum + fee.amount, 0) || 0;
+    // Calculate pending fees based on which table we're using
+    let pendingFees = 0;
+    if (idCard?.id && feeData) {
+      // Using fee_payments table - sum up balance_remaining for pending/partial payments
+      pendingFees = feeData
+        .filter(payment => payment.payment_status === 'pending' || payment.payment_status === 'partial')
+        .reduce((sum, payment) => sum + (Number(payment.balance_remaining) || 0), 0);
+    } else if (feeData) {
+      // Using Fee table fallback
+      pendingFees = feeData
+        .filter(fee => fee.status === STATUS.PENDING || fee.status === 'OVERDUE')
+        .reduce((sum, fee) => sum + (fee.amount || 0), 0);
+    }
 
     console.log('🎯 Fetching quick links');
     const quickLinks = getQuickLinks();

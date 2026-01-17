@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useId, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload, X, File, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 
 type FileUploaderProps = {
   onFilesSelected?: (files: File[]) => void;
@@ -17,8 +18,14 @@ export function FileUploader({
   existingFiles = [],
   acceptedFileTypes = ['image/*'],
 }: FileUploaderProps) {
+  const inputId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+  const handleClick = () => {
+    inputRef.current?.click();
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -60,7 +67,13 @@ export function FileUploader({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-center w-full">
-        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
+        <div 
+          onClick={handleClick}
+          onKeyDown={(e) => e.key === 'Enter' && handleClick()}
+          role="button"
+          tabIndex={0}
+          className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+        >
           <div className="flex flex-col items-center justify-center pt-5 pb-6">
             <Upload className="w-8 h-8 mb-2" />
             <p className="mb-2 text-sm">
@@ -70,14 +83,17 @@ export function FileUploader({
               Accepted file types: {acceptedFileTypes.join(', ')}
             </p>
           </div>
+          
           <input
+            ref={inputRef}
+            id={inputId}
             type="file"
             className="hidden"
             onChange={handleFileChange}
             accept={acceptedFileTypes.join(',')}
             multiple
           />
-        </label>
+        </div>
       </div>
 
       {/* Existing Files */}
@@ -161,7 +177,10 @@ export function FileUploader({
 
       {/* Image Preview Dialog */}
       <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
-        <DialogContent className="max-w-4xl p-0">
+        <DialogContent className="max-w-4xl p-0" aria-describedby={undefined}>
+          <VisuallyHidden.Root>
+            <DialogTitle>Image Preview</DialogTitle>
+          </VisuallyHidden.Root>
           {previewImage && (
             <img
               src={previewImage}

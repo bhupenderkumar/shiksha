@@ -37,6 +37,8 @@ export default function Dashboard() {
     averageAttendance: 0,
     totalFeeCollected: 0,
     totalPendingFees: 0,
+    currentMonthFeeCollected: 0,
+    currentMonthPending: 0,
     moduleStats: {
       attendance: 0,
       homework: 0,
@@ -170,11 +172,18 @@ export default function Dashboard() {
                     trend={5}
                   />
                   <StatsCard
-                    title="Fee Collection"
-                    value={`₹${stats.totalFeeCollected}`}
+                    title="This Month's Collection"
+                    value={`₹${stats.currentMonthFeeCollected?.toLocaleString('en-IN') || 0}`}
                     icon={<DollarSign className="h-4 w-4" />}
-                    description={`₹${stats.totalPendingFees} pending`}
-                    trend={-2}
+                    description={`Total: ₹${stats.totalFeeCollected?.toLocaleString('en-IN') || 0}`}
+                    trend={stats.currentMonthFeeCollected > 0 ? 0 : undefined}
+                  />
+                  <StatsCard
+                    title="Pending Fees"
+                    value={`₹${stats.totalPendingFees?.toLocaleString('en-IN') || 0}`}
+                    icon={<CreditCard className="h-4 w-4" />}
+                    description={`This month: ₹${stats.currentMonthPending?.toLocaleString('en-IN') || 0}`}
+                    trend={stats.totalPendingFees > 0 ? -1 : 0}
                   />
                   <StatsCard
                     title="Average Attendance"
@@ -219,7 +228,7 @@ export default function Dashboard() {
             </div>
 
             {/* Performance Charts */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="md:col-span-1">
                 <CardHeader>
                   <CardTitle>{isAdminOrTeacher ? 'Student Performance Trend' : 'Your Performance Trend'}</CardTitle>
@@ -251,6 +260,25 @@ export default function Dashboard() {
                   </div>
                 </CardContent>
               </Card>
+
+              {isAdminOrTeacher && (
+                <Card className="md:col-span-1">
+                  <CardHeader>
+                    <CardTitle>Fee Collection (Monthly)</CardTitle>
+                    <CardDescription>Last 6 months fee collection trend</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="h-[300px] w-full">
+                      <LineChart
+                        data={stats?.performanceMetrics?.feeCollection}
+                        labels={getLast6Months()}
+                        label="Fee Collection (₹)"
+                        color="rgb(234, 179, 8)"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             {/* Announcements and Activities */}

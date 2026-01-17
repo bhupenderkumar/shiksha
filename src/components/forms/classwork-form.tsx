@@ -25,12 +25,13 @@ export function ClassworkForm({ onSubmit, initialData }: ClassworkFormProps) {
   const [formData, setFormData] = useState<Omit<CreateClassworkData, 'uploadedBy'>>({
     title: initialData?.title || '',
     description: initialData?.description || '',
-    date: initialData?.date || new Date(),
+    date: initialData?.date ? new Date(initialData.date) : new Date(), // Default to today
     classId: initialData?.classId || '',
     attachments: initialData?.attachments || [],
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletedFileIds, setDeletedFileIds] = useState<string[]>([]); // Track deleted file IDs
 
   useEffect(() => {
     const fetchData = async () => {
@@ -40,7 +41,7 @@ export function ClassworkForm({ onSubmit, initialData }: ClassworkFormProps) {
           setFormData({
             title: classworkDetails.title,
             description: classworkDetails.description,
-            date: classworkDetails.date,
+            date: classworkDetails.date ? new Date(classworkDetails.date) : new Date(),
             classId: classworkDetails.classId,
             attachments: classworkDetails.attachments || [],
           });
@@ -75,7 +76,11 @@ export function ClassworkForm({ onSubmit, initialData }: ClassworkFormProps) {
       const timestamp = new Date().getTime();
       const uploadedFiles = await Promise.all(
         newFiles.map(async (file: File, index: number) => {
-          const uniqueFileName = `${timestamp}_${index}_${file.name}`;
+          // Sanitize file name for storage - replace spaces and special characters
+          const sanitizedFileName = file.name
+            .replace(/\\s+/g, '_')
+            .replace(/[^a-zA-Z0-9._-]/g, '');
+          const uniqueFileName = `${timestamp}_${index}_${sanitizedFileName}`;
           const filePath = `classwork/${formData.classId}/${uniqueFileName}`;
           
           try {
@@ -95,10 +100,12 @@ export function ClassworkForm({ onSubmit, initialData }: ClassworkFormProps) {
       const submitData: CreateClassworkData = {
         ...formData,
         attachments: [...existingFiles, ...uploadedFiles],
-        uploadedBy: user.id
-      };
+        uploadedBy: user.id,
+        filesToDelete: deletedFileIds, // Include IDs of files to delete
+      } as any; // Using any to include filesToDelete which is part of UpdateClassworkData
 
       await onSubmit(submitData);
+      setDeletedFileIds([]); // Clear deleted file IDs after successful submission
     } catch (error) {
       console.error('Error submitting classwork:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to create classwork');
@@ -122,6 +129,8 @@ export function ClassworkForm({ onSubmit, initialData }: ClassworkFormProps) {
       ...prev,
       attachments: (prev.attachments || []).filter(file => file.id !== fileId)
     }));
+    // Track the deleted file ID for later deletion from database
+    setDeletedFileIds(prev => [...prev, fileId]);
   };
 
   return (
@@ -174,8 +183,9 @@ export function ClassworkForm({ onSubmit, initialData }: ClassworkFormProps) {
         <div className="border rounded-lg p-2 bg-background overflow-x-auto">
           <Calendar
             mode="single"
-            selected={formData.date}
+            selected={formData.date instanceof Date ? formData.date : new Date(formData.date)}
             onSelect={(date) => setFormData({ ...formData, date: date ?? new Date() })}
+            defaultMonth={formData.date instanceof Date ? formData.date : new Date(formData.date)}
             className="w-full"
           />
         </div>

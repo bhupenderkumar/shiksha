@@ -49,6 +49,7 @@ export interface CreateClassworkData {
 // Define the structure of data required to update an existing classwork entry
 export type UpdateClassworkData = Partial<Omit<CreateClassworkData, 'uploadedBy'>> & {
   uploadedBy?: string;
+  filesToDelete?: string[]; // IDs of files to be deleted
 };
 
 // Service for managing classwork-related operations
@@ -150,8 +151,13 @@ export const classworkService = {
    */
   async update(id: string, data: UpdateClassworkData, userId: string) {
     try {
-      const { attachments, uploadedBy, ...classworkData } = data;
+      const { attachments, uploadedBy, filesToDelete, ...classworkData } = data;
       const now = new Date().toISOString();
+
+      // Delete files that were removed by user
+      if (filesToDelete && filesToDelete.length > 0) {
+        await Promise.all(filesToDelete.map(fileId => fileTableService.deleteFile(fileId)));
+      }
 
       const { data: updatedClasswork, error } = await supabase
         .schema(SCHEMA)
@@ -195,7 +201,7 @@ export const classworkService = {
    */
   async delete(id: string) {
     try {
-      const files = await fileTableService.getFilesByClassworkId(id);
+      const files = await fileTableService.getFilesByEntityId('classwork', id);
       const fileIdsToDelete = files.map(file => file.id);
 
       await Promise.all(fileIdsToDelete.map(fileId => {
