@@ -22,7 +22,8 @@ import {
   GraduationCap,
   LayoutDashboard,
   ClipboardList,
-  Star
+  Star,
+  Cake,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { useAuth } from '@/lib/auth-provider';
@@ -82,6 +83,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { id: 11, icon: IdCard, label: 'ID Card', path: '/id-card' },
     { id: 12, icon: IdCard, label: 'ID Card Details', path: '/idcarddetails', role: 'admin' },
     { id: 19, icon: IdCard, label: 'View All ID Cards', path: '/id-cards', role: 'admin' },
+    { id: 25, icon: Cake, label: 'Birthdays', path: '/birthdays' },
   ];
 
   const variants = {

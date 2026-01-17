@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProfileAccess } from '@/services/profileService';
-import { idCardService, IDCardListParams } from '@/backend/idCardService';
+import { idCardService, IDCardListParams } from '@/services/idCardService';
 import { IDCardData } from '@/types/idCard';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Button } from '@/components/ui/button';

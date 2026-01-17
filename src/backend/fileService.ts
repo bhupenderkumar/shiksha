@@ -35,10 +35,23 @@ export const fileService = {
   },
 
   sanitizeFileName(fileName: string): string {
-    return fileName
-      .replace(/[/\\?%*:|"<>]/g, '-')
-      .replace(/\.\./g, '-')
+    // Get file extension
+    const lastDotIndex = fileName.lastIndexOf('.');
+    const hasExtension = lastDotIndex > 0;
+    const name = hasExtension ? fileName.substring(0, lastDotIndex) : fileName;
+    const extension = hasExtension ? fileName.substring(lastDotIndex) : '';
+    
+    // Sanitize the name part
+    const sanitizedName = name
+      .replace(/\s+/g, '_')           // Replace spaces with underscores
+      .replace(/[/\\?%*:|"<>]/g, '-') // Replace dangerous characters
+      .replace(/[^a-zA-Z0-9._-]/g, '') // Remove any remaining non-safe characters
+      .replace(/\.\./g, '-')          // Prevent directory traversal
+      .replace(/_+/g, '_')             // Collapse multiple underscores
+      .replace(/-+/g, '-')             // Collapse multiple hyphens
       .trim();
+    
+    return sanitizedName + extension.toLowerCase();
   },
 
   async uploadFile(file: File, filePath: string) {

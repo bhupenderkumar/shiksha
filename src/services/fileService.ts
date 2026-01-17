@@ -38,11 +38,23 @@ export const fileService = {
   },
 
   sanitizeFileName(fileName: string): string {
-    // Remove any path traversal characters and potentially dangerous characters
-    return fileName
-      .replace(/[/\\?%*:|"<>]/g, '-')
-      .replace(/\.\./g, '-')
+    // Get file extension
+    const lastDotIndex = fileName.lastIndexOf('.');
+    const hasExtension = lastDotIndex > 0;
+    const name = hasExtension ? fileName.substring(0, lastDotIndex) : fileName;
+    const extension = hasExtension ? fileName.substring(lastDotIndex) : '';
+    
+    // Sanitize the name part - remove spaces and special characters
+    const sanitizedName = name
+      .replace(/\\s+/g, '_')           // Replace spaces with underscores
+      .replace(/[/\\\\?%*:|"<>]/g, '-') // Replace dangerous characters
+      .replace(/[^a-zA-Z0-9._-]/g, '') // Remove any remaining non-safe characters
+      .replace(/\\.\\./g, '-')          // Prevent directory traversal
+      .replace(/_+/g, '_')             // Collapse multiple underscores
+      .replace(/-+/g, '-')             // Collapse multiple hyphens
       .trim();
+    
+    return sanitizedName + extension.toLowerCase();
   },
 
   async uploadFile(file: File, filePath: string) {
@@ -85,12 +97,15 @@ export const fileService = {
     }
 
     try {
+      // Remove bucket prefix if present (handles both 'File/' and '/File/' formats)
+      const cleanPath = filePath.replace(/^\/?(File\/)?/, '');
+      
       // Validate that the file exists before downloading
       const { data: fileExists, error: checkError } = await supabase.storage
         .from('File')
-        .list(filePath.split('/').slice(0, -1).join('/'), {
+        .list(cleanPath.split('/').slice(0, -1).join('/'), {
           limit: 1,
-          search: filePath.split('/').pop()
+          search: cleanPath.split('/').pop()
         });
 
       if (checkError) throw checkError;
@@ -101,9 +116,9 @@ export const fileService = {
       // Get file metadata to check size before downloading
       const { data: metadata, error: metadataError } = await supabase.storage
         .from('File')
-        .list(filePath.split('/').slice(0, -1).join('/'), {
+        .list(cleanPath.split('/').slice(0, -1).join('/'), {
           limit: 1,
-          search: filePath.split('/').pop()
+          search: cleanPath.split('/').pop()
         });
 
       if (metadataError) throw metadataError;
@@ -115,7 +130,7 @@ export const fileService = {
 
       const { data, error } = await supabase.storage
         .from('File')
-        .download(filePath);
+        .download(cleanPath);
 
       if (error) throw error;
       if (!data) throw new Error('File data not found');
@@ -150,12 +165,15 @@ export const fileService = {
     }
 
     try {
+      // Remove bucket prefix if present (handles both 'File/' and '/File/' formats)
+      const cleanPath = filePath.replace(/^\/?(File\/)?/, '');
+      
       // Validate that the file exists before creating URL
       const { data: fileExists, error: checkError } = await supabase.storage
         .from('File')
-        .list(filePath.split('/').slice(0, -1).join('/'), {
+        .list(cleanPath.split('/').slice(0, -1).join('/'), {
           limit: 1,
-          search: filePath.split('/').pop()
+          search: cleanPath.split('/').pop()
         });
 
       if (checkError) throw checkError;
@@ -166,7 +184,7 @@ export const fileService = {
       // Create a signed URL that expires in 1 hour
       const { data, error } = await supabase.storage
         .from('File')
-        .createSignedUrl(filePath, 3600, {
+        .createSignedUrl(cleanPath, 3600, {
           download: false // Prevent automatic download
         });
 
@@ -194,14 +212,25 @@ export const fileService = {
     }
 
     try {
+      // Remove bucket prefix if present (handles both 'File/' and '/File/' formats)
+      const cleanPath = filePath.replace(/^\/?(File\/)?/, '');
+      
       const { data, error } = await supabase.storage
         .from('File')
-        .createSignedUrl(filePath, 3600); // 1 hour expiry
+        .createSignedUrl(cleanPath, 3600); // 1 hour expiry
 
       if (error) throw error;
       if (!data?.signedUrl) throw new Error('Failed to generate signed URL');
 
-      return data.signedUrl;
+      // For local development with Kong, we need to add the API key as a query parameter
+      // This allows <img> tags to load images without needing to send headers
+      const url = new URL(data.signedUrl);
+      const apiKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      if (apiKey && !url.searchParams.has('apikey')) {
+        url.searchParams.set('apikey', apiKey);
+      }
+
+      return url.toString();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error generating signed URL';
       console.error('Error generating signed URL:', errorMessage);
@@ -215,13 +244,24 @@ export const fileService = {
     }
 
     try {
+      // Remove bucket prefix if present (handles both 'File/' and '/File/' formats)
+      const cleanPath = filePath.replace(/^\/?(File\/)?/, '');
+      
       const { data } = supabase.storage
         .from('File')
-        .getPublicUrl(filePath);
+        .getPublicUrl(cleanPath);
 
       if (!data?.publicUrl) throw new Error('Failed to generate public URL');
 
-      return data.publicUrl;
+      // For local development with Kong, we need to add the API key as a query parameter
+      // This allows <img> tags to load images without needing to send headers
+      const url = new URL(data.publicUrl);
+      const apiKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      if (apiKey && !url.searchParams.has('apikey')) {
+        url.searchParams.set('apikey', apiKey);
+      }
+
+      return url.toString();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error generating public URL';
       console.error('Error generating public URL:', errorMessage);

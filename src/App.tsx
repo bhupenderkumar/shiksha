@@ -19,6 +19,7 @@ const AttendancePage = lazy(() => import('./pages/Attendance'));
 const SettingsPage = lazy(() => import('./pages/Settings'));
 const Home = lazy(() => import('./pages/Home/index'));
 const Toaster = lazy(() => import('@/components/ui/toast').then(module => ({ default: module.Toaster })));
+// Using unified ContentDetails component for both homework and classwork details
 const ClassworkDetail = lazy(() => import('./pages/ClassworkDetail'));
 const Feedback = lazy(() => import('./pages/Feedback'));
 const Register = lazy(() => import('./pages/Register'));
@@ -51,6 +52,12 @@ const ViewAllParentFeedback = lazy(() => import('./pages/ViewAllParentFeedback')
 const UpdateParentFeedback = lazy(() => import('./pages/UpdateParentFeedback'));
 const AdminFeedbackPage = lazy(() => import('./pages/AdminFeedbackPage'));
 const Unauthorized = lazy(() => import('./pages/Unauthorized'));
+// Using unified PublicContentShare component for both homework and classwork
+const PublicHomeworkShare = lazy(() => import('./pages/PublicHomeworkShare'));
+const PublicClassworkShare = lazy(() => import('./pages/PublicClassworkShare'));
+// Birthday pages
+const PublicBirthdayPage = lazy(() => import('./pages/PublicBirthdayPage'));
+const BirthdaysPage = lazy(() => import('./pages/BirthdaysPage'));
 
 // Private route component
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -102,6 +109,13 @@ function AppRoutes() {
         {/* Public Parent Feedback Routes */}
         <Route path="/parent-feedback-portal" element={<ParentFeedbackPortal />} />
         <Route path="/parent-feedback-search" element={<ParentFeedbackSearch />} />
+
+        {/* Public Share Routes - No authentication required */}
+        <Route path="/share/homework/:token" element={<PublicHomeworkShare />} />
+        <Route path="/share/classwork/:token" element={<PublicClassworkShare />} />
+        
+        {/* Public Birthday Page - No authentication required */}
+        <Route path="/birthday/:studentId" element={<PublicBirthdayPage />} />
 
         {/* Protected Routes */}
         <Route path="/dashboard" element={
@@ -278,6 +292,15 @@ function AppRoutes() {
           <PrivateRoute>
             <Layout>
               <AdminFeedbackPage />
+            </Layout>
+          </PrivateRoute>
+        } />
+
+        {/* Birthday Routes */}
+        <Route path="/birthdays" element={
+          <PrivateRoute>
+            <Layout>
+              <BirthdaysPage />
             </Layout>
           </PrivateRoute>
         } />

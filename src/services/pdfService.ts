@@ -399,18 +399,20 @@ export const generateFeePDF = async (fee: Fee, studentDetails: any) => {
       doc.setFont('helvetica', 'bold');
       doc.text('Payment Date:', margin + 50, yPos + 9);
       doc.setFont('helvetica', 'normal');
-      doc.text(fee.paidDate ? formatDate(fee.paidDate) : formatDate(new Date()), margin + 80, yPos + 9);
+      // Use paymentDate (correct field name from database schema)
+      doc.text(fee.paymentDate ? formatDate(fee.paymentDate) : formatDate(new Date()), margin + 80, yPos + 9);
       
       doc.setFont('helvetica', 'bold');
       doc.text('Payment Mode:', margin + 5, yPos + 20);
       doc.setFont('helvetica', 'normal');
-      doc.text(safeString(fee?.paymentMode || fee.paymentMethod || 'Cash'), margin + 35, yPos + 20);
+      // Use paymentMethod (correct field name from database schema)
+      doc.text(safeString(fee.paymentMethod || 'Cash'), margin + 35, yPos + 20);
       
-      if (fee.transactionId) {
+      if (fee.receiptNumber) {
         doc.setFont('helvetica', 'bold');
-        doc.text('Transaction ID:', margin + 80, yPos + 20);
+        doc.text('Receipt No:', margin + 80, yPos + 20);
         doc.setFont('helvetica', 'normal');
-        doc.text(safeString(fee.transactionId), margin + 110, yPos + 20);
+        doc.text(safeString(fee.receiptNumber), margin + 105, yPos + 20);
       }
     }
     yPos += 33;

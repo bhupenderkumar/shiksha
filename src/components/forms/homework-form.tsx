@@ -65,6 +65,7 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
   const [subjects, setSubjects] = useState<any[]>([]);
   const [files, setFiles] = useState<File[]>([]);
   const [existingFiles, setExistingFiles] = useState(initialFiles || []);
+  const [deletedFileIds, setDeletedFileIds] = useState<string[]>([]); // Track deleted file IDs
 
   const {
     register,
@@ -79,7 +80,8 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
       ...initialData,
       dueDate: new Date(initialData.dueDate)
     } : {
-      status: 'PENDING'
+      status: 'PENDING',
+      dueDate: new Date() // Default to today's date
     }
   });
 
@@ -124,10 +126,30 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
     }
   }, [selectedClassId]);
 
+  // Helper function to sanitize file names for storage
+  const sanitizeFileName = (fileName: string): string => {
+    const lastDotIndex = fileName.lastIndexOf('.');
+    const hasExtension = lastDotIndex > 0;
+    const name = hasExtension ? fileName.substring(0, lastDotIndex) : fileName;
+    const extension = hasExtension ? fileName.substring(lastDotIndex) : '';
+    
+    const sanitizedName = name
+      .replace(/\s+/g, '_')           // Replace spaces with underscores
+      .replace(/[/\\?%*:|"<>]/g, '-') // Replace dangerous characters
+      .replace(/[^a-zA-Z0-9._-]/g, '') // Remove any remaining non-safe characters
+      .replace(/\.\./g, '-')          // Prevent directory traversal
+      .replace(/_+/g, '_')             // Collapse multiple underscores
+      .replace(/-+/g, '-')             // Collapse multiple hyphens
+      .trim();
+    
+    return sanitizedName + extension.toLowerCase();
+  };
+
   const onFormSubmit = async (formData: FormData) => {
     try {
       const fileUploads = files.map(async (file) => {
-        const path = `homework/${formData.classId}/${Date.now()}_${file.name}`;
+        const sanitizedName = sanitizeFileName(file.name);
+        const path = `homework/${formData.classId}/${Date.now()}_${sanitizedName}`;
         const fullPath = `File/${path}`;
         
         const { data, error } = await supabase.storage
@@ -144,11 +166,15 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
           throw new Error('File name is required');
         }
 
+        // Return in the format expected by homeworkService
         return {
           id: uuidv4(),
-          fileName: file.name,
-          filePath: fullPath,
-          fileType: file.type || 'application/octet-stream',
+          name: file.name,  // Use 'name' as expected by FileData interface
+          filePath: {       // Use object structure as expected by FileData interface
+            fullPath: fullPath,
+            path: path
+          },
+          type: file.type || 'application/octet-stream',
           uploadedAt: new Date().toISOString(),
           homeworkId: null // This will be set by the service
         };
@@ -169,27 +195,29 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
         ...formData,
         attachments: [
           ...uploadedFiles,
-          ...(formData.existingFiles || []).map(file => ({
+          ...(formData.existingFiles || []).map((file: { id: string; fileName: string; filePath: string }) => ({
             id: file.id,
-            fileName: file.fileName || file.name, // Ensure fileName is present
-            filePath: file.filePath,
-            fileType: file.fileType || file.type || 'application/octet-stream',
-            uploadedAt: file.uploadedAt || new Date().toISOString()
+            name: file.fileName, // Use 'name' as expected by FileData
+            filePath: typeof file.filePath === 'string' 
+              ? { fullPath: file.filePath, path: file.filePath.replace('File/', '') }
+              : file.filePath,
+            type: 'application/octet-stream', // Default type for existing files
           }))
         ],
+        filesToDelete: deletedFileIds, // Include IDs of files to delete
         uploadedBy: userId
       };
 
       await onSubmit(submissionData);
       setFiles([]); // Clear the files state after successful submission
+      setDeletedFileIds([]); // Clear deleted file IDs after successful submission
     } catch (error) {
       console.error('Error submitting form:', error);
       toast.error('Failed to submit homework');
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files || []);
+  const handleFilesSelected = (selectedFiles: File[]) => {
     setFiles(prevFiles => [...prevFiles, ...selectedFiles]);
   };
 
@@ -197,6 +225,8 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
     const updatedFiles = existingFiles.filter(f => f.id !== fileId);
     setExistingFiles(updatedFiles);
     setValue('existingFiles', updatedFiles);
+    // Track the deleted file ID for later deletion from database
+    setDeletedFileIds(prev => [...prev, fileId]);
   };
 
   const STATUS_OPTIONS = [
@@ -287,7 +317,11 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
                 selected={selectedDate}
                 onSelect={(date) => setValue('dueDate', date || new Date())}
                 initialFocus
-                disabled={(date) => date < new Date()}
+                disabled={(date) => {
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  return date < today;
+                }}
               />
             </PopoverContent>
           </Popover>
@@ -335,7 +369,7 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
           <Label className="text-base font-semibold">Attachments</Label>
           <div className="mt-2">
             <FileUploader
-              onFilesSelected={handleFileChange}
+              onFilesSelected={handleFilesSelected}
               acceptedFileTypes={[
                 'image/*'
               ]}

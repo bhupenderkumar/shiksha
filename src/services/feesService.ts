@@ -2,6 +2,7 @@
 const ERROR_MESSAGES = {
   CREATE_FEE: 'Error creating fee record:',
   UPDATE_FEE: 'Error updating fee record:',
+  DELETE_FEE: 'Error deleting fee record:',
   FETCH_FEES: 'Error fetching fees:',
   FETCH_STUDENTS: 'Error fetching students:',
   FETCH_CLASSES: 'Error fetching classes:',
@@ -13,27 +14,8 @@ const SORT_ORDER = {
 };
 
 const TABLE_COLUMNS = {
-  FEE_WITH_STUDENT: `
-    *,
-    student:Student (
-      *,
-      class:Class (*)
-    )
-  `,
-  FEE_WITH_BASIC_STUDENT: `
-    *,
-    student:Student (
-      id,
-      name,
-      admissionNumber,
-      classId,
-      class:Class (
-        id,
-        name,
-        section
-      )
-    )
-  `,
+  // Note: Fee table has no FK to Student, so we can't use joins
+  FEE_BASIC: '*',
   STUDENT_WITH_CLASS: `
     id,
     name,
@@ -56,15 +38,30 @@ const TABLE_COLUMNS = {
       name,
       section
     )
+  `,
+  // fee_payments table joins with IDCard
+  FEE_PAYMENTS_WITH_STUDENT: `
+    *,
+    student:IDCard (
+      id,
+      student_name,
+      admission_number,
+      class_id,
+      class:Class (
+        id,
+        name,
+        section
+      )
+    )
   `
 };
 
 import { supabase } from '@/lib/api-client';
-import { FeeStatus, FeeType } from '@/types/fee';
+import { FeeStatus, FeeType, FeeFilter } from '@/types/fee';
 import { v4 as uuidv4 } from 'uuid';
 import { studentService } from './student.service';
 import { profileService } from './profileService';
-import { SCHEMA, FEE_TABLE, STUDENT_TABLE, CLASS_TABLE } from '@/lib/constants'; // Import constants
+import { SCHEMA, FEE_TABLE, FEE_PAYMENTS_TABLE, STUDENT_TABLE, CLASS_TABLE, ID_CARD_TABLE } from '@/lib/constants'; // Import constants
 
 export interface Fee {
   id: string;
@@ -73,27 +70,22 @@ export interface Fee {
   amount: number;
   dueDate: string;
   status: FeeStatus;
+  paymentDate?: string | null;
+  paymentMethod?: string | null;
+  receiptNumber?: string | null;
   createdAt: string;
   updatedAt: string;
   student?: {
     id: string;
     name: string;
     admissionNumber: string;
-    classId: string;
+    classId?: string;  // Made optional since Fee table has no FK to Student
     class?: {
       id: string;
       name: string;
       section: string;
     }
   };
-}
-
-export interface FeeFilter {
-  classId?: string;
-  studentId?: string;
-  month?: number;
-  year?: number;
-  status?: FeeStatus;
 }
 
 export const feesService = {
@@ -146,13 +138,32 @@ export const feesService = {
     }
   },
 
+  async deleteFee(id: string) {
+    try {
+      const { error } = await supabase
+        .schema(SCHEMA)
+        .from(FEE_TABLE)
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error(ERROR_MESSAGES.DELETE_FEE, error);
+        throw error;
+      }
+      return true;
+    } catch (error) {
+      console.error(ERROR_MESSAGES.DELETE_FEE, error);
+      throw error;
+    }
+  },
+
   async getMyFees(email: string) {
     try {
       const student = await studentService.findByEmail(email);
       const { data, error } = await supabase
         .schema(SCHEMA)
         .from(FEE_TABLE)
-        .select(TABLE_COLUMNS.FEE_WITH_STUDENT)
+        .select(TABLE_COLUMNS.FEE_BASIC)
         .eq('studentId', student?.id)
         .order('dueDate', SORT_ORDER.DUE_DATE_DESC);
 
@@ -172,7 +183,7 @@ export const feesService = {
       const { data, error } = await supabase
         .schema(SCHEMA)
         .from(FEE_TABLE)
-        .select(TABLE_COLUMNS.FEE_WITH_BASIC_STUDENT)
+        .select(TABLE_COLUMNS.FEE_BASIC)
         .eq('studentId', studentId)
         .order('dueDate', SORT_ORDER.DUE_DATE_DESC);
 
@@ -188,16 +199,14 @@ export const feesService = {
   },
 
   async getFeesByFilter(filter: FeeFilter) {
+    // Fee table has no FK to Student, so we fetch fees without join
     let query = supabase
       .schema(SCHEMA)
       .from(FEE_TABLE)
-      .select(TABLE_COLUMNS.FEE_WITH_BASIC_STUDENT);
+      .select(TABLE_COLUMNS.FEE_BASIC);
 
     if (filter.studentId) {
       query = query.eq('studentId', filter.studentId);
-    }
-    if (filter.classId) {
-      query = query.eq('student.classId', filter.classId);
     }
     if (filter.status) {
       query = query.eq('status', filter.status);
@@ -213,7 +222,85 @@ export const feesService = {
       console.error(ERROR_MESSAGES.FETCH_FEES, error);
       throw error;
     }
-    return data;
+    
+    return data || [];
+  },
+
+  /**
+   * Get pending fee payments from fee_payments table
+   * This table has proper FK to IDCard and tracks actual payment status
+   */
+  async getPendingFeePayments(filter?: { classId?: string; month?: number; year?: number }) {
+    try {
+      let query = supabase
+        .schema(SCHEMA)
+        .from(FEE_PAYMENTS_TABLE)
+        .select(TABLE_COLUMNS.FEE_PAYMENTS_WITH_STUDENT)
+        .in('payment_status', ['pending', 'partial']);
+
+      if (filter?.month !== undefined && filter?.year !== undefined) {
+        query = query.eq('fee_month', filter.month + 1).eq('fee_year', filter.year);
+      }
+
+      const { data, error } = await query.order('payment_date', SORT_ORDER.DUE_DATE_DESC);
+      
+      if (error) {
+        console.error('Error fetching pending fee payments:', error);
+        throw error;
+      }
+
+      // Filter by classId in memory if needed
+      let filteredData = data || [];
+      if (filter?.classId && filteredData.length > 0) {
+        filteredData = filteredData.filter((payment: any) => 
+          payment.student?.class_id === filter.classId
+        );
+      }
+
+      return filteredData;
+    } catch (error) {
+      console.error('Error fetching pending fee payments:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get all fee payments from fee_payments table
+   */
+  async getAllFeePayments(filter?: { classId?: string; status?: string; month?: number; year?: number }) {
+    try {
+      let query = supabase
+        .schema(SCHEMA)
+        .from(FEE_PAYMENTS_TABLE)
+        .select(TABLE_COLUMNS.FEE_PAYMENTS_WITH_STUDENT);
+
+      if (filter?.status) {
+        query = query.eq('payment_status', filter.status.toLowerCase());
+      }
+      if (filter?.month !== undefined && filter?.year !== undefined) {
+        query = query.eq('fee_month', filter.month + 1).eq('fee_year', filter.year);
+      }
+
+      const { data, error } = await query.order('payment_date', SORT_ORDER.DUE_DATE_DESC);
+      
+      if (error) {
+        console.error('Error fetching fee payments:', error);
+        throw error;
+      }
+
+      // Filter by classId in memory if needed
+      let filteredData = data || [];
+      if (filter?.classId && filteredData.length > 0) {
+        filteredData = filteredData.filter((payment: any) => 
+          payment.student?.class_id === filter.classId
+        );
+      }
+
+      return filteredData;
+    } catch (error) {
+      console.error('Error fetching fee payments:', error);
+      throw error;
+    }
   },
 
   /**
