@@ -56,7 +56,7 @@ const IDCardExportButton: React.FC<IDCardExportButtonProps> = ({
         toast.loading('Enhanced export failed. Falling back to standard export...', { id: 'export-toast' });
 
         // Use the existing export function from idCardService
-        const idCardService = await import('@/backend/idCardService');
+        const idCardService = await import('@/services/idCardService');
         const exportParams = {
           search: search || '',
           classId: classId || '',
@@ -64,7 +64,7 @@ const IDCardExportButton: React.FC<IDCardExportButtonProps> = ({
           sortOrder: 'desc' as 'asc' | 'desc'
         };
 
-        const excelBlob = await idCardService.default.exportIDCardsToExcel(exportParams);
+        const excelBlob = await idCardService.idCardService.exportIDCardsToExcel(exportParams);
 
         // Create a download link
         const url = URL.createObjectURL(excelBlob);
