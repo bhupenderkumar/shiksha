@@ -1,6 +1,9 @@
 import { supabase } from '@/lib/api-client';
 import { SCHEMA, ID_CARD_TABLE, CLASS_TABLE, STORAGE_BUCKET } from '@/lib/constants';
 
+// Cloud storage URL for images (images are stored on Supabase cloud)
+const CLOUD_STORAGE_URL = 'https://ytfzqzjuhcdgcvvqihda.supabase.co';
+
 export interface BirthdayStudent {
   id: string;
   studentName: string;
@@ -83,18 +86,42 @@ const getImageUrl = (storagePath: string | null): string | null => {
   if (!storagePath) return null;
   
   try {
-    // If the path already looks like a full URL, return it as-is
-    if (storagePath.startsWith('http://') || storagePath.startsWith('https://')) {
-      return storagePath;
+    let pathToUse = storagePath;
+    
+    // If this is a signed URL (from old Supabase cloud), extract the actual path
+    if (storagePath.includes('supabase.co/storage/v1/object/sign/')) {
+      // Extract path from signed URL: /storage/v1/object/sign/{bucket}/{path}?token=...
+      // The URL format is: https://xxx.supabase.co/storage/v1/object/sign/File/id-cards/...?token=...
+      const urlParts = storagePath.split('/storage/v1/object/sign/');
+      if (urlParts.length > 1) {
+        // Get everything after 'sign/' and before '?'
+        const pathWithBucket = urlParts[1].split('?')[0];
+        // Remove the bucket name (File/) from the beginning
+        const bucketPrefix = STORAGE_BUCKET + '/';
+        if (pathWithBucket.startsWith(bucketPrefix)) {
+          pathToUse = pathWithBucket.substring(bucketPrefix.length);
+        } else {
+          pathToUse = pathWithBucket;
+        }
+      }
+    } else if (storagePath.startsWith('http://') || storagePath.startsWith('https://')) {
+      // If it's some other URL format, try to extract path or return as-is
+      // Check if it's already a public URL format
+      if (storagePath.includes('/storage/v1/object/public/')) {
+        return storagePath; // Already a public URL, return as-is
+      }
+      // Otherwise try to extract the path
+      const match = storagePath.match(/\/storage\/v1\/object\/(?:public|sign)\/[^/]+\/(.+?)(?:\?|$)/);
+      if (match) {
+        pathToUse = match[1];
+      } else {
+        return storagePath; // Can't parse, return as-is
+      }
     }
     
-    // Get public URL from Supabase Storage
-    const { data } = supabase
-      .storage
-      .from(STORAGE_BUCKET)
-      .getPublicUrl(storagePath);
-    
-    return data?.publicUrl || null;
+    // Build public URL using cloud storage (images are stored on Supabase cloud, not local Docker)
+    const publicUrl = `${CLOUD_STORAGE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/${pathToUse}`;
+    return publicUrl;
   } catch (error) {
     console.error('Error getting image URL:', error);
     return null;
