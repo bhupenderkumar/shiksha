@@ -238,19 +238,13 @@ const DateSheet: React.FC = () => {
               <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/30 px-4 py-2 rounded-full">
                 <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 <span className="text-gray-700 dark:text-gray-300">
-                  Exam Time: 09:00 AM - 11:00 AM
+                  Exam Time: 09:00 AM - 11:00 AM | School Dispersal: As Usual
                 </span>
               </div>
               <div className="flex items-center gap-2 bg-green-50 dark:bg-green-900/30 px-4 py-2 rounded-full">
                 <BookOpen className="w-4 h-4 text-green-600 dark:text-green-400" />
                 <span className="text-gray-700 dark:text-gray-300">
                   Classes: Pre Nursery to Class V
-                </span>
-              </div>
-              <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-900/30 px-4 py-2 rounded-full">
-                <School className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                <span className="text-gray-700 dark:text-gray-300">
-                  School Dispersal: As Usual
                 </span>
               </div>
             </div>
