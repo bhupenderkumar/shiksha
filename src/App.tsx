@@ -58,6 +58,8 @@ const PublicClassworkShare = lazy(() => import('./pages/PublicClassworkShare'));
 // Birthday pages
 const PublicBirthdayPage = lazy(() => import('./pages/PublicBirthdayPage'));
 const BirthdaysPage = lazy(() => import('./pages/BirthdaysPage'));
+// Date Sheet page
+const DateSheet = lazy(() => import('./pages/DateSheet'));
 
 // Private route component
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -116,6 +118,9 @@ function AppRoutes() {
         
         {/* Public Birthday Page - No authentication required */}
         <Route path="/birthday/:studentId" element={<PublicBirthdayPage />} />
+        
+        {/* Public Date Sheet - No authentication required */}
+        <Route path="/date-sheet" element={<DateSheet />} />
 
         {/* Protected Routes */}
         <Route path="/dashboard" element={
