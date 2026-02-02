@@ -255,13 +255,13 @@ const DateSheet: React.FC = () => {
         <Card className="border-0 shadow-lg bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm overflow-hidden">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="relative">
                 <TableHeader>
                   <TableRow className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-600 hover:to-indigo-600">
-                    <TableHead className="text-white font-bold text-center border-r border-blue-500/30 py-4">
+                    <TableHead className="text-white font-bold text-center border-r border-blue-500/30 py-4 sticky left-0 z-20 bg-blue-600 min-w-[100px]">
                       Date
                     </TableHead>
-                    <TableHead className="text-white font-bold text-center border-r border-blue-500/30 py-4">
+                    <TableHead className="text-white font-bold text-center border-r border-blue-500/30 py-4 sticky left-[100px] z-20 bg-indigo-600 min-w-[90px]">
                       Day
                     </TableHead>
                     <TableHead className="text-white font-bold text-center border-r border-blue-500/30 py-4 whitespace-nowrap">
@@ -299,12 +299,18 @@ const DateSheet: React.FC = () => {
                         index % 2 === 0 ? 'bg-gray-50/50 dark:bg-gray-700/30' : 'bg-white dark:bg-gray-800'
                       )}
                     >
-                      <TableCell className="font-semibold text-center border-r border-gray-200 dark:border-gray-700 py-3">
+                      <TableCell className={cn(
+                        "font-semibold text-center border-r border-gray-200 dark:border-gray-700 py-3 sticky left-0 z-10 min-w-[100px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]",
+                        index % 2 === 0 ? 'bg-gray-50 dark:bg-gray-700' : 'bg-white dark:bg-gray-800'
+                      )}>
                         <span className="bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-2 py-1 rounded text-sm">
                           {row.date}
                         </span>
                       </TableCell>
-                      <TableCell className="text-center border-r border-gray-200 dark:border-gray-700 py-3 font-medium text-gray-700 dark:text-gray-300">
+                      <TableCell className={cn(
+                        "text-center border-r border-gray-200 dark:border-gray-700 py-3 font-medium text-gray-700 dark:text-gray-300 sticky left-[100px] z-10 min-w-[90px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]",
+                        index % 2 === 0 ? 'bg-gray-50 dark:bg-gray-700' : 'bg-white dark:bg-gray-800'
+                      )}>
                         {row.day}
                       </TableCell>
                       <TableCell className="text-center border-r border-gray-200 dark:border-gray-700 py-3">
