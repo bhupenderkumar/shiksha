@@ -39,6 +39,7 @@ import PublicHomeworkShare from './pages/PublicHomeworkShare';
 import PublicClassworkShare from './pages/PublicClassworkShare';
 import PublicBirthdayPage from './pages/PublicBirthdayPage';
 import BirthdaysPage from './pages/BirthdaysPage';
+import DateSheet from './pages/DateSheet';
 import Layout from './components/Layout';
 import PublicLayout from './components/PublicLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -329,6 +330,10 @@ export const router = createBrowserRouter([
       {
         path: 'parent-feedback-submission',
         element: <ParentFeedbackSubmission />,
+      },
+      {
+        path: 'date-sheet',
+        element: <DateSheet />,
       },
     ],
   },
