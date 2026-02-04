@@ -31,7 +31,6 @@ export function ClassworkForm({ onSubmit, initialData }: ClassworkFormProps) {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [deletedFileIds, setDeletedFileIds] = useState<string[]>([]); // Track deleted file IDs
 
   useEffect(() => {
     const fetchData = async () => {
@@ -100,12 +99,10 @@ export function ClassworkForm({ onSubmit, initialData }: ClassworkFormProps) {
       const submitData: CreateClassworkData = {
         ...formData,
         attachments: [...existingFiles, ...uploadedFiles],
-        uploadedBy: user.id,
-        filesToDelete: deletedFileIds, // Include IDs of files to delete
-      } as any; // Using any to include filesToDelete which is part of UpdateClassworkData
+        uploadedBy: user.id
+      };
 
       await onSubmit(submitData);
-      setDeletedFileIds([]); // Clear deleted file IDs after successful submission
     } catch (error) {
       console.error('Error submitting classwork:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to create classwork');
@@ -129,8 +126,6 @@ export function ClassworkForm({ onSubmit, initialData }: ClassworkFormProps) {
       ...prev,
       attachments: (prev.attachments || []).filter(file => file.id !== fileId)
     }));
-    // Track the deleted file ID for later deletion from database
-    setDeletedFileIds(prev => [...prev, fileId]);
   };
 
   return (

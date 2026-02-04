@@ -292,6 +292,7 @@ const IDCardForm: React.FC = () => {
   };
 
   return (
+    <div className="bg-white min-h-screen text-gray-900" data-theme="light">
     <div className="container mx-auto px-3 sm:px-4 py-4 space-y-4 sm:space-y-6">
       {/* Confetti effect */}
       {showConfetti && (
@@ -365,9 +366,9 @@ const IDCardForm: React.FC = () => {
         </div>
       )}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-0">FSPS ID Card Details</h1>
+        <h1 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-0 text-gray-900">FSPS ID Card Details</h1>
         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-          <h4 className="text-sm sm:text-base">Physical (Hard copy) will be delivered by April End</h4>
+          <h4 className="text-sm sm:text-base text-gray-700">Physical (Hard copy) will be delivered by April End</h4>
           <a
             href="https://wa.me/919311872001"
             target="_blank"
@@ -399,14 +400,14 @@ const IDCardForm: React.FC = () => {
                   <div className="grid grid-cols-1 gap-4 sm:gap-6">
                     {/* Student Information */}
                     <div className="space-y-3 sm:space-y-4">
-                      <h3 className="text-base sm:text-lg font-medium">Student Information</h3>
+                      <h3 className="text-base sm:text-lg font-medium text-gray-900">Student Information</h3>
 
                       <FormField
                         control={form.control}
                         name="studentName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="font-bold text-black">Student Name</FormLabel>
+                            <FormLabel className="font-bold text-gray-900">Student Name</FormLabel>
                             <FormControl>
                               <Input {...field} placeholder="Enter student name" />
                             </FormControl>
@@ -420,7 +421,7 @@ const IDCardForm: React.FC = () => {
                         name="dateOfBirth"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="font-bold text-black">Date of Birth</FormLabel>
+                            <FormLabel className="font-bold text-gray-900">Date of Birth</FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
@@ -438,7 +439,7 @@ const IDCardForm: React.FC = () => {
                         name="classId"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="font-bold text-black">Class</FormLabel>
+                            <FormLabel className="font-bold text-gray-900">Class</FormLabel>
                             <Select
                               onValueChange={field.onChange}
                               defaultValue={field.value}
@@ -462,7 +463,7 @@ const IDCardForm: React.FC = () => {
                       />
 
                       <div>
-                        <FormLabel className="font-bold text-black">Student Photo</FormLabel>
+                        <FormLabel className="font-bold text-gray-900">Student Photo</FormLabel>
                         <div className="flex items-center gap-3 mb-2">
                           <div className="bg-blue-50 p-2 rounded-md border border-blue-100 flex items-center">
                             <div className="w-16 h-20 bg-white border border-gray-300 rounded-sm overflow-hidden mr-2 flex items-center justify-center">
@@ -498,14 +499,14 @@ const IDCardForm: React.FC = () => {
 
                     {/* Parent Information */}
                     <div className="space-y-3 sm:space-y-4">
-                      <h3 className="text-base sm:text-lg font-medium">Parent Information</h3>
+                      <h3 className="text-base sm:text-lg font-medium text-gray-900">Parent Information</h3>
 
                       <FormField
                         control={form.control}
                         name="fatherName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="font-bold text-black">Father's Name</FormLabel>
+                            <FormLabel className="font-bold text-gray-900">Father's Name</FormLabel>
                             <FormControl>
                               <Input {...field} placeholder="Enter father's name" />
                             </FormControl>
@@ -519,7 +520,7 @@ const IDCardForm: React.FC = () => {
                         name="motherName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="font-bold text-black">Mother's Name</FormLabel>
+                            <FormLabel className="font-bold text-gray-900">Mother's Name</FormLabel>
                             <FormControl>
                               <Input {...field} placeholder="Enter mother's name" />
                             </FormControl>
@@ -529,7 +530,7 @@ const IDCardForm: React.FC = () => {
                       />
 
                       <div>
-                        <FormLabel className="font-bold text-black">Father's Photo</FormLabel>
+                        <FormLabel className="font-bold text-gray-900">Father's Photo</FormLabel>
                         <div className="flex items-center gap-3 mb-2">
                           <div className="bg-blue-50 p-2 rounded-md border border-blue-100 flex items-center">
                             <div className="w-16 h-20 bg-white border border-gray-300 rounded-sm overflow-hidden mr-2 flex items-center justify-center">
@@ -562,7 +563,7 @@ const IDCardForm: React.FC = () => {
                         </div>
                       </div>
                       <div>
-                        <FormLabel className="font-bold text-black">Mother's Photo</FormLabel>
+                        <FormLabel className="font-bold text-gray-900">Mother's Photo</FormLabel>
                         <div className="flex items-center gap-3 mb-2">
                           <div className="bg-blue-50 p-2 rounded-md border border-blue-100 flex items-center">
                             <div className="w-16 h-20 bg-white border border-gray-300 rounded-sm overflow-hidden mr-2 flex items-center justify-center">
@@ -602,7 +603,7 @@ const IDCardForm: React.FC = () => {
                       name="fatherMobile"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-bold text-black">Father's Mobile</FormLabel>
+                          <FormLabel className="font-bold text-gray-900">Father's Mobile</FormLabel>
                           <FormControl>
                             <Input {...field} type="tel" inputMode="numeric" pattern="[0-9]*" placeholder="Enter father's mobile number" />
                           </FormControl>
@@ -616,7 +617,7 @@ const IDCardForm: React.FC = () => {
                       name="motherMobile"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-bold text-black">Mother's Mobile</FormLabel>
+                          <FormLabel className="font-bold text-gray-900">Mother's Mobile</FormLabel>
                           <FormControl>
                             <Input {...field} type="tel" inputMode="numeric" pattern="[0-9]*" placeholder="Enter mother's mobile number" />
                           </FormControl>
@@ -631,7 +632,7 @@ const IDCardForm: React.FC = () => {
                       name="address"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-bold text-black">Address</FormLabel>
+                          <FormLabel className="font-bold text-gray-900">Address</FormLabel>
                           <FormControl>
                             <Input {...field} placeholder="Enter address" />
                           </FormControl>
@@ -688,6 +689,7 @@ const IDCardForm: React.FC = () => {
           )}
         </TabsContent>
       </Tabs>
+    </div>
     </div>
   );
 };
