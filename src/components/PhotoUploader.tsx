@@ -230,12 +230,12 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
     <div className="space-y-2">
       {!isCapturing && !preview && (
         <div
-          className="flex flex-col items-center justify-center w-full h-32 sm:h-40 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
+          className="flex flex-col items-center justify-center w-full h-32 sm:h-40 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
           onClick={() => fileInputRef.current?.click()}
         >
           <div className="flex flex-col items-center justify-center pt-3 pb-4 sm:pt-5 sm:pb-6">
-            <Upload className="w-6 h-6 sm:w-8 sm:h-8 mb-1 sm:mb-2" />
-            <p className="mb-1 sm:mb-2 text-xs sm:text-sm text-center px-2">
+            <Upload className="w-6 h-6 sm:w-8 sm:h-8 mb-1 sm:mb-2 text-gray-500" />
+            <p className="mb-1 sm:mb-2 text-xs sm:text-sm text-center px-2 text-gray-600">
               <span className="font-semibold">Tap to upload from gallery</span> or use camera
             </p>
           </div>

@@ -20,8 +20,8 @@ const IDCardView: React.FC = () => {
   useEffect(() => {
     const fetchIDCard = async () => {
       if (!studentId) {
-        setError('No student ID specified.');
-        setLoading(false);
+        // Redirect to new ID card form if no student ID is provided
+        navigate('/id-card/new');
         return;
       }
 
@@ -45,7 +45,7 @@ const IDCardView: React.FC = () => {
     };
 
     fetchIDCard();
-  }, [studentId]);
+  }, [studentId, navigate]);
 
   const handleGoBack = () => {
     navigate(-1);
@@ -69,7 +69,7 @@ const IDCardView: React.FC = () => {
               <CardTitle className="text-2xl font-bold">{SCHOOL_INFO.name}</CardTitle>
               <CardDescription>ID Card Details</CardDescription>
             </div>
-            <Link to="/id-cards" className="text-sm text-blue-600 hover:underline">View All ID Cards</Link>
+            <Link to="/id-cards" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">View All ID Cards</Link>
           </div>
         </CardHeader>
         <CardContent>
@@ -84,7 +84,7 @@ const IDCardView: React.FC = () => {
               <p className="text-muted-foreground">{error}</p>
               <Button
                 className="mt-6"
-                onClick={() => navigate('/id-card-form')}
+                onClick={() => navigate('/id-card/new')}
               >
                 Create New ID Card
               </Button>

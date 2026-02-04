@@ -65,7 +65,6 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
   const [subjects, setSubjects] = useState<any[]>([]);
   const [files, setFiles] = useState<File[]>([]);
   const [existingFiles, setExistingFiles] = useState(initialFiles || []);
-  const [deletedFileIds, setDeletedFileIds] = useState<string[]>([]); // Track deleted file IDs
 
   const {
     register,
@@ -204,13 +203,11 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
             type: 'application/octet-stream', // Default type for existing files
           }))
         ],
-        filesToDelete: deletedFileIds, // Include IDs of files to delete
         uploadedBy: userId
       };
 
       await onSubmit(submissionData);
       setFiles([]); // Clear the files state after successful submission
-      setDeletedFileIds([]); // Clear deleted file IDs after successful submission
     } catch (error) {
       console.error('Error submitting form:', error);
       toast.error('Failed to submit homework');
@@ -225,8 +222,6 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
     const updatedFiles = existingFiles.filter(f => f.id !== fileId);
     setExistingFiles(updatedFiles);
     setValue('existingFiles', updatedFiles);
-    // Track the deleted file ID for later deletion from database
-    setDeletedFileIds(prev => [...prev, fileId]);
   };
 
   const STATUS_OPTIONS = [

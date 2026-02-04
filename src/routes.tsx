@@ -312,6 +312,10 @@ export const router = createBrowserRouter([
         element: <IDCardView />,
       },
       {
+        path: 'id-card/new',
+        element: <IDCardForm />,
+      },
+      {
         path: 'id-cards-table',
         element: <IDCardTableView />,
       },
