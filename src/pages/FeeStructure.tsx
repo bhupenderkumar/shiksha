@@ -416,8 +416,42 @@ export default function FeeStructurePage() {
           </TabsContent>
         </Tabs>
 
+        {/* Bank Details */}
+        <div className="mt-10 rounded-xl border bg-card shadow-sm overflow-hidden">
+          <div className="px-5 py-4 bg-muted/40 border-b">
+            <h3 className="text-lg font-semibold">🏦 Bank Details for Fee Payment</h3>
+          </div>
+          <div className="px-5 py-5">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Account Number</p>
+                  <p className="text-lg font-bold font-mono tracking-wider">50424141574</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">IFSC Code</p>
+                  <p className="text-lg font-bold font-mono tracking-wider">QLA0212897</p>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Branch</p>
+                  <p className="text-base font-medium">Sector 37, Faridabad</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Account Holder Address</p>
+                  <p className="text-base font-medium">Ashoka Enclave, Faridabad</p>
+                </div>
+              </div>
+            </div>
+            <p className="mt-4 text-sm text-muted-foreground">
+              Please share the payment screenshot or transaction ID with the school office after making the payment.
+            </p>
+          </div>
+        </div>
+
         {/* Disclaimer */}
-        <div className="mt-10 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/30 p-4 text-sm text-amber-800 dark:text-amber-200">
+        <div className="mt-6 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/30 p-4 text-sm text-amber-800 dark:text-amber-200">
           <strong>Note:</strong> The fee structure is subject to revision. Please contact the school
           office for the latest information. All fees are non-refundable unless stated otherwise.
         </div>

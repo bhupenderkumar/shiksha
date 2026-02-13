@@ -78,8 +78,6 @@ function buildPromotion(fromClass: string, toClass: string): ClassPromotionCharg
     toClass,
     charges: [
       { name: 'Promotion Package', amount: 3700, note: 'Includes Books, 1 Uniform, Full-Year Stationery, ID Card & Diary' },
-      { name: 'Extra Summer Dress', amount: 700 },
-      { name: 'Winter Dress', amount: 1000 },
       { name: 'Classwork & Homework Copies', amount: 300 },
     ],
   };
