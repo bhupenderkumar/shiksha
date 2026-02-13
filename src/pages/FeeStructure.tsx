@@ -7,6 +7,7 @@ import {
   getTotalAdmissionFees,
   getTotalMonthlyFees,
   getTotalPromotionCharges,
+  getTotalOptionalPromotionCharges,
   type ClassFeeStructure,
   type ClassPromotionCharges,
 } from '@/data/fee-structure';
@@ -89,12 +90,12 @@ function exportAdmissionCSV() {
 }
 
 function exportPromotionCSV() {
-  const header = ['Promotion', 'Charge Name', 'Amount (₹)'];
+  const header = ['Promotion', 'Charge Name', 'Amount (₹)', 'Type'];
   const rows: string[][] = [header];
 
   promotionCharges.forEach((cls) => {
     cls.charges.forEach((f) =>
-      rows.push([cls.className, f.name, String(f.amount)])
+      rows.push([cls.className, f.name, String(f.amount), f.optional ? 'Optional' : 'Mandatory'])
     );
   });
 
@@ -193,6 +194,9 @@ function AdmissionClassTable({ cls }: { cls: ClassFeeStructure }) {
 // ── Promotion Table for a single class ───────────────────────────────────
 
 function PromotionClassTable({ cls }: { cls: ClassPromotionCharges }) {
+  const mandatoryCharges = cls.charges.filter(f => !f.optional);
+  const optionalCharges = cls.charges.filter(f => f.optional);
+
   return (
     <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
       <div className="flex items-center justify-between px-5 py-4 bg-muted/40 border-b">
@@ -201,7 +205,9 @@ function PromotionClassTable({ cls }: { cls: ClassPromotionCharges }) {
           Total: {formatINR(getTotalPromotionCharges(cls))}
         </span>
       </div>
-      <div className="px-5 py-4">
+
+      {/* Mandatory Charges */}
+      <div className="px-5 pt-4 pb-2">
         <Table>
           <TableHeader>
             <TableRow>
@@ -211,7 +217,7 @@ function PromotionClassTable({ cls }: { cls: ClassPromotionCharges }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {cls.charges.map((f) => (
+            {mandatoryCharges.map((f) => (
               <TableRow key={f.name}>
                 <TableCell className="font-medium">{f.name}</TableCell>
                 <TableCell className="text-right font-semibold">{formatINR(f.amount)}</TableCell>
@@ -228,6 +234,34 @@ function PromotionClassTable({ cls }: { cls: ClassPromotionCharges }) {
           </TableBody>
         </Table>
       </div>
+
+      {/* Optional Charges */}
+      {optionalCharges.length > 0 && (
+        <div className="px-5 pb-4">
+          <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2">
+            Optional Charges
+            <Badge variant="outline" className="text-xs font-normal">As needed</Badge>
+          </h4>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[50%]">Particulars</TableHead>
+                <TableHead className="text-right">Amount (₹)</TableHead>
+                <TableHead className="hidden sm:table-cell">Note</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {optionalCharges.map((f) => (
+                <TableRow key={f.name} className="text-muted-foreground">
+                  <TableCell className="font-medium">{f.name}</TableCell>
+                  <TableCell className="text-right font-semibold">{formatINR(f.amount)}</TableCell>
+                  <TableCell className="hidden sm:table-cell text-xs">{f.note || '—'}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   );
 }
@@ -397,7 +431,8 @@ export default function FeeStructurePage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Promotion</TableHead>
-                      <TableHead className="text-right">Total Charges (₹)</TableHead>
+                      <TableHead className="text-right">Mandatory (₹)</TableHead>
+                      <TableHead className="text-right">Optional (₹)</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -406,6 +441,9 @@ export default function FeeStructurePage() {
                         <TableCell className="font-medium">{cls.className}</TableCell>
                         <TableCell className="text-right font-medium">
                           {formatINR(getTotalPromotionCharges(cls))}
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground">
+                          {formatINR(getTotalOptionalPromotionCharges(cls))}
                         </TableCell>
                       </TableRow>
                     ))}
