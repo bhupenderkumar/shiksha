@@ -357,6 +357,33 @@ export function HeroSection() {
             <span className="text-pink-400">personalized attention</span>.
           </motion.p>
 
+          {/* Quick action pills - immediately visible */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.55 }}
+            className="flex flex-wrap justify-center gap-2 mb-6 px-4"
+          >
+            <Link
+              to="/fee-structure"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs sm:text-sm font-medium hover:bg-amber-500/20 hover:border-amber-500/30 transition-all duration-300 hover:scale-105"
+            >
+              💰 Fee Structure
+            </Link>
+            <Link
+              to="/parent-feedback-search"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs sm:text-sm font-medium hover:bg-emerald-500/20 hover:border-emerald-500/30 transition-all duration-300 hover:scale-105"
+            >
+              📋 View Feedback
+            </Link>
+            <Link
+              to="/date-sheet"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs sm:text-sm font-medium hover:bg-cyan-500/20 hover:border-cyan-500/30 transition-all duration-300 hover:scale-105"
+            >
+              📅 Date Sheet
+            </Link>
+          </motion.div>
+
           {/* CTA Buttons - cleaner style */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
