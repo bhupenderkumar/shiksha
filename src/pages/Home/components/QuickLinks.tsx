@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowRight, ClipboardList, MessageSquare, Eye, Zap } from "lucide-react";
+import { ArrowRight, ClipboardList, MessageSquare, Eye, Zap, IndianRupee } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -10,6 +10,13 @@ const links = [
     description: "Start your child's journey with us. Apply now for the upcoming academic session.",
     icon: ClipboardList,
     gradient: "from-blue-500 to-cyan-500",
+  },
+  {
+    to: "/fee-structure",
+    label: "Fee Structure",
+    description: "View detailed fee breakdowns, admission charges, monthly fees & promotion costs.",
+    icon: IndianRupee,
+    gradient: "from-amber-500 to-orange-500",
   },
   {
     to: "/parent-feedback-submission",
@@ -62,7 +69,7 @@ export function QuickLinks() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
           {links.map((link, index) => (
             <motion.div
               key={link.to}
