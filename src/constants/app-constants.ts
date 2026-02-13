@@ -25,6 +25,7 @@ export const ROUTES = {
   ADMIN_FEEDBACK: '/admin-feedback',
   BIRTHDAYS: '/birthdays',
   BIRTHDAY_DETAIL: '/birthday/:studentId',
+  FEE_STRUCTURE: '/fee-structure',
 } as const;
 
 export const API_ENDPOINTS = {
