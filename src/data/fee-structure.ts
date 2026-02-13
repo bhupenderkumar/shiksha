@@ -19,6 +19,7 @@ export interface PromotionChargeItem {
   name: string;
   amount: number;
   note?: string;
+  optional?: boolean;
 }
 
 export interface ClassPromotionCharges {
@@ -71,29 +72,34 @@ export const admissionFeeStructure: ClassFeeStructure[] = [
 
 // ── Promotion Charges ────────────────────────────────────────────────────
 
-function buildPromotion(fromClass: string, toClass: string): ClassPromotionCharges {
+function buildPromotion(fromClass: string, toClass: string, classFee: number): ClassPromotionCharges {
   return {
     className: `${fromClass} → ${toClass}`,
     fromClass,
     toClass,
     charges: [
       { name: 'Promotion Package', amount: 3700, note: 'Includes Books, 1 Uniform, Full-Year Stationery, ID Card & Diary' },
+      { name: 'Class Fee', amount: classFee, note: `Annual fee for ${toClass}` },
       { name: 'Classwork & Homework Copies', amount: 300 },
+      // Optional charges
+      { name: 'Extra Summer Dress', amount: 700, optional: true },
+      { name: 'Winter Dress', amount: 1000, optional: true },
+      { name: 'Extra Copies', amount: 50, optional: true, note: 'Per additional copy/notebook' },
     ],
   };
 }
 
 export const promotionCharges: ClassPromotionCharges[] = [
-  buildPromotion('Nursery', 'LKG'),
-  buildPromotion('LKG', 'UKG'),
-  buildPromotion('UKG', 'Class 1'),
-  buildPromotion('Class 1', 'Class 2'),
-  buildPromotion('Class 2', 'Class 3'),
-  buildPromotion('Class 3', 'Class 4'),
-  buildPromotion('Class 4', 'Class 5'),
-  buildPromotion('Class 5', 'Class 6'),
-  buildPromotion('Class 6', 'Class 7'),
-  buildPromotion('Class 7', 'Class 8'),
+  buildPromotion('Nursery', 'LKG', 700),
+  buildPromotion('LKG', 'UKG', 700),
+  buildPromotion('UKG', 'Class 1', 1000),
+  buildPromotion('Class 1', 'Class 2', 1250),
+  buildPromotion('Class 2', 'Class 3', 1500),
+  buildPromotion('Class 3', 'Class 4', 1750),
+  buildPromotion('Class 4', 'Class 5', 2000),
+  buildPromotion('Class 5', 'Class 6', 2250),
+  buildPromotion('Class 6', 'Class 7', 2500),
+  buildPromotion('Class 7', 'Class 8', 2750),
 ];
 
 // ── Helpers ──────────────────────────────────────────────────────────────
@@ -119,5 +125,9 @@ export function getTotalMonthlyFees(cls: ClassFeeStructure): number {
 }
 
 export function getTotalPromotionCharges(cls: ClassPromotionCharges): number {
-  return cls.charges.reduce((s, f) => s + f.amount, 0);
+  return cls.charges.filter(f => !f.optional).reduce((s, f) => s + f.amount, 0);
+}
+
+export function getTotalOptionalPromotionCharges(cls: ClassPromotionCharges): number {
+  return cls.charges.filter(f => f.optional).reduce((s, f) => s + f.amount, 0);
 }
