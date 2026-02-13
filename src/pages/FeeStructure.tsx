@@ -425,12 +425,16 @@ export default function FeeStructurePage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-3">
                 <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Account Holder</p>
+                  <p className="text-base font-bold">Bhupender Sharma</p>
+                </div>
+                <div>
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Account Number</p>
                   <p className="text-lg font-bold font-mono tracking-wider">50424141574</p>
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">IFSC Code</p>
-                  <p className="text-lg font-bold font-mono tracking-wider">QLA0212897</p>
+                  <p className="text-lg font-bold font-mono tracking-wider">ALLA0212897</p>
                 </div>
               </div>
               <div className="space-y-3">
@@ -441,6 +445,11 @@ export default function FeeStructurePage() {
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Account Holder Address</p>
                   <p className="text-base font-medium">Ashoka Enclave, Faridabad</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">UPI ID</p>
+                  <p className="text-lg font-bold font-mono tracking-wider">9717267473@ybl</p>
+                  <p className="text-xs text-muted-foreground">Name: Bhupender Sharma</p>
                 </div>
               </div>
             </div>
