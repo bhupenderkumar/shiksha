@@ -384,7 +384,7 @@ function App() {
       {/* Router is now provided in main.tsx */}
       <CustomCursor />
       <AnimatedBackground particleCount={30} />
-      <div className="flex flex-col min-h-screen bg-transparent mt-4 relative z-10">
+      <div className="flex flex-col min-h-screen bg-transparent relative z-10">
         <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center"><div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div></div>}>
           <AppRoutes />
           <Toaster />
