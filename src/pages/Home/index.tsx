@@ -23,14 +23,14 @@ export default function Home() {
       {/* Hero */}
       <HeroSection />
       
+      {/* Quick Links */}
+      <QuickLinks />
+      
       {/* Features */}
       <FeaturesSection />
       
       {/* Achievements */}
       <AchievementsSection />
-      
-      {/* Quick Links */}
-      <QuickLinks />
       
       {/* Admission Process */}
       <AdmissionProcess />
