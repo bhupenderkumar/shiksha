@@ -2,14 +2,14 @@ export const SCHOOL_INFO = {
   name: "First Step Public School",
   fullName: "First Step Public School",
   tagline: "Nurturing Minds, Building Futures",
-  address: "House No-164, H Block, Saurabh Vihar, Jaitpur, Badarpur, Delhi - 110044",
+  address: " Saurabh Vihar, Jaitpur, Badarpur, Delhi - 110044",
   phone: "+91-9717267473",
   email: "firststeppublicschool22@gmail.com",
   website: "www.myfirststepschool.com",
   logo: "/assets/images/logo.PNG", // Updated logo path
   principalName: "Dr. Jyoti Sharma",
   principalSignature: "/signatures/principal.png", // Add signature image path
-  accountantName: "Mr. Nikita Sharma",
+  accountantName: "Mrs. Nikita Sharma",
   accountantSignature: "/signatures/accountant.png",
   establishedYear: 2005,
   registrationNo: "CBSE/DEL/2005/001234", // Add school registration number
