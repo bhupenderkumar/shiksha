@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { ExternalLink } from 'lucide-react';
 import {
   feeChartData,
   promotionChartData,
@@ -82,7 +83,11 @@ export default function FeeStructurePage() {
       <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <Link to="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
-            <span className="text-primary">🏫</span> School Fee Structure
+            <img src="/assets/images/logo.PNG" alt="Logo" className="h-8 w-8 object-contain" />
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-bold">First Step Public School</span>
+              <span className="text-[10px] text-muted-foreground">School ID: 20136251</span>
+            </div>
           </Link>
           <div className="flex gap-2">
             <Link to="/fee-chart">
@@ -170,6 +175,7 @@ export default function FeeStructurePage() {
                         <div className="text-[10px] font-normal text-muted-foreground">Fee</div>
                       </TableHead>
                       <TableHead className="text-center font-bold">Status</TableHead>
+                      <TableHead className="text-center font-bold print:hidden">View</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -189,6 +195,15 @@ export default function FeeStructurePage() {
                         <TableCell className="text-right font-bold font-mono text-sm text-primary">{formatNum(getAdmissionTotal(row))}</TableCell>
                         <TableCell className="text-right font-mono text-sm font-semibold">{formatNum(row.monthlyFee)}/mo</TableCell>
                         <TableCell className="text-center">{seatBadge(row.seatStatus)}</TableCell>
+                        <TableCell className="text-center print:hidden">
+                          <Link
+                            to={`/fee-chart?class=${encodeURIComponent(row.className)}`}
+                            className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                            Details
+                          </Link>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
