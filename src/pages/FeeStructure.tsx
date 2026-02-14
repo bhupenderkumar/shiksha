@@ -1,15 +1,15 @@
-import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  admissionFeeStructure,
-  promotionCharges,
+  feeChartData,
+  promotionChartData,
   formatINR,
-  getTotalAdmissionFees,
-  getTotalMonthlyFees,
-  getTotalPromotionCharges,
-  getTotalOptionalPromotionCharges,
-  type ClassFeeStructure,
-  type ClassPromotionCharges,
+  formatNum,
+  getAdmissionTotal,
+  getMonthlyTotal,
+  getTotalFeeInYear,
+  getPromotionTotal,
+  getPromotionYearTotal,
+  type FeeChartRow,
 } from '@/data/fee-structure';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -24,26 +24,12 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 
-// ── Helpers ──────────────────────────────────────────────────────────────
-
-function seatBadge(status: ClassFeeStructure['seatStatus']) {
+function seatBadge(status: FeeChartRow['seatStatus']) {
   if (status === 'full')
-    return (
-      <Badge variant="destructive" className="ml-2 text-xs uppercase tracking-wider">
-        Seat Full
-      </Badge>
-    );
+    return <Badge variant="destructive" className="text-[10px] uppercase">Seat Full</Badge>;
   if (status === 'limited')
-    return (
-      <Badge variant="warning" className="ml-2 text-xs uppercase tracking-wider">
-        Limited Seats
-      </Badge>
-    );
-  return (
-    <Badge variant="success" className="ml-2 text-xs uppercase tracking-wider">
-      Seats Available
-    </Badge>
-  );
+    return <Badge variant="warning" className="text-[10px] uppercase">Limited</Badge>;
+  return <Badge variant="success" className="text-[10px] uppercase">Available</Badge>;
 }
 
 function exportTableToCSV(filename: string, rows: string[][]) {
@@ -57,344 +43,192 @@ function exportTableToCSV(filename: string, rows: string[][]) {
 }
 
 function exportAdmissionCSV() {
-  const header = [
-    'Class',
-    'Seat Status',
-    'Charge Type',
-    'Charge Name',
-    'Amount (₹)',
-    'Note',
-  ];
+  const header = ['Class', 'Admission Package', 'Extra Summer Dress', 'Winter Dress', 'Copies', 'Total One-time', 'Monthly Fee', 'Seat Status'];
   const rows: string[][] = [header];
-
-  admissionFeeStructure.forEach((cls) => {
-    const statusLabel =
-      cls.seatStatus === 'full'
-        ? 'Seat Full'
-        : cls.seatStatus === 'limited'
-          ? 'Limited Seats'
-          : 'Available';
-
-    cls.admissionFees.forEach((f) =>
-      rows.push([cls.className, statusLabel, 'One-time Admission', f.name, String(f.amount), f.note || ''])
-    );
-    cls.monthlyFees.forEach((f) =>
-      rows.push([cls.className, statusLabel, 'Monthly Fee', f.name, String(f.amount), f.note || ''])
-    );
-    cls.additionalCharges.forEach((f) =>
-      rows.push([cls.className, statusLabel, 'Additional Charge', f.name, String(f.amount), f.note || ''])
-    );
+  feeChartData.forEach((r) => {
+    rows.push([
+      r.className,
+      String(r.admissionPackage),
+      String(r.extraSummerDress),
+      String(r.winterDress),
+      String(r.copies),
+      String(getAdmissionTotal(r)),
+      String(r.monthlyFee),
+      r.seatStatus === 'full' ? 'Seat Full' : r.seatStatus === 'limited' ? 'Limited' : 'Available',
+    ]);
   });
-
   exportTableToCSV('admission_fee_structure.csv', rows);
 }
 
 function exportPromotionCSV() {
-  const header = ['Promotion', 'Charge Name', 'Amount (₹)', 'Type'];
+  const header = ['From', 'To', 'Promotion Package', 'Copies', 'Total', 'Monthly Fee'];
   const rows: string[][] = [header];
-
-  promotionCharges.forEach((cls) => {
-    cls.charges.forEach((f) =>
-      rows.push([cls.className, f.name, String(f.amount), f.optional ? 'Optional' : 'Mandatory'])
-    );
+  promotionChartData.forEach((r) => {
+    rows.push([
+      r.fromClass,
+      r.toClass,
+      String(r.promotionPackage),
+      String(r.copies),
+      String(getPromotionTotal(r)),
+      String(r.monthlyFee),
+    ]);
   });
-
   exportTableToCSV('promotion_charges.csv', rows);
 }
 
-// ── Admission Table for a single class ───────────────────────────────────
-
-function AdmissionClassTable({ cls }: { cls: ClassFeeStructure }) {
-  return (
-    <div
-      className={cn(
-        'rounded-xl border bg-card shadow-sm overflow-hidden',
-        cls.seatStatus === 'full' && 'opacity-75'
-      )}
-    >
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-5 py-4 bg-muted/40 border-b gap-2">
-        <div className="flex items-center gap-2">
-          <h3 className="text-lg font-semibold">{cls.className}</h3>
-          {seatBadge(cls.seatStatus)}
-        </div>
-        <div className="text-right text-sm text-muted-foreground">
-          <span className="font-medium text-foreground">
-            One-time: {formatINR(getTotalAdmissionFees(cls))}
-          </span>
-          <span className="mx-2">|</span>
-          <span className="font-medium text-foreground">
-            Monthly: {formatINR(getTotalMonthlyFees(cls))}/month
-          </span>
-        </div>
-      </div>
-
-      {cls.seatStatus === 'full' && (
-        <div className="bg-red-50 dark:bg-red-950/30 border-b border-red-200 dark:border-red-900 px-5 py-2 text-center text-sm font-medium text-red-700 dark:text-red-300">
-          Admissions for {cls.className} are currently closed — all seats are full.
-        </div>
-      )}
-
-      {/* Admission Fees (One-time) */}
-      <div className="px-5 pt-4 pb-2">
-        <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-          Admission Charges (One-time)
-        </h4>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[50%]">Particulars</TableHead>
-              <TableHead className="text-right">Amount (₹)</TableHead>
-              <TableHead className="hidden sm:table-cell">Includes</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {cls.admissionFees.map((f) => (
-              <TableRow key={f.name}>
-                <TableCell className="font-medium">{f.name}</TableCell>
-                <TableCell className="text-right font-semibold">{formatINR(f.amount)}</TableCell>
-                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{f.note || '—'}</TableCell>
-              </TableRow>
-            ))}
-            <TableRow className="bg-primary/5 font-bold">
-              <TableCell>Total One-time</TableCell>
-              <TableCell className="text-right">{formatINR(getTotalAdmissionFees(cls))}</TableCell>
-              <TableCell className="hidden sm:table-cell" />
-            </TableRow>
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Monthly Fees */}
-      <div className="px-5 pb-4">
-        <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-          Monthly Recurring Fee
-        </h4>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[50%]">Particulars</TableHead>
-              <TableHead className="text-right">Amount (₹)</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {cls.monthlyFees.map((f) => (
-              <TableRow key={f.name}>
-                <TableCell className="font-medium">{f.name}</TableCell>
-                <TableCell className="text-right font-semibold">{formatINR(f.amount)}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
-  );
-}
-
-// ── Promotion Table for a single class ───────────────────────────────────
-
-function PromotionClassTable({ cls }: { cls: ClassPromotionCharges }) {
-  const mandatoryCharges = cls.charges.filter(f => !f.optional);
-  const optionalCharges = cls.charges.filter(f => f.optional);
-
-  return (
-    <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
-      <div className="flex items-center justify-between px-5 py-4 bg-muted/40 border-b">
-        <h3 className="text-lg font-semibold">{cls.className}</h3>
-        <span className="text-sm font-medium text-foreground">
-          Total: {formatINR(getTotalPromotionCharges(cls))}
-        </span>
-      </div>
-
-      {/* Mandatory Charges */}
-      <div className="px-5 pt-4 pb-2">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[50%]">Particulars</TableHead>
-              <TableHead className="text-right">Amount (₹)</TableHead>
-              <TableHead className="hidden sm:table-cell">Includes</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {mandatoryCharges.map((f) => (
-              <TableRow key={f.name}>
-                <TableCell className="font-medium">{f.name}</TableCell>
-                <TableCell className="text-right font-semibold">{formatINR(f.amount)}</TableCell>
-                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{f.note || '—'}</TableCell>
-              </TableRow>
-            ))}
-            <TableRow className="bg-primary/5 font-bold">
-              <TableCell>Total</TableCell>
-              <TableCell className="text-right">
-                {formatINR(getTotalPromotionCharges(cls))}
-              </TableCell>
-              <TableCell className="hidden sm:table-cell" />
-            </TableRow>
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Optional Charges */}
-      {optionalCharges.length > 0 && (
-        <div className="px-5 pb-4">
-          <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2">
-            Optional Charges
-            <Badge variant="outline" className="text-xs font-normal">As needed</Badge>
-          </h4>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[50%]">Particulars</TableHead>
-                <TableHead className="text-right">Amount (₹)</TableHead>
-                <TableHead className="hidden sm:table-cell">Note</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {optionalCharges.map((f) => (
-                <TableRow key={f.name} className="text-muted-foreground">
-                  <TableCell className="font-medium">{f.name}</TableCell>
-                  <TableCell className="text-right font-semibold">{formatINR(f.amount)}</TableCell>
-                  <TableCell className="hidden sm:table-cell text-xs">{f.note || '—'}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Main Page ────────────────────────────────────────────────────────────
-
 export default function FeeStructurePage() {
-  const [selectedClass, setSelectedClass] = useState<string>('all');
-  const topRef = useRef<HTMLDivElement>(null);
-
-  const filteredAdmission =
-    selectedClass === 'all'
-      ? admissionFeeStructure
-      : admissionFeeStructure.filter((c) => c.className === selectedClass);
-
   return (
-    <div ref={topRef} className="min-h-screen bg-background">
-      {/* Top Bar */}
+    <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <Link to="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
             <span className="text-primary">🏫</span> School Fee Structure
           </Link>
-          <Link to="/admission-enquiry">
-            <Button size="sm">Apply for Admission</Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link to="/fee-chart">
+              <Button variant="outline" size="sm">📄 Fee Chart</Button>
+            </Link>
+            <Link to="/admission-enquiry">
+              <Button size="sm">Apply for Admission</Button>
+            </Link>
+          </div>
         </div>
       </header>
 
-      {/* Hero */}
       <section className="bg-gradient-to-b from-primary/5 to-background py-10 text-center">
         <div className="container mx-auto px-4">
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-2">
             Fee Structure 2026-27
           </h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Transparent breakdown of admission fees, monthly charges and
-            promotion fees for every class. All amounts are in <strong>INR (₹)</strong>.
+            Transparent breakdown of admission fees, monthly charges and promotion
+            fees for every class. All amounts are in <strong>INR (₹)</strong>.
           </p>
         </div>
       </section>
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="admission" className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <TabsList className="w-full sm:w-auto">
-              <TabsTrigger value="admission">Admission Fees &amp; Charges</TabsTrigger>
-              <TabsTrigger value="promotion">Promotion Charges</TabsTrigger>
-            </TabsList>
-          </div>
+          <TabsList className="w-full sm:w-auto">
+            <TabsTrigger value="admission">Admission Fees &amp; Charges</TabsTrigger>
+            <TabsTrigger value="promotion">Promotion Charges</TabsTrigger>
+          </TabsList>
 
-          {/* ── Admission Tab ─────────────────────────────────────────── */}
+          {/* ── Admission Tab ── */}
           <TabsContent value="admission" className="space-y-6">
-            {/* Class filter + Export */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant={selectedClass === 'all' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setSelectedClass('all')}
-                >
-                  All Classes
-                </Button>
-                {admissionFeeStructure.map((c) => (
-                  <Button
-                    key={c.className}
-                    variant={selectedClass === c.className ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setSelectedClass(c.className)}
-                    className="relative"
-                  >
-                    {c.className}
-                    {c.seatStatus === 'full' && (
-                      <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-background" />
-                    )}
-                  </Button>
-                ))}
+            <div className="flex items-center justify-between">
+              <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <span className="h-2.5 w-2.5 rounded-full bg-green-500 inline-block" /> Available
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="h-2.5 w-2.5 rounded-full bg-amber-500 inline-block" /> Limited
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="h-2.5 w-2.5 rounded-full bg-red-500 inline-block" /> Seat Full
+                </span>
               </div>
               <Button variant="outline" size="sm" onClick={exportAdmissionCSV}>
                 ⬇ Export CSV
               </Button>
             </div>
 
-            {/* Seat legend */}
-            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <span className="h-2.5 w-2.5 rounded-full bg-green-500 inline-block" /> Seats Available
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="h-2.5 w-2.5 rounded-full bg-amber-500 inline-block" /> Limited Seats
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="h-2.5 w-2.5 rounded-full bg-red-500 inline-block" /> Seat Full
-              </span>
-            </div>
-
-            {/* Cards */}
-            <div className="grid gap-6">
-              {filteredAdmission.map((cls) => (
-                <AdmissionClassTable key={cls.className} cls={cls} />
-              ))}
-            </div>
-
-            {/* Combined Summary Table */}
             <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
-              <div className="px-5 py-4 bg-muted/40 border-b flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Summary — All Classes</h3>
+              <div className="px-5 py-4 bg-primary/5 border-b">
+                <h3 className="text-lg font-bold">Admission Fee Chart — All Classes</h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Admission Package includes: Books, 1 Uniform, Full-Year Stationery, ID Card &amp; Diary
+                </p>
               </div>
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Class</TableHead>
-                      <TableHead className="text-right">Admission (One-time)</TableHead>
-                      <TableHead className="text-right">Monthly Fee</TableHead>
-                      <TableHead className="text-center">Seat Status</TableHead>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="font-bold">Class</TableHead>
+                      <TableHead className="text-right font-bold">
+                        <div>Admission</div>
+                        <div className="text-[10px] font-normal text-muted-foreground">Package</div>
+                      </TableHead>
+                      <TableHead className="text-right font-bold">
+                        <div>Summer</div>
+                        <div className="text-[10px] font-normal text-muted-foreground">Extra Dress</div>
+                      </TableHead>
+                      <TableHead className="text-right font-bold">
+                        <div>Winter</div>
+                        <div className="text-[10px] font-normal text-muted-foreground">Dress</div>
+                      </TableHead>
+                      <TableHead className="text-right font-bold">
+                        <div>Copies</div>
+                        <div className="text-[10px] font-normal text-muted-foreground">CW + HW</div>
+                      </TableHead>
+                      <TableHead className="text-right font-bold text-primary">
+                        <div>Total</div>
+                        <div className="text-[10px] font-normal">One-time</div>
+                      </TableHead>
+                      <TableHead className="text-right font-bold">
+                        <div>Monthly</div>
+                        <div className="text-[10px] font-normal text-muted-foreground">Fee</div>
+                      </TableHead>
+                      <TableHead className="text-center font-bold">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {admissionFeeStructure.map((cls) => (
+                    {feeChartData.map((row) => (
                       <TableRow
-                        key={cls.className}
-                        className={cn(cls.seatStatus === 'full' && 'bg-red-50/50 dark:bg-red-950/20')}
+                        key={row.className}
+                        className={cn(
+                          row.seatStatus === 'full' && 'bg-red-50/50 dark:bg-red-950/10',
+                          'hover:bg-muted/30'
+                        )}
                       >
-                        <TableCell className="font-medium">{cls.className}</TableCell>
-                        <TableCell className="text-right">
-                          {formatINR(getTotalAdmissionFees(cls))}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatINR(getTotalMonthlyFees(cls))}
-                        </TableCell>
-                        <TableCell className="text-center">{seatBadge(cls.seatStatus)}</TableCell>
+                        <TableCell className="font-semibold whitespace-nowrap">{row.className}</TableCell>
+                        <TableCell className="text-right font-mono text-sm">{formatNum(row.admissionPackage)}</TableCell>
+                        <TableCell className="text-right font-mono text-sm">{formatNum(row.extraSummerDress)}</TableCell>
+                        <TableCell className="text-right font-mono text-sm">{formatNum(row.winterDress)}</TableCell>
+                        <TableCell className="text-right font-mono text-sm">{formatNum(row.copies)}</TableCell>
+                        <TableCell className="text-right font-bold font-mono text-sm text-primary">{formatNum(getAdmissionTotal(row))}</TableCell>
+                        <TableCell className="text-right font-mono text-sm font-semibold">{formatNum(row.monthlyFee)}/mo</TableCell>
+                        <TableCell className="text-center">{seatBadge(row.seatStatus)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <div className="px-5 py-3 bg-muted/20 border-t text-xs text-muted-foreground space-y-1">
+                <p><strong>Admission Package (₹3,700):</strong> Books + 1 Uniform + Full-Year Classroom Stationery + ID Card + Diary</p>
+                <p><strong>Extra Summer Dress:</strong> ₹700 | <strong>Winter Dress:</strong> ₹1,000 | <strong>CW/HW Copies:</strong> ₹300</p>
+              </div>
+            </div>
+
+            {/* Yearly cost summary */}
+            <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+              <div className="px-5 py-4 bg-muted/40 border-b">
+                <h3 className="text-lg font-bold">Estimated First-Year Cost (Admission + 12 months)</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/30">
+                      <TableHead className="font-bold">Class</TableHead>
+                      <TableHead className="text-right font-bold">One-time (₹)</TableHead>
+                      <TableHead className="text-right font-bold">12 × Monthly (₹)</TableHead>
+                      <TableHead className="text-right font-bold text-primary">Total Year (₹)</TableHead>
+                      <TableHead className="text-center font-bold">Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {feeChartData.map((row) => (
+                      <TableRow
+                        key={row.className}
+                        className={cn(
+                          row.seatStatus === 'full' && 'bg-red-50/50 dark:bg-red-950/10'
+                        )}
+                      >
+                        <TableCell className="font-semibold">{row.className}</TableCell>
+                        <TableCell className="text-right font-mono text-sm">{formatINR(getAdmissionTotal(row))}</TableCell>
+                        <TableCell className="text-right font-mono text-sm">{formatINR(getMonthlyTotal(row))}</TableCell>
+                        <TableCell className="text-right font-bold font-mono text-sm text-primary">{formatINR(getTotalFeeInYear(row))}</TableCell>
+                        <TableCell className="text-center">{seatBadge(row.seatStatus)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -403,48 +237,84 @@ export default function FeeStructurePage() {
             </div>
           </TabsContent>
 
-          {/* ── Promotion Tab ─────────────────────────────────────────── */}
+          {/* ── Promotion Tab ── */}
           <TabsContent value="promotion" className="space-y-6">
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                Charges applicable when a student is promoted to the next class at the start of a new
-                session.
+                Charges when a student is promoted to the next class (new session). <strong>Does not include dress.</strong>
               </p>
               <Button variant="outline" size="sm" onClick={exportPromotionCSV}>
                 ⬇ Export CSV
               </Button>
             </div>
 
-            <div className="grid gap-6">
-              {promotionCharges.map((cls) => (
-                <PromotionClassTable key={cls.className} cls={cls} />
-              ))}
-            </div>
-
-            {/* Promotion Summary */}
             <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
-              <div className="px-5 py-4 bg-muted/40 border-b">
-                <h3 className="text-lg font-semibold">Summary — Promotion Charges</h3>
+              <div className="px-5 py-4 bg-primary/5 border-b">
+                <h3 className="text-lg font-bold">Promotion Fee Chart</h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Promotion Package includes: Books, 1 Uniform, Full-Year Stationery, ID Card &amp; Diary (no extra dress)
+                </p>
               </div>
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Promotion</TableHead>
-                      <TableHead className="text-right">Mandatory (₹)</TableHead>
-                      <TableHead className="text-right">Optional (₹)</TableHead>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="font-bold">Promotion</TableHead>
+                      <TableHead className="text-right font-bold">
+                        <div>Package</div>
+                        <div className="text-[10px] font-normal text-muted-foreground">Books+Uniform+etc</div>
+                      </TableHead>
+                      <TableHead className="text-right font-bold">
+                        <div>Copies</div>
+                        <div className="text-[10px] font-normal text-muted-foreground">CW + HW</div>
+                      </TableHead>
+                      <TableHead className="text-right font-bold text-primary">
+                        <div>Total</div>
+                        <div className="text-[10px] font-normal">One-time</div>
+                      </TableHead>
+                      <TableHead className="text-right font-bold">
+                        <div>Monthly</div>
+                        <div className="text-[10px] font-normal text-muted-foreground">New Class</div>
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {promotionCharges.map((cls) => (
-                      <TableRow key={cls.className}>
-                        <TableCell className="font-medium">{cls.className}</TableCell>
-                        <TableCell className="text-right font-medium">
-                          {formatINR(getTotalPromotionCharges(cls))}
-                        </TableCell>
-                        <TableCell className="text-right text-muted-foreground">
-                          {formatINR(getTotalOptionalPromotionCharges(cls))}
-                        </TableCell>
+                    {promotionChartData.map((row) => (
+                      <TableRow key={`${row.fromClass}-${row.toClass}`} className="hover:bg-muted/30">
+                        <TableCell className="font-semibold whitespace-nowrap">{row.fromClass} → {row.toClass}</TableCell>
+                        <TableCell className="text-right font-mono text-sm">{formatNum(row.promotionPackage)}</TableCell>
+                        <TableCell className="text-right font-mono text-sm">{formatNum(row.copies)}</TableCell>
+                        <TableCell className="text-right font-bold font-mono text-sm text-primary">{formatNum(getPromotionTotal(row))}</TableCell>
+                        <TableCell className="text-right font-mono text-sm font-semibold">{formatNum(row.monthlyFee)}/mo</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            {/* Promotion yearly summary */}
+            <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+              <div className="px-5 py-4 bg-muted/40 border-b">
+                <h3 className="text-lg font-bold">Estimated Year Cost After Promotion</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/30">
+                      <TableHead className="font-bold">Promotion</TableHead>
+                      <TableHead className="text-right font-bold">Promotion Fees (₹)</TableHead>
+                      <TableHead className="text-right font-bold">12 × Monthly (₹)</TableHead>
+                      <TableHead className="text-right font-bold text-primary">Total Year (₹)</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {promotionChartData.map((row) => (
+                      <TableRow key={`${row.fromClass}-${row.toClass}`}>
+                        <TableCell className="font-semibold whitespace-nowrap">{row.fromClass} → {row.toClass}</TableCell>
+                        <TableCell className="text-right font-mono text-sm">{formatINR(getPromotionTotal(row))}</TableCell>
+                        <TableCell className="text-right font-mono text-sm">{formatINR(row.monthlyFee * row.monthsInYear)}</TableCell>
+                        <TableCell className="text-right font-bold font-mono text-sm text-primary">{formatINR(getPromotionYearTotal(row))}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -507,8 +377,7 @@ export default function FeeStructurePage() {
       {/* Footer */}
       <footer className="border-t bg-muted/30 py-6 text-center text-sm text-muted-foreground">
         <div className="container mx-auto px-4">
-          © {new Date().getFullYear()} School Management System. For queries, contact the admin
-          office.
+          © {new Date().getFullYear()} School Management System. For queries, contact the admin office.
         </div>
       </footer>
     </div>

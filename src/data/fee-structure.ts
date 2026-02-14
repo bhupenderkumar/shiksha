@@ -1,108 +1,83 @@
 // Fee Structure Data — Session 2026-27
+// Clean chart-style data matching the fee chart image format
 
-export interface FeeItem {
-  name: string;
-  amount: number;
-  note?: string;
-}
-
-export interface ClassFeeStructure {
+export interface FeeChartRow {
   className: string;
-  admissionFees: FeeItem[];
-  monthlyFees: FeeItem[];
-  additionalCharges: FeeItem[];
+  regFee: number;          // Registration fee (one-time)
+  monthlyFee: number;
+  monthsInYear: number;    // Typically 12
+  admissionPackage: number; // Books, Uniform, Stationery, ID Card, Diary
+  extraSummerDress: number;
+  winterDress: number;
+  copies: number;          // Classwork & Homework copies
   seatStatus: 'available' | 'limited' | 'full';
-  seatsRemaining?: number;
 }
 
-export interface PromotionChargeItem {
-  name: string;
-  amount: number;
-  note?: string;
-  optional?: boolean;
-}
-
-export interface ClassPromotionCharges {
-  className: string;
+export interface PromotionChartRow {
   fromClass: string;
   toClass: string;
-  charges: PromotionChargeItem[];
+  promotionPackage: number; // Books, Uniform, Stationery, ID Card, Diary
+  copies: number;
+  monthlyFee: number;
+  monthsInYear: number;
 }
 
-// ── Helper to build a class entry ────────────────────────────────────────
+// ── Fee Chart Data ──────────────────────────────────────────────────────
 
-function buildClass(
-  className: string,
-  monthlyFee: number,
-  seatStatus: ClassFeeStructure['seatStatus'] = 'available',
-): ClassFeeStructure {
-  return {
-    className,
-    seatStatus,
-    admissionFees: [
-      { name: 'Admission Package', amount: 3700, note: 'Includes Books, 1 Uniform, Full-Year Stationery, ID Card & Diary' },
-      { name: 'Extra Summer Dress', amount: 700 },
-      { name: 'Winter Dress', amount: 1000 },
-      { name: 'Classwork & Homework Copies', amount: 300 },
-    ],
-    monthlyFees: [
-      { name: 'Monthly Fee', amount: monthlyFee },
-    ],
-    additionalCharges: [],
-  };
-}
-
-// ── Admission Fee Structure ──────────────────────────────────────────────
-
-export const admissionFeeStructure: ClassFeeStructure[] = [
-  // Pre-Primary (₹700/month)
-  buildClass('Nursery', 700),
-  buildClass('LKG', 700),
-  buildClass('UKG', 700),
-  // Primary & above (₹780/month)
-  buildClass('Class 1', 780),
-  buildClass('Class 2', 780),
-  buildClass('Class 3', 780, 'full'),
-  buildClass('Class 4', 780),
-  buildClass('Class 5', 780, 'full'),
-  buildClass('Class 6', 780),
-  buildClass('Class 7', 780),
-  buildClass('Class 8', 780),
+export const feeChartData: FeeChartRow[] = [
+  { className: 'Nursery',  regFee: 0, monthlyFee: 700,  monthsInYear: 12, admissionPackage: 3700, extraSummerDress: 700, winterDress: 1000, copies: 300, seatStatus: 'available' },
+  { className: 'LKG',      regFee: 0, monthlyFee: 700,  monthsInYear: 12, admissionPackage: 3700, extraSummerDress: 700, winterDress: 1000, copies: 300, seatStatus: 'available' },
+  { className: 'UKG',      regFee: 0, monthlyFee: 700,  monthsInYear: 12, admissionPackage: 3700, extraSummerDress: 700, winterDress: 1000, copies: 300, seatStatus: 'available' },
+  { className: 'Class 1',  regFee: 0, monthlyFee: 780,  monthsInYear: 12, admissionPackage: 3700, extraSummerDress: 700, winterDress: 1000, copies: 300, seatStatus: 'available' },
+  { className: 'Class 2',  regFee: 0, monthlyFee: 780,  monthsInYear: 12, admissionPackage: 3700, extraSummerDress: 700, winterDress: 1000, copies: 300, seatStatus: 'available' },
+  { className: 'Class 3',  regFee: 0, monthlyFee: 780,  monthsInYear: 12, admissionPackage: 3700, extraSummerDress: 700, winterDress: 1000, copies: 300, seatStatus: 'full' },
+  { className: 'Class 4',  regFee: 0, monthlyFee: 780,  monthsInYear: 12, admissionPackage: 3700, extraSummerDress: 700, winterDress: 1000, copies: 300, seatStatus: 'available' },
+  { className: 'Class 5',  regFee: 0, monthlyFee: 780,  monthsInYear: 12, admissionPackage: 3700, extraSummerDress: 700, winterDress: 1000, copies: 300, seatStatus: 'full' },
+  { className: 'Class 6',  regFee: 0, monthlyFee: 780,  monthsInYear: 12, admissionPackage: 3700, extraSummerDress: 700, winterDress: 1000, copies: 300, seatStatus: 'available' },
+  { className: 'Class 7',  regFee: 0, monthlyFee: 780,  monthsInYear: 12, admissionPackage: 3700, extraSummerDress: 700, winterDress: 1000, copies: 300, seatStatus: 'available' },
+  { className: 'Class 8',  regFee: 0, monthlyFee: 780,  monthsInYear: 12, admissionPackage: 3700, extraSummerDress: 700, winterDress: 1000, copies: 300, seatStatus: 'available' },
 ];
 
-// ── Promotion Charges ────────────────────────────────────────────────────
+// ── Promotion Chart Data ────────────────────────────────────────────────
 
-function buildPromotion(fromClass: string, toClass: string, classFee: number): ClassPromotionCharges {
-  return {
-    className: `${fromClass} → ${toClass}`,
-    fromClass,
-    toClass,
-    charges: [
-      { name: 'Promotion Package', amount: 3700, note: 'Includes Books, 1 Uniform, Full-Year Stationery, ID Card & Diary' },
-      { name: 'Class Fee', amount: classFee, note: `Annual fee for ${toClass}` },
-      { name: 'Classwork & Homework Copies', amount: 300 },
-      // Optional charges
-      { name: 'Extra Summer Dress', amount: 700, optional: true },
-      { name: 'Winter Dress', amount: 1000, optional: true },
-      { name: 'Extra Copies', amount: 50, optional: true, note: 'Per additional copy/notebook' },
-    ],
-  };
-}
-
-export const promotionCharges: ClassPromotionCharges[] = [
-  buildPromotion('Nursery', 'LKG', 700),
-  buildPromotion('LKG', 'UKG', 700),
-  buildPromotion('UKG', 'Class 1', 1000),
-  buildPromotion('Class 1', 'Class 2', 1250),
-  buildPromotion('Class 2', 'Class 3', 1500),
-  buildPromotion('Class 3', 'Class 4', 1750),
-  buildPromotion('Class 4', 'Class 5', 2000),
-  buildPromotion('Class 5', 'Class 6', 2250),
-  buildPromotion('Class 6', 'Class 7', 2500),
-  buildPromotion('Class 7', 'Class 8', 2750),
+export const promotionChartData: PromotionChartRow[] = [
+  { fromClass: 'Nursery',  toClass: 'LKG',     promotionPackage: 3700, copies: 300, monthlyFee: 700, monthsInYear: 12 },
+  { fromClass: 'LKG',      toClass: 'UKG',     promotionPackage: 3700, copies: 300, monthlyFee: 700, monthsInYear: 12 },
+  { fromClass: 'UKG',      toClass: 'Class 1', promotionPackage: 3700, copies: 300, monthlyFee: 780, monthsInYear: 12 },
+  { fromClass: 'Class 1',  toClass: 'Class 2', promotionPackage: 3700, copies: 300, monthlyFee: 780, monthsInYear: 12 },
+  { fromClass: 'Class 2',  toClass: 'Class 3', promotionPackage: 3700, copies: 300, monthlyFee: 780, monthsInYear: 12 },
+  { fromClass: 'Class 3',  toClass: 'Class 4', promotionPackage: 3700, copies: 300, monthlyFee: 780, monthsInYear: 12 },
+  { fromClass: 'Class 4',  toClass: 'Class 5', promotionPackage: 3700, copies: 300, monthlyFee: 780, monthsInYear: 12 },
+  { fromClass: 'Class 5',  toClass: 'Class 6', promotionPackage: 3700, copies: 300, monthlyFee: 780, monthsInYear: 12 },
+  { fromClass: 'Class 6',  toClass: 'Class 7', promotionPackage: 3700, copies: 300, monthlyFee: 780, monthsInYear: 12 },
+  { fromClass: 'Class 7',  toClass: 'Class 8', promotionPackage: 3700, copies: 300, monthlyFee: 780, monthsInYear: 12 },
 ];
 
-// ── Helpers ──────────────────────────────────────────────────────────────
+// ── Computed Helpers ────────────────────────────────────────────────────
+
+export function getAdmissionTotal(row: FeeChartRow): number {
+  return row.admissionPackage + row.extraSummerDress + row.winterDress + row.copies;
+}
+
+export function getMonthlyTotal(row: FeeChartRow): number {
+  return row.monthlyFee * row.monthsInYear;
+}
+
+export function getTotalAtAdmission(row: FeeChartRow): number {
+  return getAdmissionTotal(row);
+}
+
+export function getTotalFeeInYear(row: FeeChartRow): number {
+  return getAdmissionTotal(row) + getMonthlyTotal(row);
+}
+
+export function getPromotionTotal(row: PromotionChartRow): number {
+  return row.promotionPackage + row.copies;
+}
+
+export function getPromotionYearTotal(row: PromotionChartRow): number {
+  return getPromotionTotal(row) + (row.monthlyFee * row.monthsInYear);
+}
 
 export function formatINR(amount: number): string {
   return new Intl.NumberFormat('en-IN', {
@@ -113,21 +88,6 @@ export function formatINR(amount: number): string {
   }).format(amount);
 }
 
-export function getTotalAdmissionFees(cls: ClassFeeStructure): number {
-  return (
-    cls.admissionFees.reduce((s, f) => s + f.amount, 0) +
-    cls.additionalCharges.reduce((s, f) => s + f.amount, 0)
-  );
-}
-
-export function getTotalMonthlyFees(cls: ClassFeeStructure): number {
-  return cls.monthlyFees.reduce((s, f) => s + f.amount, 0);
-}
-
-export function getTotalPromotionCharges(cls: ClassPromotionCharges): number {
-  return cls.charges.filter(f => !f.optional).reduce((s, f) => s + f.amount, 0);
-}
-
-export function getTotalOptionalPromotionCharges(cls: ClassPromotionCharges): number {
-  return cls.charges.filter(f => f.optional).reduce((s, f) => s + f.amount, 0);
+export function formatNum(amount: number): string {
+  return new Intl.NumberFormat('en-IN').format(amount);
 }

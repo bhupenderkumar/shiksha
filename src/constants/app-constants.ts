@@ -26,6 +26,7 @@ export const ROUTES = {
   BIRTHDAYS: '/birthdays',
   BIRTHDAY_DETAIL: '/birthday/:studentId',
   FEE_STRUCTURE: '/fee-structure',
+  FEE_CHART: '/fee-chart',
 } as const;
 
 export const API_ENDPOINTS = {
