@@ -11,9 +11,9 @@ export const SCHOOL_INFO = {
   principalSignature: "/signatures/principal.png", // Add signature image path
   accountantName: "Mrs. Nikita Sharma",
   accountantSignature: "/signatures/accountant.png",
-  establishedYear: 2005,
+  establishedYear: 2021,
   registrationNo: "CBSE/DEL/2005/001234", // Add school registration number
-  affiliationNo: "2130456", // CBSE affiliation number
+  affiliationNo: "20136251", // CBSE affiliation number
   bankDetails: {
     bankName: "ALLAHABAD BANK",
     accountName: "First Step Public School",
