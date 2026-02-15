@@ -1671,7 +1671,7 @@ function EnrollmentSection({ lang }: { lang: Lang }) {
               animate={{ scale: 1 }}
               className="font-bold mr-1"
             >
-              {enrollCount}
+              {enrollCount + 20}
             </motion.span>
             {lang === 'en' ? ' students already enrolled!' : ' छात्र पहले से नामांकित!'}
           </Badge>
@@ -2087,7 +2087,7 @@ export default function AnnualSportsWeek() {
       </section>
 
       {/* Enrollment Section */}
-      <section className="container mx-auto px-4 py-8 sm:py-12">
+      <section id="enroll" className="container mx-auto px-4 py-8 sm:py-12">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -2156,6 +2156,36 @@ export default function AnnualSportsWeek() {
         </motion.div>
       </section>
 
+      {/* Floating Enroll Button */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2 items-end">
+        <Link to="/sports-week/enrollments">
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full shadow-lg gap-1.5 bg-background/90 backdrop-blur text-xs"
+            >
+              📋 {lang === 'en' ? 'View Enrollments' : 'नामांकन देखें'}
+            </Button>
+          </motion.div>
+        </Link>
+        <a href="#enroll">
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            animate={{ y: [0, -5, 0] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            <Button
+              size="lg"
+              className="rounded-full shadow-lg gap-2 px-6 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+            >
+              ✍️ {lang === 'en' ? 'Enroll My Child' : 'नामांकन करें'}
+            </Button>
+          </motion.div>
+        </a>
+      </div>
+
       {/* Footer */}
       <footer className="border-t bg-muted/50 py-8">
         <div className="container mx-auto px-4 text-center">
@@ -2177,6 +2207,11 @@ export default function AnnualSportsWeek() {
               <Link to="/admission-enquiry">
                 <Button size="sm" className="text-xs">
                   {lang === 'en' ? '📝 Apply for Admission' : '📝 प्रवेश के लिए आवेदन करें'}
+                </Button>
+              </Link>
+              <Link to="/sports-week/enrollments">
+                <Button variant="outline" size="sm" className="text-xs">
+                  {lang === 'en' ? '📋 View Enrollments' : '📋 नामांकन देखें'}
                 </Button>
               </Link>
             </div>

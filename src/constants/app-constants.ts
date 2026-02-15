@@ -28,6 +28,7 @@ export const ROUTES = {
   FEE_STRUCTURE: '/fee-structure',
   FEE_CHART: '/fee-chart',
   SPORTS_WEEK: '/sports-week',
+  SPORTS_ENROLLMENTS: '/sports-week/enrollments',
 } as const;
 
 export const API_ENDPOINTS = {
