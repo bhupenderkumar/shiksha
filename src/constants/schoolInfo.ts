@@ -12,7 +12,7 @@ export const SCHOOL_INFO = {
   accountantName: "Mrs. Nikita Sharma",
   accountantSignature: "/signatures/accountant.png",
   establishedYear: 2021,
-  registrationNo: "CBSE/DEL/2005/001234", // Add school registration number
+  registrationNo: "DEL/2021/20136251", // Add school registration number
   affiliationNo: "20136251", // CBSE affiliation number
   bankDetails: {
     bankName: "ALLAHABAD BANK",

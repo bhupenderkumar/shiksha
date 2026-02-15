@@ -377,12 +377,6 @@ export function HeroSection() {
               📋 View Feedback
             </Link>
             <Link
-              to="/date-sheet"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs sm:text-sm font-medium hover:bg-cyan-500/20 hover:border-cyan-500/30 transition-all duration-300 hover:scale-105"
-            >
-              📅 Date Sheet
-            </Link>
-            <Link
               to="/final-date-sheet"
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs sm:text-sm font-medium hover:bg-red-500/20 hover:border-red-500/30 transition-all duration-300 hover:scale-105 animate-pulse"
             >
