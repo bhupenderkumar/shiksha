@@ -1752,12 +1752,12 @@ function EnrollmentSection({ lang }: { lang: Lang }) {
             <div className="h-10 bg-muted rounded-md animate-pulse" />
           ) : (
             <Select value={selectedClassId} onValueChange={(val) => { setSelectedClassId(val); setErrors((p) => ({ ...p, classId: '' })); }}>
-              <SelectTrigger className={cn(errors.classId && 'border-red-500')}>
+              <SelectTrigger className={cn('bg-white dark:bg-zinc-900 border-input', errors.classId && 'border-red-500')}>
                 <SelectValue placeholder={lang === 'en' ? 'Select class' : 'कक्षा चुनें'} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white dark:bg-zinc-900 border border-input shadow-xl z-[100]">
                 {classes.map((cls) => (
-                  <SelectItem key={cls.id} value={cls.id}>
+                  <SelectItem key={cls.id} value={cls.id} className="cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-800">
                     {cls.name} - {cls.section}
                   </SelectItem>
                 ))}
