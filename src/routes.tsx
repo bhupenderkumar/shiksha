@@ -40,6 +40,9 @@ import PublicClassworkShare from './pages/PublicClassworkShare';
 import PublicBirthdayPage from './pages/PublicBirthdayPage';
 import BirthdaysPage from './pages/BirthdaysPage';
 import DateSheet from './pages/DateSheet';
+import FeeStructure from './pages/FeeStructure';
+import FeeChartPrint from './pages/FeeChartPrint';
+import AnnualSportsWeek from './pages/AnnualSportsWeek';
 import Layout from './components/Layout';
 import PublicLayout from './components/PublicLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -338,6 +341,18 @@ export const router = createBrowserRouter([
       {
         path: 'date-sheet',
         element: <DateSheet />,
+      },
+      {
+        path: 'fee-structure',
+        element: <FeeStructure />,
+      },
+      {
+        path: 'fee-chart',
+        element: <FeeChartPrint />,
+      },
+      {
+        path: 'sports-week',
+        element: <AnnualSportsWeek />,
       },
     ],
   },

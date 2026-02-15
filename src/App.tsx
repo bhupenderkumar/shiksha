@@ -64,6 +64,7 @@ const DateSheet = lazy(() => import('./pages/DateSheet'));
 // Public Fee Structure page
 const FeeStructure = lazy(() => import('./pages/FeeStructure'));
 const FeeChartPrint = lazy(() => import('./pages/FeeChartPrint'));
+const AnnualSportsWeek = lazy(() => import('./pages/AnnualSportsWeek'));
 
 // Private route component
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -130,6 +131,7 @@ function AppRoutes() {
         {/* Public Fee Structure - No authentication required */}
         <Route path="/fee-structure" element={<FeeStructure />} />
         <Route path="/fee-chart" element={<FeeChartPrint />} />
+        <Route path="/sports-week" element={<AnnualSportsWeek />} />
 
         {/* Protected Routes */}
         <Route path="/dashboard" element={

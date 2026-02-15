@@ -27,6 +27,7 @@ export const ROUTES = {
   BIRTHDAY_DETAIL: '/birthday/:studentId',
   FEE_STRUCTURE: '/fee-structure',
   FEE_CHART: '/fee-chart',
+  SPORTS_WEEK: '/sports-week',
 } as const;
 
 export const API_ENDPOINTS = {
