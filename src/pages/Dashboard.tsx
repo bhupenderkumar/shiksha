@@ -26,6 +26,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'react-hot-toast'; // Import toast
 import { EmptyState } from '@/components/ui/empty-state';
 import FeeCard from '@/components/ui/FeeCard';
+import { sportsEnrollmentService, type SportsEnrollment } from '@/services/sportsEnrollmentService';
 
 export default function Dashboard() {
   const { profile, isAdminOrTeacher } = useProfileAccess();
@@ -57,6 +58,8 @@ export default function Dashboard() {
   });
   const [loading, setLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [sportsEnrollments, setSportsEnrollments] = useState<SportsEnrollment[]>([]);
+  const [sportsLoading, setSportsLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -81,6 +84,23 @@ export default function Dashboard() {
 
     loadDashboardData();
   }, [profile?.email, isAdminOrTeacher]);
+
+  // Fetch sports enrollments for admin
+  useEffect(() => {
+    if (!isAdminOrTeacher) return;
+    const fetchSportsEnrollments = async () => {
+      setSportsLoading(true);
+      try {
+        const data = await sportsEnrollmentService.getAllEnrollments();
+        setSportsEnrollments(data);
+      } catch (err) {
+        console.error('Error fetching sports enrollments:', err);
+      } finally {
+        setSportsLoading(false);
+      }
+    };
+    fetchSportsEnrollments();
+  }, [isAdminOrTeacher]);
 
   // Greeting based on time
   const getGreeting = () => {
@@ -148,6 +168,89 @@ export default function Dashboard() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Sports Week Enrollment Banner (Admin Only) */}
+            {isAdminOrTeacher && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <Card className="border-2 border-orange-200 dark:border-orange-800 bg-gradient-to-r from-orange-50 via-yellow-50 to-amber-50 dark:from-orange-950/20 dark:via-yellow-950/20 dark:to-amber-950/20">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <span className="text-4xl">🏆</span>
+                        <div>
+                          <h3 className="font-bold text-lg">Annual Sports Week 2026</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {sportsLoading
+                              ? 'Loading enrollments...'
+                              : `${sportsEnrollments.length} student${sportsEnrollments.length !== 1 ? 's' : ''} enrolled so far`}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 w-full sm:w-auto">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 sm:flex-none gap-1.5"
+                          onClick={() => navigate('/sports-week')}
+                        >
+                          🏃 View Page
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="flex-1 sm:flex-none gap-1.5"
+                          onClick={() => navigate('/sports-week/enrollments')}
+                        >
+                          📋 View Enrollments ({sportsEnrollments.length})
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Recent enrollments notification */}
+                    {sportsEnrollments.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-orange-200 dark:border-orange-800">
+                        <p className="text-xs font-semibold text-muted-foreground mb-2">🔔 Recent Enrollments</p>
+                        <div className="space-y-2">
+                          {sportsEnrollments.slice(0, 5).map((enrollment) => (
+                            <div
+                              key={enrollment.id}
+                              className="flex items-center justify-between bg-background/60 rounded-lg px-3 py-2 text-sm"
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="text-base">👦</span>
+                                <span className="font-medium truncate">{enrollment.studentName}</span>
+                                <Badge variant="outline" className="text-[10px] shrink-0">
+                                  {enrollment.className}
+                                </Badge>
+                              </div>
+                              <span className="text-[10px] text-muted-foreground shrink-0 ml-2">
+                                {new Date(enrollment.enrolledAt).toLocaleDateString('en-IN', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                })}
+                              </span>
+                            </div>
+                          ))}
+                          {sportsEnrollments.length > 5 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="w-full text-xs text-muted-foreground"
+                              onClick={() => navigate('/sports-week/enrollments')}
+                            >
+                              +{sportsEnrollments.length - 5} more enrollments →
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
 
             {/* Main Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
