@@ -86,4 +86,22 @@ export const sportsEnrollmentService = {
 
     return count ?? 0;
   },
+
+  /**
+   * Get all enrollments (for admin/list view)
+   */
+  async getAllEnrollments(): Promise<SportsEnrollment[]> {
+    const { data, error } = await supabase
+      .schema(SCHEMA)
+      .from(SPORTS_ENROLLMENT_TABLE)
+      .select('*')
+      .order('createdAt', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching enrollments:', error);
+      throw error;
+    }
+
+    return (data as SportsEnrollment[]) || [];
+  },
 };
