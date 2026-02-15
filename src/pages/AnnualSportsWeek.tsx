@@ -1755,7 +1755,7 @@ function EnrollmentSection({ lang }: { lang: Lang }) {
               <SelectTrigger className={cn('bg-white dark:bg-zinc-900 border-input', errors.classId && 'border-red-500')}>
                 <SelectValue placeholder={lang === 'en' ? 'Select class' : 'कक्षा चुनें'} />
               </SelectTrigger>
-              <SelectContent className="bg-white dark:bg-zinc-900 border border-input shadow-xl z-[100]">
+              <SelectContent className="bg-white dark:bg-zinc-900 border border-input shadow-xl">
                 {classes.map((cls) => (
                   <SelectItem key={cls.id} value={cls.id} className="cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-800">
                     {cls.name} - {cls.section}

@@ -59,8 +59,9 @@ const PublicClassworkShare = lazy(() => import('./pages/PublicClassworkShare'));
 // Birthday pages
 const PublicBirthdayPage = lazy(() => import('./pages/PublicBirthdayPage'));
 const BirthdaysPage = lazy(() => import('./pages/BirthdaysPage'));
-// Date Sheet page
+// Date Sheet pages
 const DateSheet = lazy(() => import('./pages/DateSheet'));
+const FinalDateSheet = lazy(() => import('./pages/FinalDateSheet'));
 // Public Fee Structure page
 const FeeStructure = lazy(() => import('./pages/FeeStructure'));
 const FeeChartPrint = lazy(() => import('./pages/FeeChartPrint'));
@@ -128,6 +129,7 @@ function AppRoutes() {
         
         {/* Public Date Sheet - No authentication required */}
         <Route path="/date-sheet" element={<DateSheet />} />
+        <Route path="/final-date-sheet" element={<FinalDateSheet />} />
         
         {/* Public Fee Structure - No authentication required */}
         <Route path="/fee-structure" element={<FeeStructure />} />
