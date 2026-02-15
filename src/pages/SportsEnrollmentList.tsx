@@ -188,10 +188,10 @@ export default function SportsEnrollmentList() {
             />
           </div>
           <Select value={classFilter} onValueChange={setClassFilter}>
-            <SelectTrigger className="w-full sm:w-48">
+            <SelectTrigger className="w-full sm:w-48 bg-card border-border">
               <SelectValue placeholder="Filter by class" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-card border-border shadow-lg">
               <SelectItem value="all">All Classes</SelectItem>
               {classNames.map((cls) => (
                 <SelectItem key={cls} value={cls}>
@@ -290,8 +290,8 @@ export default function SportsEnrollmentList() {
                         <div className="flex flex-wrap gap-1.5 mb-2">
                           <span className="text-xs text-muted-foreground mr-1">🏅 Events:</span>
                           {enrollment.selectedGames.map((game, i) => (
-                            <Badge key={i} variant="secondary" className="text-[10px] px-2 py-0.5">
-                              {game}
+                            <Badge key={i} variant="outline" className="text-[10px] px-2 py-0.5 bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/50 dark:text-orange-300 dark:border-orange-800">
+                              🏅 {game}
                             </Badge>
                           ))}
                         </div>
