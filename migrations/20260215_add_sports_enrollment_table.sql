@@ -36,3 +36,9 @@ CREATE POLICY "Allow public read on SportsEnrollment"
   FOR SELECT
   TO anon, authenticated
   USING (true);
+
+-- Grant table-level permissions (required in addition to RLS policies)
+GRANT USAGE ON SCHEMA school TO anon;
+GRANT USAGE ON SCHEMA school TO authenticated;
+GRANT INSERT, SELECT ON school."SportsEnrollment" TO anon;
+GRANT ALL ON school."SportsEnrollment" TO authenticated;

@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui/toast';
+import { SCHOOL_INFO } from '@/lib/constants';
 import { classService, type ClassType } from '@/services/classService';
 import { sportsEnrollmentService } from '@/services/sportsEnrollmentService';
 
@@ -1404,11 +1405,26 @@ const allMedalGameNames = sportsWeekDays
   }, []);
 
 // ─── Enrollment Form ──────────────────────────────────────────────────────────
+// Helper to build WhatsApp URL
+function buildWhatsAppUrl(studentName: string, className: string, parentName: string, selectedGames: string[], lang: Lang) {
+  // Use the first phone number from SCHOOL_INFO
+  const rawPhone = SCHOOL_INFO.phone.split(',')[0].trim();
+  const phone = rawPhone.replace(/[^0-9]/g, '');
+  const whatsAppPhone = phone.startsWith('91') ? phone : `91${phone}`;
+
+  const message = lang === 'en'
+    ? `🏆 *Sports Week 2026 Enrollment*\n\n👦 Student: ${studentName}\n🎓 Class: ${className}\n👨‍👩‍👧 Parent: ${parentName}${selectedGames.length > 0 ? `\n🏅 Events: ${selectedGames.join(', ')}` : ''}\n\nPlease confirm my child's enrollment for Annual Sports Week. Thank you! 🙏`
+    : `🏆 *खेल सप्ताह 2026 नामांकन*\n\n👦 छात्र: ${studentName}\n🎓 कक्षा: ${className}\n👨‍👩‍👧 अभिभावक: ${parentName}${selectedGames.length > 0 ? `\n🏅 इवेंट: ${selectedGames.join(', ')}` : ''}\n\nकृपया मेरे बच्चे के वार्षिक खेल सप्ताह के नामांकन की पुष्टि करें। धन्यवाद! 🙏`;
+
+  return `https://wa.me/${whatsAppPhone}?text=${encodeURIComponent(message)}`;
+}
+
 function EnrollmentSection({ lang }: { lang: Lang }) {
   const [classes, setClasses] = useState<ClassType[]>([]);
   const [loadingClasses, setLoadingClasses] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [enrolled, setEnrolled] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [enrollCount, setEnrollCount] = useState(0);
 
   // Form state
@@ -1498,12 +1514,17 @@ function EnrollmentSection({ lang }: { lang: Lang }) {
       });
 
       setEnrolled(true);
+      setShowSuccessModal(true);
       setEnrollCount((prev) => prev + 1);
       toast.success(
         lang === 'en'
           ? `${studentName} enrolled for Sports Week! 🎉`
           : `${studentName} का खेल सप्ताह में नामांकन हो गया! 🎉`
       );
+
+      // Open WhatsApp with pre-filled message
+      const whatsAppUrl = buildWhatsAppUrl(studentName, className, parentName, selectedGames, lang);
+      window.open(whatsAppUrl, '_blank');
     } catch (error) {
       console.error('Enrollment error:', error);
       toast.error(
@@ -1525,52 +1546,112 @@ function EnrollmentSection({ lang }: { lang: Lang }) {
     setSpecialNotes('');
     setErrors({});
     setEnrolled(false);
+    setShowSuccessModal(false);
   };
 
-  // Success state
+  const selectedClassName = classes.find((c) => c.id === selectedClassId);
+  const classDisplayName = selectedClassName ? `${selectedClassName.name} - ${selectedClassName.section}` : '';
+
+  // WhatsApp URL for manual send button
+  const whatsAppUrl = enrolled
+    ? buildWhatsAppUrl(studentName, classDisplayName, parentName, selectedGames, lang)
+    : '';
+
+  // Success state — inline + modal
   if (enrolled) {
     return (
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="text-center py-10"
-      >
+      <>
+        {/* Success Modal */}
+        <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
+          <DialogContent className="sm:max-w-md">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="text-center py-4"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
+                className="text-7xl mb-4 inline-block"
+              >
+                🎉
+              </motion.div>
+              <h3 className="text-2xl font-extrabold mb-2">
+                {lang === 'en' ? 'Enrollment Successful!' : 'नामांकन सफल!'}
+              </h3>
+              <p className="text-muted-foreground mb-4 text-sm">
+                {lang === 'en'
+                  ? `${studentName} is now registered for Annual Sports Week 2026!`
+                  : `${studentName} अब वार्षिक खेल सप्ताह 2026 के लिए पंजीकृत है!`}
+              </p>
+
+              {/* WhatsApp CTA */}
+              <div className="bg-green-50 dark:bg-green-950/30 rounded-xl border border-green-200 dark:border-green-800 p-4 mb-4">
+                <p className="text-sm font-medium mb-3">
+                  {lang === 'en'
+                    ? '📱 Send enrollment details to school via WhatsApp:'
+                    : '📱 व्हाट्सएप पर स्कूल को नामांकन विवरण भेजें:'}
+                </p>
+                <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer">
+                  <Button className="w-full gap-2 bg-[#25D366] hover:bg-[#1fb855] text-white" size="lg">
+                    <span className="text-xl">💬</span>
+                    {lang === 'en' ? 'Send on WhatsApp' : 'व्हाट्सएप पर भेजें'}
+                  </Button>
+                </a>
+                <p className="text-[11px] text-muted-foreground mt-2">
+                  {lang === 'en'
+                    ? `School WhatsApp: ${SCHOOL_INFO.phone.split(',')[0].trim()}`
+                    : `स्कूल व्हाट्सएप: ${SCHOOL_INFO.phone.split(',')[0].trim()}`}
+                </p>
+              </div>
+
+              <div className="flex gap-2 justify-center">
+                <Button variant="outline" onClick={() => { setShowSuccessModal(false); resetForm(); }} className="gap-2">
+                  {lang === 'en' ? '➕ Enroll Another' : '➕ एक और नामांकन'}
+                </Button>
+                <Button variant="ghost" onClick={() => setShowSuccessModal(false)}>
+                  {lang === 'en' ? 'Close' : 'बंद करें'}
+                </Button>
+              </div>
+            </motion.div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Inline Success State */}
         <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
-          className="text-7xl mb-4 inline-block"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="text-center py-10"
         >
-          🎉
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
+            className="text-7xl mb-4 inline-block"
+          >
+            🎉
+          </motion.div>
+          <h3 className="text-2xl font-extrabold mb-2">
+            {lang === 'en' ? 'Enrollment Successful!' : 'नामांकन सफल!'}
+          </h3>
+          <p className="text-muted-foreground mb-6">
+            {lang === 'en'
+              ? `${studentName} is now registered for Annual Sports Week 2026! See you on the field! 🏃`
+              : `${studentName} अब वार्षिक खेल सप्ताह 2026 के लिए पंजीकृत है! मैदान पर मिलते हैं! 🏃`}
+          </p>
+          <div className="flex flex-wrap gap-3 justify-center">
+            <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer">
+              <Button size="lg" className="gap-2 bg-[#25D366] hover:bg-[#1fb855] text-white">
+                💬 {lang === 'en' ? 'Send on WhatsApp' : 'व्हाट्सएप पर भेजें'}
+              </Button>
+            </a>
+            <Button onClick={resetForm} variant="outline" size="lg" className="gap-2">
+              {lang === 'en' ? '➕ Enroll Another Child' : '➕ एक और बच्चे का नामांकन करें'}
+            </Button>
+          </div>
         </motion.div>
-        <motion.h3
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="text-2xl font-extrabold mb-2"
-        >
-          {lang === 'en' ? 'Enrollment Successful!' : 'नामांकन सफल!'}
-        </motion.h3>
-        <motion.p
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="text-muted-foreground mb-6"
-        >
-          {lang === 'en'
-            ? `${studentName} is now registered for Annual Sports Week 2026! See you on the field! 🏃`
-            : `${studentName} अब वार्षिक खेल सप्ताह 2026 के लिए पंजीकृत है! मैदान पर मिलते हैं! 🏃`}
-        </motion.p>
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          <Button onClick={resetForm} size="lg" className="gap-2">
-            {lang === 'en' ? '➕ Enroll Another Child' : '➕ एक और बच्चे का नामांकन करें'}
-          </Button>
-        </motion.div>
-      </motion.div>
+      </>
     );
   }
 
