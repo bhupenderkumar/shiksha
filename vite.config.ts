@@ -1,16 +1,15 @@
 import path from "path"
 import { readFileSync } from "fs"
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'))
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '');
   return {
     define: {
-      'process.env': env,
+      'process.env.NODE_ENV': JSON.stringify(mode),
       __APP_VERSION__: JSON.stringify(pkg.version),
       __BUILD_TIMESTAMP__: JSON.stringify(new Date().toISOString()),
     },

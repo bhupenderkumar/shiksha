@@ -5,7 +5,11 @@ const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
 // Supabase configuration
-const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://ytfzqzjuhcdgcvvqihda.supabase.co';
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+if (!supabaseUrl) {
+  console.error('Error: VITE_SUPABASE_URL is required. Please set it in your environment.');
+  process.exit(1);
+}
 const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseKey) {

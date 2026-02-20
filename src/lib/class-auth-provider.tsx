@@ -76,8 +76,11 @@ export class ClassAuthProvider extends React.Component<{
     }
   };
 
-  // Sign up function
-  signUp = async (email: string, password: string, role: string, fullName: string) => {
+  // Sign up function — role is forced to a safe default to prevent privilege escalation.
+  // Only an admin can later promote a user via the dashboard.
+  signUp = async (email: string, password: string, _role: string, fullName: string) => {
+    const SAFE_DEFAULT_ROLE = 'STUDENT';
+
     try {
       // First create the auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -88,14 +91,14 @@ export class ClassAuthProvider extends React.Component<{
       if (authError) throw authError;
 
       if (authData?.user) {
-        // Then create the profile
+        // Then create the profile with a safe default role
         const { error: profileError } = await supabase
           .from('profiles')
           .insert({
             id: authData.user.id,
             user_id: authData.user.id,
             full_name: fullName,
-            role: role,
+            role: SAFE_DEFAULT_ROLE,
           });
 
         if (profileError) throw profileError;

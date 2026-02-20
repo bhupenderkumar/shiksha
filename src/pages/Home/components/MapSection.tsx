@@ -131,7 +131,7 @@ export function MapSection() {
           >
             <div className="relative rounded-3xl overflow-hidden border border-slate-200 shadow-xl shadow-slate-200/50">
               <iframe
-                src="https://www.google.com/maps/embed/v1/place?key=AIzaSyD7IJF39_HZvW9Bhno1guh95uAfY79WpaA&q=The+First+Step+Public+School,Saurabh+Vihar,Jaitpur,Delhi&zoom=17"
+                src={`https://www.google.com/maps/embed/v1/place?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''}&q=The+First+Step+Public+School,Saurabh+Vihar,Jaitpur,Delhi&zoom=17`}
                 width="100%"
                 height="450"
                 style={{ border: 0 }}

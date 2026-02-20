@@ -2,7 +2,7 @@ import { supabase } from '@/lib/api-client';
 import { SCHEMA, ID_CARD_TABLE, CLASS_TABLE, STORAGE_BUCKET } from '@/lib/constants';
 
 // Cloud storage URL for images (images are stored on Supabase cloud)
-const CLOUD_STORAGE_URL = 'https://ytfzqzjuhcdgcvvqihda.supabase.co';
+const CLOUD_STORAGE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 
 export interface BirthdayStudent {
   id: string;

@@ -16,7 +16,9 @@ const GTMScript: React.FC = () => {
   useEffect(() => {
     const script = document.createElement('script');
     script.async = true;
-    script.src = 'https://www.googletagmanager.com/gtm.js?id=GTM-MRQ2QLPL';
+    const gtmId = import.meta.env.VITE_GTM_ID || '';
+    if (!gtmId) return;
+    script.src = `https://www.googletagmanager.com/gtm.js?id=${gtmId}`;
     document.head.appendChild(script);
 
     const gtmDataLayer = document.createElement('script');
@@ -24,7 +26,7 @@ const GTMScript: React.FC = () => {
     document.head.appendChild(gtmDataLayer);
 
     const noscriptTag = document.createElement('noscript');
-    noscriptTag.innerHTML = '<iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MRQ2QLPL" height="0" width="0" style="display:none;visibility:hidden"></iframe>';
+    noscriptTag.innerHTML = `<iframe src="https://www.googletagmanager.com/ns.html?id=${gtmId}" height="0" width="0" style="display:none;visibility:hidden"></iframe>`;
     document.body.insertBefore(noscriptTag, document.body.firstChild);
   }, []);
 

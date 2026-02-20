@@ -3,7 +3,7 @@ import { SCHEMA } from './constants';
 /**
  * Generates a Supabase REST API URL with proper schema handling
  * 
- * @param baseUrl - The Supabase project URL (e.g., https://ytfzqzjuhcdgcvvqihda.supabase.co)
+ * @param baseUrl - The Supabase project URL (from VITE_SUPABASE_URL env var)
  * @param table - The table name without schema prefix
  * @param query - The query parameters (select, order, etc.)
  * @returns The complete URL with schema handling
