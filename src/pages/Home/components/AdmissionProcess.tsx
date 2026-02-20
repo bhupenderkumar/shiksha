@@ -10,39 +10,42 @@ const steps = [
     title: "Submit Enquiry",
     description: "Fill out the admission enquiry form with required details",
     icon: FileText,
+    color: "from-violet-500 to-indigo-500",
+    lightBg: "bg-violet-50",
+    lightBorder: "border-violet-100",
   },
   {
     number: 2,
     title: "Document Submission",
     description: "Submit required documents for verification",
     icon: Upload,
+    color: "from-blue-500 to-cyan-500",
+    lightBg: "bg-blue-50",
+    lightBorder: "border-blue-100",
   },
   {
     number: 3,
     title: "Interview",
     description: "Schedule and attend admission interview",
     icon: Users,
+    color: "from-amber-500 to-orange-500",
+    lightBg: "bg-amber-50",
+    lightBorder: "border-amber-100",
   },
   {
     number: 4,
-    title: "Admission Confirmation",
+    title: "Confirmation",
     description: "Receive confirmation and join our school family",
     icon: CheckCircle2,
+    color: "from-emerald-500 to-teal-500",
+    lightBg: "bg-emerald-50",
+    lightBorder: "border-emerald-100",
   },
 ];
 
 export function AdmissionProcess() {
   return (
-    <section className="relative py-24 bg-[#0a0a0a] overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0">
-        <div className="absolute top-1/2 right-0 w-[600px] h-[600px] rounded-full"
-          style={{
-            background: 'radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%)',
-          }}
-        />
-      </div>
-
+    <section id="admissions" className="relative py-20 bg-gradient-to-b from-white via-violet-50/30 to-white overflow-hidden">
       <div className="container mx-auto px-4 relative z-10">
         {/* Header */}
         <motion.div
@@ -50,68 +53,70 @@ export function AdmissionProcess() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-14"
         >
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 text-sm font-medium mb-6">
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-50 border border-violet-100 text-violet-600 text-sm font-semibold mb-4">
             <GraduationCap className="w-4 h-4" />
             Admission Process
           </span>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-4">
             Your Journey{" "}
-            <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
               Starts Here
             </span>
           </h2>
-          <p className="text-xl text-zinc-400 max-w-2xl mx-auto">
+          <p className="text-lg text-slate-400 max-w-xl mx-auto">
             Simple steps to join our school family
           </p>
         </motion.div>
 
-        {/* Steps Timeline */}
+        {/* Steps */}
         <div className="relative max-w-5xl mx-auto">
-          {/* Connecting line */}
-          <div className="absolute top-24 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-zinc-700 to-transparent hidden md:block" />
-          
-          <div className="grid md:grid-cols-4 gap-8">
+          {/* Connecting line - desktop */}
+          <div className="absolute top-[60px] left-[10%] right-[10%] h-0.5 bg-gradient-to-r from-violet-200 via-blue-200 via-amber-200 to-emerald-200 hidden md:block rounded-full" />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 md:gap-4">
             {steps.map((step, index) => (
               <motion.div
                 key={step.number}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.15, duration: 0.5 }}
+                transition={{ delay: index * 0.12, duration: 0.5 }}
                 className="text-center relative group"
               >
                 {/* Step circle */}
-                <div className="relative mx-auto mb-6">
+                <div className="relative mx-auto mb-5">
                   <motion.div
                     className={cn(
-                      "w-20 h-20 rounded-2xl",
-                      "bg-zinc-900 border-2 border-zinc-700",
+                      "w-[72px] h-[72px] rounded-2xl mx-auto",
+                      "bg-white border-2",
+                      step.lightBorder,
                       "flex items-center justify-center",
-                      "group-hover:border-violet-500/50 transition-colors duration-300",
+                      "group-hover:shadow-lg transition-all duration-300",
                       "relative z-10"
                     )}
                     whileHover={{ scale: 1.05, rotate: 5 }}
                     transition={{ type: "spring", stiffness: 300 }}
                   >
-                    {/* Gradient background on hover */}
-                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 opacity-0 group-hover:opacity-20 transition-opacity" />
-                    
-                    <step.icon className="w-8 h-8 text-violet-400" />
+                    <step.icon className="w-7 h-7 text-slate-500 group-hover:text-violet-500 transition-colors" />
                   </motion.div>
-                  
+
                   {/* Step number badge */}
-                  <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm z-20">
+                  <div className={cn(
+                    "absolute -top-2 -right-2 w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs z-20",
+                    "bg-gradient-to-br",
+                    step.color
+                  )}>
                     {step.number}
                   </div>
                 </div>
 
                 {/* Step content */}
-                <h3 className="text-xl font-bold text-white mb-2 group-hover:text-violet-400 transition-colors">
+                <h3 className="text-base font-bold text-slate-800 mb-1.5 group-hover:text-violet-600 transition-colors">
                   {step.title}
                 </h3>
-                <p className="text-zinc-500 group-hover:text-zinc-400 transition-colors">
+                <p className="text-sm text-slate-400 leading-relaxed px-2">
                   {step.description}
                 </p>
               </motion.div>
@@ -124,13 +129,13 @@ export function AdmissionProcess() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ delay: 0.6 }}
-          className="mt-16 text-center"
+          transition={{ delay: 0.5 }}
+          className="mt-14 text-center"
         >
           <Button
             size="lg"
             asChild
-            className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-semibold px-8 py-7 text-lg rounded-full shadow-2xl shadow-violet-500/20 hover:scale-105 transition-all duration-300 group"
+            className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-semibold px-8 py-6 text-base rounded-2xl shadow-xl shadow-violet-200 hover:shadow-violet-300 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group"
           >
             <Link to="/admission-enquiry">
               Start Your Journey Today

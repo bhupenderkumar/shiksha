@@ -1,37 +1,25 @@
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
 import { features } from "@/data/home/features";
 import { cn } from "@/lib/utils";
 import { ArrowUpRight, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export function FeaturesSection() {
-  // Bento grid layout classes for different positions
-  const gridClasses = [
-    "md:col-span-2 md:row-span-2", // Large card
-    "md:col-span-1 md:row-span-1", // Small card
-    "md:col-span-1 md:row-span-1", // Small card
-    "md:col-span-1 md:row-span-2", // Tall card
-    "md:col-span-2 md:row-span-1", // Wide card
-  ];
-
-  const gradients = [
-    "from-violet-600 to-indigo-600",
-    "from-pink-600 to-rose-600",
-    "from-amber-500 to-orange-600",
-    "from-emerald-500 to-teal-600",
-    "from-blue-600 to-cyan-600",
+  const cardColors = [
+    { border: "border-violet-100", hoverBorder: "hover:border-violet-200", iconBg: "bg-gradient-to-br from-violet-500 to-indigo-600", shadow: "hover:shadow-violet-100/50", accent: "text-violet-600" },
+    { border: "border-pink-100", hoverBorder: "hover:border-pink-200", iconBg: "bg-gradient-to-br from-pink-500 to-rose-600", shadow: "hover:shadow-pink-100/50", accent: "text-pink-600" },
+    { border: "border-amber-100", hoverBorder: "hover:border-amber-200", iconBg: "bg-gradient-to-br from-amber-500 to-orange-600", shadow: "hover:shadow-amber-100/50", accent: "text-amber-600" },
+    { border: "border-emerald-100", hoverBorder: "hover:border-emerald-200", iconBg: "bg-gradient-to-br from-emerald-500 to-teal-600", shadow: "hover:shadow-emerald-100/50", accent: "text-emerald-600" },
+    { border: "border-blue-100", hoverBorder: "hover:border-blue-200", iconBg: "bg-gradient-to-br from-blue-500 to-cyan-600", shadow: "hover:shadow-blue-100/50", accent: "text-blue-600" },
   ];
 
   return (
-    <section className="relative py-24 bg-[#0a0a0a] overflow-hidden">
-      {/* Background elements */}
-      <div className="absolute inset-0">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full"
-          style={{
-            background: 'radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%)',
-          }}
-        />
-      </div>
+    <section id="features" className="relative py-20 bg-slate-50/50 overflow-hidden">
+      {/* Subtle background pattern */}
+      <div className="absolute inset-0 opacity-[0.02]" style={{
+        backgroundImage: 'radial-gradient(circle, #6366f1 1px, transparent 1px)',
+        backgroundSize: '24px 24px'
+      }} />
 
       <div className="container mx-auto px-4 relative z-10">
         {/* Section header */}
@@ -40,104 +28,87 @@ export function FeaturesSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-14"
         >
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-sm font-medium mb-6">
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-50 border border-violet-100 text-violet-600 text-sm font-semibold mb-4">
             <Sparkles className="w-4 h-4" />
             Why Parents Choose Us
           </span>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-4">
             Excellence in{" "}
-            <span className="bg-gradient-to-r from-indigo-400 to-pink-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-violet-600 to-pink-600 bg-clip-text text-transparent">
               Every Aspect
             </span>
           </h2>
-          <p className="text-xl text-zinc-400 max-w-2xl mx-auto">
+          <p className="text-lg text-slate-400 max-w-2xl mx-auto">
             A holistic approach to education that nurtures creativity, curiosity, and character
           </p>
         </motion.div>
 
-        {/* Bento Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 auto-rows-[200px]">
+        {/* Feature cards grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-5xl mx-auto">
           {features.map((feature, index) => {
-            const CardContent = (
+            const colors = cardColors[index % cardColors.length];
+            const CardInner = (
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
+                transition={{ duration: 0.5, delay: index * 0.08 }}
                 className={cn(
-                  "group relative h-full rounded-3xl overflow-hidden cursor-pointer",
-                  "bg-zinc-900/80 border border-zinc-800",
-                  "hover:border-zinc-700 transition-all duration-500",
-                  gridClasses[index % gridClasses.length]
+                  "group relative h-full p-6 rounded-2xl",
+                  "bg-white border",
+                  colors.border,
+                  colors.hoverBorder,
+                  "shadow-sm hover:shadow-lg",
+                  colors.shadow,
+                  "transition-all duration-300 hover:-translate-y-1",
+                  "cursor-pointer"
                 )}
               >
-                {/* Gradient background on hover */}
+                {/* Top accent line */}
                 <div className={cn(
-                  "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500",
-                  "bg-gradient-to-br",
-                  gradients[index % gradients.length]
-                )} style={{ opacity: 0.1 }} />
-                
-                {/* Content */}
-                <div className="relative h-full p-8 flex flex-col justify-between">
-                  {/* Top section */}
-                  <div>
-                    {/* Icon */}
-                    <div className={cn(
-                      "inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-6",
-                      "bg-gradient-to-br",
-                      gradients[index % gradients.length]
-                    )}>
-                      <feature.icon className="w-7 h-7 text-white" />
-                    </div>
-                    
-                    {/* Title */}
-                    <h3 className="text-xl md:text-2xl font-bold text-white mb-3 group-hover:text-white transition-colors">
-                      {feature.title}
-                    </h3>
-                    
-                    {/* Description - only visible on larger cards */}
-                    <p className={cn(
-                      "text-zinc-400 leading-relaxed group-hover:text-zinc-300 transition-colors",
-                      index === 0 || index === 3 ? "block" : "hidden md:block"
-                    )}>
-                      {feature.description}
-                    </p>
-                  </div>
-                  
-                  {/* Bottom section - arrow indicator */}
-                  <div className="flex items-center justify-between mt-4">
-                    <span className="text-sm text-zinc-500 group-hover:text-zinc-400 transition-colors">
-                      {feature.link ? "Learn more" : ""}
-                    </span>
-                    <div className={cn(
-                      "w-10 h-10 rounded-full flex items-center justify-center",
-                      "bg-white/5 group-hover:bg-white/10 transition-colors"
-                    )}>
-                      <ArrowUpRight className="w-5 h-5 text-zinc-400 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
-                    </div>
-                  </div>
+                  "absolute top-0 left-6 right-6 h-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity",
+                  colors.iconBg
+                )} />
+
+                {/* Icon */}
+                <div className={cn(
+                  "inline-flex items-center justify-center w-12 h-12 rounded-xl mb-5",
+                  colors.iconBg
+                )}>
+                  <feature.icon className="w-6 h-6 text-white" />
                 </div>
 
-                {/* Decorative elements */}
-                {index === 0 && (
-                  <div className="absolute -bottom-20 -right-20 w-64 h-64 rounded-full bg-gradient-to-br from-violet-500/20 to-transparent blur-3xl" />
-                )}
-                {index === 3 && (
-                  <div className="absolute -top-20 -left-20 w-64 h-64 rounded-full bg-gradient-to-br from-emerald-500/20 to-transparent blur-3xl" />
+                {/* Title */}
+                <h3 className="text-lg font-bold text-slate-800 mb-2">
+                  {feature.title}
+                </h3>
+
+                {/* Description */}
+                <p className="text-sm text-slate-400 leading-relaxed mb-4">
+                  {feature.description}
+                </p>
+
+                {/* Link arrow */}
+                {feature.link && (
+                  <div className="flex items-center gap-1.5">
+                    <span className={cn("text-sm font-medium", colors.accent)}>
+                      Learn more
+                    </span>
+                    <ArrowUpRight className={cn("w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform", colors.accent)} />
+                  </div>
                 )}
               </motion.div>
             );
 
             return feature.link ? (
-              <Link key={index} to={feature.link} className={cn(gridClasses[index % gridClasses.length])}>
-                {CardContent}
+              <Link key={index} to={feature.link}>
+                {CardInner}
               </Link>
             ) : (
-              <div key={index} className={cn(gridClasses[index % gridClasses.length])}>
-                {CardContent}
+              <div key={index}>
+                {CardInner}
               </div>
             );
           })}
