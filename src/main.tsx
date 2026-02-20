@@ -6,6 +6,10 @@ import { ClassAuthProvider } from './lib/class-auth-provider';
 import { PWAUpdatePrompt } from './components/pwa/PWAUpdatePrompt';
 import App from './App';
 import './styles/globals.css';
+import { logVersionInfo } from './lib/version';
+
+// Log version on startup
+logVersionInfo();
 
 // GTM Script Component
 const GTMScript: React.FC = () => {
