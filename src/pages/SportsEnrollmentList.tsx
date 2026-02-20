@@ -78,6 +78,11 @@ export default function SportsEnrollmentList() {
             </div>
           </Link>
           <div className="flex gap-2 items-center">
+            <Link to="/sports-week/enrollments/grouped">
+              <Button variant="outline" size="sm" className="text-xs sm:text-sm gap-1">
+                📊 Grouped View
+              </Button>
+            </Link>
             <Link to="/sports-week">
               <Button variant="outline" size="sm" className="text-xs sm:text-sm gap-1">
                 🏆 Sports Week

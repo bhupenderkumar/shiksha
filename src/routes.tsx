@@ -44,6 +44,7 @@ import FeeStructure from './pages/FeeStructure';
 import FeeChartPrint from './pages/FeeChartPrint';
 import AnnualSportsWeek from './pages/AnnualSportsWeek';
 import SportsEnrollmentList from './pages/SportsEnrollmentList';
+import SportsEnrollmentGrouped from './pages/SportsEnrollmentGrouped';
 import Layout from './components/Layout';
 import PublicLayout from './components/PublicLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -358,6 +359,10 @@ export const router = createBrowserRouter([
       {
         path: 'sports-week/enrollments',
         element: <SportsEnrollmentList />,
+      },
+      {
+        path: 'sports-week/enrollments/grouped',
+        element: <SportsEnrollmentGrouped />,
       },
     ],
   },
