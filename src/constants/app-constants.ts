@@ -35,6 +35,8 @@ export const ROUTES = {
   COPY_REQUEST: '/copy-request',
   SCHOOL_FEEDBACK: '/school-feedback',
   ADMIN_SCHOOL_FEEDBACK: '/admin-school-feedback',
+  ADMISSION_ENQUIRY: '/admission-enquiry',
+  ADMISSION_ENQUIRIES: '/admission-enquiries',
 } as const;
 
 export const API_ENDPOINTS = {

@@ -69,7 +69,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { id: 23, icon: Star, label: 'View Year End Feedback', path: '/view-year-end-feedback', role: 'admin' },
 
     // Admission Section
-    { id: 24, icon: ClipboardList, label: 'Admission Enquiries', path: '/admission-enquiries', role: 'admin' },
+    { id: 29, icon: ClipboardList, label: 'New Admission Query', path: ROUTES.ADMISSION_ENQUIRY, role: 'teacher' },
+    { id: 24, icon: ClipboardList, label: 'Admission Enquiries', path: ROUTES.ADMISSION_ENQUIRIES, role: 'admin' },
 
     // Parent Feedback Section
     { id: 14, icon: FileText, label: 'Create Parent Feedback', path: ROUTES.PARENT_FEEDBACK_LIST, role: 'admin' },
