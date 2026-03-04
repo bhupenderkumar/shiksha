@@ -126,6 +126,8 @@ if (!YOUTUBE_API_KEY || !YOUTUBE_CHANNEL_ID) {
 
 export const SCHOOL_INFO = {
   name: 'First Step School',
+  logo: '/assets/images/logo.PNG',
+  tagline: 'Nurturing Young Minds',
   address: 'Saurabh Vihar , Delhi 110044',
   phone: '+91-9311872001, +91-9717267473',
   email: 'firststepschool22@gmail.com',

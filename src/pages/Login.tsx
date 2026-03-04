@@ -1,23 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../lib/auth-provider';
-import { LogIn } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { SCHOOL_INFO } from '@/lib/constants';
 
 import {
   authPageStyles,
-  cardStyles,
   inputStyles,
   buttonStyles,
   linkStyles,
   textStyles,
-  dividerStyles,
   loadingStyles,
 } from '@/styles/theme';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { user, signIn } = useAuth();
 
@@ -45,102 +45,97 @@ const Login = () => {
 
   return (
     <div className={authPageStyles.container}>
-
-
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          <div className={authPageStyles.iconWrapper}>
-            <LogIn className={`w-12 h-12 ${authPageStyles.iconColor}`} />
-          </div>
+      {/* ── Branding ── */}
+      <div className={authPageStyles.brandingArea}>
+        <div className={authPageStyles.logoWrapper}>
+          <img
+            src={SCHOOL_INFO.logo}
+            alt={SCHOOL_INFO.name}
+            className={authPageStyles.logoImage}
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
         </div>
-        <h2 className={authPageStyles.title}>
-          Welcome back
-        </h2>
-        <p className={authPageStyles.subtitle}>
-          Sign in to continue to your account
-        </p>
+        <h1 className={authPageStyles.schoolName}>{SCHOOL_INFO.name}</h1>
+        <p className={authPageStyles.schoolTagline}>{SCHOOL_INFO.tagline}</p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className={cardStyles.container}>
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <label htmlFor="email" className={inputStyles.label}>
-                Email address
-              </label>
+      {/* ── Form ── */}
+      <div className={authPageStyles.formCard}>
+        <h2 className={authPageStyles.formTitle}>Welcome back</h2>
+        <p className={authPageStyles.formSubtitle}>Sign in to your account</p>
+
+        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+          <div>
+            <label htmlFor="email" className={inputStyles.label}>Email</label>
+            <div className="relative">
+              <div className={inputStyles.iconWrapper}>
+                <Mail className="w-4 h-4" />
+              </div>
               <input
                 id="email"
-                name="email"
                 type="email"
                 autoComplete="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className={inputStyles.base}
-                placeholder="Enter your email"
+                className={inputStyles.withIcon}
+                placeholder="you@example.com"
               />
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <label htmlFor="password" className={inputStyles.label}>
-                Password
-              </label>
+          <div>
+            <label htmlFor="password" className={inputStyles.label}>Password</label>
+            <div className="relative">
+              <div className={inputStyles.iconWrapper}>
+                <Lock className="w-4 h-4" />
+              </div>
               <input
                 id="password"
-                name="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 autoComplete="current-password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className={inputStyles.base}
+                className={inputStyles.withIcon}
                 placeholder="Enter your password"
               />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="text-sm">
-                <Link to="/forgot-password" className={linkStyles.primary}>
-                  Forgot your password?
-                </Link>
-              </div>
-            </div>
-
-            <div>
               <button
-                type="submit"
-                disabled={loading}
-                className={buttonStyles.primary}
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
               >
-                {loading ? (
-                  <div className={loadingStyles.wrapper}>
-                    <div className={loadingStyles.spinner}></div>
-                    Signing in...
-                  </div>
-                ) : (
-                  'Sign in'
-                )}
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-          </form>
-
-          <div className="mt-6 text-center">
-            <p className={textStyles.muted}>
-              Don't have an account?{' '}
-              <Link to="/register" className={linkStyles.primary}>
-                Register here
-              </Link>
-            </p>
           </div>
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className={dividerStyles.line}></div>
+          <div className="flex justify-end">
+            <Link to="/forgot-password" className="text-xs text-gray-400 hover:text-gray-600">
+              Forgot password?
+            </Link>
+          </div>
+
+          <button type="submit" disabled={loading} className={buttonStyles.primary}>
+            {loading ? (
+              <div className={loadingStyles.wrapper}>
+                <div className={loadingStyles.spinner}></div>
+                Signing in...
               </div>
-            </div>
-          </div>
-        </div>
+            ) : (
+              'Sign In'
+            )}
+          </button>
+        </form>
+
+        <p className="mt-6 text-center text-sm text-gray-400">
+          Don't have an account?{' '}
+          <Link to="/register" className="font-medium text-gray-900 hover:text-gray-700">
+            Create Account
+          </Link>
+        </p>
       </div>
     </div>
   );

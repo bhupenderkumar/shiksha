@@ -37,6 +37,7 @@ export const ROUTES = {
   ADMIN_SCHOOL_FEEDBACK: '/admin-school-feedback',
   ADMISSION_ENQUIRY: '/admission-enquiry',
   ADMISSION_ENQUIRIES: '/admission-enquiries',
+  ADMISSION_TEST: '/admission-test',
 } as const;
 
 export const API_ENDPOINTS = {

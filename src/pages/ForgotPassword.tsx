@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { KeyRound } from 'lucide-react';
+import { Mail, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '@/lib/api-client';
+import { SCHOOL_INFO } from '@/lib/constants';
 
 import {
   authPageStyles,
-  cardStyles,
   inputStyles,
   buttonStyles,
-  linkStyles,
-  textStyles,
+  loadingStyles,
 } from '@/styles/theme';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +29,7 @@ const ForgotPassword = () => {
       if (error) throw error;
 
       toast.success('Password reset instructions sent to your email');
-      setEmail('');
+      setSent(true);
     } catch (error) {
       toast.error('Failed to send reset instructions');
       console.error('Reset password error:', error);
@@ -40,67 +40,89 @@ const ForgotPassword = () => {
 
   return (
     <div className={authPageStyles.container}>
-
-
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          <div className={authPageStyles.iconWrapper}>
-            <KeyRound className={`w-12 h-12 ${authPageStyles.iconColor}`} />
-          </div>
+      {/* ── Branding ── */}
+      <div className={authPageStyles.brandingArea}>
+        <div className={authPageStyles.logoWrapper}>
+          <img
+            src={SCHOOL_INFO.logo}
+            alt={SCHOOL_INFO.name}
+            className={authPageStyles.logoImage}
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
         </div>
-        <h2 className={authPageStyles.title}>
-          Reset your password
-        </h2>
-        <p className={authPageStyles.subtitle}>
-          Enter your email address and we'll send you instructions to reset your password.
-        </p>
+        <h1 className={authPageStyles.schoolName}>{SCHOOL_INFO.name}</h1>
+        <p className={authPageStyles.schoolTagline}>{SCHOOL_INFO.tagline}</p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className={cardStyles.container}>
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div>
-              <label htmlFor="email" className={inputStyles.label}>
-                Email address
-              </label>
-              <div className="mt-1">
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={inputStyles.base}
-                />
-              </div>
+      {/* ── Form ── */}
+      <div className={authPageStyles.formCard}>
+        {sent ? (
+          <div className="text-center py-4">
+            <div className="w-14 h-14 mx-auto bg-gray-50 rounded-full flex items-center justify-center mb-4 border border-gray-100">
+              <Mail className="w-6 h-6 text-gray-600" />
             </div>
-
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className={buttonStyles.primary}
-              >
-                {loading ? 'Sending...' : 'Send reset instructions'}
-              </button>
-            </div>
-          </form>
-
-          <div className="mt-6">
-            <div className="relative">
-              <div className="relative flex justify-center text-sm">
-                <span className={textStyles.dividerText}>
-                  Remember your password?{' '}
-                  <Link to="/login" className={linkStyles.primary}>
-                    Sign in
-                  </Link>
-                </span>
-              </div>
-            </div>
+            <h2 className={authPageStyles.formTitle}>Check your email</h2>
+            <p className="mt-2 text-sm text-gray-400 leading-relaxed">
+              We sent reset instructions to<br />
+              <span className="font-medium text-gray-700">{email}</span>
+            </p>
+            <Link
+              to="/login"
+              className={`${buttonStyles.secondary} mt-6 inline-flex items-center justify-center gap-2`}
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Sign In
+            </Link>
           </div>
-        </div>
+        ) : (
+          <>
+            <h2 className={authPageStyles.formTitle}>Reset password</h2>
+            <p className={authPageStyles.formSubtitle}>
+              Enter your email to receive reset instructions
+            </p>
+
+            <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+              <div>
+                <label htmlFor="email" className={inputStyles.label}>Email</label>
+                <div className="relative">
+                  <div className={inputStyles.iconWrapper}>
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className={inputStyles.withIcon}
+                    placeholder="you@example.com"
+                  />
+                </div>
+              </div>
+
+              <button type="submit" disabled={loading} className={buttonStyles.primary}>
+                {loading ? (
+                  <div className={loadingStyles.wrapper}>
+                    <div className={loadingStyles.spinner}></div>
+                    Sending...
+                  </div>
+                ) : (
+                  'Send Reset Link'
+                )}
+              </button>
+            </form>
+
+            <p className="mt-6 text-center text-sm text-gray-400">
+              Remember your password?{' '}
+              <Link to="/login" className="font-medium text-gray-900 hover:text-gray-700">
+                Sign In
+              </Link>
+            </p>
+          </>
+        )}
       </div>
     </div>
   );

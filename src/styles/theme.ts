@@ -10,20 +10,44 @@
 
 // Auth Page Container Styles (Login, Register, ForgotPassword, etc.)
 export const authPageStyles = {
-  // Main container with gradient background
-  container: "min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors duration-300",
+  // Main container – clean white, mobile-first
+  container: "min-h-[100dvh] bg-white flex flex-col items-center px-6 py-0 sm:py-8 sm:px-6 lg:px-8 overflow-auto",
   
-  // Icon container
-  iconWrapper: "p-4 bg-white rounded-full shadow-lg transform transition-all hover:scale-110",
+  // Top branding area (logo + school name)
+  brandingArea: "flex flex-col items-center pt-10 pb-4 sm:pt-14 sm:pb-6",
+  
+  // Logo wrapper – simple circle with light border
+  logoWrapper: "w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white border border-gray-200 flex items-center justify-center p-1.5 shadow-sm",
+  
+  // Logo image
+  logoImage: "w-full h-full rounded-full object-cover",
+  
+  // School name
+  schoolName: "mt-3 text-center text-lg sm:text-xl font-semibold text-gray-900",
+  
+  // School tagline
+  schoolTagline: "mt-0.5 text-center text-xs text-gray-400",
+  
+  // Form area
+  formCard: "w-full max-w-sm px-0 py-4 sm:px-2 sm:py-6",
+  
+  // Form card title
+  formTitle: "text-xl font-semibold text-gray-900 text-center",
+  
+  // Form card subtitle
+  formSubtitle: "mt-1 text-sm text-gray-400 text-center",
+  
+  // Icon container (legacy compat)
+  iconWrapper: "p-4 bg-white rounded-full shadow-sm border border-gray-100",
   
   // Icon color
-  iconColor: "text-primary",
+  iconColor: "text-gray-700",
   
-  // Page title
-  title: "mt-6 text-center text-3xl font-extrabold bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent",
+  // Page title (legacy compat)
+  title: "mt-6 text-center text-2xl font-semibold text-gray-900",
   
   // Subtitle/description text
-  subtitle: "mt-2 text-center text-sm text-muted-foreground",
+  subtitle: "mt-2 text-center text-sm text-gray-400",
 };
 
 // Card Styles for forms
@@ -37,29 +61,35 @@ export const cardStyles = {
 
 // Form Input Styles
 export const inputStyles = {
-  // Standard text input
-  base: "appearance-none block w-full px-4 py-3 border border-gray-200 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white text-gray-900",
+  // Standard text input – clean with border
+  base: "appearance-none block w-full px-4 py-3 border border-gray-200 rounded-lg placeholder-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 transition-colors text-gray-900 text-sm",
   
   // Input label
-  label: "block text-sm font-medium text-gray-700",
+  label: "block text-sm font-medium text-gray-600 mb-1.5",
+  
+  // Input with icon padding
+  withIcon: "appearance-none block w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg placeholder-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 transition-colors text-gray-900 text-sm",
+  
+  // Icon wrapper positioned inside input
+  iconWrapper: "absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400",
   
   // Input with minimal styling
-  minimal: "appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary bg-white text-gray-900",
+  minimal: "appearance-none block w-full px-3 py-2 border border-gray-200 rounded-md placeholder-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 bg-white text-gray-900",
 };
 
 // Button Styles
 export const buttonStyles = {
-  // Primary gradient button
-  primary: "w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-blue-500 hover:from-indigo-700 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 transition-all duration-200 transform hover:scale-[1.02]",
+  // Primary button – solid dark, clean
+  primary: "w-full flex justify-center items-center py-3 px-4 rounded-lg text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 transition-colors active:scale-[0.98]",
   
   // Secondary/outline button
-  secondary: "w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50",
+  secondary: "w-full flex justify-center py-3 px-4 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:opacity-50 transition-colors",
   
   // Role selector button (active state)
-  roleActive: "px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 bg-primary text-white",
+  roleActive: "flex-1 px-4 py-3 text-sm font-medium rounded-lg transition-colors bg-gray-900 text-white",
   
   // Role selector button (inactive state)
-  roleInactive: "px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50",
+  roleInactive: "flex-1 px-4 py-3 text-sm font-medium rounded-lg transition-colors border border-gray-200 text-gray-500 hover:bg-gray-50",
 };
 
 // Link Styles

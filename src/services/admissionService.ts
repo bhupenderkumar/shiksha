@@ -42,6 +42,27 @@ const FILE_CONFIG = {
   ALLOWED_TYPES: ['application/pdf', 'image/jpeg', 'image/png']
 } as const;
 
+// Cache the school ID so we only fetch it once
+let cachedSchoolId: string | null = null;
+
+async function getSchoolId(): Promise<string> {
+  if (cachedSchoolId) return cachedSchoolId;
+
+  const { data, error } = await supabase
+    .schema(SCHEMA)
+    .from('School')
+    .select('id')
+    .limit(1)
+    .single();
+
+  if (error || !data) {
+    throw new Error('Could not determine school ID. Please ensure a School record exists.');
+  }
+
+  cachedSchoolId = data.id;
+  return cachedSchoolId;
+}
+
 // Database interfaces - using camelCase to match DB schema
 type DocumentVerificationStatus = 'pending' | 'verified' | 'rejected';
 
@@ -174,6 +195,7 @@ export const admissionService = {
   async createEnquiry(data: ProspectiveStudentData): Promise<ProspectiveStudent> {
     const id = uuidv4();
     const now = new Date().toISOString();
+    const schoolId = await getSchoolId();
     
     // Database uses camelCase column names
     const dbData = {
@@ -191,7 +213,7 @@ export const admissionService = {
       lastUpdateDate: now,
       createdAt: now,
       updatedAt: now,
-      schoolId: '00000000-0000-0000-0000-000000000001' // Default school ID
+      schoolId
     };
 
     const { data: newEnquiry, error } = await supabase

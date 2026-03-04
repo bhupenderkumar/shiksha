@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import { Outlet } from 'react-router-dom';
 import AdmissionEnquiry from './pages/AdmissionEnquiry';
 import AdmissionProgress from './pages/AdmissionProgress';
+import AdmissionTest from './pages/AdmissionTest';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -339,6 +340,10 @@ export const router = createBrowserRouter([
       {
         path: 'admission-enquiry',
         element: <AdmissionEnquiry />,
+      },
+      {
+        path: 'admission-test',
+        element: <AdmissionTest />,
       },
       {
         path: 'admission-progress/:id',

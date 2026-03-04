@@ -30,7 +30,7 @@ import { Button } from './ui/button';
 import { useAuth } from '@/lib/auth-provider';
 import { ROUTES } from '@/constants/app-constants';
 import { AnimatedText } from './ui/animated-text';
-import { isAdminOrTeacher } from '@/services/profileService';
+import { useProfileAccess } from '@/services/profileService';
 
 import { NoInternet } from './NoInternet';
 import { NetworkProvider } from '@/contexts/NetworkContext';
@@ -41,6 +41,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { profile } = useProfileAccess();
 
   useEffect(() => {
     const handleResize = () => {
@@ -70,6 +71,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
     // Admission Section
     { id: 29, icon: ClipboardList, label: 'New Admission Query', path: ROUTES.ADMISSION_ENQUIRY, role: 'teacher' },
+    { id: 30, icon: GraduationCap, label: 'Admission Test', path: ROUTES.ADMISSION_TEST, role: 'teacher' },
     { id: 24, icon: ClipboardList, label: 'Admission Enquiries', path: ROUTES.ADMISSION_ENQUIRIES, role: 'admin' },
 
     // Parent Feedback Section
@@ -215,7 +217,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           >
             <nav className="h-full p-4 space-y-2 overflow-y-auto">
               {menuItems.filter(item => {
-                const userRole = user.role?.toUpperCase();
+                const userRole = profile?.role?.toUpperCase();
                 // No role restriction — visible to all
                 if (!item.role) return true;
                 // Admin sees everything

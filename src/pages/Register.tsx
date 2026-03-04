@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { UserPlus } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, GraduationCap, BookOpen } from 'lucide-react';
 import { signUp } from '@/services/authservice';
+import { SCHOOL_INFO } from '@/lib/constants';
 
 import {
   authPageStyles,
-  cardStyles,
   inputStyles,
   buttonStyles,
   linkStyles,
@@ -19,6 +19,7 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState('student');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -50,128 +51,135 @@ const Register = () => {
 
   return (
     <div className={authPageStyles.container}>
-
-
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          <div className={authPageStyles.iconWrapper}>
-            <UserPlus className={`w-12 h-12 ${authPageStyles.iconColor}`} />
-          </div>
+      {/* ── Branding ── */}
+      <div className={authPageStyles.brandingArea}>
+        <div className={authPageStyles.logoWrapper}>
+          <img
+            src={SCHOOL_INFO.logo}
+            alt={SCHOOL_INFO.name}
+            className={authPageStyles.logoImage}
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
         </div>
-        <h2 className={authPageStyles.title}>
-          Create your account
-        </h2>
-        <p className={authPageStyles.subtitle}>
-          Join our community today
-        </p>
+        <h1 className={authPageStyles.schoolName}>{SCHOOL_INFO.name}</h1>
+        <p className={authPageStyles.schoolTagline}>{SCHOOL_INFO.tagline}</p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className={cardStyles.container}>
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <label htmlFor="fullName" className={inputStyles.label}>
-                Full Name
-              </label>
+      {/* ── Form ── */}
+      <div className={authPageStyles.formCard}>
+        <h2 className={authPageStyles.formTitle}>Create account</h2>
+        <p className={authPageStyles.formSubtitle}>Join our school community</p>
+
+        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+          <div>
+            <label htmlFor="fullName" className={inputStyles.label}>Full Name</label>
+            <div className="relative">
+              <div className={inputStyles.iconWrapper}>
+                <User className="w-4 h-4" />
+              </div>
               <input
                 id="fullName"
-                name="fullName"
                 type="text"
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className={inputStyles.base}
-                placeholder="Enter your full name"
+                className={inputStyles.withIcon}
+                placeholder="Your full name"
               />
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <label htmlFor="email" className={inputStyles.label}>
-                Email address
-              </label>
+          <div>
+            <label htmlFor="email" className={inputStyles.label}>Email</label>
+            <div className="relative">
+              <div className={inputStyles.iconWrapper}>
+                <Mail className="w-4 h-4" />
+              </div>
               <input
                 id="email"
-                name="email"
                 type="email"
                 autoComplete="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className={inputStyles.base}
-                placeholder="Enter your email"
+                className={inputStyles.withIcon}
+                placeholder="you@example.com"
               />
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <label htmlFor="password" className={inputStyles.label}>
-                Password
-              </label>
+          <div>
+            <label htmlFor="password" className={inputStyles.label}>Password</label>
+            <div className="relative">
+              <div className={inputStyles.iconWrapper}>
+                <Lock className="w-4 h-4" />
+              </div>
               <input
                 id="password"
-                name="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 autoComplete="new-password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className={inputStyles.base}
-                placeholder="Create a password"
+                className={inputStyles.withIcon}
+                placeholder="Min. 6 characters"
               />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="role" className={inputStyles.label}>
-                I am a
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setRole('student')}
-                  className={role === 'student' ? buttonStyles.roleActive : buttonStyles.roleInactive}
-                >
-                  Student
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRole('teacher')}
-                  className={role === 'teacher' ? buttonStyles.roleActive : buttonStyles.roleInactive}
-                >
-                  Teacher
-                </button>
-              </div>
-            </div>
-
-            <div>
               <button
-                type="submit"
-                disabled={loading}
-                className={buttonStyles.primary}
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
               >
-                {loading ? (
-                  <div className={loadingStyles.wrapper}>
-                    <div className={loadingStyles.spinner}></div>
-                    Creating account...
-                  </div>
-                ) : (
-                  'Create account'
-                )}
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-          </form>
+          </div>
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="relative flex justify-center text-sm">
-                <span className={textStyles.dividerText}>
-                  Already have an account?{' '}
-                  <Link to="/login" className={linkStyles.primary}>
-                    Sign in
-                  </Link>
+          <div>
+            <label className={inputStyles.label}>I am a</label>
+            <div className="flex gap-3 mt-1">
+              <button
+                type="button"
+                onClick={() => setRole('student')}
+                className={role === 'student' ? buttonStyles.roleActive : buttonStyles.roleInactive}
+              >
+                <span className="flex items-center justify-center gap-1.5">
+                  <GraduationCap className="w-4 h-4" />
+                  Student
                 </span>
-              </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole('teacher')}
+                className={role === 'teacher' ? buttonStyles.roleActive : buttonStyles.roleInactive}
+              >
+                <span className="flex items-center justify-center gap-1.5">
+                  <BookOpen className="w-4 h-4" />
+                  Teacher
+                </span>
+              </button>
             </div>
           </div>
-        </div>
+
+          <button type="submit" disabled={loading} className={buttonStyles.primary}>
+            {loading ? (
+              <div className={loadingStyles.wrapper}>
+                <div className={loadingStyles.spinner}></div>
+                Creating account...
+              </div>
+            ) : (
+              'Create Account'
+            )}
+          </button>
+        </form>
+
+        <p className="mt-6 text-center text-sm text-gray-400">
+          Already have an account?{' '}
+          <Link to="/login" className="font-medium text-gray-900 hover:text-gray-700">
+            Sign In
+          </Link>
+        </p>
       </div>
     </div>
   );
