@@ -72,11 +72,27 @@ const CLASS_OPTIONS: { value: FilterValue; label: string; short: string }[] = [
 ];
 
 const EXAM_SCHEDULE: ExamRow[] = [
+  // ── 09 Mar: Pre-N & Nursery → English | KG+ → Break ──
   {
     date: "09 Mar",
     day: "Mon",
     preNursery: "English",
     nursery: "English",
+    lkg: "Break",
+    ukg: "Break",
+    class1: "Break",
+    class2: "Break",
+    class3: "Break",
+    class4: "Break",
+    class5: "Break",
+    type: "exam",
+  },
+  // ── 10 Mar: Pre-N & Nursery → Break | KG+ → English ──
+  {
+    date: "10 Mar",
+    day: "Tue",
+    preNursery: "Break",
+    nursery: "Break",
     lkg: "English",
     ukg: "English",
     class1: "English",
@@ -86,11 +102,12 @@ const EXAM_SCHEDULE: ExamRow[] = [
     class5: "English",
     type: "exam",
   },
+  // ── 11 Mar: Pre-N & Nursery → Hindi | KG+ → Break ──
   {
-    date: "10 Mar",
-    day: "Tue",
-    preNursery: "Break",
-    nursery: "Break",
+    date: "11 Mar",
+    day: "Wed",
+    preNursery: "Hindi",
+    nursery: "Hindi",
     lkg: "Break",
     ukg: "Break",
     class1: "Break",
@@ -98,13 +115,14 @@ const EXAM_SCHEDULE: ExamRow[] = [
     class3: "Break",
     class4: "Break",
     class5: "Break",
-    type: "break",
+    type: "exam",
   },
+  // ── 12 Mar: Pre-N & Nursery → Break | KG+ → Hindi ──
   {
-    date: "11 Mar",
-    day: "Wed",
-    preNursery: "Hindi",
-    nursery: "Hindi",
+    date: "12 Mar",
+    day: "Thu",
+    preNursery: "Break",
+    nursery: "Break",
     lkg: "Hindi",
     ukg: "Hindi",
     class1: "Hindi",
@@ -114,11 +132,12 @@ const EXAM_SCHEDULE: ExamRow[] = [
     class5: "Hindi",
     type: "exam",
   },
+  // ── 13 Mar: Pre-N & Nursery → Maths | KG+ → Break ──
   {
-    date: "12 Mar",
-    day: "Thu",
-    preNursery: "Break",
-    nursery: "Break",
+    date: "13 Mar",
+    day: "Fri",
+    preNursery: "Maths",
+    nursery: "Maths",
     lkg: "Break",
     ukg: "Break",
     class1: "Break",
@@ -126,13 +145,14 @@ const EXAM_SCHEDULE: ExamRow[] = [
     class3: "Break",
     class4: "Break",
     class5: "Break",
-    type: "break",
+    type: "exam",
   },
+  // ── 14 Mar: Pre-N & Nursery → Break | KG+ → Maths ──
   {
-    date: "13 Mar",
-    day: "Fri",
-    preNursery: "Maths",
-    nursery: "Maths",
+    date: "14 Mar",
+    day: "Sat",
+    preNursery: "Break",
+    nursery: "Break",
     lkg: "Maths",
     ukg: "Maths",
     class1: "Maths",
@@ -142,20 +162,7 @@ const EXAM_SCHEDULE: ExamRow[] = [
     class5: "Maths",
     type: "exam",
   },
-  {
-    date: "14 Mar",
-    day: "Sat",
-    preNursery: "Break",
-    nursery: "Break",
-    lkg: "Break",
-    ukg: "Break",
-    class1: "Break",
-    class2: "Break",
-    class3: "Break",
-    class4: "Break",
-    class5: "Break",
-    type: "break",
-  },
+  // ── 15 Mar: Sunday Holiday ──
   {
     date: "15 Mar",
     day: "Sun",
@@ -170,11 +177,27 @@ const EXAM_SCHEDULE: ExamRow[] = [
     class5: "Holiday",
     type: "holiday",
   },
+  // ── 16 Mar: Pre-N & Nursery → EVS/Oral | KG+ → Break ──
   {
     date: "16 Mar",
     day: "Mon",
     preNursery: "EVS / Oral",
     nursery: "EVS / Oral",
+    lkg: "Break",
+    ukg: "Break",
+    class1: "Break",
+    class2: "Break",
+    class3: "Break",
+    class4: "Break",
+    class5: "Break",
+    type: "exam",
+  },
+  // ── 17 Mar: Pre-N & Nursery → Break | KG+ → EVS/Science ──
+  {
+    date: "17 Mar",
+    day: "Tue",
+    preNursery: "Break",
+    nursery: "Break",
     lkg: "EVS / Oral",
     ukg: "EVS / Oral",
     class1: "EVS / Oral",
@@ -184,11 +207,12 @@ const EXAM_SCHEDULE: ExamRow[] = [
     class5: "Science",
     type: "exam",
   },
+  // ── 18 Mar: Pre-N & Nursery → Computer+Drawing | KG+ → Break ──
   {
-    date: "17 Mar",
-    day: "Tue",
-    preNursery: "Break",
-    nursery: "Break",
+    date: "18 Mar",
+    day: "Wed",
+    preNursery: "Computer + Drawing",
+    nursery: "Computer + Drawing",
     lkg: "Break",
     ukg: "Break",
     class1: "Break",
@@ -196,13 +220,14 @@ const EXAM_SCHEDULE: ExamRow[] = [
     class3: "Break",
     class4: "Break",
     class5: "Break",
-    type: "break",
+    type: "combined",
   },
+  // ── 19 Mar: Pre-N & Nursery → Break | KG+ → Computer+Drawing / SST ──
   {
-    date: "18 Mar",
-    day: "Wed",
-    preNursery: "Computer + Drawing",
-    nursery: "Computer + Drawing",
+    date: "19 Mar",
+    day: "Thu",
+    preNursery: "Break",
+    nursery: "Break",
     lkg: "Computer + Drawing",
     ukg: "Computer + Drawing",
     class1: "Computer + Drawing",
@@ -212,48 +237,37 @@ const EXAM_SCHEDULE: ExamRow[] = [
     class5: "SST",
     type: "combined",
   },
-  {
-    date: "19 Mar",
-    day: "Thu",
-    preNursery: "—",
-    nursery: "—",
-    lkg: "—",
-    ukg: "—",
-    class1: "Break",
-    class2: "Break",
-    class3: "Break",
-    class4: "Break",
-    class5: "Break",
-    type: "break",
-  },
+  // ── 20 Mar: Pre-N & Nursery → GK | KG+ → Break ──
   {
     date: "20 Mar",
     day: "Fri",
     preNursery: "GK",
     nursery: "GK",
-    lkg: "GK",
-    ukg: "GK",
-    class1: "GK",
-    class2: "Computer",
-    class3: "Computer",
-    class4: "Computer",
-    class5: "Computer",
-    type: "exam",
-  },
-  {
-    date: "21 Mar",
-    day: "Sat",
-    preNursery: "—",
-    nursery: "—",
-    lkg: "—",
-    ukg: "—",
-    class1: "—",
+    lkg: "Break",
+    ukg: "Break",
+    class1: "Break",
     class2: "Break",
     class3: "Break",
     class4: "Break",
     class5: "Break",
-    type: "break",
+    type: "exam",
   },
+  // ── 21 Mar: Id-ul-Fitr Holiday ──
+  {
+    date: "21 Mar",
+    day: "Sat",
+    preNursery: "Holiday",
+    nursery: "Holiday",
+    lkg: "Holiday",
+    ukg: "Holiday",
+    class1: "Holiday",
+    class2: "Holiday",
+    class3: "Holiday",
+    class4: "Holiday",
+    class5: "Holiday",
+    type: "holiday",
+  },
+  // ── 22 Mar: Sunday Holiday ──
   {
     date: "22 Mar",
     day: "Sun",
@@ -268,20 +282,22 @@ const EXAM_SCHEDULE: ExamRow[] = [
     class5: "Holiday",
     type: "holiday",
   },
+  // ── 23 Mar: LKG–Class1 → GK | Class2–5 → Computer ──
   {
     date: "23 Mar",
     day: "Mon",
     preNursery: "—",
     nursery: "—",
-    lkg: "—",
-    ukg: "—",
-    class1: "—",
-    class2: "Drawing",
-    class3: "Drawing",
-    class4: "Drawing",
-    class5: "Drawing",
+    lkg: "GK",
+    ukg: "GK",
+    class1: "GK",
+    class2: "Computer",
+    class3: "Computer",
+    class4: "Computer",
+    class5: "Computer",
     type: "exam",
   },
+  // ── 24 Mar: Break for Class2–5 ──
   {
     date: "24 Mar",
     day: "Tue",
@@ -296,9 +312,40 @@ const EXAM_SCHEDULE: ExamRow[] = [
     class5: "Break",
     type: "break",
   },
+  // ── 25 Mar: Class2–5 → Drawing ──
   {
     date: "25 Mar",
     day: "Wed",
+    preNursery: "—",
+    nursery: "—",
+    lkg: "—",
+    ukg: "—",
+    class1: "—",
+    class2: "Drawing",
+    class3: "Drawing",
+    class4: "Drawing",
+    class5: "Drawing",
+    type: "exam",
+  },
+  // ── 26 Mar: Ram Navami Holiday ──
+  {
+    date: "26 Mar",
+    day: "Thu",
+    preNursery: "Holiday",
+    nursery: "Holiday",
+    lkg: "Holiday",
+    ukg: "Holiday",
+    class1: "Holiday",
+    class2: "Holiday",
+    class3: "Holiday",
+    class4: "Holiday",
+    class5: "Holiday",
+    type: "holiday",
+  },
+  // ── 27 Mar: Class2–5 → GK ──
+  {
+    date: "27 Mar",
+    day: "Fri",
     preNursery: "—",
     nursery: "—",
     lkg: "—",
@@ -310,23 +357,10 @@ const EXAM_SCHEDULE: ExamRow[] = [
     class5: "GK",
     type: "exam",
   },
+  // ── 28 Mar: Class2–5 → Oral ──
   {
-    date: "26 Mar",
-    day: "Thu",
-    preNursery: "—",
-    nursery: "—",
-    lkg: "—",
-    ukg: "—",
-    class1: "—",
-    class2: "Break",
-    class3: "Break",
-    class4: "Break",
-    class5: "Break",
-    type: "break",
-  },
-  {
-    date: "27 Mar",
-    day: "Fri",
+    date: "28 Mar",
+    day: "Sat",
     preNursery: "—",
     nursery: "—",
     lkg: "—",
@@ -338,9 +372,25 @@ const EXAM_SCHEDULE: ExamRow[] = [
     class5: "Oral",
     type: "exam",
   },
+  // ── 29 Mar: Sunday Holiday ──
   {
-    date: "31 Mar",
-    day: "Tue",
+    date: "29 Mar",
+    day: "Sun",
+    preNursery: "Holiday",
+    nursery: "Holiday",
+    lkg: "Holiday",
+    ukg: "Holiday",
+    class1: "Holiday",
+    class2: "Holiday",
+    class3: "Holiday",
+    class4: "Holiday",
+    class5: "Holiday",
+    type: "holiday",
+  },
+  // ── 30 Mar: Result Day ──
+  {
+    date: "30 Mar",
+    day: "Mon",
     preNursery: "Result Day",
     nursery: "Result Day",
     lkg: "Result Day",
@@ -496,7 +546,7 @@ export default function FinalDateSheet() {
                   Final Year Examination 2025-26
                 </h1>
                 <p className="text-xs sm:text-sm text-gray-500">
-                  9th March – 27th March 2026 • Result: 31st March 2026
+                  9th March – 28th March 2026 • Result: 30th March 2026
                 </p>
               </div>
             </div>
@@ -729,12 +779,21 @@ export default function FinalDateSheet() {
               </h3>
               <ul className="text-sm text-gray-700 space-y-1 list-disc list-inside">
                 <li>
-                  Pre Nursery to Class I: Exams finish by{" "}
+                  <strong>Alternate-day schedule:</strong> Pre Nursery &amp;
+                  Nursery exams on <strong>9, 11, 13, 16, 18, 20 Mar</strong>;
+                  LKG to Class V on <strong>10, 12, 14, 17, 19, 21 Mar</strong>
+                </li>
+                <li>
+                  Pre Nursery &amp; Nursery: Exams finish by{" "}
                   <strong>20th March</strong>
                 </li>
                 <li>
+                  LKG to Class I: Exams finish by{" "}
+                  <strong>21st March</strong>
+                </li>
+                <li>
                   Class II to Class V: Exams finish by{" "}
-                  <strong>27th March</strong>
+                  <strong>28th March</strong>
                 </li>
                 <li>
                   <strong>Computer + Drawing</strong> are combined on the same
@@ -742,11 +801,12 @@ export default function FinalDateSheet() {
                 </li>
                 <li>Sundays are holidays — no exams scheduled</li>
                 <li>
-                  A preparation break is given between successive exam days
+                  Each group gets a preparation break while the other group has
+                  their exam
                 </li>
                 <li>
                   Results will be declared on{" "}
-                  <strong>31st March 2026 (Tuesday)</strong>
+                  <strong>30th March 2026 (Monday)</strong>
                 </li>
               </ul>
             </CardContent>
