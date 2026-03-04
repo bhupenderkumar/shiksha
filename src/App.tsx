@@ -70,6 +70,7 @@ const SportsEnrollmentList = lazy(() => import('./pages/SportsEnrollmentList'));
 const SportsEnrollmentGrouped = lazy(() => import('./pages/SportsEnrollmentGrouped'));
 const SchoolFeedback = lazy(() => import('./pages/SchoolFeedback'));
 const AdminSchoolFeedback = lazy(() => import('./pages/AdminSchoolFeedback'));
+const AdmissionQueries = lazy(() => import('./pages/AdmissionQueries'));
 
 // Private route component
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -254,6 +255,13 @@ function AppRoutes() {
           <PrivateRoute>
             <Layout>
               <ViewAdmissionEnquiries />
+            </Layout>
+          </PrivateRoute>
+        } />
+        <Route path='/admission-queries' element={
+          <PrivateRoute>
+            <Layout>
+              <AdmissionQueries />
             </Layout>
           </PrivateRoute>
         } />

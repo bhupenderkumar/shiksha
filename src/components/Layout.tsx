@@ -71,6 +71,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
     // Admission Section
     { id: 29, icon: ClipboardList, label: 'New Admission Query', path: ROUTES.ADMISSION_ENQUIRY, role: 'teacher' },
+    { id: 31, icon: ClipboardList, label: 'All Admission Queries', path: ROUTES.ADMISSION_QUERIES, role: 'teacher' },
     { id: 30, icon: GraduationCap, label: 'Admission Test', path: ROUTES.ADMISSION_TEST, role: 'teacher' },
     { id: 24, icon: ClipboardList, label: 'Admission Enquiries', path: ROUTES.ADMISSION_ENQUIRIES, role: 'admin' },
 

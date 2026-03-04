@@ -21,6 +21,7 @@ import Layout from '@/components/Layout';
 import PublicLayout from '@/components/PublicLayout';
 import { format } from 'date-fns';
 import { ADMISSION_STATUS } from '@/lib/constants';
+import type { ClassLevel } from '@/components/admission-tests/types';
 import type {
   ProspectiveStudent,
   AdmissionProcess,
@@ -28,6 +29,25 @@ import type {
   RequiredDocument,
   ProspectiveStudentData
 } from '@/types/admission';
+
+/**
+ * Maps a grade name (from the class/grade selector) to the admission test ClassLevel.
+ * Grades that don't have a matching test default to 'class-1'.
+ */
+function gradeToTestLevel(grade: string): ClassLevel {
+  const normalized = grade.toLowerCase().trim();
+  if (normalized.includes('pre-nursery') || normalized.includes('pre nursery') || normalized.includes('prenursery') || normalized.includes('playgroup') || normalized.includes('play group')) {
+    return 'pre-nursery';
+  }
+  if (normalized === 'nursery') {
+    return 'nursery';
+  }
+  if (normalized === 'lkg' || normalized === 'ukg' || normalized === 'kg' || normalized.includes('kindergarten')) {
+    return 'kg';
+  }
+  // For Grade 1 and above, use the class-1 math test
+  return 'class-1';
+}
 
 interface DocumentUploadProps {
   documentType: RequiredDocument;

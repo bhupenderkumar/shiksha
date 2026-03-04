@@ -22,6 +22,7 @@ import Attendance from './pages/Attendance';
 import Fees from './pages/Fees';
 import Settings from './pages/Settings';
 import ViewAdmissionEnquiries from './pages/ViewAdmissionEnquiries';
+import AdmissionQueries from './pages/AdmissionQueries';
 import IDCardForm from './pages/IDCardForm';
 import IDCardDetails from './pages/IDCardDetails';
 import IDCardView from './pages/IDCardView';
@@ -237,6 +238,22 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    path: '/admission-queries',
+    element: (
+      <ProtectedRoute>
+        <Layout><AdmissionQueries /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admission-queries',
+    element: (
+      <ProtectedRoute>
+        <Layout><AdmissionQueries /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
     path: '/interactive-assignments',
     element: (
       <ProtectedRoute>
@@ -316,6 +333,11 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
+  // Admission Test - handles its own layout
+  {
+    path: '/admission-test',
+    element: <AdmissionTest />,
+  },
   // Public routes with PublicLayout
   {
     path: '/',
@@ -340,10 +362,6 @@ export const router = createBrowserRouter([
       {
         path: 'admission-enquiry',
         element: <AdmissionEnquiry />,
-      },
-      {
-        path: 'admission-test',
-        element: <AdmissionTest />,
       },
       {
         path: 'admission-progress/:id',
