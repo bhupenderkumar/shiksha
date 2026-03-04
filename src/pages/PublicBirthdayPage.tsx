@@ -1,6 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { format } from 'date-fns';
 import {
   Cake,
   Gift,
@@ -18,6 +17,8 @@ import {
   GraduationCap,
   Users,
   X,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -129,6 +130,127 @@ const SparkleStars: React.FC = () => {
   );
 };
 
+// Speak the full birthday message in Hindi using Speech Synthesis API
+const speakBirthdayWish = (name: string): Promise<void> => {
+  return new Promise((resolve) => {
+    try {
+      if (!('speechSynthesis' in window)) {
+        resolve();
+        return;
+      }
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+      
+      const firstName = name.split(' ')[0];
+      const hindiMessage = 
+        `प्यारे ${firstName}, ` +
+        `इस खूबसूरत दिन पर, पूरा First Step School परिवार आपको जन्मदिन की बहुत बहुत शुभकामनाएं देता है! ` +
+        `यह खास दिन आपके लिए अनंत खुशियां, हंसी और अद्भुत आश्चर्य लेकर आए। ` +
+        `जैसे-जैसे आप जीवन का एक और साल मनाते हैं, हम उम्मीद करते हैं कि आप चमकते रहें, बड़े सपने देखें और अपने सभी लक्ष्य हासिल करें! ` +
+        `आपके शिक्षक और सहपाठी आप पर बहुत गर्व करते हैं और आपके साथ यह पल मनाकर बहुत खुश हैं। ` +
+        `आने वाला साल सीखने, बढ़ने और सुंदर यादों से भरा हो! ` +
+        `जन्मदिन मुबारक हो ${firstName}!`;
+
+      const utterance = new SpeechSynthesisUtterance(hindiMessage);
+      utterance.rate = 0.95;
+      utterance.pitch = 1.0;
+      utterance.volume = 1;
+      
+      // Try to pick a Hindi voice
+      const voices = window.speechSynthesis.getVoices();
+      const hindiVoice = voices.find(v => v.lang.startsWith('hi'))
+        || voices.find(v => v.lang.includes('hi-IN'));
+      if (hindiVoice) {
+        utterance.voice = hindiVoice;
+        utterance.lang = 'hi-IN';
+      } else {
+        // Fallback: set language to Hindi even without a specific voice
+        utterance.lang = 'hi-IN';
+      }
+      
+      utterance.onend = () => resolve();
+      utterance.onerror = () => resolve();
+      
+      window.speechSynthesis.speak(utterance);
+      
+      // Safety timeout — full message is longer, give it ~25s
+      setTimeout(resolve, 25000);
+    } catch (e) {
+      console.warn('Speech synthesis failed:', e);
+      resolve();
+    }
+  });
+};
+
+// Happy Birthday melody using Web Audio API
+// Returns a stop function to cancel playback
+const playHappyBirthdayMelody = (): (() => void) => {
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return () => {};
+    const ctx = new AudioCtx();
+    
+    // Notes for "Happy Birthday to You" (freq in Hz, duration in beats)
+    const notes: [number, number][] = [
+      [261.63, 0.75], [261.63, 0.25], [293.66, 1], [261.63, 1], [349.23, 1], [329.63, 2],
+      [261.63, 0.75], [261.63, 0.25], [293.66, 1], [261.63, 1], [392.00, 1], [349.23, 2],
+      [261.63, 0.75], [261.63, 0.25], [523.25, 1], [440.00, 1], [349.23, 1], [329.63, 1], [293.66, 2],
+      [466.16, 0.75], [466.16, 0.25], [440.00, 1], [349.23, 1], [392.00, 1], [349.23, 2],
+    ];
+    const tempo = 0.35;
+    let time = ctx.currentTime + 0.1;
+    const oscillators: OscillatorNode[] = [];
+    
+    notes.forEach(([freq, dur]) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.22, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + dur * tempo - 0.02);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(time);
+      osc.stop(time + dur * tempo);
+      oscillators.push(osc);
+      time += dur * tempo;
+    });
+    
+    const closeTimer = setTimeout(() => ctx.close(), time * 1000 + 500);
+    
+    return () => {
+      clearTimeout(closeTimer);
+      oscillators.forEach(osc => { try { osc.stop(); } catch (_) {} });
+      try { ctx.close(); } catch (_) {}
+    };
+  } catch (e) {
+    console.warn('Could not play birthday melody:', e);
+    return () => {};
+  }
+};
+
+// Combined: speak name then play melody. Returns a stop function.
+const playBirthdayWithSpeech = (name: string, onDone?: () => void): (() => void) => {
+  let cancelled = false;
+  let stopMelody: (() => void) | null = null;
+
+  speakBirthdayWish(name).then(() => {
+    if (cancelled) return;
+    stopMelody = playHappyBirthdayMelody();
+    // Melody lasts ~8.4s after speech finishes
+    setTimeout(() => {
+      if (!cancelled && onDone) onDone();
+    }, 9000);
+  });
+
+  return () => {
+    cancelled = true;
+    try { window.speechSynthesis.cancel(); } catch (_) {}
+    if (stopMelody) stopMelody();
+    if (onDone) onDone();
+  };
+};
+
 const PublicBirthdayPage: React.FC = () => {
   const { studentId } = useParams<{ studentId: string }>();
   const [student, setStudent] = useState<BirthdayStudent | null>(null);
@@ -140,6 +262,9 @@ const PublicBirthdayPage: React.FC = () => {
   const [wishMessage, setWishMessage] = useState('');
   const [submittingWish, setSubmittingWish] = useState(false);
   const [showWishForm, setShowWishForm] = useState(false);
+  const [musicPlaying, setMusicPlaying] = useState(false);
+  const stopMelodyRef = useRef<(() => void) | null>(null);
+  const melodyPlayed = useRef(false);
 
   useEffect(() => {
     const fetchStudent = async () => {
@@ -179,6 +304,55 @@ const PublicBirthdayPage: React.FC = () => {
       document.title = `Happy Birthday ${student.studentName}! | ${SCHOOL_INFO.name}`;
     }
   }, [student]);
+
+  // Play melody on first user interaction (browsers block autoplay)
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      if (!melodyPlayed.current && student) {
+        melodyPlayed.current = true;
+        setMusicPlaying(true);
+        stopMelodyRef.current = playBirthdayWithSpeech(
+          student.studentName,
+          () => setMusicPlaying(false)
+        );
+      }
+      document.removeEventListener('click', handleFirstInteraction);
+      document.removeEventListener('touchstart', handleFirstInteraction);
+    };
+    
+    // Preload voices (some browsers load them async)
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.getVoices();
+    }
+    
+    if (student) {
+      document.addEventListener('click', handleFirstInteraction, { once: true });
+      document.addEventListener('touchstart', handleFirstInteraction, { once: true });
+    }
+    
+    return () => {
+      document.removeEventListener('click', handleFirstInteraction);
+      document.removeEventListener('touchstart', handleFirstInteraction);
+    };
+  }, [student]);
+
+  const toggleMusic = useCallback(() => {
+    if (musicPlaying) {
+      // Stop current melody
+      if (stopMelodyRef.current) {
+        stopMelodyRef.current();
+        stopMelodyRef.current = null;
+      }
+      setMusicPlaying(false);
+    } else if (student) {
+      // Play speech + melody
+      setMusicPlaying(true);
+      stopMelodyRef.current = playBirthdayWithSpeech(
+        student.studentName,
+        () => setMusicPlaying(false)
+      );
+    }
+  }, [musicPlaying, student]);
 
   const getInitials = (name: string) => {
     return name
@@ -313,12 +487,27 @@ const PublicBirthdayPage: React.FC = () => {
 
         {/* Main content */}
         <div className="relative z-10 max-w-2xl mx-auto px-4 py-8">
+          {/* Music toggle button */}
+          <button
+            onClick={toggleMusic}
+            className="fixed top-4 right-4 z-50 bg-white/20 backdrop-blur-sm rounded-full p-3 text-white hover:bg-white/30 transition-all shadow-lg"
+            title={musicPlaying ? 'Mute music' : 'Play birthday music'}
+          >
+            {musicPlaying ? (
+              <Volume2 className="w-5 h-5 animate-pulse" />
+            ) : (
+              <VolumeX className="w-5 h-5" />
+            )}
+          </button>
+
           {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 mb-6">
-              <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
-                <GraduationCap className="w-4 h-4 text-purple-600" />
-              </div>
+              <img
+                src={SCHOOL_INFO.logo}
+                alt={SCHOOL_INFO.name}
+                className="w-10 h-10 rounded-full object-cover bg-white"
+              />
               <span className="text-white text-sm font-medium">{SCHOOL_INFO.name}</span>
             </div>
 
@@ -365,14 +554,6 @@ const PublicBirthdayPage: React.FC = () => {
                 </AvatarFallback>
               </Avatar>
 
-              {/* Age badge */}
-              <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 z-20">
-                <Badge className="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold px-4 py-2 text-lg shadow-lg animate-bounce">
-                  <Cake className="w-5 h-5 mr-2" />
-                  {student.age} Years Old!
-                </Badge>
-              </div>
-
               {/* Click hint */}
               <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 rounded-full transition-colors z-10">
                 <span className="text-white/0 group-hover:text-white/90 text-sm font-medium transition-colors">
@@ -392,9 +573,7 @@ const PublicBirthdayPage: React.FC = () => {
                 Class {student.className} {student.classSection}
               </Badge>
             </div>
-            <p className="text-white/70 mt-2">
-              Born on {format(new Date(student.dateOfBirth), 'MMMM d, yyyy')}
-            </p>
+
           </div>
 
           {/* Parent photos */}
@@ -458,9 +637,11 @@ const PublicBirthdayPage: React.FC = () => {
           <Card className="bg-white/15 backdrop-blur-md border-white/20 mb-8">
             <CardContent className="pt-6">
               <div className="flex items-start gap-3">
-                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-                  <GraduationCap className="w-6 h-6 text-white" />
-                </div>
+                <img
+                  src={SCHOOL_INFO.logo}
+                  alt={SCHOOL_INFO.name}
+                  className="w-12 h-12 rounded-full object-cover bg-white flex-shrink-0"
+                />
                 <div>
                   <h3 className="text-white font-semibold mb-2 flex items-center gap-2">
                     <Heart className="w-4 h-4 text-red-300" fill="currentColor" />
@@ -470,7 +651,7 @@ const PublicBirthdayPage: React.FC = () => {
                     Dear {student.studentName.split(' ')[0]}, 🌟
                     <br /><br />
                     On this beautiful day, the entire {SCHOOL_INFO.name} family wishes you a 
-                    very Happy {student.age}th Birthday! 🎂
+                    very Happy Birthday! 🎂
                     <br /><br />
                     May this special day bring you endless joy, laughter, and wonderful surprises. 
                     As you celebrate another year of life, we hope you continue to shine bright, 
@@ -569,7 +750,11 @@ const PublicBirthdayPage: React.FC = () => {
           {/* Footer */}
           <footer className="text-center py-8 border-t border-white/20">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <GraduationCap className="w-5 h-5 text-white/70" />
+              <img
+                src={SCHOOL_INFO.logo}
+                alt={SCHOOL_INFO.name}
+                className="w-6 h-6 rounded-full object-cover bg-white"
+              />
               <span className="text-white/80 font-medium">{SCHOOL_INFO.name}</span>
             </div>
             <p className="text-white/60 text-sm">{SCHOOL_INFO.address}</p>

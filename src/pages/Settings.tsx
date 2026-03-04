@@ -1505,7 +1505,7 @@ export default function SettingsPage() {
 
                     <Switch
 
-                      checked={theme === 'dark'}
+                      checked={themeSettings.theme === 'dark'}
 
                       onCheckedChange={(checked) => handleSettingChange('theme', checked ? 'dark' : 'light')}
 
