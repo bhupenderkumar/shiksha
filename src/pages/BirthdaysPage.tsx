@@ -126,7 +126,7 @@ const BirthdaysPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-950/20 dark:to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50">
       {/* Header */}
       <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white py-8 px-4">
         <div className="max-w-6xl mx-auto">
@@ -144,58 +144,58 @@ const BirthdaysPage: React.FC = () => {
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-          <Card className="bg-gradient-to-br from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30 border-0">
+          <Card className="bg-gradient-to-br from-yellow-100 to-orange-100 border-0">
             <CardContent className="pt-6 text-center">
-              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-yellow-200 dark:bg-yellow-800 flex items-center justify-center">
-                <Cake className="w-6 h-6 text-yellow-600 dark:text-yellow-300" />
+              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-yellow-200 flex items-center justify-center">
+                <Cake className="w-6 h-6 text-yellow-600" />
               </div>
-              <p className="text-3xl font-bold text-yellow-700 dark:text-yellow-300">
+              <p className="text-3xl font-bold text-yellow-700">
                 {todaysBirthdays.length}
               </p>
-              <p className="text-sm text-yellow-600/80 dark:text-yellow-400/80">Today</p>
+              <p className="text-sm text-yellow-600/80">Today</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 border-0">
+          <Card className="bg-gradient-to-br from-purple-100 to-pink-100 border-0">
             <CardContent className="pt-6 text-center">
-              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-purple-200 dark:bg-purple-800 flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-purple-600 dark:text-purple-300" />
+              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-purple-200 flex items-center justify-center">
+                <Calendar className="w-6 h-6 text-purple-600" />
               </div>
-              <p className="text-3xl font-bold text-purple-700 dark:text-purple-300">
+              <p className="text-3xl font-bold text-purple-700">
                 {upcomingBirthdays.length}
               </p>
-              <p className="text-sm text-purple-600/80 dark:text-purple-400/80">This Month</p>
+              <p className="text-sm text-purple-600/80">This Month</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900/30 dark:to-cyan-900/30 border-0">
+          <Card className="bg-gradient-to-br from-blue-100 to-cyan-100 border-0">
             <CardContent className="pt-6 text-center">
-              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center">
-                <Users className="w-6 h-6 text-blue-600 dark:text-blue-300" />
+              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-blue-200 flex items-center justify-center">
+                <Users className="w-6 h-6 text-blue-600" />
               </div>
-              <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">
+              <p className="text-3xl font-bold text-blue-700">
                 {allStudents.length}
               </p>
-              <p className="text-sm text-blue-600/80 dark:text-blue-400/80">Total Students</p>
+              <p className="text-sm text-blue-600/80">Total Students</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-100 to-teal-100 dark:from-green-900/30 dark:to-teal-900/30 border-0">
+          <Card className="bg-gradient-to-br from-green-100 to-teal-100 border-0">
             <CardContent className="pt-6 text-center">
-              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-green-200 dark:bg-green-800 flex items-center justify-center">
-                <Gift className="w-6 h-6 text-green-600 dark:text-green-300" />
+              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-green-200 flex items-center justify-center">
+                <Gift className="w-6 h-6 text-green-600" />
               </div>
-              <p className="text-3xl font-bold text-green-700 dark:text-green-300">
+              <p className="text-3xl font-bold text-green-700">
                 {MONTHS[new Date().getMonth()]}
               </p>
-              <p className="text-sm text-green-600/80 dark:text-green-400/80">Current Month</p>
+              <p className="text-sm text-green-600/80">Current Month</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 bg-white dark:bg-gray-800 shadow-sm">
+          <TabsList className="grid w-full grid-cols-3 bg-white shadow-sm">
             <TabsTrigger
               value="today"
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-purple-500 data-[state=active]:text-white"
@@ -235,13 +235,13 @@ const BirthdaysPage: React.FC = () => {
             ) : (
               <Card className="text-center py-12">
                 <CardContent>
-                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
                     <Cake className="w-10 h-10 text-gray-400" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">
                     No Birthdays Today
                   </h3>
-                  <p className="text-gray-500 dark:text-gray-400">
+                  <p className="text-gray-500">
                     Check out upcoming birthdays to see who's celebrating soon!
                   </p>
                 </CardContent>
@@ -265,13 +265,13 @@ const BirthdaysPage: React.FC = () => {
             ) : (
               <Card className="text-center py-12">
                 <CardContent>
-                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
                     <Calendar className="w-10 h-10 text-gray-400" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">
                     No Upcoming Birthdays
                   </h3>
-                  <p className="text-gray-500 dark:text-gray-400">
+                  <p className="text-gray-500">
                     No birthdays in the next 30 days.
                   </p>
                 </CardContent>
@@ -330,13 +330,13 @@ const BirthdaysPage: React.FC = () => {
             ) : (
               <Card className="text-center py-12">
                 <CardContent>
-                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
                     <Search className="w-10 h-10 text-gray-400" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">
                     No Results Found
                   </h3>
-                  <p className="text-gray-500 dark:text-gray-400">
+                  <p className="text-gray-500">
                     No birthdays found for {MONTHS[selectedMonth]}
                     {searchQuery && ` matching "${searchQuery}"`}.
                   </p>
@@ -377,8 +377,8 @@ const BirthdayStudentCard: React.FC<BirthdayStudentCardProps> = ({
       className={cn(
         'group overflow-hidden transition-all duration-300 hover:shadow-xl',
         isToday
-          ? 'bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-yellow-200 dark:border-yellow-800'
-          : 'hover:border-purple-200 dark:hover:border-purple-800'
+          ? 'bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200'
+          : 'hover:border-purple-200'
       )}
     >
       {isToday && (
@@ -393,7 +393,7 @@ const BirthdayStudentCard: React.FC<BirthdayStudentCardProps> = ({
                   'w-16 h-16 ring-2 transition-all duration-300 group-hover:scale-110',
                   isToday
                     ? 'ring-yellow-400 shadow-lg shadow-yellow-200'
-                    : 'ring-purple-200 dark:ring-purple-800'
+                    : 'ring-purple-200'
                 )}
               >
                 <AvatarImage src={student.studentPhotoUrl || undefined} />
@@ -422,23 +422,23 @@ const BirthdayStudentCard: React.FC<BirthdayStudentCardProps> = ({
                 className={cn(
                   'font-semibold truncate hover:underline',
                   isToday
-                    ? 'text-orange-700 dark:text-orange-300'
-                    : 'text-gray-800 dark:text-gray-200'
+                    ? 'text-orange-700'
+                    : 'text-gray-800'
                 )}
               >
                 {student.studentName}
               </h3>
             </Link>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-gray-500">
               Class {student.className} {student.classSection}
             </p>
             {showDate && (
-              <p className="text-sm text-purple-600 dark:text-purple-400 mt-1">
+              <p className="text-sm text-purple-600 mt-1">
                 {format(new Date(student.dateOfBirth), 'MMMM d')}
               </p>
             )}
             {!isToday && !showDate && (
-              <p className="text-sm text-purple-500 dark:text-purple-400 mt-1">
+              <p className="text-sm text-purple-500 mt-1">
                 {student.daysUntilBirthday === 1
                   ? 'Tomorrow!'
                   : `In ${student.daysUntilBirthday} days`}
@@ -450,7 +450,7 @@ const BirthdayStudentCard: React.FC<BirthdayStudentCardProps> = ({
                 className={cn(
                   'text-xs',
                   isToday
-                    ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'
+                    ? 'bg-yellow-100 text-yellow-700'
                     : ''
                 )}
               >

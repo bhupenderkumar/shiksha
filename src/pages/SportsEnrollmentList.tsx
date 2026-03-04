@@ -279,8 +279,8 @@ export default function SportsEnrollmentList() {
                         className={cn(
                           'text-xs',
                           enrollment.status === 'ENROLLED'
-                            ? 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400'
-                            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-yellow-100 text-yellow-700'
                         )}
                       >
                         {enrollment.status === 'ENROLLED' ? '✅' : '⏳'} {enrollment.status}
@@ -295,7 +295,7 @@ export default function SportsEnrollmentList() {
                         <div className="flex flex-wrap gap-1.5 mb-2">
                           <span className="text-xs text-muted-foreground mr-1">🏅 Events:</span>
                           {enrollment.selectedGames.map((game, i) => (
-                            <Badge key={i} variant="outline" className="text-[10px] px-2 py-0.5 bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/50 dark:text-orange-300 dark:border-orange-800">
+                            <Badge key={i} variant="outline" className="text-[10px] px-2 py-0.5 bg-orange-50 text-orange-700 border-orange-200">
                               🏅 {game}
                             </Badge>
                           ))}

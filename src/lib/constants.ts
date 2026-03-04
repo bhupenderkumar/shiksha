@@ -110,7 +110,9 @@ export const PUBLIC_ROUTES = [
   '/share/homework/:token',
   '/share/classwork/:token',
   '/birthday/:studentId',
-  '/date-sheet'
+  '/date-sheet',
+  '/copy-request',
+  '/school-feedback'
 ] as const;
 
 

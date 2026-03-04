@@ -45,6 +45,11 @@ import FeeChartPrint from './pages/FeeChartPrint';
 import AnnualSportsWeek from './pages/AnnualSportsWeek';
 import SportsEnrollmentList from './pages/SportsEnrollmentList';
 import SportsEnrollmentGrouped from './pages/SportsEnrollmentGrouped';
+import UnitTestMarksEntry from './pages/UnitTestMarksEntry';
+import UnitTestReport from './pages/UnitTestReport';
+import CopyRequest from './pages/CopyRequest';
+import SchoolFeedback from './pages/SchoolFeedback';
+import AdminSchoolFeedback from './pages/AdminSchoolFeedback';
 import Layout from './components/Layout';
 import PublicLayout from './components/PublicLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -64,6 +69,33 @@ export const router = createBrowserRouter([
   {
     path: '/share/classwork/:token',
     element: <PublicClassworkShare />,
+  },
+  // Admin School Feedback - Protected route
+  {
+    path: '/admin-school-feedback',
+    element: (
+      <ProtectedRoute>
+        <Layout><AdminSchoolFeedback /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  // Unit Test Marks Entry - Protected route
+  {
+    path: '/unit-test-marks',
+    element: (
+      <ProtectedRoute>
+        <Layout><UnitTestMarksEntry /></Layout>
+      </ProtectedRoute>
+    ),
+  },
+  // Unit Test Report - Protected route
+  {
+    path: '/unit-test-report',
+    element: (
+      <ProtectedRoute>
+        <Layout><UnitTestReport /></Layout>
+      </ProtectedRoute>
+    ),
   },
   // Birthdays listing page - Protected route with Layout
   {
@@ -363,6 +395,14 @@ export const router = createBrowserRouter([
       {
         path: 'sports-week/enrollments/grouped',
         element: <SportsEnrollmentGrouped />,
+      },
+      {
+        path: 'copy-request',
+        element: <CopyRequest />,
+      },
+      {
+        path: 'school-feedback',
+        element: <SchoolFeedback />,
       },
     ],
   },

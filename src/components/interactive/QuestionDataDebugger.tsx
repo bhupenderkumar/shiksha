@@ -54,7 +54,7 @@ export function QuestionDataDebugger({ question, showDebug = false }: QuestionDa
       {/* Show raw data in collapsed details section */}
       <details className="mt-2">
         <summary className="cursor-pointer text-blue-600">Show Raw Data</summary>
-        <pre className="mt-1 p-2 bg-gray-100 dark:bg-gray-800 rounded-md overflow-x-auto text-xs">
+        <pre className="mt-1 p-2 bg-gray-100 rounded-md overflow-x-auto text-xs">
           {JSON.stringify(question, null, 2)}
         </pre>
       </details>

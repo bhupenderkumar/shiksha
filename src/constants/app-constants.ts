@@ -30,6 +30,11 @@ export const ROUTES = {
   SPORTS_WEEK: '/sports-week',
   SPORTS_ENROLLMENTS: '/sports-week/enrollments',
   SPORTS_ENROLLMENTS_GROUPED: '/sports-week/enrollments/grouped',
+  UNIT_TEST_MARKS: '/unit-test-marks',
+  UNIT_TEST_REPORT: '/unit-test-report',
+  COPY_REQUEST: '/copy-request',
+  SCHOOL_FEEDBACK: '/school-feedback',
+  ADMIN_SCHOOL_FEEDBACK: '/admin-school-feedback',
 } as const;
 
 export const API_ENDPOINTS = {

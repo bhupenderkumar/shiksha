@@ -15,15 +15,13 @@ export function TeacherCharacter({
   delay = 0
 }: TeacherCharacterProps) {
   const { theme } = useTheme();
-  const isDark = theme === "dark";
-
   // Character colors
   const colors = {
-    skin: isDark ? "#e0b088" : "#ffcba4",
-    outfit: isDark ? "#5e81ac" : "#4c6ef5",
-    hair: isDark ? "#d8dee9" : "#adb5bd",
-    glasses: isDark ? "#eceff4" : "#dee2e6",
-    book: isDark ? "#bf616a" : "#fa5252",
+    skin: "#ffcba4",
+    outfit: "#4c6ef5",
+    hair: "#adb5bd",
+    glasses: "#dee2e6",
+    book: "#fa5252",
   };
 
   // Animation variants
@@ -106,13 +104,13 @@ export function TeacherCharacter({
         <line x1="33" y1="19.5" x2="37" y2="19.5" stroke={colors.glasses} strokeWidth="1.5" />
         
         {/* Eyes */}
-        <circle cx="29" cy="19.5" r="1.5" fill={isDark ? "#ffffff" : "#000000"} />
-        <circle cx="41" cy="19.5" r="1.5" fill={isDark ? "#ffffff" : "#000000"} />
+        <circle cx="29" cy="19.5" r="1.5" fill={"#000000"} />
+        <circle cx="41" cy="19.5" r="1.5" fill={"#000000"} />
         
         {/* Smile */}
         <path
           d="M30 25C30 25 32 28 35 28C38 28 40 25 40 25"
-          stroke={isDark ? "#ffffff" : "#000000"}
+          stroke={"#000000"}
           strokeWidth="1.5"
           strokeLinecap="round"
         />
@@ -129,17 +127,17 @@ export function TeacherCharacter({
         
         {/* Book in hand */}
         <rect x="10" y="55" width="15" height="10" rx="2" fill={colors.book} />
-        <line x1="15" y1="57" x2="20" y2="57" stroke={isDark ? "#eceff4" : "#ffffff"} strokeWidth="1" />
-        <line x1="15" y1="60" x2="20" y2="60" stroke={isDark ? "#eceff4" : "#ffffff"} strokeWidth="1" />
-        <line x1="15" y1="63" x2="20" y2="63" stroke={isDark ? "#eceff4" : "#ffffff"} strokeWidth="1" />
+        <line x1="15" y1="57" x2="20" y2="57" stroke={"#ffffff"} strokeWidth="1" />
+        <line x1="15" y1="60" x2="20" y2="60" stroke={"#ffffff"} strokeWidth="1" />
+        <line x1="15" y1="63" x2="20" y2="63" stroke={"#ffffff"} strokeWidth="1" />
         
         {/* Legs */}
-        <rect x="28" y="70" width="6" height="40" fill={isDark ? "#2e3440" : "#343a40"} />
-        <rect x="36" y="70" width="6" height="40" fill={isDark ? "#2e3440" : "#343a40"} />
+        <rect x="28" y="70" width="6" height="40" fill={"#343a40"} />
+        <rect x="36" y="70" width="6" height="40" fill={"#343a40"} />
         
         {/* Shoes */}
-        <rect x="26" y="110" width="10" height="5" rx="2.5" fill={isDark ? "#2e3440" : "#212529"} />
-        <rect x="34" y="110" width="10" height="5" rx="2.5" fill={isDark ? "#2e3440" : "#212529"} />
+        <rect x="26" y="110" width="10" height="5" rx="2.5" fill={"#212529"} />
+        <rect x="34" y="110" width="10" height="5" rx="2.5" fill={"#212529"} />
       </svg>
     </motion.div>
   );

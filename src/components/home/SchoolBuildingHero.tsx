@@ -15,8 +15,6 @@ interface SchoolBuildingHeroProps {
 
 export function SchoolBuildingHero({ className = "" }: SchoolBuildingHeroProps) {
   const { theme } = useTheme();
-  const isDark = theme === "dark";
-
   // Animation variants
   const heroTextAnimation = {
     hidden: { opacity: 0, y: 20 },
@@ -46,9 +44,7 @@ export function SchoolBuildingHero({ className = "" }: SchoolBuildingHeroProps) 
       {/* Sky background with day/night effect */}
       <div 
         className={`absolute inset-0 transition-colors duration-1000 ${
-          isDark 
-            ? "bg-gradient-to-b from-blue-950 via-indigo-950 to-purple-950" 
-            : "bg-gradient-to-b from-blue-200 via-blue-100 to-white"
+          "bg-gradient-to-b from-blue-200 via-blue-100 to-white"
         }`}
       />
       
@@ -58,7 +54,7 @@ export function SchoolBuildingHero({ className = "" }: SchoolBuildingHeroProps) 
         variants={cloudAnimation}
         animate="animate"
       >
-        <div className={`w-40 h-16 rounded-full ${isDark ? "bg-gray-700" : "bg-white"}`}></div>
+        <div className={`w-40 h-16 rounded-full ${"bg-white"}`}></div>
       </motion.div>
       
       <motion.div
@@ -67,7 +63,7 @@ export function SchoolBuildingHero({ className = "" }: SchoolBuildingHeroProps) 
         animate="animate"
         transition={{ delay: 0.5 }}
       >
-        <div className={`w-32 h-12 rounded-full ${isDark ? "bg-gray-800" : "bg-white"}`}></div>
+        <div className={`w-32 h-12 rounded-full ${"bg-white"}`}></div>
       </motion.div>
 
       {/* Sun/Moon */}
@@ -81,9 +77,7 @@ export function SchoolBuildingHero({ className = "" }: SchoolBuildingHeroProps) 
       >
         <div 
           className={`w-20 h-20 rounded-full ${
-            isDark 
-              ? "bg-gray-300 shadow-[0_0_40px_10px_rgba(255,255,255,0.2)]" 
-              : "bg-yellow-300 shadow-[0_0_60px_20px_rgba(255,255,100,0.3)]"
+            "bg-yellow-300 shadow-[0_0_60px_20px_rgba(255,255,100,0.3)]"
           }`}
         />
       </motion.div>

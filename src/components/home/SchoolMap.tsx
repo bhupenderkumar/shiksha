@@ -3,7 +3,6 @@ import { AnimatedText } from "@/components/ui/animated-text";
 import { useEffect, useRef, useCallback } from "react";
 import { SCHOOL_INFO } from "@/constants/schoolInfo";
 import { getSchoolLocation } from "@/services/googleMapsService";
-import { useTheme } from "@/lib/theme-provider";
 import { School, Bus, Palmtree, BookOpen } from "lucide-react";
 
 interface SchoolMapProps {
@@ -23,8 +22,7 @@ interface SimpleLatLng {
 }
 
 export function SchoolMap({ className = "" }: SchoolMapProps) {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
+
   
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
@@ -37,32 +35,32 @@ export function SchoolMap({ className = "" }: SchoolMapProps) {
     {
       featureType: "all",
       elementType: "geometry",
-      stylers: [{ visibility: "simplified" }, { hue: isDark ? "#1f2937" : "#a5d6ff" }]
+      stylers: [{ visibility: "simplified" }, { hue: "#a5d6ff" }]
     },
     {
       featureType: "water",
       elementType: "geometry",
-      stylers: [{ color: isDark ? "#3b4252" : "#a5d6ff" }]
+      stylers: [{ color: "#a5d6ff" }]
     },
     {
       featureType: "poi.park",
       elementType: "geometry.fill",
-      stylers: [{ color: isDark ? "#4c566a" : "#b9f6ca" }]
+      stylers: [{ color: "#b9f6ca" }]
     },
     {
       featureType: "road",
       elementType: "geometry",
-      stylers: [{ color: isDark ? "#d8dee9" : "#ffffff" }]
+      stylers: [{ color: "#ffffff" }]
     },
     {
       featureType: "road",
       elementType: "labels.text.fill",
-      stylers: [{ color: isDark ? "#eceff4" : "#212529" }]
+      stylers: [{ color: "#212529" }]
     },
     {
       featureType: "building",
       elementType: "geometry",
-      stylers: [{ color: isDark ? "#4c566a" : "#ced4da" }]
+      stylers: [{ color: "#ced4da" }]
     },
     {
       featureType: "poi",
@@ -78,7 +76,7 @@ export function SchoolMap({ className = "" }: SchoolMapProps) {
 
   // Create SVG icons for markers
   const createSchoolIcon = () => {
-    const color = isDark ? "#5e81ac" : "#4c6ef5";
+    const color = "#4c6ef5";
     const svg = `
       <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="m4 6 8-4 8 4"></path>
@@ -93,7 +91,7 @@ export function SchoolMap({ className = "" }: SchoolMapProps) {
   };
 
   const createBusIcon = () => {
-    const color = isDark ? "#bf616a" : "#fa5252";
+    const color = "#fa5252";
     const svg = `
       <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M8 6v6"></path>
@@ -109,7 +107,7 @@ export function SchoolMap({ className = "" }: SchoolMapProps) {
   };
 
   const createParkIcon = () => {
-    const color = isDark ? "#a3be8c" : "#51cf66";
+    const color = "#51cf66";
     const svg = `
       <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M13 8c0-2.76-2.46-5-5.5-5S2 5.24 2 8h2l1-1 1 1h4"></path>
@@ -122,7 +120,7 @@ export function SchoolMap({ className = "" }: SchoolMapProps) {
   };
 
   const createLibraryIcon = () => {
-    const color = isDark ? "#88c0d0" : "#4dabf7";
+    const color = "#4dabf7";
     const svg = `
       <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M2 16V4a2 2 0 0 1 2-2h11"></path>
@@ -186,7 +184,7 @@ export function SchoolMap({ className = "" }: SchoolMapProps) {
     // Add some cartoon landmarks around the school
     addCartoonLandmarks(map, schoolLocation);
 
-  }, [isDark]);
+  }, []);
 
   const animateSchoolBus = (map: google.maps.Map, schoolLocation: SimpleLatLng) => {
     // Create a path for the bus to follow
@@ -317,10 +315,10 @@ export function SchoolMap({ className = "" }: SchoolMapProps) {
     if (mapInstanceRef.current) {
       mapInstanceRef.current.setOptions({ styles: cartoonMapStyles });
     }
-  }, [isDark, cartoonMapStyles]);
+  }, [cartoonMapStyles]);
 
   return (
-    <section className={`py-24 ${isDark ? "bg-primary/10" : "bg-primary/5"} ${className}`}>
+    <section className={`py-24 ${"bg-primary/5"} ${className}`}>
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <AnimatedText

@@ -183,7 +183,7 @@ export default function FeeStructurePage() {
                       <TableRow
                         key={row.className}
                         className={cn(
-                          row.seatStatus === 'full' && 'bg-red-50/50 dark:bg-red-950/10',
+                          row.seatStatus === 'full' && 'bg-red-50/50',
                           'hover:bg-muted/30'
                         )}
                       >
@@ -236,7 +236,7 @@ export default function FeeStructurePage() {
                       <TableRow
                         key={row.className}
                         className={cn(
-                          row.seatStatus === 'full' && 'bg-red-50/50 dark:bg-red-950/10'
+                          row.seatStatus === 'full' && 'bg-red-50/50'
                         )}
                       >
                         <TableCell className="font-semibold">{row.className}</TableCell>
@@ -383,7 +383,7 @@ export default function FeeStructurePage() {
         </div>
 
         {/* Disclaimer */}
-        <div className="mt-6 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/30 p-4 text-sm text-amber-800 dark:text-amber-200">
+        <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
           <strong>Note:</strong> The fee structure is subject to revision. Please contact the school
           office for the latest information. All fees are non-refundable unless stated otherwise.
         </div>

@@ -1,7 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Moon, Sun, Share2, GraduationCap, BookOpen, Pencil } from 'lucide-react';
-import { useTheme } from '@/hooks/useTheme';
+import { Share2, GraduationCap, BookOpen, Pencil } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 export type ContentColorScheme = 'homework' | 'classwork';
@@ -17,46 +16,25 @@ interface PublicShareLayoutProps {
 
 const colorSchemes = {
   homework: {
-    // Gradient backgrounds
-    headerGradientDark: 'from-violet-600 via-purple-600 to-indigo-700',
-    headerGradientLight: 'from-violet-500 via-purple-500 to-indigo-600',
-    // Icon colors
-    iconBgDark: 'bg-white/20',
-    iconBgLight: 'bg-white/30',
-    // Decorative orbs
+    headerGradient: 'from-violet-500 via-purple-500 to-indigo-600',
+    iconBg: 'bg-white/20',
     orbColors: ['violet', 'purple', 'indigo'] as const,
-    // Text accents
-    accentDark: 'text-purple-400',
-    accentLight: 'text-purple-600',
-    // Background
-    bgDark: 'bg-slate-900',
-    bgLight: 'bg-gray-50',
-    // Footer gradient
-    footerFromDark: 'from-violet-500/10',
-    footerToDark: 'to-purple-500/10',
-    footerBorderDark: 'border-violet-500/20',
-    footerFromLight: 'from-violet-100',
-    footerToLight: 'to-purple-100',
-    footerBorderLight: 'border-violet-200',
-    // Icon
+    accent: 'text-purple-600',
+    bg: 'bg-gray-50',
+    footerFrom: 'from-violet-100',
+    footerTo: 'to-purple-100',
+    footerBorder: 'border-violet-200',
     Icon: Pencil,
   },
   classwork: {
-    headerGradientDark: 'from-emerald-600 via-teal-600 to-cyan-700',
-    headerGradientLight: 'from-emerald-500 via-teal-500 to-cyan-600',
-    iconBgDark: 'bg-white/20',
-    iconBgLight: 'bg-white/30',
+    headerGradient: 'from-emerald-500 via-teal-500 to-cyan-600',
+    iconBg: 'bg-white/20',
     orbColors: ['emerald', 'teal', 'cyan'] as const,
-    accentDark: 'text-emerald-400',
-    accentLight: 'text-emerald-600',
-    bgDark: 'bg-slate-900',
-    bgLight: 'bg-gray-50',
-    footerFromDark: 'from-emerald-500/10',
-    footerToDark: 'to-teal-500/10',
-    footerBorderDark: 'border-emerald-500/20',
-    footerFromLight: 'from-emerald-100',
-    footerToLight: 'to-teal-100',
-    footerBorderLight: 'border-emerald-200',
+    accent: 'text-emerald-600',
+    bg: 'bg-gray-50',
+    footerFrom: 'from-emerald-100',
+    footerTo: 'to-teal-100',
+    footerBorder: 'border-emerald-200',
     Icon: BookOpen,
   },
 };
@@ -69,8 +47,6 @@ export function PublicShareLayout({
   shareUrl,
   viewCount,
 }: PublicShareLayoutProps) {
-  const { theme, toggleTheme } = useTheme();
-  const isDark = theme === 'dark';
   const colors = colorSchemes[contentType];
   const Icon = colors.Icon;
 
@@ -106,7 +82,7 @@ export function PublicShareLayout({
     <div
       className={cn(
         'min-h-screen transition-colors duration-300',
-        isDark ? colors.bgDark : colors.bgLight
+        colors.bg
       )}
     >
       {/* Header */}
@@ -114,7 +90,7 @@ export function PublicShareLayout({
         className={cn(
           'relative overflow-hidden',
           'bg-gradient-to-r',
-          isDark ? colors.headerGradientDark : colors.headerGradientLight
+          colors.headerGradient
         )}
       >
         {/* Decorative elements */}
@@ -145,7 +121,7 @@ export function PublicShareLayout({
             <div className="flex items-center justify-between">
               {/* Logo */}
               <div className="flex items-center gap-3">
-                <div className={cn('p-2.5 rounded-xl', colors.iconBgDark)}>
+                <div className={cn('p-2.5 rounded-xl', colors.iconBg)}>
                   <GraduationCap className="w-7 h-7 text-white" />
                 </div>
                 <div>
@@ -164,20 +140,6 @@ export function PublicShareLayout({
                   </span>
                 )}
                 <button
-                  onClick={toggleTheme}
-                  className={cn(
-                    'p-2.5 rounded-xl transition-all duration-200',
-                    'bg-white/10 hover:bg-white/20 text-white'
-                  )}
-                  aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-                >
-                  {isDark ? (
-                    <Sun className="w-5 h-5" />
-                  ) : (
-                    <Moon className="w-5 h-5" />
-                  )}
-                </button>
-                <button
                   onClick={handleShare}
                   className={cn(
                     'p-2.5 rounded-xl transition-all duration-200',
@@ -194,7 +156,7 @@ export function PublicShareLayout({
             {(title || subtitle) && (
               <div className="mt-8 pb-6">
                 <div className="flex items-start gap-4">
-                  <div className={cn('p-3 rounded-xl', colors.iconBgDark)}>
+                  <div className={cn('p-3 rounded-xl', colors.iconBg)}>
                     <Icon className="w-6 h-6 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -225,21 +187,19 @@ export function PublicShareLayout({
       <footer
         className={cn(
           'mt-auto py-6 border-t',
-          isDark
-            ? `bg-gradient-to-r ${colors.footerFromDark} ${colors.footerToDark} ${colors.footerBorderDark}`
-            : `bg-gradient-to-r ${colors.footerFromLight} ${colors.footerToLight} ${colors.footerBorderLight}`
+          `bg-gradient-to-r ${colors.footerFrom} ${colors.footerTo} ${colors.footerBorder}`
         )}
       >
         <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
           <p
             className={cn(
               'text-sm',
-              isDark ? 'text-slate-400' : 'text-gray-600'
+              'text-gray-600'
             )}
           >
             Powered by{' '}
             <span
-              className={cn('font-semibold', isDark ? colors.accentDark : colors.accentLight)}
+              className={cn('font-semibold', colors.accent)}
             >
               Shiksha
             </span>{' '}

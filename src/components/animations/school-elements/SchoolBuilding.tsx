@@ -7,17 +7,15 @@ interface SchoolBuildingProps {
 
 export function SchoolBuilding({ className = "" }: SchoolBuildingProps) {
   const { theme } = useTheme();
-  const isDark = theme === "dark";
-
   // Building colors
   const colors = {
-    walls: isDark ? "#4c566a" : "#f8f9fa",
-    roof: isDark ? "#bf616a" : "#fa5252",
-    windows: isDark ? "#88c0d0" : "#74c0fc",
-    door: isDark ? "#5e81ac" : "#4c6ef5",
-    steps: isDark ? "#d8dee9" : "#ced4da",
-    flag: isDark ? "#a3be8c" : "#51cf66",
-    chimney: isDark ? "#4c566a" : "#adb5bd",
+    walls: "#f8f9fa",
+    roof: "#fa5252",
+    windows: "#74c0fc",
+    door: "#4c6ef5",
+    steps: "#ced4da",
+    flag: "#51cf66",
+    chimney: "#adb5bd",
   };
 
   // Animation variants
@@ -99,7 +97,7 @@ export function SchoolBuilding({ className = "" }: SchoolBuildingProps) {
           cx="290"
           cy="40"
           r="5"
-          fill={isDark ? "#d8dee9" : "#adb5bd"}
+          fill={"#adb5bd"}
           variants={smokeAnimation}
           animate="animate"
         />
@@ -107,7 +105,7 @@ export function SchoolBuilding({ className = "" }: SchoolBuildingProps) {
           cx="290"
           cy="30"
           r="4"
-          fill={isDark ? "#d8dee9" : "#adb5bd"}
+          fill={"#adb5bd"}
           variants={smokeAnimation}
           animate="animate"
           transition={{ delay: 0.5 }}
@@ -116,7 +114,7 @@ export function SchoolBuilding({ className = "" }: SchoolBuildingProps) {
           cx="290"
           cy="20"
           r="3"
-          fill={isDark ? "#d8dee9" : "#adb5bd"}
+          fill={"#adb5bd"}
           variants={smokeAnimation}
           animate="animate"
           transition={{ delay: 1 }}
@@ -177,7 +175,7 @@ export function SchoolBuilding({ className = "" }: SchoolBuildingProps) {
         
         {/* Door */}
         <rect x="185" y="170" width="30" height="80" fill={colors.door} />
-        <circle cx="190" cy="210" r="2" fill={isDark ? "#d8dee9" : "#ced4da"} />
+        <circle cx="190" cy="210" r="2" fill={"#ced4da"} />
         
         {/* Steps */}
         <rect x="175" y="250" width="50" height="10" fill={colors.steps} />
@@ -185,7 +183,7 @@ export function SchoolBuilding({ className = "" }: SchoolBuildingProps) {
         <rect x="165" y="270" width="70" height="10" fill={colors.steps} />
         
         {/* Flag on top */}
-        <rect x="200" y="30" width="2" height="30" fill={isDark ? "#d8dee9" : "#adb5bd"} />
+        <rect x="200" y="30" width="2" height="30" fill={"#adb5bd"} />
         <motion.path
           d="M202 30L220 40L202 50V30Z"
           fill={colors.flag}
@@ -194,22 +192,22 @@ export function SchoolBuilding({ className = "" }: SchoolBuildingProps) {
         />
         
         {/* School Sign */}
-        <rect x="150" y="80" width="100" height="15" fill={isDark ? "#d8dee9" : "#ced4da"} />
+        <rect x="150" y="80" width="100" height="15" fill={"#ced4da"} />
         <text
           x="200"
           y="92"
           textAnchor="middle"
           fontSize="10"
           fontWeight="bold"
-          fill={isDark ? "#2e3440" : "#212529"}
+          fill={"#212529"}
         >
           FIRST STEP SCHOOL
         </text>
         
         {/* Clock */}
-        <circle cx="200" cy="60" r="10" fill={isDark ? "#d8dee9" : "#ffffff"} stroke={isDark ? "#2e3440" : "#212529"} />
-        <line x1="200" y1="60" x2="200" y2="54" stroke={isDark ? "#2e3440" : "#212529"} strokeWidth="1" />
-        <line x1="200" y1="60" x2="204" y2="60" stroke={isDark ? "#2e3440" : "#212529"} strokeWidth="1" />
+        <circle cx="200" cy="60" r="10" fill={"#ffffff"} stroke={"#212529"} />
+        <line x1="200" y1="60" x2="200" y2="54" stroke={"#212529"} strokeWidth="1" />
+        <line x1="200" y1="60" x2="204" y2="60" stroke={"#212529"} strokeWidth="1" />
       </svg>
     </motion.div>
   );

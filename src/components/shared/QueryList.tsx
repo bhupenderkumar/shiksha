@@ -55,8 +55,6 @@ export function QueryList({
   theme = 'light',
   className,
 }: QueryListProps) {
-  const isDark = theme === 'dark';
-  
   // Sort queries by creation date (newest first)
   const sortedQueries = [...queries].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -66,7 +64,7 @@ export function QueryList({
     return (
       <div className={cn(
         "text-center py-8",
-        isDark ? "text-gray-400" : "text-muted-foreground",
+        "text-muted-foreground",
         className
       )}>
         <MessageCircle className="w-10 h-10 mx-auto mb-3 opacity-40" />
@@ -101,22 +99,19 @@ interface QueryItemCardProps {
 }
 
 function QueryItemCard({ query, isExpanded, onToggle, theme = 'light' }: QueryItemCardProps) {
-  const isDark = theme === 'dark';
   const hasReplies = query.replies && query.replies.length > 0;
 
   return (
     <div className={cn(
       "border rounded-lg overflow-hidden",
-      isDark ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-white"
+      "border-gray-200 bg-white"
     )}>
       {/* Question Header */}
       <div
         className={cn(
           'p-4 transition-colors',
           hasReplies ? 'cursor-pointer' : '',
-          isDark 
-            ? hasReplies ? 'hover:bg-gray-700/50' : 'bg-gray-800/30'
-            : hasReplies ? 'hover:bg-muted/50' : 'bg-muted/30'
+          hasReplies ? 'hover:bg-muted/50' : 'bg-muted/30'
         )}
         onClick={hasReplies ? onToggle : undefined}
       >
@@ -125,17 +120,17 @@ function QueryItemCard({ query, isExpanded, onToggle, theme = 'light' }: QueryIt
             <div className="flex items-center gap-2 flex-wrap mb-2">
               <span className={cn(
                 "font-medium text-sm flex items-center gap-1",
-                isDark ? "text-white" : "text-foreground"
+                "text-foreground"
               )}>
                 <User className={cn(
                   "w-4 h-4",
-                  isDark ? "text-gray-400" : "text-muted-foreground"
+                  "text-muted-foreground"
                 )} />
                 {query.parent_name}
               </span>
               <span className={cn(
                 "text-xs",
-                isDark ? "text-gray-500" : "text-muted-foreground"
+                "text-muted-foreground"
               )}>
                 {formatDistanceToNow(new Date(query.created_at), { addSuffix: true })}
               </span>
@@ -144,9 +139,7 @@ function QueryItemCard({ query, isExpanded, onToggle, theme = 'light' }: QueryIt
                   variant="outline" 
                   className={cn(
                     "text-xs",
-                    isDark 
-                      ? "text-green-400 border-green-500/30 bg-green-500/10" 
-                      : "text-green-600 border-green-200 bg-green-50"
+                    "text-green-600 border-green-200 bg-green-50"
                   )}
                 >
                   <CheckCircle2 className="w-3 h-3 mr-1" />
@@ -156,7 +149,7 @@ function QueryItemCard({ query, isExpanded, onToggle, theme = 'light' }: QueryIt
             </div>
             <p className={cn(
               "text-sm",
-              isDark ? "text-gray-200" : "text-foreground"
+              "text-foreground"
             )}>
               {query.question_text}
             </p>
@@ -168,7 +161,7 @@ function QueryItemCard({ query, isExpanded, onToggle, theme = 'light' }: QueryIt
                 variant="secondary" 
                 className={cn(
                   "text-xs",
-                  isDark ? "bg-gray-700 text-gray-300" : ""
+                  ""
                 )}
               >
                 {query.replies!.length} {query.replies!.length === 1 ? 'reply' : 'replies'}
@@ -180,7 +173,7 @@ function QueryItemCard({ query, isExpanded, onToggle, theme = 'light' }: QueryIt
                 size="sm" 
                 className={cn(
                   "h-8 w-8 p-0",
-                  isDark ? "hover:bg-gray-700" : ""
+                  ""
                 )}
               >
                 {isExpanded ? (
@@ -198,7 +191,7 @@ function QueryItemCard({ query, isExpanded, onToggle, theme = 'light' }: QueryIt
       {hasReplies && isExpanded && (
         <div className={cn(
           "border-t",
-          isDark ? "border-gray-700 bg-gray-900/50" : "border-gray-200 bg-background"
+          "border-gray-200 bg-background"
         )}>
           <div className="p-4 space-y-3">
             {query.replies!.map((reply) => (
@@ -212,9 +205,7 @@ function QueryItemCard({ query, isExpanded, onToggle, theme = 'light' }: QueryIt
       {!hasReplies && (
         <div className={cn(
           "border-t px-4 py-2",
-          isDark 
-            ? "border-gray-700 bg-amber-500/10 text-amber-400" 
-            : "border-gray-200 bg-amber-50/50 text-amber-700"
+          "border-gray-200 bg-amber-50/50 text-amber-700"
         )}>
           <span className="text-xs flex items-center gap-1">
             <Clock className="w-3 h-3" />
@@ -232,35 +223,31 @@ interface ReplyItemCardProps {
 }
 
 function ReplyItemCard({ reply, theme = 'light' }: ReplyItemCardProps) {
-  const isDark = theme === 'dark';
-
   return (
     <div className={cn(
       "pl-4 border-l-2",
-      isDark ? "border-indigo-500/50" : "border-indigo-200"
+      "border-indigo-200"
     )}>
       <div className="flex items-center gap-2 mb-1">
         <Badge 
           variant="outline" 
           className={cn(
             "text-xs",
-            isDark 
-              ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/30" 
-              : "bg-indigo-50 text-indigo-700 border-indigo-200"
+            "bg-indigo-50 text-indigo-700 border-indigo-200"
           )}
         >
           Teacher
         </Badge>
         <span className={cn(
           "text-xs",
-          isDark ? "text-gray-500" : "text-muted-foreground"
+          "text-muted-foreground"
         )}>
           {formatDistanceToNow(new Date(reply.replied_at), { addSuffix: true })}
         </span>
       </div>
       <p className={cn(
         "text-sm",
-        isDark ? "text-gray-200" : "text-foreground"
+        "text-foreground"
       )}>
         {reply.reply_text}
       </p>

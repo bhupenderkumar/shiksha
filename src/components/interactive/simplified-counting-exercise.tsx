@@ -149,7 +149,7 @@ export function SimplifiedCountingExercise({
               {Array.from({ length: count }).map((_, index) => (
                 <div
                   key={index}
-                  className="w-8 h-8 flex items-center justify-center bg-blue-100 dark:bg-blue-900/40 rounded-full font-bold text-blue-800 dark:text-blue-300"
+                  className="w-8 h-8 flex items-center justify-center bg-blue-100 rounded-full font-bold text-blue-800"
                 >
                   {index + 1}
                 </div>

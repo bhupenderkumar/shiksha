@@ -77,14 +77,14 @@ export default function SportsEnrollmentGrouped() {
   ];
 
   const bgGradients = [
-    'from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20',
-    'from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20',
-    'from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20',
-    'from-purple-50 to-violet-50 dark:from-purple-950/20 dark:to-violet-950/20',
-    'from-pink-50 to-rose-50 dark:from-pink-950/20 dark:to-rose-950/20',
-    'from-yellow-50 to-amber-50 dark:from-yellow-950/20 dark:to-amber-950/20',
-    'from-teal-50 to-cyan-50 dark:from-teal-950/20 dark:to-cyan-950/20',
-    'from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-950/20',
+    'from-blue-50 to-cyan-50',
+    'from-orange-50 to-amber-50',
+    'from-green-50 to-emerald-50',
+    'from-purple-50 to-violet-50',
+    'from-pink-50 to-rose-50',
+    'from-yellow-50 to-amber-50',
+    'from-teal-50 to-cyan-50',
+    'from-indigo-50 to-blue-50',
   ];
 
   return (
@@ -249,7 +249,7 @@ export default function SportsEnrollmentGrouped() {
                                     <Badge
                                       key={gi}
                                       variant="outline"
-                                      className="text-[10px] bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/50 dark:text-orange-300 dark:border-orange-800"
+                                      className="text-[10px] bg-orange-50 text-orange-700 border-orange-200"
                                     >
                                       🏅 {game}
                                     </Badge>
@@ -260,7 +260,7 @@ export default function SportsEnrollmentGrouped() {
                                 className={cn(
                                   'text-[10px]',
                                   enrollment.status === 'ENROLLED'
-                                    ? 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400'
+                                    ? 'bg-green-100 text-green-700'
                                     : 'bg-yellow-100 text-yellow-700'
                                 )}
                               >

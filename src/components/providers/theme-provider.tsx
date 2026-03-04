@@ -25,38 +25,24 @@ export function ThemeProvider({
   defaultTheme = "system",
   storageKey = "ui-theme",
 }: ThemeProviderProps) {
-  // Get initial theme from localStorage or use default
-  const [theme, setThemeState] = React.useState<Theme>(() => {
-    if (typeof window !== "undefined") {
-      const savedTheme = localStorage.getItem(storageKey);
-      return (savedTheme as Theme) || defaultTheme;
-    }
-    return defaultTheme;
-  });
+  // Always use light theme - dark mode removed
+  const [theme] = React.useState<Theme>("light");
 
-  // Update theme class on document element
+  // Update theme class on document element - always light
   React.useEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove("light", "dark");
-
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : "light";
-      root.classList.add(systemTheme);
-    } else {
-      root.classList.add(theme);
-    }
-  }, [theme]);
-
-  // Set theme and save to localStorage
-  const setTheme = React.useCallback((newTheme: Theme) => {
-    setThemeState(newTheme);
+    root.classList.add("light");
+    // Clear any stale dark theme from localStorage
     if (typeof window !== "undefined") {
-      localStorage.setItem(storageKey, newTheme);
+      localStorage.setItem(storageKey, "light");
     }
   }, [storageKey]);
+
+  // No-op: dark mode removed
+  const setTheme = React.useCallback((_newTheme: Theme) => {
+    // Always light - intentional no-op
+  }, []);
 
   // Memoize context value to prevent unnecessary re-renders
   const contextValue = React.useMemo(

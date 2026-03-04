@@ -2,7 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { CustomCursor } from '@/components/ui/custom-cursor';
-import { AnimatedBackground } from '@/components/ui/animated-background';
+// AnimatedBackground removed - dark mode cleanup
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import { useAuth } from '@/lib/auth-provider';
@@ -68,6 +68,8 @@ const FeeChartPrint = lazy(() => import('./pages/FeeChartPrint'));
 const AnnualSportsWeek = lazy(() => import('./pages/AnnualSportsWeek'));
 const SportsEnrollmentList = lazy(() => import('./pages/SportsEnrollmentList'));
 const SportsEnrollmentGrouped = lazy(() => import('./pages/SportsEnrollmentGrouped'));
+const SchoolFeedback = lazy(() => import('./pages/SchoolFeedback'));
+const AdminSchoolFeedback = lazy(() => import('./pages/AdminSchoolFeedback'));
 
 // Private route component
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -138,6 +140,9 @@ function AppRoutes() {
         <Route path="/sports-week" element={<AnnualSportsWeek />} />
         <Route path="/sports-week/enrollments" element={<SportsEnrollmentList />} />
         <Route path="/sports-week/enrollments/grouped" element={<SportsEnrollmentGrouped />} />
+
+        {/* Public School Feedback - No authentication required */}
+        <Route path="/school-feedback" element={<SchoolFeedback />} />
 
         {/* Protected Routes */}
         <Route path="/dashboard" element={
@@ -317,6 +322,13 @@ function AppRoutes() {
             </Layout>
           </PrivateRoute>
         } />
+        <Route path="/admin-school-feedback" element={
+          <PrivateRoute>
+            <Layout>
+              <AdminSchoolFeedback />
+            </Layout>
+          </PrivateRoute>
+        } />
 
         {/* Birthday Routes */}
         <Route path="/birthdays" element={
@@ -393,8 +405,7 @@ function App() {
     <TooltipProvider>
       {/* Router is now provided in main.tsx */}
       <CustomCursor />
-      <AnimatedBackground particleCount={30} />
-      <div className="flex flex-col min-h-screen bg-transparent relative z-10">
+      <div className="flex flex-col min-h-screen bg-background relative z-10">
         <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center"><div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div></div>}>
           <AppRoutes />
           <Toaster />

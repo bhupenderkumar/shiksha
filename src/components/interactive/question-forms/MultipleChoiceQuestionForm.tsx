@@ -180,7 +180,7 @@ export function MultipleChoiceQuestionForm({
                     className={`mb-2 ${option.isCorrect ? 'border-green-300' : ''}`}
                   />
                   {option.isCorrect && (
-                    <Badge variant="success" className="bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900/40 dark:text-green-300">
+                    <Badge variant="success" className="bg-green-100 text-green-800 hover:bg-green-100">
                       <CheckCircle className="h-3 w-3 mr-1" /> Marked as correct
                     </Badge>
                   )}

@@ -256,16 +256,16 @@ const PublicBirthdayPage: React.FC = () => {
 
   if (error || !student) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center p-4">
         <Card className="max-w-md w-full shadow-2xl">
           <CardContent className="pt-8 pb-8 text-center">
-            <div className="w-20 h-20 rounded-full bg-red-100 dark:bg-red-900/30 mx-auto mb-6 flex items-center justify-center">
+            <div className="w-20 h-20 rounded-full bg-red-100 mx-auto mb-6 flex items-center justify-center">
               <AlertTriangle className="w-10 h-10 text-red-500" />
             </div>
-            <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">
+            <h2 className="text-2xl font-bold mb-3 text-gray-900">
               Oops!
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+            <p className="text-gray-600 mb-6">
               {error || 'This birthday link is not available.'}
             </p>
             <Link to="/">

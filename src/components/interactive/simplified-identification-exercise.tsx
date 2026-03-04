@@ -146,8 +146,8 @@ export function SimplifiedIdentificationExercise({
                 className={`
                   px-3 py-1 border rounded-full text-sm
                   ${isIdentified 
-                    ? 'bg-green-100 border-green-300 dark:bg-green-900/40 dark:border-green-700' 
-                    : 'bg-gray-100 border-gray-300 dark:bg-gray-700 dark:border-gray-600'}
+                    ? 'bg-green-100 border-green-300' 
+                    : 'bg-gray-100 border-gray-300'}
                 `}
               >
                 {item.name}

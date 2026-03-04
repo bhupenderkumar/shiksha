@@ -148,7 +148,7 @@ export function AdmissionEnquiryForm({ initialData, onSubmit }: AdmissionEnquiry
                   "w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300",
                   isActive && "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/30",
                   isCompleted && "bg-emerald-500 text-white",
-                  !isActive && !isCompleted && "bg-zinc-800 text-zinc-400 border border-zinc-700"
+                  !isActive && !isCompleted && "bg-gray-100 text-gray-500 border border-gray-200"
                 )}
               >
                 {isCompleted ? (
@@ -159,9 +159,9 @@ export function AdmissionEnquiryForm({ initialData, onSubmit }: AdmissionEnquiry
               </div>
               <span className={cn(
                 "text-xs mt-2 font-medium",
-                isActive && "text-violet-400",
-                isCompleted && "text-emerald-400",
-                !isActive && !isCompleted && "text-zinc-500"
+                isActive && "text-violet-600",
+                isCompleted && "text-emerald-600",
+                !isActive && !isCompleted && "text-gray-400"
               )}>
                 {step.title}
               </span>
@@ -169,7 +169,7 @@ export function AdmissionEnquiryForm({ initialData, onSubmit }: AdmissionEnquiry
             {index < steps.length - 1 && (
               <div className={cn(
                 "w-16 h-0.5 mx-2 transition-all duration-300",
-                isCompleted ? "bg-emerald-500" : "bg-zinc-700"
+                isCompleted ? "bg-emerald-500" : "bg-gray-200"
               )} />
             )}
           </React.Fragment>
@@ -183,13 +183,13 @@ export function AdmissionEnquiryForm({ initialData, onSubmit }: AdmissionEnquiry
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         {renderStepIndicator()}
 
-        <Card className="border-zinc-800 bg-zinc-900/50 backdrop-blur-sm">
+        <Card className="border-gray-200 bg-white/80 shadow-sm backdrop-blur-sm">
           <CardContent className="pt-6">
             {/* Step 1: Student Info */}
             {currentStep === 1 && (
               <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                  <User className="w-5 h-5 text-violet-400" />
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <User className="w-5 h-5 text-violet-600" />
                   Student Information
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -198,18 +198,18 @@ export function AdmissionEnquiryForm({ initialData, onSubmit }: AdmissionEnquiry
                     name="studentName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-zinc-300">Student Name</FormLabel>
+                        <FormLabel className="text-gray-700">Student Name</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                             <Input 
                               {...field} 
                               placeholder="Enter student's full name" 
-                              className="pl-10 bg-zinc-800/50 border-zinc-700 focus:border-violet-500 text-white placeholder:text-zinc-500"
+                              className="pl-10 bg-gray-50 border-gray-200 focus:border-violet-500 text-gray-900 placeholder:text-gray-400"
                             />
                           </div>
                         </FormControl>
-                        <FormMessage className="text-red-400" />
+                        <FormMessage className="text-red-500" />
                       </FormItem>
                     )}
                   />
@@ -219,20 +219,20 @@ export function AdmissionEnquiryForm({ initialData, onSubmit }: AdmissionEnquiry
                     name="gender"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-zinc-300">Gender</FormLabel>
+                        <FormLabel className="text-gray-700">Gender</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger className="bg-zinc-800/50 border-zinc-700 focus:border-violet-500 text-white">
+                            <SelectTrigger className="bg-gray-50 border-gray-200 focus:border-violet-500 text-gray-900">
                               <SelectValue placeholder="Select gender" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent className="bg-zinc-800 border-zinc-700">
-                            <SelectItem value="Male" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">Male</SelectItem>
-                            <SelectItem value="Female" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">Female</SelectItem>
-                            <SelectItem value="Other" className="text-white hover:bg-zinc-700 focus:bg-zinc-700">Other</SelectItem>
+                          <SelectContent className="bg-gray-100 border-gray-200">
+                            <SelectItem value="Male" className="text-gray-900 hover:bg-gray-200 focus:bg-gray-200">Male</SelectItem>
+                            <SelectItem value="Female" className="text-gray-900 hover:bg-gray-200 focus:bg-gray-200">Female</SelectItem>
+                            <SelectItem value="Other" className="text-gray-900 hover:bg-gray-200 focus:bg-gray-200">Other</SelectItem>
                           </SelectContent>
                         </Select>
-                        <FormMessage className="text-red-400" />
+                        <FormMessage className="text-red-500" />
                       </FormItem>
                     )}
                   />
@@ -242,19 +242,19 @@ export function AdmissionEnquiryForm({ initialData, onSubmit }: AdmissionEnquiry
                     name="dateOfBirth"
                     render={({ field }) => (
                       <FormItem className="md:col-span-2">
-                        <FormLabel className="text-zinc-300">Date of Birth</FormLabel>
+                        <FormLabel className="text-gray-700">Date of Birth</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                             <Input
                               {...field}
                               type="date"
                               max={new Date().toISOString().split("T")[0]}
-                              className="pl-10 bg-zinc-800/50 border-zinc-700 focus:border-violet-500 text-white"
+                              className="pl-10 bg-gray-50 border-gray-200 focus:border-violet-500 text-gray-900"
                             />
                           </div>
                         </FormControl>
-                        <FormMessage className="text-red-400" />
+                        <FormMessage className="text-red-500" />
                       </FormItem>
                     )}
                   />
@@ -265,8 +265,8 @@ export function AdmissionEnquiryForm({ initialData, onSubmit }: AdmissionEnquiry
             {/* Step 2: Parent Info */}
             {currentStep === 2 && (
               <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                  <Users className="w-5 h-5 text-violet-400" />
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-violet-600" />
                   Parent/Guardian Information
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -275,18 +275,18 @@ export function AdmissionEnquiryForm({ initialData, onSubmit }: AdmissionEnquiry
                     name="parentName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-zinc-300">Parent/Guardian Name</FormLabel>
+                        <FormLabel className="text-gray-700">Parent/Guardian Name</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                            <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                             <Input 
                               {...field} 
                               placeholder="Enter parent's name" 
-                              className="pl-10 bg-zinc-800/50 border-zinc-700 focus:border-violet-500 text-white placeholder:text-zinc-500"
+                              className="pl-10 bg-gray-50 border-gray-200 focus:border-violet-500 text-gray-900 placeholder:text-gray-400"
                             />
                           </div>
                         </FormControl>
-                        <FormMessage className="text-red-400" />
+                        <FormMessage className="text-red-500" />
                       </FormItem>
                     )}
                   />
@@ -296,18 +296,18 @@ export function AdmissionEnquiryForm({ initialData, onSubmit }: AdmissionEnquiry
                     name="contactNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-zinc-300">Contact Number</FormLabel>
+                        <FormLabel className="text-gray-700">Contact Number</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                             <Input 
                               {...field} 
                               placeholder="Enter 10-digit mobile number" 
-                              className="pl-10 bg-zinc-800/50 border-zinc-700 focus:border-violet-500 text-white placeholder:text-zinc-500"
+                              className="pl-10 bg-gray-50 border-gray-200 focus:border-violet-500 text-gray-900 placeholder:text-gray-400"
                             />
                           </div>
                         </FormControl>
-                        <FormMessage className="text-red-400" />
+                        <FormMessage className="text-red-500" />
                       </FormItem>
                     )}
                   />
@@ -317,19 +317,19 @@ export function AdmissionEnquiryForm({ initialData, onSubmit }: AdmissionEnquiry
                     name="email"
                     render={({ field }) => (
                       <FormItem className="md:col-span-2">
-                        <FormLabel className="text-zinc-300">Email Address</FormLabel>
+                        <FormLabel className="text-gray-700">Email Address</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                             <Input 
                               {...field} 
                               type="email" 
                               placeholder="Enter email address" 
-                              className="pl-10 bg-zinc-800/50 border-zinc-700 focus:border-violet-500 text-white placeholder:text-zinc-500"
+                              className="pl-10 bg-gray-50 border-gray-200 focus:border-violet-500 text-gray-900 placeholder:text-gray-400"
                             />
                           </div>
                         </FormControl>
-                        <FormMessage className="text-red-400" />
+                        <FormMessage className="text-red-500" />
                       </FormItem>
                     )}
                   />
@@ -340,8 +340,8 @@ export function AdmissionEnquiryForm({ initialData, onSubmit }: AdmissionEnquiry
             {/* Step 3: Academic Info */}
             {currentStep === 3 && (
               <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                  <GraduationCap className="w-5 h-5 text-violet-400" />
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <GraduationCap className="w-5 h-5 text-violet-600" />
                   Academic Information
                 </h3>
                 <div className="grid grid-cols-1 gap-6">
@@ -350,10 +350,10 @@ export function AdmissionEnquiryForm({ initialData, onSubmit }: AdmissionEnquiry
                     name="gradeApplying"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-zinc-300">Grade Applying For</FormLabel>
+                        <FormLabel className="text-gray-700">Grade Applying For</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger className="bg-zinc-800/50 border-zinc-700 focus:border-violet-500 text-white">
+                            <SelectTrigger className="bg-gray-50 border-gray-200 focus:border-violet-500 text-gray-900">
                               {loadingClasses ? (
                                 <div className="flex items-center gap-2">
                                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -364,16 +364,16 @@ export function AdmissionEnquiryForm({ initialData, onSubmit }: AdmissionEnquiry
                               )}
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent className="bg-zinc-800 border-zinc-700 max-h-60">
+                          <SelectContent className="bg-gray-100 border-gray-200 max-h-60">
                             {classes.length > 0 ? (
                               classes.map((cls) => (
                                 <SelectItem 
                                   key={cls.id} 
                                   value={cls.name}
-                                  className="text-white hover:bg-zinc-700 focus:bg-zinc-700"
+                                  className="text-gray-900 hover:bg-gray-200 focus:bg-gray-200"
                                 >
                                   <div className="flex items-center gap-2">
-                                    <GraduationCap className="w-4 h-4 text-violet-400" />
+                                    <GraduationCap className="w-4 h-4 text-violet-600" />
                                     {cls.name} {cls.section && `- Section ${cls.section}`}
                                   </div>
                                 </SelectItem>
@@ -384,10 +384,10 @@ export function AdmissionEnquiryForm({ initialData, onSubmit }: AdmissionEnquiry
                                 <SelectItem 
                                   key={grade} 
                                   value={grade}
-                                  className="text-white hover:bg-zinc-700 focus:bg-zinc-700"
+                                  className="text-gray-900 hover:bg-gray-200 focus:bg-gray-200"
                                 >
                                   <div className="flex items-center gap-2">
-                                    <GraduationCap className="w-4 h-4 text-violet-400" />
+                                    <GraduationCap className="w-4 h-4 text-violet-600" />
                                     {grade === "Nursery" || grade === "LKG" || grade === "UKG" ? grade : `Grade ${grade}`}
                                   </div>
                                 </SelectItem>
@@ -395,7 +395,7 @@ export function AdmissionEnquiryForm({ initialData, onSubmit }: AdmissionEnquiry
                             )}
                           </SelectContent>
                         </Select>
-                        <FormMessage className="text-red-400" />
+                        <FormMessage className="text-red-500" />
                       </FormItem>
                     )}
                   />
@@ -405,18 +405,18 @@ export function AdmissionEnquiryForm({ initialData, onSubmit }: AdmissionEnquiry
                     name="address"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-zinc-300">Address</FormLabel>
+                        <FormLabel className="text-gray-700">Address</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <MapPin className="absolute left-3 top-3 w-4 h-4 text-zinc-500" />
+                            <MapPin className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
                             <Input 
                               {...field} 
                               placeholder="Enter complete address" 
-                              className="pl-10 bg-zinc-800/50 border-zinc-700 focus:border-violet-500 text-white placeholder:text-zinc-500"
+                              className="pl-10 bg-gray-50 border-gray-200 focus:border-violet-500 text-gray-900 placeholder:text-gray-400"
                             />
                           </div>
                         </FormControl>
-                        <FormMessage className="text-red-400" />
+                        <FormMessage className="text-red-500" />
                       </FormItem>
                     )}
                   />
@@ -434,7 +434,7 @@ export function AdmissionEnquiryForm({ initialData, onSubmit }: AdmissionEnquiry
             onClick={prevStep}
             disabled={currentStep === 1}
             className={cn(
-              "border-zinc-700 text-zinc-300 hover:bg-zinc-800",
+              "border-gray-200 text-gray-700 hover:bg-gray-100",
               currentStep === 1 && "opacity-50 cursor-not-allowed"
             )}
           >

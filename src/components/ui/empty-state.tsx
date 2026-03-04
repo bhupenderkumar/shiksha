@@ -29,7 +29,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         'flex flex-col items-center justify-center p-8 text-center rounded-lg',
         'bg-gradient-to-b from-white to-gray-50',
         'border-2 border-dashed border-gray-200',
-        'dark:from-gray-900 dark:to-gray-800 dark:border-gray-700',
+        '',
         className
       )}
     >
@@ -51,7 +51,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.2 }}
-        className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2"
+        className="text-lg font-semibold text-gray-900 mb-2"
       >
         {title === 'No Students Available' ? (
           <div className="empty-state">
@@ -67,7 +67,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.2 }}
-        className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mb-4"
+        className="text-sm text-gray-500 max-w-sm mb-4"
       >
         {description}
       </motion.p>

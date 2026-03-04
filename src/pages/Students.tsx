@@ -649,7 +649,7 @@ const StudentDetailModal = ({
                   </span>
                 )}
                 {student.bloodGroup && (
-                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-700">
                     <Droplets className="h-3 w-3 inline mr-1" />
                     {student.bloodGroup}
                   </span>

@@ -69,7 +69,7 @@ const IDCardView: React.FC = () => {
               <CardTitle className="text-2xl font-bold">{SCHOOL_INFO.name}</CardTitle>
               <CardDescription>ID Card Details</CardDescription>
             </div>
-            <Link to="/id-cards" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">View All ID Cards</Link>
+            <Link to="/id-cards" className="text-sm text-blue-600 hover:underline">View All ID Cards</Link>
           </div>
         </CardHeader>
         <CardContent>

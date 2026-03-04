@@ -34,7 +34,7 @@ export default function FeeChartPrint() {
   return (
     <>
       {/* ── Screen-only toolbar (hidden when printing) ── */}
-      <div className="print:hidden sticky top-0 z-50 bg-white dark:bg-gray-900 border-b shadow-sm">
+      <div className="print:hidden sticky top-0 z-50 bg-white border-b shadow-sm">
         <div className="container mx-auto flex items-center justify-between px-4 py-3">
           <Link to="/fee-structure" className="text-sm text-blue-600 hover:underline">
             ← Back to Fee Structure

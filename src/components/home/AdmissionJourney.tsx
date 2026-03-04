@@ -18,8 +18,6 @@ interface AdmissionJourneyProps {
 
 export function AdmissionJourney({ className = "" }: AdmissionJourneyProps) {
   const { theme } = useTheme();
-  const isDark = theme === "dark";
-
   const steps: AdmissionStep[] = [
     {
       step: 1,
@@ -67,15 +65,13 @@ export function AdmissionJourney({ className = "" }: AdmissionJourneyProps) {
 
   // Path colors
   const pathColors = {
-    path: isDark ? "#4c566a" : "#dee2e6",
-    highlight: isDark ? "#88c0d0" : "#74c0fc",
-    checkpoint: isDark ? "#5e81ac" : "#4c6ef5",
+    path: "#dee2e6",
+    highlight: "#74c0fc",
+    checkpoint: "#4c6ef5",
   };
 
   return (
-    <section className={`section-padding ${isDark 
-      ? "bg-gradient-to-b from-blue-950/30 via-indigo-950/30 to-purple-950/30" 
-      : "bg-gradient-to-b from-pink-50/50 via-blue-50/50 to-purple-50/50"} ${className}`}>
+    <section className={`section-padding ${"bg-gradient-to-b from-pink-50/50 via-blue-50/50 to-purple-50/50"} ${className}`}>
       <div className="container mx-auto container-padding">
         <div className="text-center mb-16">
           <AnimatedText

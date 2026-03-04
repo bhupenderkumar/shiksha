@@ -31,15 +31,15 @@ const getEffectiveStatus = (fee: Fee): FeeStatus => {
 const getStatusStyle = (status: FeeStatus): string => {
   switch (status) {
     case FeeStatus.PAID:
-      return 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300';
+      return 'bg-green-100 text-green-800';
     case FeeStatus.PENDING:
-      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300';
+      return 'bg-yellow-100 text-yellow-800';
     case FeeStatus.OVERDUE:
-      return 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300';
+      return 'bg-red-100 text-red-800';
     case FeeStatus.PARTIAL:
-      return 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300';
+      return 'bg-orange-100 text-orange-800';
     default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900/40 dark:text-gray-300';
+      return 'bg-gray-100 text-gray-800';
   }
 };
 
@@ -65,14 +65,14 @@ const FeeCard: React.FC<FeeCardProps> = ({ fee, onDownloadReceipt, onEdit, onDel
   const isOverdue = effectiveStatus === FeeStatus.OVERDUE;
   
   return (
-    <Card className={`p-4 ${isOverdue ? 'border-red-200 dark:border-red-900' : ''}`}>
+    <Card className={`p-4 ${isOverdue ? 'border-red-200' : ''}`}>
       <div className="flex justify-between items-start">
         <div>
           <h3 className="font-semibold">{fee.student?.name || 'Unknown Student'}</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-gray-600">
             {fee.student?.class?.name} {fee.student?.class?.section}
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+          <p className="text-xs text-gray-500 mt-1">
             {fee.feeType}
           </p>
         </div>
@@ -84,12 +84,12 @@ const FeeCard: React.FC<FeeCardProps> = ({ fee, onDownloadReceipt, onEdit, onDel
       
       <div className="mt-3">
         <p className="text-xl font-bold">₹{fee.amount.toLocaleString('en-IN')}</p>
-        <p className={`text-sm mt-1 ${isOverdue ? 'text-red-600 dark:text-red-400 font-medium' : 'text-gray-600 dark:text-gray-400'}`}>
+        <p className={`text-sm mt-1 ${isOverdue ? 'text-red-600 font-medium' : 'text-gray-600'}`}>
           Due: {format(new Date(fee.dueDate), 'dd MMM yyyy')}
           {isOverdue && ' (Overdue)'}
         </p>
         {fee.paymentDate && (
-          <p className="text-sm text-green-600 dark:text-green-400">
+          <p className="text-sm text-green-600">
             Paid: {format(new Date(fee.paymentDate), 'dd MMM yyyy')}
             {fee.paymentMethod && ` via ${fee.paymentMethod}`}
           </p>
@@ -119,7 +119,7 @@ const FeeCard: React.FC<FeeCardProps> = ({ fee, onDownloadReceipt, onEdit, onDel
               <Button
                 variant="outline"
                 size="sm"
-                className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
                 onClick={() => onDelete(fee)}
               >
                 Delete

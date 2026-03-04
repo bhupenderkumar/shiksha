@@ -81,7 +81,7 @@ export const BirthdaySidebar: React.FC<BirthdaySidebarProps> = ({
   return (
     <Card
       className={cn(
-        'border-0 shadow-lg bg-gradient-to-b from-pink-50 to-purple-50 dark:from-pink-950/30 dark:to-purple-950/30 overflow-hidden',
+        'border-0 shadow-lg bg-gradient-to-b from-pink-50 to-purple-50 overflow-hidden',
         className
       )}
     >
@@ -119,12 +119,12 @@ export const BirthdaySidebar: React.FC<BirthdaySidebarProps> = ({
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="animate-pulse flex items-center gap-3 p-3 rounded-xl bg-white/50 dark:bg-gray-800/50"
+                  className="animate-pulse flex items-center gap-3 p-3 rounded-xl bg-white/50"
                 >
-                  <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700" />
+                  <div className="w-12 h-12 rounded-full bg-gray-200" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
-                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+                    <div className="h-4 bg-gray-200 rounded w-3/4" />
+                    <div className="h-3 bg-gray-200 rounded w-1/2" />
                   </div>
                 </div>
               ))}
@@ -136,12 +136,12 @@ export const BirthdaySidebar: React.FC<BirthdaySidebarProps> = ({
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 px-1">
                     <PartyPopper className="w-4 h-4 text-yellow-500 animate-bounce" />
-                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <span className="text-sm font-semibold text-gray-700">
                       Today's Celebration
                     </span>
                     <Badge
                       variant="secondary"
-                      className="ml-auto bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
+                      className="ml-auto bg-yellow-100 text-yellow-700"
                     >
                       {todaysBirthdays.length}
                     </Badge>
@@ -161,7 +161,7 @@ export const BirthdaySidebar: React.FC<BirthdaySidebarProps> = ({
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 px-1">
                     <Calendar className="w-4 h-4 text-indigo-500" />
-                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <span className="text-sm font-semibold text-gray-700">
                       This Week
                     </span>
                     <Badge variant="outline" className="ml-auto">
@@ -181,10 +181,10 @@ export const BirthdaySidebar: React.FC<BirthdaySidebarProps> = ({
               {/* No birthdays */}
               {todaysBirthdays.length === 0 && upcomingBirthdays.length === 0 && (
                 <div className="text-center py-8 space-y-3">
-                  <div className="w-16 h-16 mx-auto rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  <div className="w-16 h-16 mx-auto rounded-full bg-gray-100 flex items-center justify-center">
                     <Cake className="w-8 h-8 text-gray-400" />
                   </div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-sm text-gray-500">
                     No birthdays this week
                   </p>
                 </div>
@@ -196,7 +196,7 @@ export const BirthdaySidebar: React.FC<BirthdaySidebarProps> = ({
                 className="flex items-center justify-center gap-2 p-3 rounded-xl bg-gradient-to-r from-pink-500/10 to-purple-500/10 hover:from-pink-500/20 hover:to-purple-500/20 transition-colors group"
               >
                 <Gift className="w-4 h-4 text-pink-500" />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <span className="text-sm font-medium text-gray-700">
                   View All Birthdays
                 </span>
                 <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-transform" />
@@ -231,8 +231,8 @@ const BirthdayCard: React.FC<BirthdayCardProps> = ({ student, isToday }) => {
         'block rounded-xl p-3 transition-all duration-300',
         'hover:scale-[1.02] hover:shadow-md',
         isToday
-          ? 'bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/30 dark:to-orange-950/30 border border-yellow-200/50 dark:border-yellow-800/30'
-          : 'bg-white/70 dark:bg-gray-800/50 hover:bg-white dark:hover:bg-gray-800'
+          ? 'bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200/50'
+          : 'bg-white/70 hover:bg-white'
       )}
     >
       <div className="flex items-center gap-3">
@@ -242,7 +242,7 @@ const BirthdayCard: React.FC<BirthdayCardProps> = ({ student, isToday }) => {
               'w-12 h-12 ring-2 transition-all',
               isToday
                 ? 'ring-yellow-400 animate-pulse'
-                : 'ring-purple-200 dark:ring-purple-800'
+                : 'ring-purple-200'
             )}
           >
             <AvatarImage src={student.studentPhotoUrl || undefined} />
@@ -269,13 +269,13 @@ const BirthdayCard: React.FC<BirthdayCardProps> = ({ student, isToday }) => {
             className={cn(
               'font-semibold text-sm truncate',
               isToday
-                ? 'text-orange-700 dark:text-orange-300'
-                : 'text-gray-800 dark:text-gray-200'
+                ? 'text-orange-700'
+                : 'text-gray-800'
             )}
           >
             {student.studentName}
           </p>
-          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+          <div className="flex items-center gap-2 text-xs text-gray-500">
             <span>
               {student.className} {student.classSection}
             </span>
@@ -283,7 +283,7 @@ const BirthdayCard: React.FC<BirthdayCardProps> = ({ student, isToday }) => {
             <span>Turns {student.age + (isToday ? 0 : 1)}</span>
           </div>
           {!isToday && (
-            <p className="text-xs text-purple-500 dark:text-purple-400 mt-0.5">
+            <p className="text-xs text-purple-500 mt-0.5">
               {student.daysUntilBirthday === 1
                 ? 'Tomorrow'
                 : `In ${student.daysUntilBirthday} days`}

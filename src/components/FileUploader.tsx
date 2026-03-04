@@ -72,14 +72,14 @@ export function FileUploader({
           onKeyDown={(e) => e.key === 'Enter' && handleClick()}
           role="button"
           tabIndex={0}
-          className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
         >
           <div className="flex flex-col items-center justify-center pt-5 pb-6">
             <Upload className="w-8 h-8 mb-2" />
             <p className="mb-2 text-sm">
               <span className="font-semibold">Click to upload</span> or drag and drop
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-gray-500">
               Accepted file types: {acceptedFileTypes.join(', ')}
             </p>
           </div>

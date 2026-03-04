@@ -212,34 +212,34 @@ const AdmissionEnquiry = () => {
     const Wrapper = user ? Layout : PublicLayout;
     return (
       <Wrapper>
-        <div className="min-h-screen bg-gradient-to-b from-zinc-900 via-zinc-900 to-black">
+        <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100">
           {/* Hero Header */}
           <div className="relative overflow-hidden">
             <div className="absolute inset-0">
-              <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-violet-600/20 blur-3xl" />
-              <div className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full bg-fuchsia-600/20 blur-3xl" />
+              <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-violet-100/60 blur-3xl" />
+              <div className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full bg-fuchsia-100/60 blur-3xl" />
             </div>
             <div className="relative container mx-auto px-4 py-12">
               <Button
                 variant="ghost"
                 onClick={() => navigate(user ? '/admission/enquiries' : '/')}
-                className="text-zinc-400 hover:text-white hover:bg-zinc-800 mb-6"
+                className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 mb-6"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Home
               </Button>
               
               <div className="text-center max-w-2xl mx-auto">
-                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 text-sm font-medium mb-6">
+                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-50 border border-violet-200 text-violet-700 text-sm font-medium mb-6">
                   ✨ Start Your Journey
                 </span>
-                <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
                   Admission{" "}
-                  <span className="bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
                     Enquiry
                   </span>
                 </h1>
-                <p className="text-zinc-400 text-lg">
+                <p className="text-gray-500 text-lg">
                   Fill out the form below to begin your child's educational journey with us.
                 </p>
               </div>
@@ -378,9 +378,9 @@ const AdmissionEnquiry = () => {
                     className="flex flex-col items-center"
                   >
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      step.completed ? 'bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400' :
-                      step.current ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400' :
-                      'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500'
+                      step.completed ? 'bg-green-100 text-green-600' :
+                      step.current ? 'bg-blue-100 text-blue-600' :
+                      'bg-gray-100 text-gray-400'
                     }`}>
                       {step.completed ? (
                         <div className="w-2 h-2 rounded-full bg-green-600" />

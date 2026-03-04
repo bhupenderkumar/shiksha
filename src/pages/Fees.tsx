@@ -511,15 +511,15 @@ const Fees = () => {
 
           {/* Pending Fees Summary */}
           {pendingPayments.length > 0 && (
-            <Card className="p-4 mb-4 bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
+            <Card className="p-4 mb-4 bg-amber-50 border-amber-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <AlertCircle className="h-5 w-5 text-amber-600" />
-                  <span className="font-semibold text-amber-800 dark:text-amber-200">
+                  <span className="font-semibold text-amber-800">
                     Total Pending: {pendingPayments.length} students
                   </span>
                 </div>
-                <div className="text-lg font-bold text-amber-800 dark:text-amber-200">
+                <div className="text-lg font-bold text-amber-800">
                   ₹{pendingPayments.reduce((sum, p) => sum + Number(p.balance_remaining), 0).toLocaleString('en-IN')}
                 </div>
               </div>

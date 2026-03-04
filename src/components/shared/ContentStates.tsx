@@ -1,16 +1,11 @@
 import { cn } from '@/lib/utils';
 import { Loader2, AlertTriangle, RefreshCw, BookOpen, Pencil } from 'lucide-react';
-import { useTheme } from '@/hooks/useTheme';
-
 interface LoadingStateProps {
   contentType: 'homework' | 'classwork';
   message?: string;
 }
 
 export function ContentLoadingState({ contentType, message }: LoadingStateProps) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
-
   const Icon = contentType === 'homework' ? Pencil : BookOpen;
   const colorClass = contentType === 'homework' ? 'text-purple-500' : 'text-emerald-500';
   const bgGradient =
@@ -22,7 +17,7 @@ export function ContentLoadingState({ contentType, message }: LoadingStateProps)
     <div
       className={cn(
         'min-h-screen flex flex-col',
-        isDark ? 'bg-slate-900' : 'bg-gray-50'
+        'bg-gray-50'
       )}
     >
       {/* Mini header */}
@@ -54,12 +49,12 @@ export function ContentLoadingState({ contentType, message }: LoadingStateProps)
           <h2
             className={cn(
               'text-xl font-semibold mb-2',
-              isDark ? 'text-white' : 'text-gray-900'
+              'text-gray-900'
             )}
           >
             {message || `Loading ${contentType}...`}
           </h2>
-          <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-gray-500')}>
+          <p className={cn('text-sm', 'text-gray-500')}>
             Please wait while we fetch the content
           </p>
         </div>
@@ -75,9 +70,6 @@ interface ErrorStateProps {
 }
 
 export function ContentErrorState({ contentType, error, onRetry }: ErrorStateProps) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
-
   const Icon = contentType === 'homework' ? Pencil : BookOpen;
   const bgGradient =
     contentType === 'homework'
@@ -92,7 +84,7 @@ export function ContentErrorState({ contentType, error, onRetry }: ErrorStatePro
     <div
       className={cn(
         'min-h-screen flex flex-col',
-        isDark ? 'bg-slate-900' : 'bg-gray-50'
+        'bg-gray-50'
       )}
     >
       {/* Mini header */}
@@ -112,25 +104,23 @@ export function ContentErrorState({ contentType, error, onRetry }: ErrorStatePro
         <div
           className={cn(
             'max-w-md w-full rounded-2xl p-8 text-center',
-            isDark
-              ? 'bg-slate-800/50 border border-slate-700/50'
-              : 'bg-white border border-gray-200 shadow-lg'
+            'bg-white border border-gray-200 shadow-lg'
           )}
         >
           <div
             className={cn(
               'w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6',
-              isDark ? 'bg-red-500/20' : 'bg-red-100'
+              'bg-red-100'
             )}
           >
             <AlertTriangle
-              className={cn('w-8 h-8', isDark ? 'text-red-400' : 'text-red-600')}
+              className={cn('w-8 h-8', 'text-red-600')}
             />
           </div>
           <h2
             className={cn(
               'text-xl font-bold mb-3',
-              isDark ? 'text-white' : 'text-gray-900'
+              'text-gray-900'
             )}
           >
             Unable to Load Content
@@ -138,7 +128,7 @@ export function ContentErrorState({ contentType, error, onRetry }: ErrorStatePro
           <p
             className={cn(
               'text-sm mb-6',
-              isDark ? 'text-slate-400' : 'text-gray-600'
+              'text-gray-600'
             )}
           >
             {error}

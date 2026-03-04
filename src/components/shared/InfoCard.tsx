@@ -50,26 +50,19 @@ export function InfoCard({
   className,
 }: InfoCardProps) {
   const colors = colorSchemes[colorScheme];
-  const isDark = theme === 'dark';
 
   return (
     <div
       className={cn(
         'rounded-xl p-4 transition-all duration-300',
         variant === 'default' && [
-          isDark
-            ? 'bg-slate-800/50 border border-slate-700/50 hover:bg-slate-800/70'
-            : 'bg-white border border-gray-200 shadow-sm hover:shadow-md',
+          'bg-white border border-gray-200 shadow-sm hover:shadow-md',
         ],
         variant === 'gradient' && [
-          isDark
-            ? 'bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-slate-700/50'
-            : 'bg-gradient-to-br from-white to-gray-50 border border-gray-200 shadow-sm',
+          'bg-gradient-to-br from-white to-gray-50 border border-gray-200 shadow-sm',
         ],
         variant === 'highlight' && [
-          isDark
-            ? `bg-gradient-to-br from-${colorScheme}-500/10 to-${colorScheme}-600/5 border border-${colorScheme}-500/20`
-            : `bg-gradient-to-br from-${colorScheme}-50 to-${colorScheme}-100/50 border border-${colorScheme}-200`,
+          `bg-gradient-to-br from-${colorScheme}-50 to-${colorScheme}-100/50 border border-${colorScheme}-200`,
         ],
         className
       )}
@@ -79,7 +72,7 @@ export function InfoCard({
           <Icon
             className={cn(
               'w-5 h-5',
-              isDark ? colors.iconText : colors.iconTextLight
+              colors.iconTextLight
             )}
           />
         </div>
@@ -87,7 +80,7 @@ export function InfoCard({
           <p
             className={cn(
               'text-xs font-medium uppercase tracking-wider mb-1',
-              isDark ? 'text-slate-400' : 'text-gray-500'
+              'text-gray-500'
             )}
           >
             {label}
@@ -95,7 +88,7 @@ export function InfoCard({
           <div
             className={cn(
               'text-sm font-semibold',
-              isDark ? 'text-white' : 'text-gray-900'
+              'text-gray-900'
             )}
           >
             {value}
@@ -112,38 +105,36 @@ interface StatusBadgeProps {
   theme?: 'dark' | 'light';
 }
 
-export function StatusBadge({ status, theme = 'dark' }: StatusBadgeProps) {
-  const isDark = theme === 'dark';
-
+export function StatusBadge({ status }: StatusBadgeProps) {
   const statusConfig = {
     overdue: {
-      bg: isDark ? 'bg-red-500/20' : 'bg-red-100',
-      text: isDark ? 'text-red-400' : 'text-red-700',
-      border: isDark ? 'border-red-500/30' : 'border-red-300',
+      bg: 'bg-red-100',
+      text: 'text-red-700',
+      border: 'border-red-300',
       label: 'Overdue',
     },
     'due-today': {
-      bg: isDark ? 'bg-amber-500/20' : 'bg-amber-100',
-      text: isDark ? 'text-amber-400' : 'text-amber-700',
-      border: isDark ? 'border-amber-500/30' : 'border-amber-300',
+      bg: 'bg-amber-100',
+      text: 'text-amber-700',
+      border: 'border-amber-300',
       label: 'Due Today',
     },
     'due-tomorrow': {
-      bg: isDark ? 'bg-blue-500/20' : 'bg-blue-100',
-      text: isDark ? 'text-blue-400' : 'text-blue-700',
-      border: isDark ? 'border-blue-500/30' : 'border-blue-300',
+      bg: 'bg-blue-100',
+      text: 'text-blue-700',
+      border: 'border-blue-300',
       label: 'Due Tomorrow',
     },
     upcoming: {
-      bg: isDark ? 'bg-emerald-500/20' : 'bg-emerald-100',
-      text: isDark ? 'text-emerald-400' : 'text-emerald-700',
-      border: isDark ? 'border-emerald-500/30' : 'border-emerald-300',
+      bg: 'bg-emerald-100',
+      text: 'text-emerald-700',
+      border: 'border-emerald-300',
       label: 'Upcoming',
     },
     completed: {
-      bg: isDark ? 'bg-green-500/20' : 'bg-green-100',
-      text: isDark ? 'text-green-400' : 'text-green-700',
-      border: isDark ? 'border-green-500/30' : 'border-green-300',
+      bg: 'bg-green-100',
+      text: 'text-green-700',
+      border: 'border-green-300',
       label: 'Completed',
     },
   };

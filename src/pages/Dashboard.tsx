@@ -176,7 +176,7 @@ export default function Dashboard() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
               >
-                <Card className="border-2 border-orange-200 dark:border-orange-800 bg-gradient-to-r from-orange-50 via-yellow-50 to-amber-50 dark:from-orange-950/20 dark:via-yellow-950/20 dark:to-amber-950/20">
+                <Card className="border-2 border-orange-200 bg-gradient-to-r from-orange-50 via-yellow-50 to-amber-50">
                   <CardContent className="p-4 sm:p-6">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
@@ -211,7 +211,7 @@ export default function Dashboard() {
 
                     {/* Recent enrollments notification */}
                     {sportsEnrollments.length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-orange-200 dark:border-orange-800">
+                      <div className="mt-4 pt-4 border-t border-orange-200">
                         <p className="text-xs font-semibold text-muted-foreground mb-2">🔔 Recent Enrollments</p>
                         <div className="space-y-2">
                           {sportsEnrollments.slice(0, 5).map((enrollment) => (

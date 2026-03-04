@@ -218,40 +218,40 @@ const ParentFeedbackSearch: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-900 via-zinc-900 to-black">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100">
       {/* Hero Header */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-emerald-600/20 blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full bg-teal-600/20 blur-3xl" />
+          <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-emerald-100/60 blur-3xl" />
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full bg-teal-100/60 blur-3xl" />
         </div>
         <div className="relative container mx-auto px-4 py-12">
           <Button
             variant="ghost"
             onClick={() => navigate('/')}
-            className="text-zinc-400 hover:text-white hover:bg-zinc-800 mb-6"
+            className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 mb-6"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Home
           </Button>
           
           <div className="text-center max-w-2xl mx-auto">
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium mb-6">
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-medium mb-6">
               📋 Student Progress
             </span>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
               {SCHOOL_INFO?.name || 'School'}
             </h1>
-            <p className="text-zinc-400 text-lg mb-4">
+            <p className="text-gray-500 text-lg mb-4">
               Student Feedback &{" "}
-              <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
                 Certificate Portal
               </span>
             </p>
             <Button
               variant="outline"
               onClick={() => setIsModalOpen(true)}
-              className="text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+              className="text-emerald-700 border-emerald-300 hover:bg-emerald-50"
             >
               Submit Your Feedback About Your Child
             </Button>
@@ -261,10 +261,10 @@ const ParentFeedbackSearch: React.FC = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
-        <Card className="max-w-4xl mx-auto mb-8 bg-zinc-900/80 border-zinc-800">
+        <Card className="max-w-4xl mx-auto mb-8 bg-white/80 border-gray-200 shadow-sm">
           <CardHeader className="text-center">
-            <CardTitle className="text-xl font-bold text-white">Search Student Feedback</CardTitle>
-            <CardDescription className="text-zinc-400">Select class and student to view feedback and certificate</CardDescription>
+            <CardTitle className="text-xl font-bold">Search Student Feedback</CardTitle>
+            <CardDescription>Select class and student to view feedback and certificate</CardDescription>
           </CardHeader>
           <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

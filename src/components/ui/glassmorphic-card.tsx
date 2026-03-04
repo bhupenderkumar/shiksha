@@ -24,9 +24,6 @@ export function GlassmorphicCard({
   animated = false,
   shimmer = false,
 }: GlassmorphicCardProps) {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
-
   // Mouse hover state for enhanced effects
   const [isHovered, setIsHovered] = useState(false);
 
@@ -34,30 +31,26 @@ export function GlassmorphicCard({
   const intensityLevels = {
     low: {
       blur: "backdrop-blur-sm",
-      bg: isDark ? "bg-black/10" : "bg-white/10",
-      border: isDark ? "border-white/5" : "border-black/5",
+      bg: "bg-white/10",
+      border: "border-black/5",
     },
     medium: {
       blur: "backdrop-blur-md",
-      bg: isDark ? "bg-black/20" : "bg-white/20",
-      border: isDark ? "border-white/10" : "border-black/10",
+      bg: "bg-white/20",
+      border: "border-black/10",
     },
     high: {
       blur: "backdrop-blur-lg",
-      bg: isDark ? "bg-black/30" : "bg-white/30",
-      border: isDark ? "border-white/20" : "border-black/20",
+      bg: "bg-white/30",
+      border: "border-black/20",
     },
   };
 
   // Border glow effect - enhanced when hovered
   const glowEffect = borderGlow
-    ? isDark
-      ? isHovered
-        ? "border-primary/50 shadow-[0_0_20px_rgba(var(--primary),0.4)]"
-        : "border-primary/30 shadow-[0_0_15px_rgba(var(--primary),0.2)]"
-      : isHovered
-        ? "border-primary/50 shadow-[0_0_20px_rgba(var(--primary),0.3)]"
-        : "border-primary/30 shadow-[0_0_15px_rgba(var(--primary),0.15)]"
+    ? isHovered
+      ? "border-primary/50 shadow-[0_0_20px_rgba(var(--primary),0.3)]"
+      : "border-primary/30 shadow-[0_0_15px_rgba(var(--primary),0.15)]"
     : "";
 
   // Hover effects - more pronounced

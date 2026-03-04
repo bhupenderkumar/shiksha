@@ -20,8 +20,6 @@ interface ClassroomFeaturesProps {
 
 export function ClassroomFeatures({ features, className = "" }: ClassroomFeaturesProps) {
   const { theme } = useTheme();
-  const isDark = theme === "dark";
-
   // Animation variants
   const containerAnimation = {
     hidden: { opacity: 0 },
@@ -45,14 +43,14 @@ export function ClassroomFeatures({ features, className = "" }: ClassroomFeature
   };
 
   const classroomElements = {
-    whiteboard: isDark ? "#d8dee9" : "#f8f9fa",
-    desk: isDark ? "#4c566a" : "#adb5bd",
-    floor: isDark ? "#2e3440" : "#e9ecef",
-    wall: isDark ? "#3b4252" : "#f1f3f5",
+    whiteboard: "#f8f9fa",
+    desk: "#adb5bd",
+    floor: "#e9ecef",
+    wall: "#f1f3f5",
   };
 
   return (
-    <section className={`py-20 ${isDark ? "bg-gray-900/50" : "bg-muted/50"} ${className}`}>
+    <section className={`py-20 ${"bg-muted/50"} ${className}`}>
       <div className="container mx-auto px-4">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
           Why Choose <GradientText>{SCHOOL_INFO.name}</GradientText>
@@ -88,7 +86,7 @@ export function ClassroomFeatures({ features, className = "" }: ClassroomFeature
                     width: "80%",
                     height: "40px",
                     background: classroomElements.whiteboard,
-                    border: `2px solid ${isDark ? "#4c566a" : "#ced4da"}`,
+                    border: `2px solid ${"#ced4da"}`,
                   }}
                 >
                   <div className="text-center text-xs font-bold pt-2">

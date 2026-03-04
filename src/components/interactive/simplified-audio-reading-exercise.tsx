@@ -302,7 +302,7 @@ export function SimplifiedAudioReadingExercise({
                             key={option}
                             className={`
                               flex items-start space-x-2 p-2 rounded
-                              ${isOptionCorrect ? 'bg-green-100 dark:bg-green-900/40' : ''}
+                              ${isOptionCorrect ? 'bg-green-100' : ''}
                             `}
                           >
                             <RadioGroupItem value={option} id={`${question.id}-${option}`} />

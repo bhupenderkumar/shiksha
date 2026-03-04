@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { useTheme } from "@/lib/theme-provider";
 import { useEffect, useState } from "react";
 
 interface AnimatedBackgroundProps {
@@ -13,8 +12,7 @@ export function AnimatedBackground({
   className = "",
   interactive = true,
 }: AnimatedBackgroundProps) {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
+
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [particles, setParticles] = useState<Array<{
     id: number;
@@ -40,9 +38,7 @@ export function AnimatedBackground({
   
   // Generate particles
   useEffect(() => {
-    const colors = isDark 
-      ? ['#88c0d0', '#81a1c1', '#b48ead', '#ebcb8b', '#a3be8c']
-      : ['#ff9b71', '#e84855', '#4e4187', '#2a9d8f', '#f9c74f'];
+    const colors = ['#ff9b71', '#e84855', '#4e4187', '#2a9d8f', '#f9c74f'];
       
     const newParticles = Array.from({ length: particleCount }, (_, i) => ({
       id: i,
@@ -55,7 +51,7 @@ export function AnimatedBackground({
     }));
     
     setParticles(newParticles);
-  }, [isDark, particleCount]);
+  }, [particleCount]);
 
   return (
     <div className={`fixed inset-0 pointer-events-none overflow-hidden ${className}`}>
@@ -93,7 +89,7 @@ export function AnimatedBackground({
             left: mousePosition.x - 150,
             top: mousePosition.y - 150,
             background: `radial-gradient(circle at center, ${
-              isDark ? 'rgba(136, 192, 208, 0.3)' : 'rgba(255, 155, 113, 0.3)'
+              'rgba(255, 155, 113, 0.3)'
             } 0%, transparent 70%)`,
             transition: 'left 0.3s ease-out, top 0.3s ease-out'
           }}
@@ -104,8 +100,8 @@ export function AnimatedBackground({
       <div 
         className="absolute inset-0 opacity-20"
         style={{
-          backgroundImage: `linear-gradient(to right, ${isDark ? '#ffffff10' : '#00000010'} 1px, transparent 1px),
-                           linear-gradient(to bottom, ${isDark ? '#ffffff10' : '#00000010'} 1px, transparent 1px)`,
+          backgroundImage: `linear-gradient(to right, ${'#00000010'} 1px, transparent 1px),
+                           linear-gradient(to bottom, ${'#00000010'} 1px, transparent 1px)`,
           backgroundSize: '40px 40px'
         }}
       />
@@ -116,7 +112,7 @@ export function AnimatedBackground({
           className="absolute inset-0" 
           style={{
             backgroundImage: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, 
-              ${isDark ? 'rgba(136, 192, 208, 0.1)' : 'rgba(255, 155, 113, 0.1)'} 0%, 
+              ${'rgba(255, 155, 113, 0.1)'} 0%, 
               transparent 15%)`
           }}
         />

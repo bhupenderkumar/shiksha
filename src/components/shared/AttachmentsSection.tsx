@@ -57,7 +57,6 @@ export function AttachmentsSection({
   showCard = true,
   onDownload,
 }: AttachmentsSectionProps) {
-  const isDark = theme === 'dark';
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
@@ -99,13 +98,13 @@ export function AttachmentsSection({
           <div className="flex items-center gap-2">
             <div className={cn(
               "w-8 h-8 rounded-lg flex items-center justify-center",
-              isDark ? "bg-pink-500/20" : "bg-pink-100"
+              "bg-pink-100"
             )}>
-              <ImageIcon className={cn("w-4 h-4", isDark ? "text-pink-400" : "text-pink-600")} />
+              <ImageIcon className={cn("w-4 h-4", "text-pink-600")} />
             </div>
             <span className={cn(
               "font-medium text-sm",
-              isDark ? "text-white" : "text-gray-900"
+              "text-gray-900"
             )}>
               Images
             </span>
@@ -116,7 +115,7 @@ export function AttachmentsSection({
           
           <p className={cn(
             "text-xs",
-            isDark ? "text-gray-500" : "text-gray-400"
+            "text-gray-400"
           )}>
             Tap to view full screen • Pinch to zoom
           </p>
@@ -129,9 +128,7 @@ export function AttachmentsSection({
                 className={cn(
                   "relative aspect-square rounded-xl overflow-hidden group transition-all duration-200",
                   "focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2",
-                  isDark 
-                    ? "bg-gray-800 hover:ring-2 hover:ring-indigo-400" 
-                    : "bg-gray-100 hover:ring-2 hover:ring-indigo-300"
+                  "bg-gray-100 hover:ring-2 hover:ring-indigo-300"
                 )}
               >
                 {attachment.url ? (
@@ -143,7 +140,7 @@ export function AttachmentsSection({
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <ImageIcon className={cn("w-8 h-8", isDark ? "text-gray-600" : "text-gray-300")} />
+                    <ImageIcon className={cn("w-8 h-8", "text-gray-300")} />
                   </div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
@@ -168,13 +165,13 @@ export function AttachmentsSection({
           <div className="flex items-center gap-2">
             <div className={cn(
               "w-8 h-8 rounded-lg flex items-center justify-center",
-              isDark ? "bg-cyan-500/20" : "bg-cyan-100"
+              "bg-cyan-100"
             )}>
-              <Paperclip className={cn("w-4 h-4", isDark ? "text-cyan-400" : "text-cyan-600")} />
+              <Paperclip className={cn("w-4 h-4", "text-cyan-600")} />
             </div>
             <span className={cn(
               "font-medium text-sm",
-              isDark ? "text-white" : "text-gray-900"
+              "text-gray-900"
             )}>
               Files
             </span>
@@ -189,28 +186,26 @@ export function AttachmentsSection({
                 key={attachment.id}
                 className={cn(
                   "flex items-center justify-between p-3 rounded-xl transition-colors",
-                  isDark 
-                    ? "bg-gray-800/50 hover:bg-gray-800" 
-                    : "bg-gray-50 hover:bg-gray-100"
+                  "bg-gray-50 hover:bg-gray-100"
                 )}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className={cn(
                     "w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0",
-                    isDark ? "bg-indigo-500/20" : "bg-indigo-100"
+                    "bg-indigo-100"
                   )}>
-                    <FileText className={cn("w-5 h-5", isDark ? "text-indigo-400" : "text-indigo-600")} />
+                    <FileText className={cn("w-5 h-5", "text-indigo-600")} />
                   </div>
                   <div className="min-w-0">
                     <p className={cn(
                       "text-sm font-medium truncate",
-                      isDark ? "text-white" : "text-gray-900"
+                      "text-gray-900"
                     )}>
                       {attachment.fileName}
                     </p>
                     <p className={cn(
                       "text-xs uppercase",
-                      isDark ? "text-gray-500" : "text-gray-400"
+                      "text-gray-400"
                     )}>
                       {attachment.fileType || getFileExtension(attachment.fileName)}
                     </p>
@@ -218,7 +213,7 @@ export function AttachmentsSection({
                 </div>
                 <Button
                   size="sm"
-                  variant={isDark ? "secondary" : "outline"}
+                  variant={"outline"}
                   onClick={() => handleDownload(attachment)}
                   className="flex-shrink-0 gap-1.5"
                 >
@@ -254,19 +249,19 @@ export function AttachmentsSection({
   return (
     <Card className={cn(
       "border-0 shadow-xl",
-      isDark ? "bg-gray-900" : "bg-white",
+      "bg-white",
       className
     )}>
       <CardHeader className="pb-3">
         <CardTitle className={cn(
           "text-lg flex items-center gap-2",
-          isDark ? "text-white" : "text-gray-900"
+          "text-gray-900"
         )}>
           <div className={cn(
             "w-8 h-8 rounded-lg flex items-center justify-center",
-            isDark ? "bg-indigo-500/20" : "bg-indigo-100"
+            "bg-indigo-100"
           )}>
-            <Paperclip className={cn("w-4 h-4", isDark ? "text-indigo-400" : "text-indigo-600")} />
+            <Paperclip className={cn("w-4 h-4", "text-indigo-600")} />
           </div>
           <span>{title}</span>
           <Badge variant="secondary" className="ml-auto">{attachments.length}</Badge>

@@ -168,9 +168,9 @@ const DateSheet: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Professional Header Section */}
-      <div className="bg-white dark:bg-gray-900 border-b-4 border-blue-600 shadow-lg print:shadow-none">
+      <div className="bg-white border-b-4 border-blue-600 shadow-lg print:shadow-none">
         <div className="container mx-auto max-w-6xl px-4 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {/* School Branding */}
@@ -179,17 +179,17 @@ const DateSheet: React.FC = () => {
                 <School className="w-12 h-12 md:w-14 md:h-14 text-white" />
               </div>
               <div className="text-center md:text-left">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-tight uppercase">
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight uppercase">
                   {SCHOOL_INFO.name}
                 </h1>
-                <p className="text-blue-600 dark:text-blue-400 font-medium text-sm md:text-base italic">
+                <p className="text-blue-600 font-medium text-sm md:text-base italic">
                   {SCHOOL_INFO.tagline}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400 text-xs md:text-sm mt-1 flex items-center gap-1">
+                <p className="text-gray-600 text-xs md:text-sm mt-1 flex items-center gap-1">
                   <span className="inline-block w-4 h-4">📍</span>
                   Saurabh Vihar, Jaitpur, Badarpur, New Delhi - 110044
                 </p>
-                <p className="text-gray-500 dark:text-gray-500 text-xs mt-0.5">
+                <p className="text-gray-500 text-xs mt-0.5">
                   📞 {SCHOOL_INFO.phone} | ✉️ {SCHOOL_INFO.email}
                 </p>
               </div>
@@ -218,32 +218,32 @@ const DateSheet: React.FC = () => {
       {/* Main Content */}
       <div className="container mx-auto max-w-6xl px-4 py-8">
         {/* Title Card */}
-        <Card className="mb-6 border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+        <Card className="mb-6 border-0 shadow-lg bg-white/80 backdrop-blur-sm">
           <CardHeader className="text-center pb-4">
             <div className="flex justify-center mb-4">
               <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-lg px-6 py-2 font-semibold">
                 Unit Test - 4
               </Badge>
             </div>
-            <CardTitle className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white flex items-center justify-center gap-3">
+            <CardTitle className="text-2xl md:text-3xl font-bold text-gray-800 flex items-center justify-center gap-3">
               <Calendar className="w-8 h-8 text-blue-600" />
               Examination Date Sheet
             </CardTitle>
-            <p className="text-gray-600 dark:text-gray-300 mt-2 text-sm md:text-base">
+            <p className="text-gray-600 mt-2 text-sm md:text-base">
               Academic Session 2025-26
             </p>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap justify-center gap-4 mb-6 text-sm">
-              <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/30 px-4 py-2 rounded-full">
-                <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                <span className="text-gray-700 dark:text-gray-300">
+              <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-full">
+                <Clock className="w-4 h-4 text-blue-600" />
+                <span className="text-gray-700">
                   Exam Time: 09:00 AM - 11:00 AM | School Dispersal: As Usual
                 </span>
               </div>
-              <div className="flex items-center gap-2 bg-green-50 dark:bg-green-900/30 px-4 py-2 rounded-full">
-                <BookOpen className="w-4 h-4 text-green-600 dark:text-green-400" />
-                <span className="text-gray-700 dark:text-gray-300">
+              <div className="flex items-center gap-2 bg-green-50 px-4 py-2 rounded-full">
+                <BookOpen className="w-4 h-4 text-green-600" />
+                <span className="text-gray-700">
                   Classes: Pre Nursery to Class V
                 </span>
               </div>
@@ -252,7 +252,7 @@ const DateSheet: React.FC = () => {
         </Card>
 
         {/* Date Sheet Table */}
-        <Card className="border-0 shadow-lg bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm overflow-hidden">
+        <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm overflow-hidden">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table className="relative">
@@ -295,43 +295,43 @@ const DateSheet: React.FC = () => {
                     <TableRow
                       key={index}
                       className={cn(
-                        'hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors',
-                        index % 2 === 0 ? 'bg-gray-50/50 dark:bg-gray-700/30' : 'bg-white dark:bg-gray-800'
+                        'hover:bg-blue-50/50 transition-colors',
+                        index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'
                       )}
                     >
                       <TableCell className={cn(
-                        "font-semibold text-center border-r border-gray-200 dark:border-gray-700 py-3 sticky left-0 z-10 min-w-[100px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]",
-                        index % 2 === 0 ? 'bg-gray-50 dark:bg-gray-700' : 'bg-white dark:bg-gray-800'
+                        "font-semibold text-center border-r border-gray-200 py-3 sticky left-0 z-10 min-w-[100px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]",
+                        index % 2 === 0 ? 'bg-gray-50' : 'bg-white'
                       )}>
-                        <span className="bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-2 py-1 rounded text-sm">
+                        <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-sm">
                           {row.date}
                         </span>
                       </TableCell>
                       <TableCell className={cn(
-                        "text-center border-r border-gray-200 dark:border-gray-700 py-3 font-medium text-gray-700 dark:text-gray-300 sticky left-[100px] z-10 min-w-[90px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]",
-                        index % 2 === 0 ? 'bg-gray-50 dark:bg-gray-700' : 'bg-white dark:bg-gray-800'
+                        "text-center border-r border-gray-200 py-3 font-medium text-gray-700 sticky left-[100px] z-10 min-w-[90px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]",
+                        index % 2 === 0 ? 'bg-gray-50' : 'bg-white'
                       )}>
                         {row.day}
                       </TableCell>
-                      <TableCell className="text-center border-r border-gray-200 dark:border-gray-700 py-3">
+                      <TableCell className="text-center border-r border-gray-200 py-3">
                         <SubjectBadge subject={row.preNursery} />
                       </TableCell>
-                      <TableCell className="text-center border-r border-gray-200 dark:border-gray-700 py-3">
+                      <TableCell className="text-center border-r border-gray-200 py-3">
                         <SubjectBadge subject={row.nursery} />
                       </TableCell>
-                      <TableCell className="text-center border-r border-gray-200 dark:border-gray-700 py-3">
+                      <TableCell className="text-center border-r border-gray-200 py-3">
                         <SubjectBadge subject={row.kg} />
                       </TableCell>
-                      <TableCell className="text-center border-r border-gray-200 dark:border-gray-700 py-3">
+                      <TableCell className="text-center border-r border-gray-200 py-3">
                         <SubjectBadge subject={row.classI} />
                       </TableCell>
-                      <TableCell className="text-center border-r border-gray-200 dark:border-gray-700 py-3">
+                      <TableCell className="text-center border-r border-gray-200 py-3">
                         <SubjectBadge subject={row.classII} />
                       </TableCell>
-                      <TableCell className="text-center border-r border-gray-200 dark:border-gray-700 py-3">
+                      <TableCell className="text-center border-r border-gray-200 py-3">
                         <SubjectBadge subject={row.classIII} />
                       </TableCell>
-                      <TableCell className="text-center border-r border-gray-200 dark:border-gray-700 py-3">
+                      <TableCell className="text-center border-r border-gray-200 py-3">
                         <SubjectBadge subject={row.classIV} />
                       </TableCell>
                       <TableCell className="text-center py-3">
@@ -346,11 +346,11 @@ const DateSheet: React.FC = () => {
         </Card>
 
         {/* Syllabus Note */}
-        <Card className="mt-6 border-0 shadow-lg bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
+        <Card className="mt-6 border-0 shadow-lg bg-gradient-to-r from-green-50 to-emerald-50">
           <CardContent className="py-6">
             <div className="flex items-center justify-center gap-3">
-              <BookOpen className="w-6 h-6 text-green-600 dark:text-green-400" />
-              <p className="text-lg font-semibold text-green-800 dark:text-green-300">
+              <BookOpen className="w-6 h-6 text-green-600" />
+              <p className="text-lg font-semibold text-green-800">
                 📚 Syllabus has already been shared with students
               </p>
             </div>
@@ -358,10 +358,10 @@ const DateSheet: React.FC = () => {
         </Card>
 
         {/* Contact Section with WhatsApp */}
-        <Card className="mt-6 border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+        <Card className="mt-6 border-0 shadow-lg bg-white/80 backdrop-blur-sm">
           <CardContent className="py-6">
             <div className="text-center mb-4">
-              <p className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
+              <p className="text-lg font-semibold text-gray-800 mb-2">
                 For any queries, contact us via:
               </p>
             </div>
@@ -396,7 +396,7 @@ const DateSheet: React.FC = () => {
               </a>
             </div>
             
-            <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+            <div className="mt-6 text-center text-sm text-gray-500">
               <p className="flex items-center justify-center gap-2">
                 <Phone className="w-4 h-4" />
                 {SCHOOL_INFO.phone}
@@ -410,7 +410,7 @@ const DateSheet: React.FC = () => {
         </Card>
 
         {/* Footer */}
-        <div className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400 print:mt-4">
+        <div className="mt-8 text-center text-sm text-gray-500 print:mt-4">
           <p>© {new Date().getFullYear()} {SCHOOL_INFO.name}. All rights reserved.</p>
           <p className="mt-1">Wishing all students the very best for their examinations! 🎓</p>
         </div>
@@ -441,21 +441,21 @@ const DateSheet: React.FC = () => {
 // Subject Badge Component
 const SubjectBadge: React.FC<{ subject: string }> = ({ subject }) => {
   if (subject === '-') {
-    return <span className="text-gray-400 dark:text-gray-500">—</span>;
+    return <span className="text-gray-400">—</span>;
   }
 
   const getSubjectColor = (subj: string) => {
     const subjectLower = subj.toLowerCase();
-    if (subjectLower.includes('eng')) return 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300';
-    if (subjectLower.includes('math') || subjectLower.includes('mental')) return 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300';
-    if (subjectLower.includes('hindi')) return 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300';
-    if (subjectLower.includes('evs')) return 'bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-300';
-    if (subjectLower.includes('science')) return 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300';
-    if (subjectLower.includes('computer')) return 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300';
-    if (subjectLower.includes('sanskrit')) return 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300';
-    if (subjectLower.includes('drawing') || subjectLower.includes('gk')) return 'bg-pink-100 text-pink-700 dark:bg-pink-900/50 dark:text-pink-300';
-    if (subjectLower.includes('yoga') || subjectLower.includes('vocational')) return 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-300';
-    return 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
+    if (subjectLower.includes('eng')) return 'bg-blue-100 text-blue-700';
+    if (subjectLower.includes('math') || subjectLower.includes('mental')) return 'bg-green-100 text-green-700';
+    if (subjectLower.includes('hindi')) return 'bg-orange-100 text-orange-700';
+    if (subjectLower.includes('evs')) return 'bg-teal-100 text-teal-700';
+    if (subjectLower.includes('science')) return 'bg-purple-100 text-purple-700';
+    if (subjectLower.includes('computer')) return 'bg-indigo-100 text-indigo-700';
+    if (subjectLower.includes('sanskrit')) return 'bg-amber-100 text-amber-700';
+    if (subjectLower.includes('drawing') || subjectLower.includes('gk')) return 'bg-pink-100 text-pink-700';
+    if (subjectLower.includes('yoga') || subjectLower.includes('vocational')) return 'bg-cyan-100 text-cyan-700';
+    return 'bg-gray-100 text-gray-700';
   };
 
   return (

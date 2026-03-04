@@ -15,15 +15,13 @@ export function StudentCharacter({
   delay = 0
 }: StudentCharacterProps) {
   const { theme } = useTheme();
-  const isDark = theme === "dark";
-
   // Character colors
   const colors = {
-    skin: isDark ? "#e0b088" : "#ffcba4",
-    shirt: isDark ? "#5e81ac" : "#4dabf7",
-    pants: isDark ? "#2e3440" : "#495057",
-    hair: isDark ? "#2e3440" : "#212529",
-    shoes: isDark ? "#2e3440" : "#212529",
+    skin: "#ffcba4",
+    shirt: "#4dabf7",
+    pants: "#495057",
+    hair: "#212529",
+    shoes: "#212529",
   };
 
   // Animation variants
@@ -101,13 +99,13 @@ export function StudentCharacter({
         />
         
         {/* Eyes */}
-        <circle cx="25" cy="18" r="2" fill={isDark ? "#ffffff" : "#000000"} />
-        <circle cx="35" cy="18" r="2" fill={isDark ? "#ffffff" : "#000000"} />
+        <circle cx="25" cy="18" r="2" fill={"#000000"} />
+        <circle cx="35" cy="18" r="2" fill={"#000000"} />
         
         {/* Smile */}
         <path
           d="M25 25C25 25 27 28 30 28C33 28 35 25 35 25"
-          stroke={isDark ? "#ffffff" : "#000000"}
+          stroke={"#000000"}
           strokeWidth="1.5"
           strokeLinecap="round"
         />
@@ -128,7 +126,7 @@ export function StudentCharacter({
         <rect x="30" y="90" width="12" height="5" rx="2.5" fill={colors.shoes} />
         
         {/* Backpack */}
-        <rect x="15" y="40" width="10" height="15" rx="2" fill={isDark ? "#bf616a" : "#ff6b6b"} />
+        <rect x="15" y="40" width="10" height="15" rx="2" fill={"#ff6b6b"} />
       </svg>
     </motion.div>
   );

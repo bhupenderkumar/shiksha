@@ -24,6 +24,7 @@ import {
   ClipboardList,
   Star,
   Cake,
+  Mic,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { useAuth } from '@/lib/auth-provider';
@@ -53,19 +54,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const menuItems = [
     { id: 1, icon: Home, label: 'Dashboard', path: ROUTES.DASHBOARD },
-    { id: 20, icon: LayoutDashboard, label: 'Student Dashboard', path: '/student-dashboard' },
+    { id: 20, icon: LayoutDashboard, label: 'Student Dashboard', path: '/student-dashboard', role: 'student' },
     { id: 9, icon: Bell, label: 'Notifications', path: '/notifications' },
-    { id: 2, icon: Users, label: 'Students', path: ROUTES.STUDENTS },
-    { id: 21, icon: GraduationCap, label: 'Subjects', path: '/subjects' },
+    { id: 2, icon: Users, label: 'Students', path: ROUTES.STUDENTS, role: 'teacher' },
+    { id: 21, icon: GraduationCap, label: 'Subjects', path: '/subjects', role: 'teacher' },
     { id: 3, icon: BookOpen, label: 'Homework', path: ROUTES.HOMEWORK },
     { id: 4, icon: BookOpen, label: 'Classwork', path: ROUTES.CLASSWORK },
-    { id: 13, icon: Puzzle, label: 'Interactive Assignments', path: ROUTES.INTERACTIVE_ASSIGNMENTS },
+    { id: 13, icon: Puzzle, label: 'Interactive Assignments', path: ROUTES.INTERACTIVE_ASSIGNMENTS, role: 'teacher' },
     { id: 5, icon: Calendar, label: 'Attendance', path: ROUTES.ATTENDANCE },
-    { id: 6, icon: CreditCard, label: 'Fees', path: ROUTES.FEES },
-    { id: 7, icon: MessageSquare, label: 'Feedback', path: ROUTES.FEEDBACK },
+    { id: 6, icon: CreditCard, label: 'Fees', path: ROUTES.FEES, role: 'teacher' },
+    { id: 7, icon: MessageSquare, label: 'Feedback', path: ROUTES.FEEDBACK, role: 'teacher' },
 
     // Year End Feedback Section
-    { id: 22, icon: Star, label: 'Year End Feedback', path: '/year-end-feedback' },
+    { id: 22, icon: Star, label: 'Year End Feedback', path: '/year-end-feedback', role: 'teacher' },
     { id: 23, icon: Star, label: 'View Year End Feedback', path: '/view-year-end-feedback', role: 'admin' },
 
     // Admission Section
@@ -74,9 +75,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     // Parent Feedback Section
     { id: 14, icon: FileText, label: 'Create Parent Feedback', path: ROUTES.PARENT_FEEDBACK_LIST, role: 'admin' },
     { id: 15, icon: MessageCircle, label: 'Parent Submitted Feedback', path: '/parent-submitted-feedback-list', role: 'admin' },
+    { id: 28, icon: Mic, label: 'School Feedback (Voice)', path: ROUTES.ADMIN_SCHOOL_FEEDBACK, role: 'admin' },
     { id: 16, icon: ListChecks, label: 'View All Parent Feedback', path: ROUTES.VIEW_ALL_PARENT_FEEDBACK, role: 'admin' },
     { id: 17, icon: MessageSquare, label: 'Parent Feedback Search', path: ROUTES.PARENT_FEEDBACK_SEARCH },
-    { id: 18, icon: MessageCircle, label: 'Submit Admin Feedback', path: ROUTES.ADMIN_FEEDBACK },
+    { id: 18, icon: MessageCircle, label: 'Submit Admin Feedback', path: ROUTES.ADMIN_FEEDBACK, role: 'admin' },
 
     { id: 8, icon: Settings, label: 'Settings', path: ROUTES.SETTINGS },
     { id: 10, icon: Users, label: 'Profile', path: '/profile' },
@@ -84,6 +86,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { id: 12, icon: IdCard, label: 'ID Card Details', path: '/idcarddetails', role: 'admin' },
     { id: 19, icon: IdCard, label: 'View All ID Cards', path: '/id-cards', role: 'admin' },
     { id: 25, icon: Cake, label: 'Birthdays', path: '/birthdays' },
+
+    // Unit Test Section
+    { id: 26, icon: FileText, label: 'UT4 Marks Entry', path: ROUTES.UNIT_TEST_MARKS, role: 'admin' },
+    { id: 27, icon: ClipboardList, label: 'UT4 Report & Requests', path: ROUTES.UNIT_TEST_REPORT, role: 'admin' },
   ];
 
   const variants = {
@@ -117,7 +123,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <div className="flex flex-col min-h-screen bg-background text-foreground">
         <NoInternet />
         {/* Header */}
-        <header className="fixed top-0 w-full z-50 border-b bg-background/80 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60">
+        <header className="fixed top-0 w-full z-50 border-b bg-background">
           <div className="container mx-auto flex items-center justify-between p-4">
             <motion.div
               key="header-left"
@@ -208,7 +214,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             )}
           >
             <nav className="h-full p-4 space-y-2 overflow-y-auto">
-              {menuItems.filter(item => !item.role || (item.role === 'admin' && user.role === 'admin') || (item.role === 'teacher' && user.role === 'teacher')).map((item) => {
+              {menuItems.filter(item => {
+                const userRole = user.role?.toUpperCase();
+                // No role restriction — visible to all
+                if (!item.role) return true;
+                // Admin sees everything
+                if (userRole === 'ADMIN') return true;
+                // Teacher sees teacher + student items
+                if (userRole === 'TEACHER') return item.role === 'teacher' || item.role === 'student';
+                // Student sees only student items
+                if (userRole === 'STUDENT') return item.role === 'student';
+                return false;
+              }).map((item) => {
                 const isActive = location.pathname === item.path;
                 const Icon = item.icon;
 

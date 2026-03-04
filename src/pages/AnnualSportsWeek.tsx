@@ -627,7 +627,7 @@ const sportsWeekDays: DaySchedule[] = [
     dayLabel: { en: 'Day 1 — Monday, Feb 16', hi: 'दिन 1 — सोमवार, 16 फरवरी' },
     tagline: { en: 'Indoor Classics & Track Fun', hi: 'इनडोर क्लासिक्स और ट्रैक मस्ती' },
     color: 'from-blue-500 to-cyan-400',
-    bgGradient: 'from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30',
+    bgGradient: 'from-blue-50 to-cyan-50',
     icon: '🏁',
     games: [
       { en: 'Ludo', hi: 'लूडो', category: 'fun', emoji: '🎲' },
@@ -648,7 +648,7 @@ const sportsWeekDays: DaySchedule[] = [
     dayLabel: { en: 'Day 2 — Tuesday, Feb 17', hi: 'दिन 2 — मंगलवार, 17 फरवरी' },
     tagline: { en: 'Jump, Sprint & Balance', hi: 'कूदो, दौड़ो और संतुलन बनाओ' },
     color: 'from-orange-500 to-amber-400',
-    bgGradient: 'from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30',
+    bgGradient: 'from-orange-50 to-amber-50',
     icon: '🏅',
     games: [
       { en: 'Jump Race', hi: 'जंप रेस', category: 'medal', emoji: '🦘' },
@@ -665,7 +665,7 @@ const sportsWeekDays: DaySchedule[] = [
     dayLabel: { en: 'Day 3 — Wednesday, Feb 18', hi: 'दिन 3 — बुधवार, 18 फरवरी' },
     tagline: { en: 'Sports + Creative Arts', hi: 'खेल + रचनात्मक कला' },
     color: 'from-green-500 to-emerald-400',
-    bgGradient: 'from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30',
+    bgGradient: 'from-green-50 to-emerald-50',
     icon: '⚽',
     games: [
       { en: 'Basketball', hi: 'बास्केटबॉल', category: 'medal', emoji: '🏀' },
@@ -683,7 +683,7 @@ const sportsWeekDays: DaySchedule[] = [
     dayLabel: { en: 'Day 4 — Thursday, Feb 19', hi: 'दिन 4 — गुरुवार, 19 फरवरी' },
     tagline: { en: 'Brain Games & Skill Challenges', hi: 'दिमागी खेल और कौशल चुनौतियाँ' },
     color: 'from-purple-500 to-violet-400',
-    bgGradient: 'from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30',
+    bgGradient: 'from-purple-50 to-violet-50',
     icon: '🧠',
     games: [
       { en: 'Cup and Ball Game', hi: 'कप और बॉल गेम', category: 'fun', emoji: '🥤' },
@@ -699,7 +699,7 @@ const sportsWeekDays: DaySchedule[] = [
     dayLabel: { en: 'Day 5 — Saturday, Feb 21', hi: 'दिन 5 — शनिवार, 21 फरवरी' },
     tagline: { en: 'PTM & Grand Prize Ceremony', hi: 'PTM और भव्य पुरस्कार समारोह' },
     color: 'from-yellow-500 to-amber-500',
-    bgGradient: 'from-yellow-50 to-amber-50 dark:from-yellow-950/30 dark:to-amber-950/30',
+    bgGradient: 'from-yellow-50 to-amber-50',
     icon: '🏆',
     isSpecial: true,
     games: [
@@ -809,7 +809,7 @@ function Countdown({ lang }: { lang: Lang }) {
         className="text-center"
       >
         <div className="text-4xl mb-2">🏆</div>
-        <p className="text-lg font-bold text-green-600 dark:text-green-400">{t.completed[lang]}</p>
+        <p className="text-lg font-bold text-green-600">{t.completed[lang]}</p>
       </motion.div>
     );
   }
@@ -823,7 +823,7 @@ function Countdown({ lang }: { lang: Lang }) {
         className="text-center"
       >
         <div className="text-4xl mb-2">🔥</div>
-        <p className="text-lg font-bold text-orange-600 dark:text-orange-400 animate-pulse">
+        <p className="text-lg font-bold text-orange-600 animate-pulse">
           {t.started[lang]}
         </p>
       </motion.div>
@@ -1024,12 +1024,12 @@ function GameDetailModal({
               transition={{ delay: 0.2 }}
               className="grid grid-cols-2 gap-3"
             >
-              <div className="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30 rounded-xl p-3 text-center border border-purple-200 dark:border-purple-800">
+              <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl p-3 text-center border border-purple-200">
                 <div className="text-lg mb-1">👥</div>
                 <p className="text-xs text-muted-foreground">{lang === 'en' ? 'Players' : 'खिलाड़ी'}</p>
                 <p className="font-bold text-sm">{details.players[lang]}</p>
               </div>
-              <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-xl p-3 text-center border border-green-200 dark:border-green-800">
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-3 text-center border border-green-200">
                 <div className="text-lg mb-1">⏱️</div>
                 <p className="text-xs text-muted-foreground">{lang === 'en' ? 'Duration' : 'अवधि'}</p>
                 <p className="font-bold text-sm">{details.duration[lang]}</p>
@@ -1098,8 +1098,8 @@ function GameDetailModal({
               className={cn(
                 'rounded-xl p-4 border-2 border-dashed',
                 isMedal
-                  ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-300 dark:border-amber-700'
-                  : 'bg-sky-50 dark:bg-sky-950/20 border-sky-300 dark:border-sky-700'
+                  ? 'bg-amber-50 border-amber-300'
+                  : 'bg-sky-50 border-sky-300'
               )}
             >
               <div className="flex items-start gap-2">
@@ -1143,8 +1143,8 @@ function GameCard({ game, lang, index, onSelect }: { game: Game; lang: Lang; ind
       className={cn(
         'relative rounded-xl p-3 sm:p-4 border-2 cursor-pointer transition-all group',
         isMedal
-          ? 'bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 border-amber-300 dark:border-amber-700 hover:border-amber-400 hover:shadow-amber-200/50 dark:hover:shadow-amber-900/30 hover:shadow-lg'
-          : 'bg-gradient-to-br from-sky-50 to-blue-50 dark:from-sky-950/30 dark:to-blue-950/30 border-sky-300 dark:border-sky-700 hover:border-sky-400 hover:shadow-sky-200/50 dark:hover:shadow-sky-900/30 hover:shadow-lg'
+          ? 'bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-300 hover:border-amber-400 hover:shadow-amber-200/50 hover:shadow-lg'
+          : 'bg-gradient-to-br from-sky-50 to-blue-50 border-sky-300 hover:border-sky-400 hover:shadow-sky-200/50 hover:shadow-lg'
       )}
     >
       {isMedal && (
@@ -1177,7 +1177,7 @@ function GameCard({ game, lang, index, onSelect }: { game: Game; lang: Lang; ind
                 'text-[9px] sm:text-[10px]',
                 isMedal
                   ? 'bg-amber-500 hover:bg-amber-600 text-white'
-                  : 'bg-sky-100 dark:bg-sky-900 text-sky-700 dark:text-sky-300'
+                  : 'bg-sky-100 text-sky-700'
               )}
             >
               {isMedal ? t.medalGames[lang] : t.funGames[lang]}
@@ -1338,7 +1338,7 @@ function DaySection({ day, lang, index, onSelectGame }: { day: DaySchedule; lang
                   whileHover={{ scale: 1.05, y: -3 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => onSelectGame(game)}
-                  className="bg-gradient-to-br from-amber-100 to-yellow-100 dark:from-amber-900/40 dark:to-yellow-900/40 rounded-xl p-4 text-center border-2 border-amber-300 dark:border-amber-700 cursor-pointer hover:shadow-lg hover:border-amber-400 transition-all group"
+                  className="bg-gradient-to-br from-amber-100 to-yellow-100 rounded-xl p-4 text-center border-2 border-amber-300 cursor-pointer hover:shadow-lg hover:border-amber-400 transition-all group"
                 >
                   <motion.div
                     className="text-3xl mb-2"
@@ -1375,14 +1375,14 @@ function Legend({ lang }: { lang: Lang }) {
       viewport={{ once: true }}
       className="flex flex-wrap justify-center gap-4 sm:gap-6"
     >
-      <div className="flex items-center gap-2 bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 border-2 border-amber-300 dark:border-amber-700 rounded-full px-4 py-2">
+      <div className="flex items-center gap-2 bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-300 rounded-full px-4 py-2">
         <span className="text-lg">🏅</span>
         <span className="font-semibold text-sm">{t.medalGames[lang]}</span>
         <span className="text-xs text-muted-foreground">
           ({lang === 'en' ? 'Winners get medals & certificates' : 'विजेताओं को पदक और प्रमाण पत्र मिलेंगे'})
         </span>
       </div>
-      <div className="flex items-center gap-2 bg-gradient-to-r from-sky-50 to-blue-50 dark:from-sky-950/30 dark:to-blue-950/30 border-2 border-sky-300 dark:border-sky-700 rounded-full px-4 py-2">
+      <div className="flex items-center gap-2 bg-gradient-to-r from-sky-50 to-blue-50 border-2 border-sky-300 rounded-full px-4 py-2">
         <span className="text-lg">🎉</span>
         <span className="font-semibold text-sm">{t.funGames[lang]}</span>
         <span className="text-xs text-muted-foreground">
@@ -1587,7 +1587,7 @@ function EnrollmentSection({ lang }: { lang: Lang }) {
               </p>
 
               {/* WhatsApp CTA */}
-              <div className="bg-green-50 dark:bg-green-950/30 rounded-xl border border-green-200 dark:border-green-800 p-4 mb-4">
+              <div className="bg-green-50 rounded-xl border border-green-200 p-4 mb-4">
                 <p className="text-sm font-medium mb-3">
                   {lang === 'en'
                     ? '📱 Send enrollment details to school via WhatsApp:'
@@ -1664,7 +1664,7 @@ function EnrollmentSection({ lang }: { lang: Lang }) {
           animate={{ opacity: 1, y: 0 }}
           className="text-center"
         >
-          <Badge variant="outline" className="text-sm px-4 py-1.5 bg-green-50 dark:bg-green-950/30 border-green-300 dark:border-green-700 text-green-700 dark:text-green-400">
+          <Badge variant="outline" className="text-sm px-4 py-1.5 bg-green-50 border-green-300 text-green-700">
             <motion.span
               key={enrollCount}
               initial={{ scale: 1.5 }}
@@ -1752,12 +1752,12 @@ function EnrollmentSection({ lang }: { lang: Lang }) {
             <div className="h-10 bg-muted rounded-md animate-pulse" />
           ) : (
             <Select value={selectedClassId} onValueChange={(val) => { setSelectedClassId(val); setErrors((p) => ({ ...p, classId: '' })); }}>
-              <SelectTrigger className={cn('bg-white dark:bg-zinc-900 border-input', errors.classId && 'border-red-500')}>
+              <SelectTrigger className={cn('bg-white border-input', errors.classId && 'border-red-500')}>
                 <SelectValue placeholder={lang === 'en' ? 'Select class' : 'कक्षा चुनें'} />
               </SelectTrigger>
-              <SelectContent className="bg-white dark:bg-zinc-900 border border-input shadow-xl">
+              <SelectContent className="bg-white border border-input shadow-xl">
                 {classes.map((cls) => (
-                  <SelectItem key={cls.id} value={cls.id} className="cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-800">
+                  <SelectItem key={cls.id} value={cls.id} className="cursor-pointer hover:bg-gray-100">
                     {cls.name} - {cls.section}
                   </SelectItem>
                 ))}
@@ -2055,7 +2055,7 @@ export default function AnnualSportsWeek() {
           className="max-w-3xl mx-auto"
         >
           {/* Important Note Box */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-2xl border-2 border-blue-200 dark:border-blue-800 p-6 sm:p-8 mb-6">
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border-2 border-blue-200 p-6 sm:p-8 mb-6">
             <div className="flex items-start gap-3">
               <span className="text-3xl flex-shrink-0">📢</span>
               <div>
@@ -2070,7 +2070,7 @@ export default function AnnualSportsWeek() {
           </div>
 
           {/* Schedule Note */}
-          <div className="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 rounded-2xl border-2 border-amber-200 dark:border-amber-800 p-6 sm:p-8">
+          <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-2xl border-2 border-amber-200 p-6 sm:p-8">
             <div className="flex items-start gap-3">
               <span className="text-3xl flex-shrink-0">⏰</span>
               <div>
@@ -2094,7 +2094,7 @@ export default function AnnualSportsWeek() {
           viewport={{ once: true }}
           className="max-w-3xl mx-auto"
         >
-          <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-2xl border-2 border-green-200 dark:border-green-800 p-6 sm:p-8">
+          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border-2 border-green-200 p-6 sm:p-8">
             <div className="text-center mb-6">
               <motion.span
                 className="text-5xl inline-block mb-3"

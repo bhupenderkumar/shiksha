@@ -21,8 +21,6 @@ interface SchoolAssemblyProps {
 
 export function SchoolAssembly({ testimonials, className = "" }: SchoolAssemblyProps) {
   const { theme } = useTheme();
-  const isDark = theme === "dark";
-
   // Animation variants
   const containerAnimation = {
     hidden: { opacity: 0 },
@@ -60,14 +58,14 @@ export function SchoolAssembly({ testimonials, className = "" }: SchoolAssemblyP
 
   // Assembly hall elements
   const assemblyHallElements = {
-    stage: isDark ? "#4c566a" : "#dee2e6",
-    curtains: isDark ? "#bf616a" : "#fa5252",
-    floor: isDark ? "#2e3440" : "#f8f9fa",
-    wall: isDark ? "#3b4252" : "#f1f3f5",
+    stage: "#dee2e6",
+    curtains: "#fa5252",
+    floor: "#f8f9fa",
+    wall: "#f1f3f5",
   };
 
   return (
-    <section className={`py-24 ${isDark ? "bg-gradient-to-b from-blue-950/30 to-gray-900/50" : "bg-gradient-to-b from-primary/5 to-background"} ${className}`}>
+    <section className={`py-24 ${"bg-gradient-to-b from-primary/5 to-background"} ${className}`}>
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <AnimatedText
@@ -161,7 +159,7 @@ export function SchoolAssembly({ testimonials, className = "" }: SchoolAssemblyP
                   {/* Speech bubble pointer */}
                   <div 
                     className="absolute -bottom-4 left-8 w-8 h-8 rotate-45"
-                    style={{ background: isDark ? "#2e3440" : "#ffffff" }}
+                    style={{ background: "#ffffff" }}
                   />
                 </Card>
               </motion.div>
