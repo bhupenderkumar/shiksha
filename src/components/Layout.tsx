@@ -95,19 +95,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { id: 27, icon: ClipboardList, label: 'UT4 Report & Requests', path: ROUTES.UNIT_TEST_REPORT, role: 'admin' },
   ];
 
-  const variants = {
-    hidden: { opacity: 0, x: -20 },
-    visible: (i: number) => ({
-      opacity: 1,
-      x: 0,
-      transition: {
-        delay: i * 0.1,
-        duration: 0.5,
-        ease: 'easeOut'
-      }
-    })
-  };
-
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -233,13 +220,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 const Icon = item.icon;
 
                 return (
-                  <motion.div
-                    key={item.id}
-                    custom={item.id}
-                    initial="hidden"
-                    animate="visible"
-                    variants={variants}
-                  >
+                  <div key={item.id}>
                     <Link to={item.path} onClick={() => setIsSidebarOpen(false)}>
                       <Button
                         variant={isActive ? "secondary" : "ghost"}
@@ -248,20 +229,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                           isActive && "bg-primary/10 text-primary"
                         )}
                       >
-                        <motion.div
-                          key={`icon-${item.id}`}
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          <Icon className="h-5 w-5" />
-                        </motion.div>
+                        <Icon className="h-5 w-5" />
                         <span>{item.label}</span>
                         {isActive && (
                           <ChevronRight className="w-4 h-4 ml-auto text-primary" />
                         )}
                       </Button>
                     </Link>
-                  </motion.div>
+                  </div>
                 );
               })}
               <InstallPWAButton />
@@ -271,14 +246,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           {/* Main Content */}
           <main className="flex-1 w-full md:pl-64">
             <div className="container mx-auto p-6">
-              <motion.div
-                key="main-content"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                {children}
-              </motion.div>
+              {children}
             </div>
           </main>
         </div>

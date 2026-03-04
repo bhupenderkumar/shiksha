@@ -71,6 +71,7 @@ const SportsEnrollmentGrouped = lazy(() => import('./pages/SportsEnrollmentGroup
 const SchoolFeedback = lazy(() => import('./pages/SchoolFeedback'));
 const AdminSchoolFeedback = lazy(() => import('./pages/AdminSchoolFeedback'));
 const AdmissionQueries = lazy(() => import('./pages/AdmissionQueries'));
+const AdmissionTest = lazy(() => import('./pages/AdmissionTest'));
 
 // Private route component
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -102,6 +103,7 @@ function AppRoutes() {
         <Route path="/" element={<Home />} />
         <Route path='/admission-enquiry' element={<AdmissionEnquiry />} />
         <Route path='/admission-enquiry/:id' element={<AdmissionEnquiry />} />
+        <Route path='/admission-test' element={<AdmissionTest />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/pwa-test" element={<PwaTest />} />
@@ -337,6 +339,51 @@ function AppRoutes() {
             </Layout>
           </PrivateRoute>
         } />
+
+        {/* Admission Test Routes */}
+        <Route path="/admission-test" element={<AdmissionTest />} />
+        <Route path="/admission-test-results" element={
+          <PrivateRoute>
+            <Layout>
+              <AdmissionTestResults />
+            </Layout>
+          </PrivateRoute>
+        } />
+
+        {/* Unit Test Routes */}
+        <Route path="/unit-test-marks" element={
+          <PrivateRoute>
+            <Layout>
+              <UnitTestMarksEntry />
+            </Layout>
+          </PrivateRoute>
+        } />
+        <Route path="/unit-test-report" element={
+          <PrivateRoute>
+            <Layout>
+              <UnitTestReport />
+            </Layout>
+          </PrivateRoute>
+        } />
+
+        {/* Parent Submitted Feedback Routes */}
+        <Route path="/parent-submitted-feedback-list" element={
+          <PrivateRoute>
+            <Layout>
+              <ParentSubmittedFeedbackList />
+            </Layout>
+          </PrivateRoute>
+        } />
+        <Route path="/parent-submitted-feedback/:id" element={
+          <PrivateRoute>
+            <Layout>
+              <ParentSubmittedFeedbackDetail />
+            </Layout>
+          </PrivateRoute>
+        } />
+
+        {/* Copy Request Route */}
+        <Route path="/copy-request" element={<CopyRequest />} />
 
         {/* Birthday Routes */}
         <Route path="/birthdays" element={

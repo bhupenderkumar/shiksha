@@ -167,8 +167,11 @@ const AdmissionEnquiry = () => {
         toast.success('Admission enquiry updated successfully');
       } else {
         const result = await admissionService.createEnquiry(formData);
-        toast.success('Admission enquiry created successfully');
-        navigate(`/admission-enquiry/${result.id}`);
+        toast.success('Admission enquiry submitted! Redirecting to admission test...');
+        // Navigate to the admission test page with the level pre-selected based on grade
+        const testLevel = gradeToTestLevel(formData.gradeApplying);
+        navigate(`/admission-test?level=${testLevel}&name=${encodeURIComponent(formData.studentName)}`);
+        return;
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to save admission enquiry');

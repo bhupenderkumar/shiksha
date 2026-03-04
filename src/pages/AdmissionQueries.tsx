@@ -87,7 +87,7 @@ const AdmissionQueries = () => {
       const params: Record<string, unknown> = {
         page,
         limit,
-        sortBy: 'applieddate',
+        sortBy: 'appliedDate',
         sortOrder: 'desc',
       };
       if (searchText.trim()) params.search = searchText.trim();

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,8 @@ import { KGMatchingTest } from '@/components/admission-tests/KGMatchingTest';
 import { Class1MathTest } from '@/components/admission-tests/Class1MathTest';
 import { TestResultCard } from '@/components/admission-tests/TestResultCard';
 
+const VALID_LEVELS: ClassLevel[] = ['pre-nursery', 'nursery', 'kg', 'class-1'];
+
 const CLASS_LEVELS: { value: ClassLevel; icon: React.ElementType; color: string; bgGradient: string }[] = [
   { value: 'pre-nursery', icon: Palette, color: 'text-violet-600', bgGradient: 'from-violet-50 to-fuchsia-50 hover:from-violet-100 hover:to-fuchsia-100 border-violet-200' },
   { value: 'nursery', icon: Puzzle, color: 'text-emerald-600', bgGradient: 'from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 border-emerald-200' },
@@ -26,15 +28,18 @@ const CLASS_LEVELS: { value: ClassLevel; icon: React.ElementType; color: string;
 
 export default function AdmissionTest() {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const { user } = useAuth();
 
   const initialLevel = searchParams.get('level') as ClassLevel | null;
   const initialName = searchParams.get('name') || '';
+  // Auto-start if coming from admission enquiry with both params
+  const autoStart = !!(initialLevel && VALID_LEVELS.includes(initialLevel) && initialName.trim());
 
   const [studentName, setStudentName] = useState(initialName);
-  const [selectedLevel, setSelectedLevel] = useState<ClassLevel | null>(initialLevel);
-  const [testStarted, setTestStarted] = useState(false);
+  const [selectedLevel, setSelectedLevel] = useState<ClassLevel | null>(
+    initialLevel && VALID_LEVELS.includes(initialLevel) ? initialLevel : null
+  );
+  const [testStarted, setTestStarted] = useState(autoStart);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
 
   const handleStartTest = useCallback(() => {

@@ -103,7 +103,7 @@ const ViewAdmissionEnquiries = () => {
   const [searchParams, setSearchParams] = useState<SearchParams>({
     page: 1,
     limit: 9,
-    sortBy: 'applieddate',
+    sortBy: 'appliedDate',
     sortOrder: 'desc'
   });
 

@@ -337,25 +337,20 @@ export const admissionService = {
       query = query.eq('status', params.status);
     }
     if (params.search) {
-      query = query.or(`
-        student_name.ilike.%${params.search}%,
-        parent_name.ilike.%${params.search}%,
-        email.ilike.%${params.search}%,
-        contact_number.ilike.%${params.search}%
-      `);
+      query = query.or(`studentName.ilike.%${params.search}%,parentName.ilike.%${params.search}%,email.ilike.%${params.search}%,contactNumber.ilike.%${params.search}%`);
     }
     if (params.fromDate) {
-      query = query.gte('applied_date', params.fromDate.toISOString());
+      query = query.gte('appliedDate', params.fromDate.toISOString());
     }
     if (params.toDate) {
-      query = query.lte('applied_date', params.toDate.toISOString());
+      query = query.lte('appliedDate', params.toDate.toISOString());
     }
     if (params.grade) {
-      query = query.eq('grade_applying', params.grade);
+      query = query.eq('gradeApplying', params.grade);
     }
 
     // Apply sorting
-    const sortColumn = params.sortBy || 'applied_date';
+    const sortColumn = params.sortBy || 'appliedDate';
     const sortOrder = params.sortOrder || 'desc';
     query = query.order(sortColumn, { ascending: sortOrder === 'asc' });
 
