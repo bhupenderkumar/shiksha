@@ -39,6 +39,7 @@ export const ROUTES = {
   ADMISSION_ENQUIRIES: '/admission-enquiries',
   ADMISSION_QUERIES: '/admission-queries',
   ADMISSION_TEST: '/admission-test',
+  ADMISSION_TEST_RESULTS: '/admission-test-results',
 } as const;
 
 export const API_ENDPOINTS = {

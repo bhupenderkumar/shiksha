@@ -28,10 +28,12 @@ export const SCHOOL_INFO = {
   },
   googleMapsUrl: "https://www.google.com/maps/place/The+First+Step+Public+School/@28.5086264,77.3246508,17z",
   socialMedia: {
-    facebook: "https://facebook.com/firststepschool",
+    facebook: "https://www.facebook.com/profile.php?id=61556285984625",
     twitter: "https://twitter.com/firststepschool",
     instagram: "https://instagram.com/firststepschool",
+    youtube: "https://www.youtube.com/channel/UCIbKG2jiKpOuV0R1dozJdIw",
   },
+  whatsappNumber: "919311872001", // without + or 00 prefix, for wa.me links
 };
 
 export const FEE_RECEIPT_TERMS = [

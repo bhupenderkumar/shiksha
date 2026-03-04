@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS school."AdmissionTestResult" (
   "percentage" INTEGER NOT NULL,
   "timeTaken" INTEGER NOT NULL, -- in seconds
   "answers" JSONB NOT NULL DEFAULT '[]'::jsonb,
-  "prospectiveStudentId" UUID REFERENCES school."ProspectiveStudent"(id) ON DELETE SET NULL,
+  "prospectiveStudentId" TEXT REFERENCES school."ProspectiveStudent"(id) ON DELETE SET NULL,
   "conductedBy" UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
   "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -41,3 +41,7 @@ CREATE POLICY "Authenticated users can read test results"
   ON school."AdmissionTestResult"
   FOR SELECT
   USING (auth.role() = 'authenticated');
+
+-- Grant table-level permissions
+GRANT INSERT, SELECT ON school."AdmissionTestResult" TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON school."AdmissionTestResult" TO authenticated;

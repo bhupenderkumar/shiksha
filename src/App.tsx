@@ -72,6 +72,12 @@ const SchoolFeedback = lazy(() => import('./pages/SchoolFeedback'));
 const AdminSchoolFeedback = lazy(() => import('./pages/AdminSchoolFeedback'));
 const AdmissionQueries = lazy(() => import('./pages/AdmissionQueries'));
 const AdmissionTest = lazy(() => import('./pages/AdmissionTest'));
+const AdmissionTestResults = lazy(() => import('./pages/AdmissionTestResults'));
+const ParentSubmittedFeedbackList = lazy(() => import('./pages/ParentSubmittedFeedbackList'));
+const ParentSubmittedFeedbackDetail = lazy(() => import('./pages/ParentSubmittedFeedbackDetail'));
+const UnitTestMarksEntry = lazy(() => import('./pages/UnitTestMarksEntry'));
+const UnitTestReport = lazy(() => import('./pages/UnitTestReport'));
+const CopyRequest = lazy(() => import('./pages/CopyRequest'));
 
 // Private route component
 function PrivateRoute({ children }: { children: React.ReactNode }) {

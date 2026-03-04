@@ -1,8 +1,9 @@
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { TestComponentProps, TestResult } from './types';
+import { useSoundEffects } from './useSoundEffects';
 import { ChevronRight } from 'lucide-react';
 
 type MathOp = '+' | '-' | '>' | '<' | '=';
@@ -83,6 +84,8 @@ export function Class1MathTest({ onComplete, studentName }: TestComponentProps) 
   const [showFeedback, setShowFeedback] = useState(false);
   const [answers, setAnswers] = useState<{ questionId: number; correct: boolean }[]>([]);
   const startTime = useRef(Date.now());
+  const autoAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { playTap, playApplause, playOhOh, playWhoosh, playCelebration } = useSoundEffects();
 
   const question = questions[currentQ];
   const isCorrect = selected !== null && String(selected) === String(question.correctAnswer);
@@ -90,15 +93,25 @@ export function Class1MathTest({ onComplete, studentName }: TestComponentProps) 
 
   const handleSelect = useCallback((option: string | number) => {
     if (showFeedback) return;
+    playTap();
     setSelected(option);
     setShowFeedback(true);
-  }, [showFeedback]);
+
+    const correct = String(option) === String(question.correctAnswer);
+    if (correct) {
+      setTimeout(() => playApplause(), 100);
+    } else {
+      setTimeout(() => playOhOh(), 100);
+    }
+  }, [showFeedback, playTap, playApplause, playOhOh, question]);
 
   const handleNext = useCallback(() => {
+    playWhoosh();
     const newAnswers = [...answers, { questionId: question.id, correct: isCorrect }];
     setAnswers(newAnswers);
 
     if (currentQ + 1 >= questions.length) {
+      playCelebration();
       const result: TestResult = {
         classLevel: 'class-1',
         totalQuestions: questions.length,
@@ -113,7 +126,22 @@ export function Class1MathTest({ onComplete, studentName }: TestComponentProps) 
     setCurrentQ(prev => prev + 1);
     setSelected(null);
     setShowFeedback(false);
-  }, [answers, question, isCorrect, currentQ, questions.length, onComplete]);
+  }, [answers, question, isCorrect, currentQ, questions.length, onComplete, playWhoosh, playCelebration]);
+
+  // Auto-advance to next question after 2 seconds on correct answer
+  useEffect(() => {
+    if (showFeedback && isCorrect) {
+      autoAdvanceTimer.current = setTimeout(() => {
+        handleNext();
+      }, 2000);
+    }
+    return () => {
+      if (autoAdvanceTimer.current) {
+        clearTimeout(autoAdvanceTimer.current);
+        autoAdvanceTimer.current = null;
+      }
+    };
+  }, [showFeedback, isCorrect]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getTypeBadge = (type: string) => {
     switch (type) {

@@ -23,6 +23,7 @@ import Fees from './pages/Fees';
 import Settings from './pages/Settings';
 import ViewAdmissionEnquiries from './pages/ViewAdmissionEnquiries';
 import AdmissionQueries from './pages/AdmissionQueries';
+import AdmissionTestResults from './pages/AdmissionTestResults';
 import IDCardForm from './pages/IDCardForm';
 import IDCardDetails from './pages/IDCardDetails';
 import IDCardView from './pages/IDCardView';
@@ -337,6 +338,14 @@ export const router = createBrowserRouter([
   {
     path: '/admission-test',
     element: <AdmissionTest />,
+  },
+  {
+    path: '/admission-test-results',
+    element: (
+      <ProtectedRoute>
+        <Layout><AdmissionTestResults /></Layout>
+      </ProtectedRoute>
+    ),
   },
   // Public routes with PublicLayout
   {

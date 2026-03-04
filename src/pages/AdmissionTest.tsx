@@ -9,6 +9,7 @@ import { ArrowLeft, Palette, Puzzle, Brain, Calculator, GraduationCap } from 'lu
 import { useAuth } from '@/lib/auth-provider';
 import Layout from '@/components/Layout';
 import PublicLayout from '@/components/PublicLayout';
+import { admissionTestResultService } from '@/services/admissionService';
 
 import { ClassLevel, CLASS_LEVEL_LABELS, CLASS_LEVEL_DESCRIPTIONS, TestResult } from '@/components/admission-tests/types';
 import { PreNurseryColorTest } from '@/components/admission-tests/PreNurseryColorTest';
@@ -32,6 +33,7 @@ export default function AdmissionTest() {
 
   const initialLevel = searchParams.get('level') as ClassLevel | null;
   const initialName = searchParams.get('name') || '';
+  const prospectiveStudentId = searchParams.get('prospectiveStudentId') || undefined;
   // Auto-start if coming from admission enquiry with both params
   const autoStart = !!(initialLevel && VALID_LEVELS.includes(initialLevel) && initialName.trim());
 
@@ -51,7 +53,23 @@ export default function AdmissionTest() {
   const handleComplete = useCallback((result: TestResult) => {
     setTestResult(result);
     setTestStarted(false);
-  }, []);
+
+    // Save result to database (fire-and-forget)
+    const percentage = Math.round((result.correctAnswers / result.totalQuestions) * 100);
+    admissionTestResultService.saveResult({
+      studentName: studentName.trim(),
+      classLevel: result.classLevel,
+      totalQuestions: result.totalQuestions,
+      correctAnswers: result.correctAnswers,
+      percentage,
+      timeTaken: result.timeTaken,
+      answers: result.answers,
+      prospectiveStudentId,
+      conductedBy: user?.id,
+    }).catch(() => {
+      // Silently ignore save errors - test result is still shown to user
+    });
+  }, [studentName, user, prospectiveStudentId]);
 
   const handleRetry = useCallback(() => {
     setTestResult(null);
@@ -199,9 +217,9 @@ export default function AdmissionTest() {
               <CardContent className="p-4">
                 <div className="text-center space-y-2">
                   <p className="text-sm text-muted-foreground">
-                    {selectedLevel === 'pre-nursery' && '10 questions about identifying colors with pictures and colored shapes.'}
-                    {selectedLevel === 'nursery' && '8 matching exercises: animals to sounds, fruits to colors, shapes and more.'}
-                    {selectedLevel === 'kg' && '10 advanced matching exercises with 4 pairs each: letters, numbers, opposites and more.'}
+                    {selectedLevel === 'pre-nursery' && '12 questions: identify colors from pictures & find the colored object. With fun sounds! 🔊'}
+                    {selectedLevel === 'nursery' && '10 matching rounds: animals, fruits, shapes, numbers & more. Tap to match with sounds! 🧩'}
+                    {selectedLevel === 'kg' && '12 advanced matching rounds with 4 pairs each: letters, numbers, opposites, sequences & more. 🧠'}
                     {selectedLevel === 'class-1' && '12 math questions: addition, subtraction, comparison, counting and missing numbers.'}
                   </p>
                   <p className="text-xs text-muted-foreground">

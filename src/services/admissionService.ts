@@ -631,3 +631,120 @@ export const admissionService = {
     }
   }
 };
+
+// ─── Admission Test Result Service ───────────────────────────────────────────
+
+const ADMISSION_TEST_RESULT_TABLE = 'AdmissionTestResult';
+
+export interface AdmissionTestResultData {
+  studentName: string;
+  classLevel: string;
+  totalQuestions: number;
+  correctAnswers: number;
+  percentage: number;
+  timeTaken: number;
+  answers: { questionId: number; correct: boolean }[];
+  prospectiveStudentId?: string;
+  conductedBy?: string;
+}
+
+export interface AdmissionTestResultRow {
+  id: string;
+  studentName: string;
+  classLevel: string;
+  totalQuestions: number;
+  correctAnswers: number;
+  percentage: number;
+  timeTaken: number;
+  answers: { questionId: number; correct: boolean }[];
+  prospectiveStudentId: string | null;
+  conductedBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const admissionTestResultService = {
+  async saveResult(data: AdmissionTestResultData): Promise<AdmissionTestResultRow> {
+    const { data: result, error } = await supabase
+      .schema(SCHEMA)
+      .from(ADMISSION_TEST_RESULT_TABLE)
+      .insert([{
+        studentName: data.studentName,
+        classLevel: data.classLevel,
+        totalQuestions: data.totalQuestions,
+        correctAnswers: data.correctAnswers,
+        percentage: data.percentage,
+        timeTaken: data.timeTaken,
+        answers: data.answers,
+        prospectiveStudentId: data.prospectiveStudentId || null,
+        conductedBy: data.conductedBy || null,
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to save test result: ${error.message}`);
+    }
+
+    return result as AdmissionTestResultRow;
+  },
+
+  async getAllResults(params: {
+    page?: number;
+    limit?: number;
+    classLevel?: string;
+    search?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  } = {}) {
+    let query = supabase
+      .schema(SCHEMA)
+      .from(ADMISSION_TEST_RESULT_TABLE)
+      .select('*', { count: 'exact' });
+
+    if (params.classLevel) {
+      query = query.eq('classLevel', params.classLevel);
+    }
+    if (params.search) {
+      query = query.ilike('studentName', `%${params.search}%`);
+    }
+
+    const sortColumn = params.sortBy || 'createdAt';
+    const sortOrder = params.sortOrder || 'desc';
+    query = query.order(sortColumn, { ascending: sortOrder === 'asc' });
+
+    const page = params.page || 1;
+    const limit = params.limit || 10;
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    query = query.range(from, to);
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      throw new Error(`Failed to fetch test results: ${error.message}`);
+    }
+
+    return {
+      results: (data || []) as AdmissionTestResultRow[],
+      total: count || 0,
+      page,
+      limit,
+    };
+  },
+
+  async getResultById(id: string): Promise<AdmissionTestResultRow> {
+    const { data, error } = await supabase
+      .schema(SCHEMA)
+      .from(ADMISSION_TEST_RESULT_TABLE)
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to fetch test result: ${error.message}`);
+    }
+
+    return data as AdmissionTestResultRow;
+  },
+};
