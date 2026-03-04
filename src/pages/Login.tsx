@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../lib/auth-provider';
 import { LogIn } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
+
 import {
   authPageStyles,
   cardStyles,
@@ -45,10 +45,7 @@ const Login = () => {
 
   return (
     <div className={authPageStyles.container}>
-      {/* Theme Toggle */}
-      <div className="absolute top-4 right-4">
-        <ThemeToggle />
-      </div>
+
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">

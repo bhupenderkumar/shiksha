@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router } from 'react-router-dom';
-import { ThemeProvider } from './components/theme-provider';
 import { ClassAuthProvider } from './lib/class-auth-provider';
 import { PWAUpdatePrompt } from './components/pwa/PWAUpdatePrompt';
 import App from './App';
@@ -38,15 +37,13 @@ const root = document.getElementById('root');
 if (root) {
   ReactDOM.createRoot(root).render(
     <React.StrictMode>
-      <ThemeProvider defaultTheme="light" storageKey="ui-theme">
-        <ClassAuthProvider>
-          <Router>
-            <GTMScript />
-            <App />
-            <PWAUpdatePrompt />
-          </Router>
-        </ClassAuthProvider>
-      </ThemeProvider>
+      <ClassAuthProvider>
+        <Router>
+          <GTMScript />
+          <App />
+          <PWAUpdatePrompt />
+        </Router>
+      </ClassAuthProvider>
     </React.StrictMode>
   );
 }

@@ -1,5 +1,84 @@
 import { supabase } from '@/lib/api-client';
 
+// ─── Signed URL Cache ───────────────────────────────────────────────────────
+// Global in-memory cache for signed URLs with TTL to avoid redundant API calls.
+// Signed URLs expire in 1 hour; we cache for 50 minutes to stay fresh.
+const URL_CACHE_TTL = 50 * 60 * 1000; // 50 minutes
+
+interface CacheEntry {
+  url: string;
+  expiresAt: number;
+}
+
+class SignedUrlCache {
+  private cache = new Map<string, CacheEntry>();
+  private pendingRequests = new Map<string, Promise<string | null>>();
+
+  get(filePath: string): string | null {
+    const entry = this.cache.get(filePath);
+    if (entry && Date.now() < entry.expiresAt) {
+      return entry.url;
+    }
+    if (entry) this.cache.delete(filePath); // expired
+    return null;
+  }
+
+  set(filePath: string, url: string): void {
+    this.cache.set(filePath, {
+      url,
+      expiresAt: Date.now() + URL_CACHE_TTL,
+    });
+  }
+
+  /**
+   * Get a URL from cache, or fetch and cache it.
+   * Deduplicates concurrent requests for the same filePath.
+   */
+  async getOrFetch(filePath: string): Promise<string | null> {
+    // 1. Return from cache if valid
+    const cached = this.get(filePath);
+    if (cached) return cached;
+
+    // 2. If already fetching, reuse the same promise
+    const pending = this.pendingRequests.get(filePath);
+    if (pending) return pending;
+
+    // 3. Fetch, cache, and return
+    const fetchPromise = (async (): Promise<string | null> => {
+      try {
+        const url = await fileService.getSignedUrl(filePath);
+        this.set(filePath, url);
+        return url;
+      } catch {
+        // Fallback to public URL
+        try {
+          const url = await fileService.getPublicUrl(filePath);
+          this.set(filePath, url);
+          return url;
+        } catch {
+          return null;
+        }
+      } finally {
+        this.pendingRequests.delete(filePath);
+      }
+    })();
+
+    this.pendingRequests.set(filePath, fetchPromise);
+    return fetchPromise;
+  }
+
+  clear(): void {
+    this.cache.clear();
+    this.pendingRequests.clear();
+  }
+
+  get size(): number {
+    return this.cache.size;
+  }
+}
+
+export const signedUrlCache = new SignedUrlCache();
+
 // Allowed file types and max size in bytes (5MB)
 const ALLOWED_FILE_TYPES = [
   'image/jpeg',

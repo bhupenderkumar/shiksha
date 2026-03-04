@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { useTheme } from "@/lib/theme-provider";
 
 interface TeacherCharacterProps {
   className?: string;
@@ -14,7 +13,6 @@ export function TeacherCharacter({
   variant = "standing",
   delay = 0
 }: TeacherCharacterProps) {
-  const { theme } = useTheme();
   // Character colors
   const colors = {
     skin: "#ffcba4",

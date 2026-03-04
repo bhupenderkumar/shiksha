@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { AnimatedText } from "@/components/ui/animated-text";
 import { Link } from "react-router-dom";
 import { StudentCharacter } from "@/components/animations/characters/StudentCharacter";
-import { useTheme } from "@/lib/theme-provider";
 
 interface AdmissionStep {
   step: number;
@@ -17,7 +16,6 @@ interface AdmissionJourneyProps {
 }
 
 export function AdmissionJourney({ className = "" }: AdmissionJourneyProps) {
-  const { theme } = useTheme();
   const steps: AdmissionStep[] = [
     {
       step: 1,

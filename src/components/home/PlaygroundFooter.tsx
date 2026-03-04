@@ -3,7 +3,6 @@ import { SCHOOL_INFO } from "@/constants/schoolInfo";
 import { Link } from "react-router-dom";
 import { Mail, Phone, MapPin, ArrowUp } from "lucide-react";
 import { FaFacebook, FaTwitter, FaInstagram } from "react-icons/fa";
-import { useTheme } from "@/lib/theme-provider";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 
 interface PlaygroundFooterProps {
@@ -11,7 +10,6 @@ interface PlaygroundFooterProps {
 }
 
 export function PlaygroundFooter({ className = "" }: PlaygroundFooterProps) {
-  const { theme } = useTheme();
 
   // Animation variants
   const floatingAnimation = {

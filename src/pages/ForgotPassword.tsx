@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { KeyRound } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '@/lib/api-client';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
+
 import {
   authPageStyles,
   cardStyles,
@@ -40,10 +40,7 @@ const ForgotPassword = () => {
 
   return (
     <div className={authPageStyles.container}>
-      {/* Theme Toggle */}
-      <div className="absolute top-4 right-4">
-        <ThemeToggle />
-      </div>
+
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">

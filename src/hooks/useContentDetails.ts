@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { homeworkService } from '@/services/homeworkService';
 import { fetchClassworkDetails } from '@/services/classworkService';
 import { fileTableService } from '@/services/fileTableService';
-import { fileService } from '@/services/fileService';
+import { fileService, signedUrlCache } from '@/services/fileService';
 import { shareableLinkService, ShareableLink } from '@/services/shareableLinkService';
 import { useImagePreview } from '@/hooks/use-image-preview';
 import toast from 'react-hot-toast';
@@ -124,12 +124,12 @@ export function useContentDetails(
         };
       }
 
-      // Get signed URLs for all attachments
+      // Get signed URLs for all attachments using cache to avoid redundant requests
       const attachmentsWithUrls = await Promise.all(
         files.map(async (file) => {
           try {
-            const url = await fileService.getSignedUrl(file.filePath);
-            return { ...file, url };
+            const url = await signedUrlCache.getOrFetch(file.filePath);
+            return { ...file, url: url || undefined };
           } catch {
             return { ...file, url: undefined };
           }

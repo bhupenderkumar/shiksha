@@ -4,7 +4,7 @@ import { AnimatedText } from "@/components/ui/animated-text";
 import { Star, Users } from "lucide-react";
 import { StudentCharacter } from "@/components/animations/characters/StudentCharacter";
 import { TeacherCharacter } from "@/components/animations/characters/TeacherCharacter";
-import { useTheme } from "@/lib/theme-provider";
+
 
 interface Testimonial {
   name: string;
@@ -20,7 +20,6 @@ interface SchoolAssemblyProps {
 }
 
 export function SchoolAssembly({ testimonials, className = "" }: SchoolAssemblyProps) {
-  const { theme } = useTheme();
   // Animation variants
   const containerAnimation = {
     hidden: { opacity: 0 },

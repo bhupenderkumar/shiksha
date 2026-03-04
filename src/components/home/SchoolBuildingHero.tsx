@@ -4,7 +4,6 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GradientText } from "@/components/ui/light-effects";
 import { Link } from "react-router-dom";
-import { useTheme } from "@/lib/theme-provider";
 import { StudentCharacter } from "@/components/animations/characters/StudentCharacter";
 import { TeacherCharacter } from "@/components/animations/characters/TeacherCharacter";
 import { SchoolBuilding } from "@/components/animations/school-elements/SchoolBuilding";
@@ -14,7 +13,6 @@ interface SchoolBuildingHeroProps {
 }
 
 export function SchoolBuildingHero({ className = "" }: SchoolBuildingHeroProps) {
-  const { theme } = useTheme();
   // Animation variants
   const heroTextAnimation = {
     hidden: { opacity: 0, y: 20 },

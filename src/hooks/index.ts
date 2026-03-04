@@ -1,5 +1,4 @@
 // Shared Hooks
-export { useTheme, default as useThemeDefault } from './useTheme';
 export { 
   usePublicContentShare, 
   default as usePublicContentShareDefault,

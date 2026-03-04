@@ -129,15 +129,15 @@ export function ClassworkForm({ onSubmit, initialData }: ClassworkFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2">
+    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="class">Class</Label>
           <Select
             value={formData.classId}
             onValueChange={(value) => setFormData(prev => ({ ...prev, classId: value }))}
           >
-            <SelectTrigger>
+            <SelectTrigger className="h-10 sm:h-9">
               <SelectValue placeholder="Select a class" />
             </SelectTrigger>
             <SelectContent>
@@ -157,7 +157,7 @@ export function ClassworkForm({ onSubmit, initialData }: ClassworkFormProps) {
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             required
-            className="w-full"
+            className="w-full h-10 sm:h-9"
           />
         </div>
       </div>
@@ -169,7 +169,7 @@ export function ClassworkForm({ onSubmit, initialData }: ClassworkFormProps) {
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           required
-          className="min-h-[120px]"
+          className="min-h-[100px] sm:min-h-[120px]"
         />
       </div>
 
@@ -181,25 +181,25 @@ export function ClassworkForm({ onSubmit, initialData }: ClassworkFormProps) {
             selected={formData.date instanceof Date ? formData.date : new Date(formData.date)}
             onSelect={(date) => setFormData({ ...formData, date: date ?? new Date() })}
             defaultMonth={formData.date instanceof Date ? formData.date : new Date(formData.date)}
-            className="w-full"
+            className="w-full mx-auto"
           />
         </div>
       </div>
 
       <div className="space-y-2">
         <Label>Attachments</Label>
-        <div className="border rounded-lg p-4 bg-background">
+        <div className="border rounded-lg p-3 sm:p-4 bg-background">
           <FileUploader
             onFilesSelected={handleFileUpload}
             onFileDelete={handleFileDelete}
             existingFiles={formData.attachments}
-            acceptedFileTypes={['image/*']} // Only allow images
+            acceptedFileTypes={['image/*']}
           />
         </div>
       </div>
 
-      <div className="flex justify-end space-x-2 sticky bottom-0 bg-background pt-4 border-t">
-        <Button type="submit" disabled={isSubmitting}>
+      <div className="flex justify-end space-x-2 sticky bottom-0 bg-background pt-3 sm:pt-4 border-t">
+        <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
           {initialData ? 'Update' : 'Create'}
         </Button>
       </div>

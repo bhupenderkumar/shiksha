@@ -14,11 +14,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useProfileAccess } from '@/services/profileService';
-import { useMediaQuery } from 'react-responsive';
-import { Attachment } from '@/components/Attachment'; // Import Attachment component
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { DateRangePicker } from "@/components/ui/date-range-picker";
 import debounce from 'lodash/debounce';
 
 export default function HomeworkPage() {
@@ -35,7 +31,6 @@ export default function HomeworkPage() {
   const [selectedHomework, setSelectedHomework] = useState<HomeworkType | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { profile, loading: profileLoading, isAdminOrTeacher } = useProfileAccess();
-  const isMobile = useMediaQuery({ query: '(max-width: 640px)' });
 
   const [searchParams, setSearchParams] = useState({
     searchTerm: '',
@@ -125,58 +120,27 @@ export default function HomeworkPage() {
   }
 
   const renderSearchFilters = () => (
-    <div className="mb-6 space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Input
-          placeholder="Search homework..."
-          onChange={(e) => debouncedSearch(e.target.value)}
-          className="w-full"
-        />
-
-        {isAdminOrTeacher && (
-          <Select
-            value={searchParams.status}
-            onChange={(value) => setSearchParams(prev => ({ ...prev, status: value }))}
-            options={[
-              { label: 'All Status', value: '' },
-              { label: 'Pending', value: 'PENDING' },
-              { label: 'Completed', value: 'COMPLETED' },
-              { label: 'Overdue', value: 'OVERDUE' }
-            ]}
-            className="w-full"
-          />
-        )}
-
-        <Select
-          value={searchParams.subjectId}
-          onChange={(value) => setSearchParams(prev => ({ ...prev, subjectId: value }))}
-          options={[
-            { label: 'All Subjects', value: '' },
-            // Add subject options based on your data
-          ]}
-          className="w-full"
-        />
-
-        <DateRangePicker
-          value={searchParams.dateRange}
-          onChange={(range) => setSearchParams(prev => ({ ...prev, dateRange: range }))}
-          className="w-full"
-        />
-      </div>
+    <div className="mb-4 sm:mb-6">
+      <Input
+        placeholder="Search homework..."
+        onChange={(e) => debouncedSearch(e.target.value)}
+        className="w-full max-w-md"
+      />
     </div>
   );
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
       <PageHeader
         title="Homework"
         subtitle="Manage and track homework assignments"
         icon={<Book className="text-primary-500" />}
         action={
           isAdminOrTeacher ? (
-            <Button className="text-sm" onClick={() => setDialogState({ isOpen: true, mode: 'create' })}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Homework
+            <Button size="sm" className="text-xs sm:text-sm" onClick={() => setDialogState({ isOpen: true, mode: 'create' })}>
+              <Plus className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Add Homework</span>
+              <span className="sm:hidden">Add</span>
             </Button>
           ) : null
         }
@@ -198,38 +162,32 @@ export default function HomeworkPage() {
           }
         />
       ) : (
-        <div className="overflow-auto">
-          <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
-            {homeworks.map((homework) => (
-              <div key={homework.id} className="relative">
-                <HomeworkCard
-                  key={homework.id}
-                  homework={homework}
-                  onEdit={handleEdit}
-                  onDelete={handleDeleteHomework}
-                  onView={() => {}}
-                  isStudent={profile?.role === 'STUDENT'}
-                  attachments={homework.attachments}
-                />
-                {isAdminOrTeacher && (
-                  <div className="absolute top-2 right-2 flex space-x-2">
-                    <button onClick={() => handleEdit(homework)}>
-                      <Edit className="text-blue-500" />
-                    </button>
-                    <button onClick={() => {
-                      setSelectedHomework(homework);
-                      setIsDeleteDialogOpen(true);
-                    }}>
-                      <Trash className="text-red-500" />
-                    </button>
-                    <button onClick={() => navigate(`/homework/${homework.id}`)}>
-                      <Eye className="text-gray-500" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+        <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {homeworks.map((homework) => (
+            <div key={homework.id} className="relative">
+              <HomeworkCard
+                homework={homework}
+                isStudent={profile?.role === 'STUDENT'}
+                attachments={homework.attachments}
+              />
+              {isAdminOrTeacher && (
+                <div className="absolute top-2 right-2 flex space-x-1 sm:space-x-2 bg-white/80 backdrop-blur-sm rounded-md p-0.5">
+                  <button className="p-1.5 rounded hover:bg-blue-50 transition-colors" onClick={() => handleEdit(homework)}>
+                    <Edit className="w-4 h-4 text-blue-500" />
+                  </button>
+                  <button className="p-1.5 rounded hover:bg-red-50 transition-colors" onClick={() => {
+                    setSelectedHomework(homework);
+                    setIsDeleteDialogOpen(true);
+                  }}>
+                    <Trash className="w-4 h-4 text-red-500" />
+                  </button>
+                  <button className="p-1.5 rounded hover:bg-gray-100 transition-colors" onClick={() => navigate(`/homework/${homework.id}`)}>
+                    <Eye className="w-4 h-4 text-gray-600" />
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
 
@@ -238,19 +196,18 @@ export default function HomeworkPage() {
           <Dialog open={dialogState.isOpen} onOpenChange={(open) => {
             if (!open) handleCloseDialog();
           }}>
-            <DialogContent className="max-w-4xl w-[95%] h-[90vh] overflow-y-auto">
-              <DialogHeader className="sticky top-0 bg-background z-10 pb-4 border-b">
-                <DialogTitle>
+            <DialogContent className="max-w-4xl w-[98%] sm:w-[95%] h-[95vh] sm:h-[90vh] overflow-y-auto p-3 sm:p-6">
+              <DialogHeader className="sticky top-0 bg-background z-10 pb-3 sm:pb-4 border-b">
+                <DialogTitle className="text-lg sm:text-xl">
                   {dialogState.mode === 'create' ? 'Create Homework' : 'Edit Homework'}
                 </DialogTitle>
               </DialogHeader>
-              <div className="py-4">
+              <div className="py-3 sm:py-4">
                 <HomeworkForm
                   onSubmit={dialogState.mode === 'create' ? createHomework : updateHomework}
                   initialData={dialogState.mode === 'edit' ? selectedHomework : undefined}
                   files={selectedHomework?.attachments}
                   onCancel={handleCloseDialog}
-                  readOnly={false}
                 />
               </div>
             </DialogContent>

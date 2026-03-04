@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { UserPlus } from 'lucide-react';
 import { signUp } from '@/services/authservice';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
+
 import {
   authPageStyles,
   cardStyles,
@@ -50,10 +50,7 @@ const Register = () => {
 
   return (
     <div className={authPageStyles.container}>
-      {/* Theme Toggle */}
-      <div className="absolute top-4 right-4">
-        <ThemeToggle />
-      </div>
+
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">

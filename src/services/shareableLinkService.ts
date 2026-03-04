@@ -158,34 +158,28 @@ export const shareableLinkService = {
    * Increment view count when someone accesses a shared link
    */
   async incrementViewCount(token: string): Promise<void> {
-    const { error } = await supabase
-      .schema(SCHEMA)
-      .from(SHAREABLE_LINK_TABLE as any)
-      .update({
-        view_count: supabase.rpc('increment_view_count'),
-        last_viewed_at: new Date().toISOString()
-      })
-      .eq('token', token);
-
-    // Fallback: Do a simple increment if RPC doesn't exist
-    if (error) {
-      const { data: currentLink } = await supabase
+    try {
+      // First get the current view count
+      const { data: currentLink, error: fetchError } = await supabase
         .schema(SCHEMA)
         .from(SHAREABLE_LINK_TABLE as any)
         .select('view_count')
         .eq('token', token)
         .single();
 
-      if (currentLink) {
-        await supabase
-          .schema(SCHEMA)
-          .from(SHAREABLE_LINK_TABLE as any)
-          .update({
-            view_count: ((currentLink as any).view_count || 0) + 1,
-            last_viewed_at: new Date().toISOString()
-          })
-          .eq('token', token);
-      }
+      if (fetchError || !currentLink) return;
+
+      // Then increment it
+      await supabase
+        .schema(SCHEMA)
+        .from(SHAREABLE_LINK_TABLE as any)
+        .update({
+          view_count: ((currentLink as any).view_count || 0) + 1,
+          last_viewed_at: new Date().toISOString()
+        })
+        .eq('token', token);
+    } catch {
+      // Fire-and-forget: silently ignore errors for anonymous users
     }
   },
 

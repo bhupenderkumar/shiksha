@@ -232,15 +232,15 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
   ];
 
   return (
-    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
-      <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2">
-        <div className="space-y-2 col-span-full md:col-span-2">
-          <Label htmlFor="title" className="text-base font-semibold">Title</Label>
+    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 sm:space-y-6">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
+        <div className="space-y-2 col-span-full">
+          <Label htmlFor="title" className="text-sm sm:text-base font-semibold">Title</Label>
           <Input
             id="title"
             {...register('title')}
             placeholder="Enter homework title"
-            className="w-full"
+            className="w-full h-10 sm:h-9"
           />
           {errors.title && (
             <p className="text-sm text-red-500">{errors.title.message}</p>
@@ -248,12 +248,12 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
         </div>
 
         <div className="space-y-2">
-          <Label className="text-base font-semibold">Class</Label>
+          <Label className="text-sm sm:text-base font-semibold">Class</Label>
           <Select
             value={selectedClassId}
             onValueChange={(value) => setValue('classId', value)}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full h-10 sm:h-9">
               <SelectValue placeholder="Select a class" />
             </SelectTrigger>
             <SelectContent>
@@ -270,12 +270,12 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
         </div>
 
         <div className="space-y-2">
-          <Label className="text-base font-semibold">Subject</Label>
+          <Label className="text-sm sm:text-base font-semibold">Subject</Label>
           <Select
             value={getValues('subjectId')}
             onValueChange={(value) => setValue('subjectId', value)}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full h-10 sm:h-9">
               <SelectValue placeholder="Select a subject" />
             </SelectTrigger>
             <SelectContent>
@@ -292,7 +292,7 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
         </div>
 
         <div className="space-y-2">
-          <Label className="text-base font-semibold">Due Date</Label>
+          <Label className="text-sm sm:text-base font-semibold">Due Date</Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -325,13 +325,13 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
           )}
         </div>
 
-        <div className="space-y-2 col-span-full md:col-span-2">
-          <Label htmlFor="description" className="text-base font-semibold">Description</Label>
+        <div className="space-y-2 col-span-full">
+          <Label htmlFor="description" className="text-sm sm:text-base font-semibold">Description</Label>
           <Textarea
             id="description"
             {...register('description')}
             placeholder="Enter homework description"
-            className="min-h-[100px]"
+            className="min-h-[80px] sm:min-h-[100px]"
           />
           {errors.description && (
             <p className="text-sm text-red-500">{errors.description.message}</p>
@@ -339,12 +339,12 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
         </div>
 
         <div className="space-y-2">
-          <Label className="text-base font-semibold">Status</Label>
+          <Label className="text-sm sm:text-base font-semibold">Status</Label>
           <Select
             value={getValues('status')}
             onValueChange={(value: 'PENDING' | 'COMPLETED' | 'OVERDUE' | 'SUBMITTED') => setValue('status', value)}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full h-10 sm:h-9">
               <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>
@@ -360,8 +360,8 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
           )}
         </div>
 
-        <div className="space-y-2 col-span-full md:col-span-2">
-          <Label className="text-base font-semibold">Attachments</Label>
+        <div className="space-y-2 col-span-full">
+          <Label className="text-sm sm:text-base font-semibold">Attachments</Label>
           <div className="mt-2">
             <FileUploader
               onFilesSelected={handleFilesSelected}
@@ -392,15 +392,16 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
         </div>
       </div>
 
-      <div className="flex justify-end space-x-4 mt-6">
+      <div className="flex flex-col sm:flex-row justify-end gap-2 sm:space-x-4 mt-4 sm:mt-6 sticky bottom-0 bg-background pt-3 border-t">
         <Button
           type="button"
           variant="outline"
           onClick={() => onCancel?.()}
+          className="order-2 sm:order-1"
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={loading}>
+        <Button type="submit" disabled={loading} className="order-1 sm:order-2">
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {initialData ? 'Update' : 'Create'} Homework
         </Button>

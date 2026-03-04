@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
 import { ReactNode, useState } from "react";
-import { useTheme } from "@/components/theme-provider";
 import { motion } from "framer-motion";
 
 interface GlassmorphicCardProps {

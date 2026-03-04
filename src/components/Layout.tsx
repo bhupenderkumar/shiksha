@@ -31,8 +31,7 @@ import { useAuth } from '@/lib/auth-provider';
 import { ROUTES } from '@/constants/app-constants';
 import { AnimatedText } from './ui/animated-text';
 import { isAdminOrTeacher } from '@/services/profileService';
-// Using the ThemeProvider from main.tsx
-import { ThemeToggle } from './ui/theme-toggle';
+
 import { NoInternet } from './NoInternet';
 import { NetworkProvider } from '@/contexts/NetworkContext';
 import { InstallPWAButton } from "./ui/install-pwa-button";
@@ -186,7 +185,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 >
                   <LogOut className="h-5 w-5" />
                 </Button>
-                <ThemeToggle />
+
               </div>
             </motion.div>
           </div>

@@ -216,7 +216,6 @@ export const PublicContentShare: React.FC<PublicContentShareProps> = ({ contentT
               >
                 <Share2Icon className="w-4 h-4" />
               </Button>
-              <ThemeToggle />
             </div>
           </div>
         </div>

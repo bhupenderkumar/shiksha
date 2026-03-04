@@ -41,7 +41,7 @@ import { useProfileAccess } from '@/services/profileService';
 
 import React from 'react';
 import { useAuth } from '@/lib/auth';
-import { useTheme } from '@/contexts/ThemeContext';
+
 import { SCHEMA } from '@/lib/constants';
 
 export default function SettingsPage() {
@@ -49,7 +49,7 @@ export default function SettingsPage() {
   const { profile, loading: profileLoading } = useProfileAccess();
 
   const { user } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+
 
   const [settings, setSettings] = useState<SchoolSettings | null>(null);
 
@@ -459,11 +459,7 @@ export default function SettingsPage() {
 
       setSettings(prev => ({ ...prev, [key]: value }));
 
-      if (key === 'theme') {
 
-        toggleTheme();
-
-      }
 
       toast.success('Settings updated successfully');
 

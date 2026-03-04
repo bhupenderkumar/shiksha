@@ -11,12 +11,9 @@ import { ClassworkForm } from '@/components/forms/classwork-form';
 import { Book, Plus, Edit, Trash, EyeIcon } from 'lucide-react';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import toast from 'react-hot-toast';
-import { useMediaQuery } from 'react-responsive';
-import { Link, useNavigate } from 'react-router-dom';
-import { Attachment } from '@/components/Attachment'; // Import Attachment component
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { useProfileAccess } from '@/services/profileService';
-import NepSyllabus from '@/components/NepSyllabus';
 
 export default function ClassworkPage() {
   const { user } = useAuth(); // Retrieve user from Auth context
@@ -37,7 +34,6 @@ export default function ClassworkPage() {
   const [selectedClasswork, setSelectedClasswork] = useState<ClassworkType | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const isMobile = useMediaQuery({ query: '(max-width: 640px)' });
   const navigate = useNavigate();
 
   const { loading, execute: fetchClassworks } = useAsync(
@@ -132,16 +128,17 @@ export default function ClassworkPage() {
   }
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
       <PageHeader
         title="Classwork"
         subtitle="Manage and track class activities"
         icon={<Book className="text-primary-500" />}
         action={
           isAdminOrTeacher ? (
-            <Button className="text-sm" onClick={() => setDialogState({ isOpen: true, mode: 'create', loading: false })}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Classwork
+            <Button size="sm" className="text-xs sm:text-sm" onClick={() => setDialogState({ isOpen: true, mode: 'create', loading: false })}>
+              <Plus className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Add Classwork</span>
+              <span className="sm:hidden">Add</span>
             </Button>
           ) : null
         }
@@ -161,31 +158,29 @@ export default function ClassworkPage() {
           }
         />
       ) : (
-        <div className="overflow-auto"> {/* Added overflow-auto for scrollbar */}
-          <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}> {/* Modified grid classes for responsiveness */}
-            {classworks.map((classwork) => (
-              <div key={classwork.id} className="relative">
-                <ClassworkCard
-                  classwork={classwork}
-                  isStudent={!isAdminOrTeacher}
-                  attachments={classwork.attachments}
-                />
-                {isAdminOrTeacher && (
-                  <div className="absolute top-2 right-2 flex space-x-2">
-                    <button onClick={() => handleEdit(classwork)}>
-                      <Edit className="text-blue-500" />
-                    </button>
-                    <button onClick={() => handleDelete(classwork)}>
-                      <Trash className="text-red-500" />
-                    </button>
-                    <button>
-                      <EyeIcon className="text-red-500"  onClick={() => navigate(`/classwork/${classwork.id}`)}/>
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+        <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {classworks.map((classwork) => (
+            <div key={classwork.id} className="relative">
+              <ClassworkCard
+                classwork={classwork}
+                isStudent={!isAdminOrTeacher}
+                attachments={classwork.attachments}
+              />
+              {isAdminOrTeacher && (
+                <div className="absolute top-2 right-2 flex space-x-1 sm:space-x-2 bg-white/80 backdrop-blur-sm rounded-md p-0.5">
+                  <button className="p-1.5 rounded hover:bg-blue-50 transition-colors" onClick={() => handleEdit(classwork)}>
+                    <Edit className="w-4 h-4 text-blue-500" />
+                  </button>
+                  <button className="p-1.5 rounded hover:bg-red-50 transition-colors" onClick={() => handleDelete(classwork)}>
+                    <Trash className="w-4 h-4 text-red-500" />
+                  </button>
+                  <button className="p-1.5 rounded hover:bg-gray-100 transition-colors" onClick={() => navigate(`/classwork/${classwork.id}`)}>
+                    <EyeIcon className="w-4 h-4 text-gray-600" />
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
 
@@ -194,13 +189,13 @@ export default function ClassworkPage() {
           <Dialog open={dialogState.isOpen} onOpenChange={(open) => {
             if (!open) handleCloseDialog();
           }}>
-            <DialogContent className="max-w-4xl w-[95%] h-[90vh] overflow-y-auto">
-              <DialogHeader className="sticky top-0 bg-background z-10 pb-4 border-b">
-                <DialogTitle>
+            <DialogContent className="max-w-4xl w-[98%] sm:w-[95%] h-[95vh] sm:h-[90vh] overflow-y-auto p-3 sm:p-6">
+              <DialogHeader className="sticky top-0 bg-background z-10 pb-3 sm:pb-4 border-b">
+                <DialogTitle className="text-lg sm:text-xl">
                   {dialogState.mode === 'create' ? 'Create Classwork' : 'Edit Classwork'}
                 </DialogTitle>
               </DialogHeader>
-              <div className="py-4">
+              <div className="py-3 sm:py-4">
                 <ClassworkForm
                   onSubmit={dialogState.mode === 'create' ? createClasswork : updateClasswork}
                   initialData={dialogState.mode === 'edit' ? selectedClasswork : undefined}

@@ -148,20 +148,21 @@ export const ContentDetailsPage = ({ contentType }: ContentDetailsPageProps) => 
   const otherAttachments = content.attachments?.filter((att) => !isImage(att.fileName)) || [];
 
   const renderContent = () => (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-4xl">
       <Button
         variant="ghost"
         onClick={() => navigate(user ? config.backPath : '/')}
-        className="mb-6 hover:bg-blue-50"
+        className="mb-4 sm:mb-6 hover:bg-blue-50 text-sm"
+        size="sm"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
         {user ? config.backLabel : 'Back to Home'}
       </Button>
 
       <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-100">
-        <CardHeader className="pb-6">
-          <div className="flex justify-between items-start flex-wrap gap-4">
-            <CardTitle className="text-2xl font-bold text-indigo-900">
+        <CardHeader className="p-4 sm:pb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-3 sm:gap-4">
+            <CardTitle className="text-xl sm:text-2xl font-bold text-indigo-900">
               {content.title || `Untitled ${config.label}`}
             </CardTitle>
             {content.status && (
@@ -176,12 +177,12 @@ export const ContentDetailsPage = ({ contentType }: ContentDetailsPageProps) => 
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-6 col-span-2">
+        <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+            <div className="space-y-4 sm:space-y-6 col-span-1 md:col-span-2">
               {/* Timing Details */}
-              <div className="bg-white rounded-lg p-4 shadow-sm">
-                <h3 className="text-lg font-semibold text-indigo-900 mb-3">Timing Details</h3>
+              <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm">
+                <h3 className="text-base sm:text-lg font-semibold text-indigo-900 mb-2 sm:mb-3">Timing Details</h3>
                 <div className="flex items-center text-gray-700">
                   <Calendar className="w-5 h-5 mr-2 text-indigo-600 flex-shrink-0" />
                   <span>{config.dateLabel}: {format(content.date, 'MMM dd, yyyy, h:mm a')}</span>
@@ -196,8 +197,8 @@ export const ContentDetailsPage = ({ contentType }: ContentDetailsPageProps) => 
 
               {/* Class Details */}
               {content.class && (
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <h3 className="text-lg font-semibold text-indigo-900 mb-3">Class Details</h3>
+                <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm">
+                  <h3 className="text-base sm:text-lg font-semibold text-indigo-900 mb-2 sm:mb-3">Class Details</h3>
                   <div className="space-y-2">
                     <div className="flex items-center text-gray-700">
                       <Users className="w-5 h-5 mr-2 text-indigo-600 flex-shrink-0" />
@@ -219,8 +220,8 @@ export const ContentDetailsPage = ({ contentType }: ContentDetailsPageProps) => 
 
               {/* Subject Details */}
               {content.subject && (
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <h3 className="text-lg font-semibold text-indigo-900 mb-3">Subject Details</h3>
+                <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm">
+                  <h3 className="text-base sm:text-lg font-semibold text-indigo-900 mb-2 sm:mb-3">Subject Details</h3>
                   <div className="flex items-center text-gray-700">
                     <Book className="w-5 h-5 mr-2 text-indigo-600 flex-shrink-0" />
                     <span>{content.subject.name} ({content.subject.code})</span>
@@ -229,10 +230,10 @@ export const ContentDetailsPage = ({ contentType }: ContentDetailsPageProps) => 
               )}
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Status */}
               {content.status && (
-                <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm">
                   <h3 className="text-lg font-semibold text-indigo-900 mb-3">Status</h3>
                   <Badge
                     variant="outline"
@@ -248,13 +249,13 @@ export const ContentDetailsPage = ({ contentType }: ContentDetailsPageProps) => 
 
           {/* Description */}
           <div className="prose max-w-none">
-            <h3 className="text-lg font-semibold text-indigo-900 mb-2 flex items-center gap-2">
-              <FileText className="w-5 h-5" />
+            <h3 className="text-base sm:text-lg font-semibold text-indigo-900 mb-2 flex items-center gap-2">
+              <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
               Description
             </h3>
-            <div className="bg-white rounded-lg p-4 shadow-sm">
+            <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm">
               {content.description ? (
-                <p className="text-gray-700 whitespace-pre-wrap">{content.description}</p>
+                <p className="text-sm sm:text-base text-gray-700 whitespace-pre-wrap">{content.description}</p>
               ) : (
                 <p className="text-gray-500 italic">No description provided</p>
               )}
@@ -263,15 +264,15 @@ export const ContentDetailsPage = ({ contentType }: ContentDetailsPageProps) => 
 
           {/* Attachments */}
           {content.attachments && content.attachments.length > 0 ? (
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Images Section */}
               {imageAttachments.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold text-indigo-900 mb-4 flex items-center">
-                    <Eye className="w-5 h-5 mr-2 flex-shrink-0" />
+                  <h3 className="text-base sm:text-lg font-semibold text-indigo-900 mb-3 sm:mb-4 flex items-center">
+                    <Eye className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
                     Images ({imageAttachments.length})
                   </h3>
-                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm">
                     <ImageGrid
                       images={imageAttachments.map((attachment) => ({
                         id: attachment.id,
@@ -279,7 +280,7 @@ export const ContentDetailsPage = ({ contentType }: ContentDetailsPageProps) => 
                         alt: attachment.fileName,
                         loadingText: 'Loading image...',
                       }))}
-                      className="grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+                      className="grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4"
                       onImageClick={(index: number) => {
                         const attachment = imageAttachments[index];
                         if (attachment) {
@@ -293,12 +294,12 @@ export const ContentDetailsPage = ({ contentType }: ContentDetailsPageProps) => 
 
               {/* Other Attachments Section */}
               {otherAttachments.length > 0 && (
-                <div className="mt-6">
-                  <h3 className="text-lg font-semibold text-indigo-900 mb-4 flex items-center">
-                    <Paperclip className="w-5 h-5 mr-2 flex-shrink-0" />
+                <div className="mt-4 sm:mt-6">
+                  <h3 className="text-base sm:text-lg font-semibold text-indigo-900 mb-3 sm:mb-4 flex items-center">
+                    <Paperclip className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
                     Other Attachments
                   </h3>
-                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm">
                     <AttachmentsList
                       attachments={otherAttachments.map((attachment) => ({
                         ...attachment,

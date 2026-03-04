@@ -1,12 +1,10 @@
 import { motion } from "framer-motion";
-import { useTheme } from "@/lib/theme-provider";
 
 interface SchoolBuildingProps {
   className?: string;
 }
 
 export function SchoolBuilding({ className = "" }: SchoolBuildingProps) {
-  const { theme } = useTheme();
   // Building colors
   const colors = {
     walls: "#f8f9fa",

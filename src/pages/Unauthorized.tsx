@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-provider';
 import { supabase } from '@/lib/api-client';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
+
 import { alertStyles } from '@/styles/theme';
 
 const Unauthorized: React.FC = () => {
@@ -38,10 +38,7 @@ const Unauthorized: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center bg-background transition-colors duration-300">
-      {/* Theme Toggle */}
-      <div className="absolute top-4 right-4">
-        <ThemeToggle />
-      </div>
+
 
       <div className="max-w-md">
         <h1 className={alertStyles.errorTitle}>Access Denied</h1>

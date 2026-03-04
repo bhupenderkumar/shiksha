@@ -3,7 +3,6 @@ import { SCHOOL_INFO } from "@/constants/schoolInfo";
 import { Card, CardContent } from "@/components/ui/card";
 import { GradientText } from "@/components/ui/light-effects";
 import { TeacherCharacter } from "@/components/animations/characters/TeacherCharacter";
-import { useTheme } from "@/lib/theme-provider";
 import { LucideIcon } from "lucide-react";
 
 interface Feature {
@@ -19,7 +18,6 @@ interface ClassroomFeaturesProps {
 }
 
 export function ClassroomFeatures({ features, className = "" }: ClassroomFeaturesProps) {
-  const { theme } = useTheme();
   // Animation variants
   const containerAnimation = {
     hidden: { opacity: 0 },
