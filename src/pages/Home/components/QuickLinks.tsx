@@ -54,6 +54,16 @@ const links = [
     shadow: "hover:shadow-red-100/50",
     iconBg: "bg-gradient-to-br from-orange-500 to-red-500",
   },
+  {
+    to: "/promotion-fee-2026-27.html",
+    label: "Promo Fees 2026–27",
+    description: "Flat ₹4,800 for all classes",
+    icon: IndianRupee,
+    border: "border-green-100",
+    hoverBorder: "hover:border-green-200",
+    shadow: "hover:shadow-green-100/50",
+    iconBg: "bg-gradient-to-br from-green-500 to-emerald-500",
+  },
 ];
 
 export function QuickLinks() {
@@ -91,6 +101,36 @@ export function QuickLinks() {
               viewport={{ once: true }}
               transition={{ delay: index * 0.08, duration: 0.5 }}
             >
+              {link.to.endsWith('.html') ? (
+                <a href={link.to} className="block group h-full">
+                  <div className={cn(
+                    "relative h-full p-6 rounded-2xl",
+                    "bg-white border",
+                    link.border,
+                    link.hoverBorder,
+                    "shadow-sm hover:shadow-lg",
+                    link.shadow,
+                    "transition-all duration-300 hover:-translate-y-1"
+                  )}>
+                    <div className={cn(
+                      "w-12 h-12 rounded-xl flex items-center justify-center mb-4",
+                      link.iconBg
+                    )}>
+                      <link.icon className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="text-base font-bold text-slate-800 mb-1.5">
+                      {link.label}
+                    </h3>
+                    <p className="text-sm text-slate-400 mb-4 leading-relaxed">
+                      {link.description}
+                    </p>
+                    <div className="flex items-center gap-1.5 text-sm font-medium text-slate-400 group-hover:text-violet-600 transition-colors">
+                      <span>Get Started</span>
+                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
+                </a>
+              ) : (
               <Link to={link.to} className="block group h-full">
                 <div className={cn(
                   "relative h-full p-6 rounded-2xl",
@@ -124,6 +164,7 @@ export function QuickLinks() {
                   </div>
                 </div>
               </Link>
+              )}
             </motion.div>
           ))}
         </div>
