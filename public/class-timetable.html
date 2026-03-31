@@ -180,6 +180,14 @@
     display: inline-block; padding: 4px 10px; border-radius: 6px;
     font-size: 11px; font-weight: 600; letter-spacing: 0.2px;
   }
+  .book-label {
+    display: block; font-size: 9px; font-weight: 600; color: var(--slate-400);
+    margin-top: 3px; line-height: 1.3; font-style: italic;
+  }
+  .copy-label {
+    display: block; font-size: 9px; font-weight: 600; color: var(--emerald-600);
+    margin-top: 1px; line-height: 1.3; font-style: italic;
+  }
   .subj-english  { background: #dbeafe; color: #1d4ed8; }
   .subj-hindi    { background: #fef3c7; color: #92400e; }
   .subj-math     { background: #fce7f3; color: #be185d; }
@@ -191,6 +199,12 @@
   .subj-pt       { background: #fef9c3; color: #a16207; }
   .subj-break    { background: var(--slate-100); color: var(--slate-400); font-style: italic; }
   .subj-assembly { background: var(--amber-50); color: var(--amber-700); }
+  .subj-yoga     { background: #fdf4ff; color: #a21caf; }
+  .subj-sports   { background: #fff7ed; color: #c2410c; }
+  .subj-cricket  { background: #f0fdf4; color: #15803d; }
+  .subj-mic      { background: #fefce8; color: #a16207; }
+  .subj-projector{ background: #f0f9ff; color: #0369a1; }
+  .subj-activity { background: #faf5ff; color: #7e22ce; }
 
   /* ── Books / Copies List ── */
   .list-grid {
@@ -299,60 +313,60 @@ const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 // Timetable periods per class
 const timetables = {
   'Nursery': [
-    ['Assembly', 'English', 'Math',    'BREAK', 'Hindi',   'Drawing', 'EVS'],
-    ['Assembly', 'Hindi',   'English', 'BREAK', 'Math',    'EVS',     'Computer'],
-    ['Assembly', 'Math',    'Hindi',   'BREAK', 'English', 'Drawing', 'EVS'],
-    ['Assembly', 'English', 'Drawing', 'BREAK', 'Math',    'Hindi',   'EVS'],
-    ['Assembly', 'Hindi',   'Math',    'BREAK', 'English', 'Computer','Drawing'],
-    ['Assembly', 'English', 'Hindi',   'BREAK', 'Math',    'Drawing', 'EVS'],
+    ['Assembly', 'English (Writing)', 'English (Oral)', 'BREAK', 'Math (Writing)',  'Math (Oral)',  'Yoga',         'Projector'],
+    ['Assembly', 'Hindi (Writing)',   'Hindi (Oral)',   'BREAK', 'English (Writing)','English (Oral)','Sports',      'Activity'],
+    ['Assembly', 'Math (Writing)',    'Math (Oral)',    'BREAK', 'Hindi (Writing)',  'Hindi (Oral)', 'Cricket',      'Projector'],
+    ['Assembly', 'English (Writing)', 'English (Oral)', 'BREAK', 'Drawing',         'Drawing',      'Speak on Mic', 'Activity'],
+    ['Assembly', 'Hindi (Writing)',   'Hindi (Oral)',   'BREAK', 'EVS (Writing)',   'EVS (Oral)',    'AI',           'Projector'],
+    ['Assembly', 'Math (Writing)',    'Math (Oral)',    'BREAK', 'Computer',        'EVS (Oral)',    'Sports',       'Activity'],
   ],
   'KG': [
-    ['Assembly', 'English', 'Math',    'BREAK', 'Hindi',   'EVS',     'Drawing'],
-    ['Assembly', 'Hindi',   'English', 'BREAK', 'Math',    'Computer','EVS'],
-    ['Assembly', 'Math',    'Drawing', 'BREAK', 'English', 'Hindi',   'EVS'],
-    ['Assembly', 'English', 'Hindi',   'BREAK', 'Drawing', 'Math',    'Computer'],
-    ['Assembly', 'Math',    'English', 'BREAK', 'Hindi',   'EVS',     'Drawing'],
-    ['Assembly', 'Hindi',   'Math',    'BREAK', 'English', 'Drawing', 'EVS'],
+    ['Assembly', 'English (Writing)', 'English (Oral)', 'BREAK', 'Math (Writing)',  'Math (Oral)',  'Yoga',         'Projector'],
+    ['Assembly', 'Hindi (Writing)',   'Hindi (Oral)',   'BREAK', 'English (Writing)','English (Oral)','Sports',      'Activity'],
+    ['Assembly', 'Math (Writing)',    'Math (Oral)',    'BREAK', 'Hindi (Writing)',  'Hindi (Oral)', 'Cricket',      'Projector'],
+    ['Assembly', 'English (Writing)', 'English (Oral)', 'BREAK', 'Drawing',         'EVS (Oral)',   'Speak on Mic', 'Activity'],
+    ['Assembly', 'Hindi (Writing)',   'Hindi (Oral)',   'BREAK', 'EVS (Writing)',   'EVS (Oral)',    'Computer',     'Projector'],
+    ['Assembly', 'Math (Writing)',    'Math (Oral)',    'BREAK', 'Computer',        'Drawing',       'AI',           'Activity'],
   ],
   'Class 1': [
-    ['Assembly', 'English', 'Math',    'Hindi',   'BREAK', 'EVS',     'Computer', 'Drawing'],
-    ['Assembly', 'Hindi',   'English', 'Math',    'BREAK', 'AI',      'EVS',      'English'],
-    ['Assembly', 'Math',    'Hindi',   'English', 'BREAK', 'Drawing', 'Math',     'EVS'],
-    ['Assembly', 'English', 'EVS',     'Math',    'BREAK', 'Hindi',   'Computer', 'AI'],
-    ['Assembly', 'Hindi',   'Math',    'Drawing', 'BREAK', 'English', 'EVS',      'Math'],
-    ['Assembly', 'Math',    'English', 'Hindi',   'BREAK', 'EVS',     'Drawing',  'AI'],
+    ['Assembly', 'English (Writing)', 'English (Oral)', 'BREAK', 'Math (Writing)',  'Math (Oral)',  'Yoga',         'Projector'],
+    ['Assembly', 'Hindi (Writing)',   'Hindi (Oral)',   'BREAK', 'English (Writing)','English (Oral)','Sports',      'Activity'],
+    ['Assembly', 'Math (Writing)',    'Math (Oral)',    'BREAK', 'Hindi (Writing)',  'Hindi (Oral)', 'Cricket',      'Projector'],
+    ['Assembly', 'EVS (Writing)',     'EVS (Oral)',     'BREAK', 'English (Writing)','English (Oral)','Speak on Mic','Activity'],
+    ['Assembly', 'Hindi (Writing)',   'Hindi (Oral)',   'BREAK', 'Computer',        'AI',            'Sports',      'Projector'],
+    ['Assembly', 'Math (Writing)',    'Math (Oral)',    'BREAK', 'Drawing',         'EVS (Oral)',    'Yoga',         'Activity'],
   ],
   'Class 2': [
-    ['Assembly', 'English', 'Math',    'Hindi',   'BREAK', 'EVS',     'AI',       'Drawing'],
-    ['Assembly', 'Hindi',   'English', 'Math',    'BREAK', 'Computer','EVS',      'English'],
-    ['Assembly', 'Math',    'Hindi',   'Science', 'BREAK', 'Drawing', 'English',  'EVS'],
-    ['Assembly', 'English', 'EVS',     'Math',    'BREAK', 'Hindi',   'AI',       'Computer'],
-    ['Assembly', 'Hindi',   'Math',    'Drawing', 'BREAK', 'English', 'Science',  'Math'],
-    ['Assembly', 'Math',    'English', 'Hindi',   'BREAK', 'EVS',     'Computer', 'Drawing'],
+    ['Assembly', 'English', 'Math',    'Hindi',   'BREAK', 'EVS',     'AI',       'Drawing',  'Yoga',         'Projector'],
+    ['Assembly', 'Hindi',   'English', 'Math',    'BREAK', 'Computer','EVS',      'English',  'Sports',       'Activity'],
+    ['Assembly', 'Math',    'Hindi',   'Science', 'BREAK', 'Drawing', 'English',  'EVS',      'Cricket',      'Projector'],
+    ['Assembly', 'English', 'EVS',     'Math',    'BREAK', 'Hindi',   'AI',       'Computer', 'Speak on Mic', 'Activity'],
+    ['Assembly', 'Hindi',   'Math',    'Drawing', 'BREAK', 'English', 'Science',  'Math',     'Sports',       'Projector'],
+    ['Assembly', 'Math',    'English', 'Hindi',   'BREAK', 'EVS',     'Computer', 'Drawing',  'Yoga',         'Activity'],
   ],
   'Class 3': [
-    ['Assembly', 'English', 'Math',    'Science', 'BREAK', 'Hindi',   'Computer', 'Drawing'],
-    ['Assembly', 'Hindi',   'English', 'Math',    'BREAK', 'EVS',     'AI',       'Science'],
-    ['Assembly', 'Math',    'Science', 'Hindi',   'BREAK', 'English', 'Drawing',  'EVS'],
-    ['Assembly', 'English', 'EVS',     'Math',    'BREAK', 'Science', 'Hindi',    'Computer'],
-    ['Assembly', 'Hindi',   'Math',    'Drawing', 'BREAK', 'English', 'AI',       'Science'],
-    ['Assembly', 'Math',    'English', 'Hindi',   'BREAK', 'Science', 'EVS',      'AI'],
+    ['Assembly', 'English', 'Math',    'Science', 'BREAK', 'Hindi',   'Computer', 'Drawing',  'Yoga',         'Projector'],
+    ['Assembly', 'Hindi',   'English', 'Math',    'BREAK', 'EVS',     'AI',       'Science',  'Sports',       'Activity'],
+    ['Assembly', 'Math',    'Science', 'Hindi',   'BREAK', 'English', 'Drawing',  'EVS',      'Cricket',      'Projector'],
+    ['Assembly', 'English', 'EVS',     'Math',    'BREAK', 'Science', 'Hindi',    'Computer', 'Speak on Mic', 'Activity'],
+    ['Assembly', 'Hindi',   'Math',    'Drawing', 'BREAK', 'English', 'AI',       'Science',  'Sports',       'Projector'],
+    ['Assembly', 'Math',    'English', 'Hindi',   'BREAK', 'Science', 'EVS',      'AI',       'Yoga',         'Activity'],
   ],
   'Class 4': [
-    ['Assembly', 'English', 'Science', 'Math',    'BREAK', 'Hindi',   'AI',       'Computer'],
-    ['Assembly', 'Math',    'Hindi',   'English', 'BREAK', 'Science', 'Drawing',  'EVS'],
-    ['Assembly', 'Hindi',   'Math',    'Science', 'BREAK', 'English', 'Computer', 'AI'],
-    ['Assembly', 'English', 'EVS',     'Hindi',   'BREAK', 'Math',    'Science',  'Drawing'],
-    ['Assembly', 'Science', 'Math',    'English', 'BREAK', 'Hindi',   'AI',       'EVS'],
-    ['Assembly', 'Math',    'English', 'Drawing', 'BREAK', 'Hindi',   'Science',  'Computer'],
+    ['Assembly', 'English', 'Science', 'Math',    'BREAK', 'Hindi',   'AI',       'Computer', 'Yoga',         'Projector'],
+    ['Assembly', 'Math',    'Hindi',   'English', 'BREAK', 'Science', 'Drawing',  'EVS',      'Sports',       'Activity'],
+    ['Assembly', 'Hindi',   'Math',    'Science', 'BREAK', 'English', 'Computer', 'AI',       'Cricket',      'Projector'],
+    ['Assembly', 'English', 'EVS',     'Hindi',   'BREAK', 'Math',    'Science',  'Drawing',  'Speak on Mic', 'Activity'],
+    ['Assembly', 'Science', 'Math',    'English', 'BREAK', 'Hindi',   'AI',       'EVS',      'Sports',       'Projector'],
+    ['Assembly', 'Math',    'English', 'Drawing', 'BREAK', 'Hindi',   'Science',  'Computer', 'Yoga',         'Activity'],
   ],
   'Class 5': [
-    ['Assembly', 'Math',    'English', 'Science', 'BREAK', 'Hindi',   'Computer', 'AI'],
-    ['Assembly', 'English', 'Hindi',   'Math',    'BREAK', 'Science', 'EVS',      'Drawing'],
-    ['Assembly', 'Science', 'Math',    'English', 'BREAK', 'Hindi',   'AI',       'Computer'],
-    ['Assembly', 'Hindi',   'EVS',     'Math',    'BREAK', 'English', 'Science',  'Drawing'],
-    ['Assembly', 'Math',    'Science', 'Hindi',   'BREAK', 'English', 'AI',       'EVS'],
-    ['Assembly', 'English', 'Math',    'Drawing', 'BREAK', 'Science', 'Hindi',    'Computer'],
+    ['Assembly', 'Math',    'English', 'Science', 'BREAK', 'Hindi',   'Computer', 'AI',       'Yoga',         'Projector'],
+    ['Assembly', 'English', 'Hindi',   'Math',    'BREAK', 'Science', 'EVS',      'Drawing',  'Sports',       'Activity'],
+    ['Assembly', 'Science', 'Math',    'English', 'BREAK', 'Hindi',   'AI',       'Computer', 'Cricket',      'Projector'],
+    ['Assembly', 'Hindi',   'EVS',     'Math',    'BREAK', 'English', 'Science',  'Drawing',  'Speak on Mic', 'Activity'],
+    ['Assembly', 'Math',    'Science', 'Hindi',   'BREAK', 'English', 'AI',       'EVS',      'Sports',       'Projector'],
+    ['Assembly', 'English', 'Math',    'Drawing', 'BREAK', 'Science', 'Hindi',    'Computer', 'Yoga',         'Activity'],
   ],
 };
 
@@ -518,13 +532,16 @@ let selectedClass = 'Nursery';
 let selectedSection = 'timetable';
 
 function chipClass(subj) {
-  const map = {
+  var base = subj.replace(/ \(Writing\)/, '').replace(/ \(Oral\)/, '');
+  var map = {
     'English': 'subj-english', 'Hindi': 'subj-hindi', 'Math': 'subj-math',
     'Computer': 'subj-computer', 'EVS': 'subj-evs', 'Science': 'subj-science',
     'AI': 'subj-ai', 'Drawing': 'subj-drawing', 'PT': 'subj-pt',
     'BREAK': 'subj-break', 'Assembly': 'subj-assembly',
+    'Yoga': 'subj-yoga', 'Sports': 'subj-sports', 'Cricket': 'subj-cricket',
+    'Speak on Mic': 'subj-mic', 'Projector': 'subj-projector', 'Activity': 'subj-activity',
   };
-  return map[subj] || '';
+  return map[base] || 'subj-activity';
 }
 
 function buildClassTabs() {
@@ -557,6 +574,85 @@ function render() {
   else renderCopies(container);
 }
 
+// Subject to book name mapping per class
+var subjectBooks = {
+  'Nursery': {
+    'English': 'English Primer', 'Hindi': 'Hindi Primer', 'Math': 'Math Primer',
+    'Drawing': 'Drawing Book', 'EVS': 'EVS Activity Book', 'Computer': 'Computer Primer',
+  },
+  'KG': {
+    'English': 'English Reader', 'Hindi': 'Hindi Reader', 'Math': 'Math Workbook',
+    'Drawing': 'Drawing Book', 'EVS': 'EVS Activity Book', 'Computer': 'Computer Book',
+  },
+  'Class 1': {
+    'English': 'Eng Reader + Grammar', 'Hindi': 'Hindi Patya + Vyakaran', 'Math': 'Mathematics',
+    'EVS': 'EVS', 'Computer': 'Computer Science', 'Drawing': 'Drawing Book', 'AI': 'AI Basics',
+  },
+  'Class 2': {
+    'English': 'Eng Reader + Grammar', 'Hindi': 'Hindi Patya + Vyakaran', 'Math': 'Mathematics',
+    'EVS': 'EVS', 'Science': 'Science', 'Computer': 'Computer Science', 'Drawing': 'Drawing Book', 'AI': 'AI Basics',
+  },
+  'Class 3': {
+    'English': 'Eng Reader + Grammar', 'Hindi': 'Hindi Patya + Vyakaran', 'Math': 'Mathematics',
+    'Science': 'Science', 'EVS': 'EVS / Social Studies', 'Computer': 'Computer Science',
+    'Drawing': 'Drawing Book', 'AI': 'AI Workbook',
+  },
+  'Class 4': {
+    'English': 'Eng Reader + Grammar', 'Hindi': 'Hindi Patya + Vyakaran', 'Math': 'Mathematics',
+    'Science': 'Science', 'EVS': 'EVS / Social Studies', 'Computer': 'Computer Science',
+    'Drawing': 'Drawing Book', 'AI': 'AI Workbook',
+  },
+  'Class 5': {
+    'English': 'Eng Reader + Grammar', 'Hindi': 'Hindi Patya + Vyakaran', 'Math': 'Mathematics',
+    'Science': 'Science', 'EVS': 'EVS / Social Studies', 'Computer': 'Computer Science',
+    'Drawing': 'Drawing Book', 'AI': 'AI Workbook',
+  },
+};
+
+function getBookName(subj) {
+  var base = subj.replace(/ \(Writing\)/, '').replace(/ \(Oral\)/, '');
+  var classBooks = subjectBooks[selectedClass] || {};
+  return classBooks[base] || '';
+}
+
+// Subject to copy mapping per class
+var subjectCopies = {
+  'Nursery': {
+    'English': 'English Writing Copy', 'Hindi': 'Hindi Writing Copy', 'Math': 'Math Copy',
+    'Drawing': 'Drawing Copy',
+  },
+  'KG': {
+    'English': 'English Writing Copy', 'Hindi': 'Hindi Writing Copy', 'Math': 'Math Copy',
+    'Drawing': 'Drawing Copy', 'EVS': 'EVS Copy',
+  },
+  'Class 1': {
+    'English': 'English CW + HW Copy', 'Hindi': 'Hindi CW + HW Copy', 'Math': 'Math CW + HW Copy',
+    'EVS': 'EVS Copy', 'Computer': 'Computer Copy', 'Drawing': 'Drawing Copy',
+  },
+  'Class 2': {
+    'English': 'English CW + HW Copy', 'Hindi': 'Hindi CW + HW Copy', 'Math': 'Math CW + HW Copy',
+    'EVS': 'EVS Copy', 'Computer': 'Computer Copy', 'Drawing': 'Drawing Copy',
+  },
+  'Class 3': {
+    'English': 'English CW + HW Copy', 'Hindi': 'Hindi CW + HW Copy', 'Math': 'Math CW + HW Copy',
+    'Science': 'Science Copy', 'EVS': 'EVS / SST Copy', 'Computer': 'Computer Copy', 'Drawing': 'Drawing Copy',
+  },
+  'Class 4': {
+    'English': 'English CW + HW Copy', 'Hindi': 'Hindi CW + HW Copy', 'Math': 'Math CW + HW Copy',
+    'Science': 'Science Copy', 'EVS': 'EVS / SST Copy', 'Computer': 'Computer Copy', 'Drawing': 'Drawing Copy',
+  },
+  'Class 5': {
+    'English': 'English CW + HW Copy', 'Hindi': 'Hindi CW + HW Copy', 'Math': 'Math CW + HW Copy',
+    'Science': 'Science Copy', 'EVS': 'EVS / SST Copy', 'Computer': 'Computer Copy', 'Drawing': 'Drawing Copy',
+  },
+};
+
+function getCopyName(subj) {
+  var base = subj.replace(/ \(Writing\)/, '').replace(/ \(Oral\)/, '');
+  var classCopies = subjectCopies[selectedClass] || {};
+  return classCopies[base] || '';
+}
+
 function renderTimetable(container) {
   var tt = timetables[selectedClass];
   var periods = tt[0].length;
@@ -571,7 +667,22 @@ function renderTimetable(container) {
     for (var p = 0; p < tt[d].length; p++) {
       var subj = tt[d][p];
       var label = subj === 'BREAK' ? '☕ Break' : subj;
-      rows += '<td><span class="subj-chip ' + chipClass(subj) + '">' + label + '</span></td>';
+      var isWriting = subj.indexOf('(Writing)') !== -1;
+      var isOral = subj.indexOf('(Oral)') !== -1;
+      var bookName = getBookName(subj);
+      var copyName = getCopyName(subj);
+      // Writing periods → show copy only, Oral periods → show book only
+      // Non-writing/oral subjects (Class 2+) → show book only
+      var bookHtml = '';
+      var copyHtml = '';
+      if (isWriting) {
+        copyHtml = copyName ? '<span class="copy-label">📝 ' + copyName + '</span>' : '';
+      } else if (isOral) {
+        bookHtml = bookName ? '<span class="book-label">📖 ' + bookName + '</span>' : '';
+      } else {
+        bookHtml = bookName ? '<span class="book-label">📖 ' + bookName + '</span>' : '';
+      }
+      rows += '<td><span class="subj-chip ' + chipClass(subj) + '">' + label + '</span>' + bookHtml + copyHtml + '</td>';
     }
     rows += '</tr>';
   }
@@ -586,6 +697,21 @@ function renderTimetable(container) {
         '<thead><tr>' + headerCells + '</tr></thead>' +
         '<tbody>' + rows + '</tbody>' +
       '</table>' +
+    '</div>' +
+    '<div style="padding:20px 24px;border-top:1px solid var(--border);">' +
+      '<h4 style="font-size:14px;font-weight:700;color:var(--slate-800);margin-bottom:12px;">📌 Period Descriptions</h4>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;">' +
+        '<div style="display:flex;gap:8px;align-items:start;"><span class="subj-chip subj-assembly">Assembly</span><span style="font-size:12px;color:var(--slate-500);">Morning prayer, national anthem & daily announcements</span></div>' +
+        '<div style="display:flex;gap:8px;align-items:start;"><span class="subj-chip subj-yoga">Yoga</span><span style="font-size:12px;color:var(--slate-500);">Stretching, breathing exercises & meditation for focus</span></div>' +
+        '<div style="display:flex;gap:8px;align-items:start;"><span class="subj-chip subj-sports">Sports</span><span style="font-size:12px;color:var(--slate-500);">Outdoor games, running, team exercises & fitness drills</span></div>' +
+        '<div style="display:flex;gap:8px;align-items:start;"><span class="subj-chip subj-cricket">Cricket</span><span style="font-size:12px;color:var(--slate-500);">Batting, bowling, fielding practice & mini matches</span></div>' +
+        '<div style="display:flex;gap:8px;align-items:start;"><span class="subj-chip subj-mic">Speak on Mic</span><span style="font-size:12px;color:var(--slate-500);">Public speaking, storytelling & confidence building</span></div>' +
+        '<div style="display:flex;gap:8px;align-items:start;"><span class="subj-chip subj-projector">Projector</span><span style="font-size:12px;color:var(--slate-500);">Visual learning via smart board — videos, animations & presentations</span></div>' +
+        '<div style="display:flex;gap:8px;align-items:start;"><span class="subj-chip subj-activity">Activity</span><span style="font-size:12px;color:var(--slate-500);">Craft work, clay modelling, puzzles, rhymes & fun learning games</span></div>' +
+        '<div style="display:flex;gap:8px;align-items:start;"><span class="subj-chip subj-ai">AI</span><span style="font-size:12px;color:var(--slate-500);">Age-appropriate introduction to artificial intelligence & logic</span></div>' +
+        '<div style="display:flex;gap:8px;align-items:start;"><span class="subj-chip subj-computer">Computer</span><span style="font-size:12px;color:var(--slate-500);">Hands-on computer lab session — typing, mouse skills & basic software</span></div>' +
+        '<div style="display:flex;gap:8px;align-items:start;"><span class="subj-chip subj-drawing">Drawing</span><span style="font-size:12px;color:var(--slate-500);">Sketching, colouring, painting & creative art expression</span></div>' +
+      '</div>' +
     '</div>';
 }
 
