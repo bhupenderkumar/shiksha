@@ -221,6 +221,12 @@ export function HeroSection() {
             >
               🎉 Promo Fees 2026–27
             </a>
+            <a
+              href="/class-timetable.html"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs sm:text-sm font-medium hover:bg-blue-100 hover:border-blue-300 transition-all duration-200 hover:scale-[1.03]"
+            >
+              📅 Timetable & Books
+            </a>
           </motion.div>
 
           {/* CTA Buttons */}

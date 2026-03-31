@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>First Step School – Class Timetable, Books &amp; Copies</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #6d28d9;
+    --primary-light: #8b5cf6;
+    --primary-bg: rgba(109,40,217,0.05);
+    --indigo: #4f46e5;
+    --violet-50: #f5f3ff;
+    --violet-100: #ede9fe;
+    --violet-200: #ddd6fe;
+    --violet-600: #7c3aed;
+    --slate-50: #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-200: #e2e8f0;
+    --slate-300: #cbd5e1;
+    --slate-400: #94a3b8;
+    --slate-500: #64748b;
+    --slate-600: #475569;
+    --slate-700: #334155;
+    --slate-800: #1e293b;
+    --slate-900: #0f172a;
+    --emerald-50: #ecfdf5;
+    --emerald-100: #d1fae5;
+    --emerald-500: #10b981;
+    --emerald-600: #059669;
+    --emerald-700: #047857;
+    --amber-50: #fffbeb;
+    --amber-100: #fef3c7;
+    --amber-200: #fde68a;
+    --amber-500: #f59e0b;
+    --amber-700: #b45309;
+    --amber-800: #92400e;
+    --blue-50: #eff6ff;
+    --blue-100: #dbeafe;
+    --blue-500: #3b82f6;
+    --blue-600: #2563eb;
+    --blue-700: #1d4ed8;
+    --pink-50: #fdf2f8;
+    --pink-100: #fce7f3;
+    --pink-500: #ec4899;
+    --pink-600: #db2777;
+    --border: #e2e8f0;
+    --card: #ffffff;
+    --background: #f1f5f9;
+    --muted: #f1f5f9;
+    --muted-fg: #64748b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--background);
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--slate-900);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .site-header {
+    position: sticky; top: 0; z-index: 50;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .header-inner {
+    max-width: 1200px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px; height: 64px;
+  }
+  .logo-group { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+  .logo-group img { height: 32px; width: 32px; object-fit: contain; border-radius: 6px; }
+  .logo-text { display: flex; flex-direction: column; line-height: 1.2; }
+  .logo-text .name { font-size: 14px; font-weight: 700; }
+  .logo-text .sub { font-size: 10px; color: var(--muted-fg); }
+  .header-actions { display: flex; gap: 8px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    cursor: pointer; text-decoration: none; border: none; transition: all 0.2s;
+  }
+  .btn-outline { background: var(--card); border: 1px solid var(--border); color: var(--slate-700); }
+  .btn-outline:hover { background: var(--slate-50); border-color: var(--slate-300); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--violet-600), var(--indigo));
+    color: #fff; box-shadow: 0 4px 14px rgba(109,40,217,0.25);
+  }
+  .btn-primary:hover { opacity: 0.92; transform: translateY(-1px); }
+
+  .hero-banner {
+    background: linear-gradient(180deg, var(--primary-bg), var(--background));
+    padding: 48px 16px 24px; text-align: center;
+  }
+  .hero-banner h1 { font-size: clamp(24px, 5vw, 36px); font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .hero-banner h1 .highlight {
+    background: linear-gradient(135deg, var(--violet-600), var(--indigo));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .hero-banner p { color: var(--muted-fg); max-width: 560px; margin: 0 auto; font-size: 15px; line-height: 1.6; }
+
+  /* ── Class Selector ── */
+  .class-selector-wrap { margin-top: 24px; }
+  .class-selector-label { font-size: 12px; font-weight: 600; color: var(--slate-500); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .class-tabs { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
+  .class-tab {
+    padding: 8px 18px; border-radius: 999px; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: 1.5px solid var(--border); background: var(--card);
+    color: var(--slate-600); transition: all 0.2s; user-select: none;
+  }
+  .class-tab:hover { border-color: var(--primary-light); color: var(--primary); background: var(--violet-50); }
+  .class-tab.active {
+    background: linear-gradient(135deg, var(--violet-600), var(--indigo));
+    color: #fff; border-color: transparent; box-shadow: 0 4px 12px rgba(109,40,217,0.3);
+  }
+
+  /* ── Section Tabs (Timetable / Books / Copies) ── */
+  .section-tabs { display: flex; justify-content: center; gap: 4px; margin-top: 20px; }
+  .section-tab {
+    padding: 10px 24px; border-radius: 12px 12px 0 0; font-size: 14px; font-weight: 700;
+    cursor: pointer; border: 1.5px solid var(--border); border-bottom: none;
+    background: var(--card); color: var(--slate-500); transition: all 0.2s; user-select: none;
+  }
+  .section-tab:hover { color: var(--primary); background: var(--violet-50); }
+  .section-tab.active {
+    background: var(--card); color: var(--primary); border-color: var(--border);
+    position: relative;
+  }
+  .section-tab.active::after {
+    content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 3px; background: var(--card);
+  }
+
+  /* ── Main Container ── */
+  .main { max-width: 1000px; margin: 0 auto; padding: 0 16px 48px; }
+
+  /* ── Card ── */
+  .content-card {
+    background: var(--card); border-radius: 0 0 16px 16px;
+    border: 1px solid var(--border); border-top: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 6px 24px rgba(0,0,0,0.03);
+    overflow: hidden; padding: 0;
+  }
+  .card-title-bar {
+    padding: 16px 24px; background: var(--primary-bg); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  }
+  .card-title-bar h3 { font-size: 16px; font-weight: 700; }
+  .badge-class {
+    background: var(--violet-50); color: var(--violet-600); border: 1px solid var(--violet-200);
+    font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 999px;
+  }
+
+  /* ── Timetable ── */
+  .timetable-wrap { overflow-x: auto; }
+  .timetable { width: 100%; border-collapse: collapse; min-width: 700px; }
+  .timetable th {
+    padding: 12px 10px; font-size: 11px; font-weight: 700; color: var(--slate-500);
+    text-transform: uppercase; letter-spacing: 0.5px; text-align: center;
+    border-bottom: 2px solid var(--border); background: var(--muted);
+  }
+  .timetable th:first-child { text-align: left; padding-left: 20px; }
+  .timetable td {
+    padding: 10px 8px; font-size: 13px; text-align: center;
+    border-bottom: 1px solid var(--border); vertical-align: middle;
+  }
+  .timetable td:first-child {
+    text-align: left; padding-left: 20px; font-weight: 700; color: var(--slate-700);
+    font-size: 12px; white-space: nowrap;
+  }
+  .timetable tbody tr { transition: background 0.15s; }
+  .timetable tbody tr:hover { background: var(--slate-50); }
+  .timetable tbody tr:last-child td { border-bottom: none; }
+
+  .subj-chip {
+    display: inline-block; padding: 4px 10px; border-radius: 6px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.2px;
+  }
+  .subj-english  { background: #dbeafe; color: #1d4ed8; }
+  .subj-hindi    { background: #fef3c7; color: #92400e; }
+  .subj-math     { background: #fce7f3; color: #be185d; }
+  .subj-computer { background: #e0e7ff; color: #3730a3; }
+  .subj-evs      { background: #d1fae5; color: #047857; }
+  .subj-science  { background: #ccfbf1; color: #0f766e; }
+  .subj-ai       { background: #ede9fe; color: #6d28d9; }
+  .subj-drawing  { background: #ffe4e6; color: #be123c; }
+  .subj-pt       { background: #fef9c3; color: #a16207; }
+  .subj-break    { background: var(--slate-100); color: var(--slate-400); font-style: italic; }
+  .subj-assembly { background: var(--amber-50); color: var(--amber-700); }
+
+  /* ── Books / Copies List ── */
+  .list-grid {
+    display: grid; grid-template-columns: 1fr; gap: 0;
+  }
+  .list-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 24px; border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .list-item:hover { background: var(--slate-50); }
+  .list-item:last-child { border-bottom: none; }
+  .list-num {
+    width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+  .list-num.book { background: var(--blue-50); color: var(--blue-600); border: 1px solid var(--blue-100); }
+  .list-num.copy { background: var(--emerald-50); color: var(--emerald-600); border: 1px solid var(--emerald-100); }
+  .list-name { font-size: 14px; font-weight: 600; color: var(--slate-800); }
+  .list-detail { font-size: 12px; color: var(--slate-400); margin-top: 2px; }
+  .list-qty {
+    margin-left: auto; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px;
+  }
+  .list-qty.book { background: var(--blue-50); color: var(--blue-700); }
+  .list-qty.copy { background: var(--emerald-50); color: var(--emerald-700); }
+
+  /* ── Footer ── */
+  .page-footer {
+    text-align: center; padding: 24px 16px; font-size: 13px; color: var(--slate-400);
+    border-top: 1px solid var(--border); margin-top: 32px;
+  }
+
+  @media (max-width: 640px) {
+    .class-tab { padding: 6px 14px; font-size: 12px; }
+    .section-tab { padding: 8px 16px; font-size: 12px; }
+    .timetable th, .timetable td { padding: 8px 6px; font-size: 11px; }
+    .subj-chip { padding: 3px 6px; font-size: 10px; }
+    .list-item { padding: 12px 16px; }
+    .header-actions .btn span.hide-mobile { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="logo-group">
+      <img src="/assets/images/logo.PNG" alt="Logo">
+      <div class="logo-text">
+        <span class="name">First Step Public School</span>
+        <span class="sub">School ID: 20136251</span>
+      </div>
+    </a>
+    <div class="header-actions">
+      <a href="/fee-structure" class="btn btn-outline">📄 <span class="hide-mobile">Fee Chart</span></a>
+      <a href="/admission-enquiry" class="btn btn-primary">Apply for Admission</a>
+    </div>
+  </div>
+</header>
+
+<section class="hero-banner">
+  <h1>
+    <span class="highlight">Class</span> Timetable, Books &amp; Copies
+  </h1>
+  <p>
+    Weekly timetable, book list and copy requirements for all classes.<br>
+    <strong>Session 2026–27</strong>
+  </p>
+
+  <div class="class-selector-wrap">
+    <div class="class-selector-label">Select Class</div>
+    <div class="class-tabs" id="classTabs"></div>
+  </div>
+
+  <div class="section-tabs" id="sectionTabs">
+    <button class="section-tab active" data-section="timetable">📅 Timetable</button>
+    <button class="section-tab" data-section="books">📚 Books</button>
+    <button class="section-tab" data-section="copies">📝 Copies</button>
+  </div>
+</section>
+
+<div class="main">
+  <div class="content-card" id="contentCard"></div>
+</div>
+
+<footer class="page-footer">
+  © 2026 First Step Public School. For queries, contact the admin office.
+</footer>
+
+<script>
+// ── Data ──
+const classes = ['Nursery', 'KG', 'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5'];
+
+const subjects = {
+  'Nursery': ['English', 'Hindi', 'Math', 'Drawing', 'EVS', 'Computer'],
+  'KG':      ['English', 'Hindi', 'Math', 'Drawing', 'EVS', 'Computer'],
+  'Class 1': ['English', 'Hindi', 'Math', 'EVS', 'Computer', 'Drawing', 'AI'],
+  'Class 2': ['English', 'Hindi', 'Math', 'EVS', 'Computer', 'Drawing', 'AI'],
+  'Class 3': ['English', 'Hindi', 'Math', 'Science', 'EVS', 'Computer', 'Drawing', 'AI'],
+  'Class 4': ['English', 'Hindi', 'Math', 'Science', 'EVS', 'Computer', 'Drawing', 'AI'],
+  'Class 5': ['English', 'Hindi', 'Math', 'Science', 'EVS', 'Computer', 'Drawing', 'AI'],
+};
+
+const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+// Timetable periods per class
+const timetables = {
+  'Nursery': [
+    ['Assembly', 'English', 'Math',    'BREAK', 'Hindi',   'Drawing', 'EVS'],
+    ['Assembly', 'Hindi',   'English', 'BREAK', 'Math',    'EVS',     'Computer'],
+    ['Assembly', 'Math',    'Hindi',   'BREAK', 'English', 'Drawing', 'EVS'],
+    ['Assembly', 'English', 'Drawing', 'BREAK', 'Math',    'Hindi',   'EVS'],
+    ['Assembly', 'Hindi',   'Math',    'BREAK', 'English', 'Computer','Drawing'],
+    ['Assembly', 'English', 'Hindi',   'BREAK', 'Math',    'Drawing', 'EVS'],
+  ],
+  'KG': [
+    ['Assembly', 'English', 'Math',    'BREAK', 'Hindi',   'EVS',     'Drawing'],
+    ['Assembly', 'Hindi',   'English', 'BREAK', 'Math',    'Computer','EVS'],
+    ['Assembly', 'Math',    'Drawing', 'BREAK', 'English', 'Hindi',   'EVS'],
+    ['Assembly', 'English', 'Hindi',   'BREAK', 'Drawing', 'Math',    'Computer'],
+    ['Assembly', 'Math',    'English', 'BREAK', 'Hindi',   'EVS',     'Drawing'],
+    ['Assembly', 'Hindi',   'Math',    'BREAK', 'English', 'Drawing', 'EVS'],
+  ],
+  'Class 1': [
+    ['Assembly', 'English', 'Math',    'Hindi',   'BREAK', 'EVS',     'Computer', 'Drawing'],
+    ['Assembly', 'Hindi',   'English', 'Math',    'BREAK', 'AI',      'EVS',      'English'],
+    ['Assembly', 'Math',    'Hindi',   'English', 'BREAK', 'Drawing', 'Math',     'EVS'],
+    ['Assembly', 'English', 'EVS',     'Math',    'BREAK', 'Hindi',   'Computer', 'AI'],
+    ['Assembly', 'Hindi',   'Math',    'Drawing', 'BREAK', 'English', 'EVS',      'Math'],
+    ['Assembly', 'Math',    'English', 'Hindi',   'BREAK', 'EVS',     'Drawing',  'AI'],
+  ],
+  'Class 2': [
+    ['Assembly', 'English', 'Math',    'Hindi',   'BREAK', 'EVS',     'AI',       'Drawing'],
+    ['Assembly', 'Hindi',   'English', 'Math',    'BREAK', 'Computer','EVS',      'English'],
+    ['Assembly', 'Math',    'Hindi',   'Science', 'BREAK', 'Drawing', 'English',  'EVS'],
+    ['Assembly', 'English', 'EVS',     'Math',    'BREAK', 'Hindi',   'AI',       'Computer'],
+    ['Assembly', 'Hindi',   'Math',    'Drawing', 'BREAK', 'English', 'Science',  'Math'],
+    ['Assembly', 'Math',    'English', 'Hindi',   'BREAK', 'EVS',     'Computer', 'Drawing'],
+  ],
+  'Class 3': [
+    ['Assembly', 'English', 'Math',    'Science', 'BREAK', 'Hindi',   'Computer', 'Drawing'],
+    ['Assembly', 'Hindi',   'English', 'Math',    'BREAK', 'EVS',     'AI',       'Science'],
+    ['Assembly', 'Math',    'Science', 'Hindi',   'BREAK', 'English', 'Drawing',  'EVS'],
+    ['Assembly', 'English', 'EVS',     'Math',    'BREAK', 'Science', 'Hindi',    'Computer'],
+    ['Assembly', 'Hindi',   'Math',    'Drawing', 'BREAK', 'English', 'AI',       'Science'],
+    ['Assembly', 'Math',    'English', 'Hindi',   'BREAK', 'Science', 'EVS',      'AI'],
+  ],
+  'Class 4': [
+    ['Assembly', 'English', 'Science', 'Math',    'BREAK', 'Hindi',   'AI',       'Computer'],
+    ['Assembly', 'Math',    'Hindi',   'English', 'BREAK', 'Science', 'Drawing',  'EVS'],
+    ['Assembly', 'Hindi',   'Math',    'Science', 'BREAK', 'English', 'Computer', 'AI'],
+    ['Assembly', 'English', 'EVS',     'Hindi',   'BREAK', 'Math',    'Science',  'Drawing'],
+    ['Assembly', 'Science', 'Math',    'English', 'BREAK', 'Hindi',   'AI',       'EVS'],
+    ['Assembly', 'Math',    'English', 'Drawing', 'BREAK', 'Hindi',   'Science',  'Computer'],
+  ],
+  'Class 5': [
+    ['Assembly', 'Math',    'English', 'Science', 'BREAK', 'Hindi',   'Computer', 'AI'],
+    ['Assembly', 'English', 'Hindi',   'Math',    'BREAK', 'Science', 'EVS',      'Drawing'],
+    ['Assembly', 'Science', 'Math',    'English', 'BREAK', 'Hindi',   'AI',       'Computer'],
+    ['Assembly', 'Hindi',   'EVS',     'Math',    'BREAK', 'English', 'Science',  'Drawing'],
+    ['Assembly', 'Math',    'Science', 'Hindi',   'BREAK', 'English', 'AI',       'EVS'],
+    ['Assembly', 'English', 'Math',    'Drawing', 'BREAK', 'Science', 'Hindi',    'Computer'],
+  ],
+};
+
+// Books per class
+const books = {
+  'Nursery': [
+    { name: 'English Primer', detail: 'Alphabet & phonics' },
+    { name: 'Hindi Primer', detail: 'Swar & Vyanjan' },
+    { name: 'Math Primer', detail: 'Numbers 1–50, shapes' },
+    { name: 'Drawing Book', detail: 'Colouring & tracing' },
+    { name: 'EVS Activity Book', detail: 'My body, family, animals' },
+    { name: 'Computer Primer', detail: 'Parts of computer' },
+  ],
+  'KG': [
+    { name: 'English Reader', detail: 'Words, simple sentences' },
+    { name: 'Hindi Reader', detail: 'Matra & simple words' },
+    { name: 'Math Workbook', detail: 'Numbers 1–100, addition' },
+    { name: 'Drawing Book', detail: 'Colouring & shapes' },
+    { name: 'EVS Activity Book', detail: 'Plants, seasons, food' },
+    { name: 'Computer Book', detail: 'Mouse & keyboard basics' },
+  ],
+  'Class 1': [
+    { name: 'English Reader', detail: 'Stories & comprehension' },
+    { name: 'English Grammar', detail: 'Nouns, verbs basics' },
+    { name: 'Hindi Pathyapustak', detail: 'Stories & poems' },
+    { name: 'Hindi Vyakaran', detail: 'Sangya, Sarvanam' },
+    { name: 'Mathematics', detail: 'Addition, subtraction, tables' },
+    { name: 'EVS', detail: 'Our surroundings' },
+    { name: 'Computer Science', detail: 'MS Paint, typing' },
+    { name: 'Drawing Book', detail: 'Sketching & colouring' },
+    { name: 'AI Basics', detail: 'Introduction to AI concepts' },
+  ],
+  'Class 2': [
+    { name: 'English Reader', detail: 'Stories & comprehension' },
+    { name: 'English Grammar', detail: 'Tenses, articles' },
+    { name: 'Hindi Pathyapustak', detail: 'Stories & poems' },
+    { name: 'Hindi Vyakaran', detail: 'Kriya, Visheshan' },
+    { name: 'Mathematics', detail: 'Multiplication, fractions intro' },
+    { name: 'EVS', detail: 'Water, air, shelter' },
+    { name: 'Computer Science', detail: 'MS Word basics' },
+    { name: 'Drawing Book', detail: 'Landscapes & patterns' },
+    { name: 'AI Basics', detail: 'Smart machines around us' },
+  ],
+  'Class 3': [
+    { name: 'English Reader', detail: 'Prose & poetry' },
+    { name: 'English Grammar', detail: 'Sentences, punctuation' },
+    { name: 'Hindi Pathyapustak', detail: 'Gadya & Kavita' },
+    { name: 'Hindi Vyakaran', detail: 'Vachan, Ling, Kaal' },
+    { name: 'Mathematics', detail: 'Division, geometry basics' },
+    { name: 'Science', detail: 'Living & non-living things' },
+    { name: 'EVS / Social Studies', detail: 'Maps, community helpers' },
+    { name: 'Computer Science', detail: 'MS PowerPoint basics' },
+    { name: 'Drawing Book', detail: 'Still life & creativity' },
+    { name: 'AI Workbook', detail: 'AI in daily life' },
+  ],
+  'Class 4': [
+    { name: 'English Reader', detail: 'Literature & writing' },
+    { name: 'English Grammar', detail: 'Active/passive, direct speech' },
+    { name: 'Hindi Pathyapustak', detail: 'Gadya, Kavita, Natak' },
+    { name: 'Hindi Vyakaran', detail: 'Samas, Sandhi basics' },
+    { name: 'Mathematics', detail: 'Decimals, data handling' },
+    { name: 'Science', detail: 'Force, energy, matter' },
+    { name: 'EVS / Social Studies', detail: 'States, history intro' },
+    { name: 'Computer Science', detail: 'Internet basics, Scratch' },
+    { name: 'Drawing Book', detail: 'Perspective & shading' },
+    { name: 'AI Workbook', detail: 'AI projects & logic' },
+  ],
+  'Class 5': [
+    { name: 'English Reader', detail: 'Advanced comprehension' },
+    { name: 'English Grammar', detail: 'Essay writing, letter writing' },
+    { name: 'Hindi Pathyapustak', detail: 'Sahitya & Kavita' },
+    { name: 'Hindi Vyakaran', detail: 'Muhavare, Lokoktiyan' },
+    { name: 'Mathematics', detail: 'Percentages, area, volume' },
+    { name: 'Science', detail: 'Human body, environment' },
+    { name: 'EVS / Social Studies', detail: 'India geography & civics' },
+    { name: 'Computer Science', detail: 'Coding basics, Excel' },
+    { name: 'Drawing Book', detail: 'Advanced art techniques' },
+    { name: 'AI Workbook', detail: 'AI models & problem solving' },
+  ],
+};
+
+// Copies per class
+const copies = {
+  'Nursery': [
+    { name: 'English Writing Copy', detail: 'Capital & small letters', qty: 2 },
+    { name: 'Hindi Writing Copy', detail: 'Swar & Vyanjan practice', qty: 2 },
+    { name: 'Math Copy', detail: 'Number writing', qty: 1 },
+    { name: 'Drawing Copy', detail: 'Blank pages for art', qty: 1 },
+  ],
+  'KG': [
+    { name: 'English Writing Copy', detail: 'Word formation', qty: 2 },
+    { name: 'Hindi Writing Copy', detail: 'Matra practice', qty: 2 },
+    { name: 'Math Copy', detail: 'Counting & addition', qty: 2 },
+    { name: 'Drawing Copy', detail: 'Blank pages for art', qty: 1 },
+    { name: 'EVS Copy', detail: 'Activity & paste work', qty: 1 },
+  ],
+  'Class 1': [
+    { name: 'English Classwork Copy', detail: 'Four-line ruled', qty: 3 },
+    { name: 'English Homework Copy', detail: 'Four-line ruled', qty: 2 },
+    { name: 'Hindi Classwork Copy', detail: 'Ruled notebook', qty: 3 },
+    { name: 'Hindi Homework Copy', detail: 'Ruled notebook', qty: 2 },
+    { name: 'Math Classwork Copy', detail: 'Square ruled', qty: 3 },
+    { name: 'Math Homework Copy', detail: 'Square ruled', qty: 2 },
+    { name: 'EVS Copy', detail: 'Single-line ruled', qty: 2 },
+    { name: 'Computer Copy', detail: 'Single-line ruled', qty: 1 },
+    { name: 'Drawing Copy', detail: 'Blank art pages', qty: 1 },
+    { name: 'Test Copy', detail: 'For exams', qty: 2 },
+  ],
+  'Class 2': [
+    { name: 'English Classwork Copy', detail: 'Four-line ruled', qty: 3 },
+    { name: 'English Homework Copy', detail: 'Four-line ruled', qty: 2 },
+    { name: 'Hindi Classwork Copy', detail: 'Ruled notebook', qty: 3 },
+    { name: 'Hindi Homework Copy', detail: 'Ruled notebook', qty: 2 },
+    { name: 'Math Classwork Copy', detail: 'Square ruled', qty: 3 },
+    { name: 'Math Homework Copy', detail: 'Square ruled', qty: 2 },
+    { name: 'EVS Copy', detail: 'Single-line ruled', qty: 2 },
+    { name: 'Computer Copy', detail: 'Single-line ruled', qty: 1 },
+    { name: 'Drawing Copy', detail: 'Blank art pages', qty: 1 },
+    { name: 'Test Copy', detail: 'For exams', qty: 2 },
+  ],
+  'Class 3': [
+    { name: 'English Classwork Copy', detail: 'Single-line ruled', qty: 3 },
+    { name: 'English Homework Copy', detail: 'Single-line ruled', qty: 2 },
+    { name: 'Hindi Classwork Copy', detail: 'Ruled notebook', qty: 3 },
+    { name: 'Hindi Homework Copy', detail: 'Ruled notebook', qty: 2 },
+    { name: 'Math Classwork Copy', detail: 'Square ruled', qty: 3 },
+    { name: 'Math Homework Copy', detail: 'Square ruled', qty: 2 },
+    { name: 'Science Copy', detail: 'Single-line ruled', qty: 2 },
+    { name: 'EVS / SST Copy', detail: 'Single-line ruled', qty: 2 },
+    { name: 'Computer Copy', detail: 'Single-line ruled', qty: 1 },
+    { name: 'Drawing Copy', detail: 'Blank art pages', qty: 1 },
+    { name: 'Test Copy', detail: 'For exams', qty: 2 },
+  ],
+  'Class 4': [
+    { name: 'English Classwork Copy', detail: 'Single-line ruled', qty: 3 },
+    { name: 'English Homework Copy', detail: 'Single-line ruled', qty: 2 },
+    { name: 'Hindi Classwork Copy', detail: 'Ruled notebook', qty: 3 },
+    { name: 'Hindi Homework Copy', detail: 'Ruled notebook', qty: 2 },
+    { name: 'Math Classwork Copy', detail: 'Square ruled', qty: 3 },
+    { name: 'Math Homework Copy', detail: 'Square ruled', qty: 2 },
+    { name: 'Science Copy', detail: 'Single-line ruled', qty: 2 },
+    { name: 'EVS / SST Copy', detail: 'Single-line ruled', qty: 2 },
+    { name: 'Computer Copy', detail: 'Single-line ruled', qty: 1 },
+    { name: 'Drawing Copy', detail: 'Blank art pages', qty: 1 },
+    { name: 'Test Copy', detail: 'For exams', qty: 2 },
+  ],
+  'Class 5': [
+    { name: 'English Classwork Copy', detail: 'Single-line ruled', qty: 3 },
+    { name: 'English Homework Copy', detail: 'Single-line ruled', qty: 2 },
+    { name: 'Hindi Classwork Copy', detail: 'Ruled notebook', qty: 3 },
+    { name: 'Hindi Homework Copy', detail: 'Ruled notebook', qty: 2 },
+    { name: 'Math Classwork Copy', detail: 'Square ruled', qty: 3 },
+    { name: 'Math Homework Copy', detail: 'Square ruled', qty: 2 },
+    { name: 'Science Copy', detail: 'Single-line ruled', qty: 2 },
+    { name: 'EVS / SST Copy', detail: 'Single-line ruled', qty: 2 },
+    { name: 'Computer Copy', detail: 'Single-line ruled', qty: 1 },
+    { name: 'Drawing Copy', detail: 'Blank art pages', qty: 1 },
+    { name: 'Test Copy', detail: 'For exams', qty: 2 },
+  ],
+};
+
+let selectedClass = 'Nursery';
+let selectedSection = 'timetable';
+
+function chipClass(subj) {
+  const map = {
+    'English': 'subj-english', 'Hindi': 'subj-hindi', 'Math': 'subj-math',
+    'Computer': 'subj-computer', 'EVS': 'subj-evs', 'Science': 'subj-science',
+    'AI': 'subj-ai', 'Drawing': 'subj-drawing', 'PT': 'subj-pt',
+    'BREAK': 'subj-break', 'Assembly': 'subj-assembly',
+  };
+  return map[subj] || '';
+}
+
+function buildClassTabs() {
+  var c = document.getElementById('classTabs');
+  c.innerHTML = '';
+  classes.forEach(function(cls) {
+    var b = document.createElement('button');
+    b.className = 'class-tab' + (cls === selectedClass ? ' active' : '');
+    b.textContent = cls;
+    b.onclick = function() { selectedClass = cls; buildClassTabs(); render(); };
+    c.appendChild(b);
+  });
+}
+
+function buildSectionTabs() {
+  document.querySelectorAll('.section-tab').forEach(function(tab) {
+    tab.classList.toggle('active', tab.dataset.section === selectedSection);
+    tab.onclick = function() {
+      selectedSection = tab.dataset.section;
+      buildSectionTabs();
+      render();
+    };
+  });
+}
+
+function render() {
+  var container = document.getElementById('contentCard');
+  if (selectedSection === 'timetable') renderTimetable(container);
+  else if (selectedSection === 'books') renderBooks(container);
+  else renderCopies(container);
+}
+
+function renderTimetable(container) {
+  var tt = timetables[selectedClass];
+  var periods = tt[0].length;
+  var headerCells = '<th>Day</th>';
+  for (var i = 0; i < periods; i++) {
+    headerCells += '<th>P' + (i + 1) + '</th>';
+  }
+
+  var rows = '';
+  for (var d = 0; d < days.length; d++) {
+    rows += '<tr><td>' + days[d] + '</td>';
+    for (var p = 0; p < tt[d].length; p++) {
+      var subj = tt[d][p];
+      var label = subj === 'BREAK' ? '☕ Break' : subj;
+      rows += '<td><span class="subj-chip ' + chipClass(subj) + '">' + label + '</span></td>';
+    }
+    rows += '</tr>';
+  }
+
+  container.innerHTML =
+    '<div class="card-title-bar">' +
+      '<h3>📅 Weekly Timetable</h3>' +
+      '<span class="badge-class">' + selectedClass + '</span>' +
+    '</div>' +
+    '<div class="timetable-wrap">' +
+      '<table class="timetable">' +
+        '<thead><tr>' + headerCells + '</tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table>' +
+    '</div>';
+}
+
+function renderBooks(container) {
+  var list = books[selectedClass];
+  var items = '';
+  for (var i = 0; i < list.length; i++) {
+    items +=
+      '<div class="list-item">' +
+        '<div class="list-num book">' + (i + 1) + '</div>' +
+        '<div><div class="list-name">' + list[i].name + '</div>' +
+        '<div class="list-detail">' + list[i].detail + '</div></div>' +
+        '<span class="list-qty book">1 Book</span>' +
+      '</div>';
+  }
+
+  container.innerHTML =
+    '<div class="card-title-bar">' +
+      '<h3>📚 Book List</h3>' +
+      '<span class="badge-class">' + selectedClass + ' — ' + list.length + ' Books</span>' +
+    '</div>' +
+    '<div class="list-grid">' + items + '</div>';
+}
+
+function renderCopies(container) {
+  var list = copies[selectedClass];
+  var totalQty = list.reduce(function(s, c) { return s + c.qty; }, 0);
+  var items = '';
+  for (var i = 0; i < list.length; i++) {
+    items +=
+      '<div class="list-item">' +
+        '<div class="list-num copy">' + (i + 1) + '</div>' +
+        '<div><div class="list-name">' + list[i].name + '</div>' +
+        '<div class="list-detail">' + list[i].detail + '</div></div>' +
+        '<span class="list-qty copy">× ' + list[i].qty + '</span>' +
+      '</div>';
+  }
+
+  container.innerHTML =
+    '<div class="card-title-bar">' +
+      '<h3>📝 Copy List</h3>' +
+      '<span class="badge-class">' + selectedClass + ' — ' + totalQty + ' Copies Total</span>' +
+    '</div>' +
+    '<div class="list-grid">' + items + '</div>';
+}
+
+// Init
+buildClassTabs();
+buildSectionTabs();
+render();
+</script>
+
+</body>
+</html>

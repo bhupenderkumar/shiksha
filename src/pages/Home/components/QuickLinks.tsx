@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowRight, ClipboardList, MessageSquare, Eye, Zap, IndianRupee, Trophy } from "lucide-react";
+import { ArrowRight, ClipboardList, MessageSquare, Eye, Zap, IndianRupee, Trophy, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -63,6 +63,16 @@ const links = [
     hoverBorder: "hover:border-green-200",
     shadow: "hover:shadow-green-100/50",
     iconBg: "bg-gradient-to-br from-green-500 to-emerald-500",
+  },
+  {
+    to: "/class-timetable.html",
+    label: "Timetable & Books",
+    description: "Class schedule, books & copies",
+    icon: CalendarDays,
+    border: "border-sky-100",
+    hoverBorder: "hover:border-sky-200",
+    shadow: "hover:shadow-sky-100/50",
+    iconBg: "bg-gradient-to-br from-sky-500 to-blue-500",
   },
 ];
 
