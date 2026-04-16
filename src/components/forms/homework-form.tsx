@@ -31,6 +31,7 @@ const formSchema = z.object({
   }),
   classId: z.string().min(1, 'Class is required'),
   subjectId: z.string().min(1, 'Subject is required'), 
+  chapterName: z.string().optional(),
   status: z.enum(['PENDING', 'COMPLETED', 'OVERDUE', 'SUBMITTED'] as const).default('PENDING'),
   files: z.array(z.custom<File>()).optional(),
   existingFiles: z.array(z.object({
@@ -289,6 +290,16 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
           {errors.subjectId && (
             <p className="text-sm text-red-500">{errors.subjectId.message}</p>
           )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="chapterName" className="text-sm sm:text-base font-semibold">Chapter / Topic</Label>
+          <Input
+            id="chapterName"
+            {...register('chapterName')}
+            placeholder="e.g. Ch-4: The Water Cycle"
+            className="w-full h-10 sm:h-9"
+          />
         </div>
 
         <div className="space-y-2">

@@ -31,6 +31,10 @@ export interface HomeworkType {
   subjectId: string;
   classId: string;
   status: HomeworkStatus;
+  syllabusItemId?: string | null;
+  chapterName?: string | null;
+  sourcePlanItemId?: string | null;
+  photoValidation?: Record<string, unknown> | null;
   createdAt: Date;
   updatedAt: Date;
   attachments?: FileAttachment[];

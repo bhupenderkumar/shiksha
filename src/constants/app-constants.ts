@@ -40,6 +40,10 @@ export const ROUTES = {
   ADMISSION_QUERIES: '/admission-queries',
   ADMISSION_TEST: '/admission-test',
   ADMISSION_TEST_RESULTS: '/admission-test-results',
+  NEXT_DAY_PLAN: '/next-day-plan',
+  SYLLABUS: '/syllabus',
+  SYLLABUS_DETAIL: '/syllabus/:id',
+  CLASS_WORKBOOK: '/class-workbook',
 } as const;
 
 export const API_ENDPOINTS = {

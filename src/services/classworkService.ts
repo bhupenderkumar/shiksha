@@ -19,6 +19,13 @@ export interface ClassworkType {
   description: string;
   date: Date;
   classId: string;
+  workType?: 'oral' | 'writing' | null;
+  subjectId?: string | null;
+  syllabusItemId?: string | null;
+  chapterName?: string | null;
+  completionStatus?: 'planned' | 'in_progress' | 'done' | 'skipped' | null;
+  sourcePlanItemId?: string | null;
+  photoValidation?: Record<string, unknown> | null;
   createdAt: Date;
   updatedAt: Date;
   attachments?: FileAttachment[];
@@ -29,6 +36,11 @@ export interface ClassworkType {
     roomNumber?: string;
     capacity?: number;
   };
+  subject?: {
+    id: string;
+    name: string;
+    code: string;
+  };
 }
 
 // Define the structure of data required to create a new classwork entry
@@ -37,11 +49,16 @@ export interface CreateClassworkData {
   description: string;
   date: Date;
   classId: string;
+  workType?: 'oral' | 'writing';
+  subjectId?: string;
+  syllabusItemId?: string;
+  chapterName?: string;
+  completionStatus?: string;
   attachments?: Array<{
     fileName: string;
     filePath: string;
     fileType: string;
-    id?: string;  // Added to support existing files
+    id?: string;
   }>;
   uploadedBy: string;
 }
@@ -67,6 +84,7 @@ export const classworkService = {
       .select(`
         *,
         class:Class(id, name, section, roomNumber, capacity),
+        subject:Subject(id, name, code),
         attachments:File(*)
       `)
       .order('date', { ascending: false });
@@ -255,6 +273,63 @@ export const classworkService = {
       createdAt: new Date(data.createdAt),
       updatedAt: new Date(data.updatedAt),
     } as ClassworkType;
+  },
+
+  /**
+   * Fetch classwork entries for a specific class and date
+   */
+  async getByClassAndDate(classId: string, date: string) {
+    const { data, error } = await supabase
+      .schema(SCHEMA)
+      .from(CLASSWORK_TABLE)
+      .select(`
+        *,
+        class:Class(id, name, section),
+        attachments:File(*)
+      `)
+      .eq('classId', classId)
+      .eq('date', date)
+      .order('createdAt', { ascending: true });
+
+    if (error) throw error;
+    return (data || []).map((cw: any) => ({
+      ...cw,
+      date: new Date(cw.date),
+      createdAt: new Date(cw.createdAt),
+      updatedAt: new Date(cw.updatedAt),
+    })) as ClassworkType[];
+  },
+
+  /**
+   * Update completion status of a classwork entry
+   */
+  async updateStatus(id: string, completionStatus: string) {
+    const { data, error } = await supabase
+      .schema(SCHEMA)
+      .from(CLASSWORK_TABLE)
+      .update({ completionStatus, updatedAt: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Update photo validation result for a classwork entry
+   */
+  async updatePhotoValidation(id: string, photoValidation: Record<string, unknown>) {
+    const { data, error } = await supabase
+      .schema(SCHEMA)
+      .from(CLASSWORK_TABLE)
+      .update({ photoValidation, updatedAt: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
   },
 };
 

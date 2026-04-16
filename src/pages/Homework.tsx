@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { HomeworkCard } from '@/components/HomeworkCard';
-import { Plus, Book, Eye, Trash, Edit } from 'lucide-react';
-import { homeworkService, HomeworkType } from '@/services/homeworkService';
+import { Plus, Book, Eye, Trash, Edit, Brain, Search, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
+import { homeworkService, HomeworkType, HomeworkStatus } from '@/services/homeworkService';
 import { useAsync } from '@/hooks/use-async';
 import { useAuth } from '@/lib/auth-provider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -15,12 +16,17 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useProfileAccess } from '@/services/profileService';
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
 import debounce from 'lodash/debounce';
+
+type StatusFilter = 'all' | 'PENDING' | 'COMPLETED' | 'OVERDUE' | 'SUBMITTED' | 'ai_planned';
 
 export default function HomeworkPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [homeworks, setHomeworks] = useState<HomeworkType[]>([]);
+  const [activeTab, setActiveTab] = useState<StatusFilter>('all');
   const [dialogState, setDialogState] = useState<{
     isOpen: boolean;
     mode: 'create' | 'edit';
@@ -32,26 +38,12 @@ export default function HomeworkPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { profile, loading: profileLoading, isAdminOrTeacher } = useProfileAccess();
 
-  const [searchParams, setSearchParams] = useState({
-    searchTerm: '',
-    subjectId: '',
-    status: '',
-    dateRange: null
-  });
+  const [searchTerm, setSearchTerm] = useState('');
 
   const { loading, execute: fetchHomeworks } = useAsync(
     async () => {
       if (!profile) return;
-      const data = await homeworkService.getAll(
-        profile.role,
-        profile.classId,
-        {
-          searchTerm: searchParams.searchTerm,
-          subjectId: searchParams.subjectId || undefined,
-          status: searchParams.status as HomeworkStatus || undefined,
-          dateRange: searchParams.dateRange
-        }
-      );
+      const data = await homeworkService.getAll(profile.role, profile.classId);
       setHomeworks(data);
     },
     { showErrorToast: true }
@@ -90,16 +82,15 @@ export default function HomeworkPage() {
     }
   };
 
-  // Debounce search to avoid too many requests
-  const debouncedSearch = debounce((value) => {
-    setSearchParams(prev => ({ ...prev, searchTerm: value }));
+  const debouncedSearch = debounce((value: string) => {
+    setSearchTerm(value);
   }, 300);
 
   useEffect(() => {
     if (profile) {
       fetchHomeworks();
     }
-  }, [profile, searchParams]);
+  }, [profile]);
 
   const handleEdit = (homework: HomeworkType) => {
     setSelectedHomework(homework);
@@ -111,6 +102,40 @@ export default function HomeworkPage() {
     setSelectedHomework(null);
   };
 
+  // Stats + filtering
+  const stats = useMemo(() => {
+    const pending = homeworks.filter(h => h.status === 'PENDING').length;
+    const completed = homeworks.filter(h => h.status === 'COMPLETED').length;
+    const overdue = homeworks.filter(h => h.status === 'OVERDUE').length;
+    const submitted = homeworks.filter(h => h.status === 'SUBMITTED').length;
+    const aiPlanned = homeworks.filter(h => !!h.sourcePlanItemId).length;
+    return { pending, completed, overdue, submitted, aiPlanned, total: homeworks.length };
+  }, [homeworks]);
+
+  const filteredHomeworks = useMemo(() => {
+    let result = homeworks;
+
+    // Tab filter
+    if (activeTab === 'ai_planned') {
+      result = result.filter(h => !!h.sourcePlanItemId);
+    } else if (activeTab !== 'all') {
+      result = result.filter(h => h.status === activeTab);
+    }
+
+    // Search filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(h =>
+        h.title.toLowerCase().includes(term) ||
+        h.description?.toLowerCase().includes(term) ||
+        h.subject?.name?.toLowerCase().includes(term) ||
+        h.chapterName?.toLowerCase().includes(term)
+      );
+    }
+
+    return result;
+  }, [homeworks, activeTab, searchTerm]);
+
   if (loading || profileLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -118,16 +143,6 @@ export default function HomeworkPage() {
       </div>
     );
   }
-
-  const renderSearchFilters = () => (
-    <div className="mb-4 sm:mb-6">
-      <Input
-        placeholder="Search homework..."
-        onChange={(e) => debouncedSearch(e.target.value)}
-        className="w-full max-w-md"
-      />
-    </div>
-  );
 
   return (
     <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
@@ -146,15 +161,77 @@ export default function HomeworkPage() {
         }
       />
 
-      {renderSearchFilters()}
+      {/* Stats bar */}
+      {homeworks.length > 0 && (
+        <div className="flex items-center gap-3 mb-3 overflow-x-auto pb-1">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
+            <span className="font-medium text-foreground">{stats.total}</span> total
+          </div>
+          {stats.pending > 0 && (
+            <Badge variant="outline" className="text-[10px] gap-1 bg-yellow-50 text-yellow-700 border-yellow-200 whitespace-nowrap">
+              <Clock className="w-3 h-3" /> {stats.pending} Pending
+            </Badge>
+          )}
+          {stats.overdue > 0 && (
+            <Badge variant="outline" className="text-[10px] gap-1 bg-red-50 text-red-700 border-red-200 whitespace-nowrap">
+              <AlertTriangle className="w-3 h-3" /> {stats.overdue} Overdue
+            </Badge>
+          )}
+          {stats.completed > 0 && (
+            <Badge variant="outline" className="text-[10px] gap-1 bg-green-50 text-green-700 border-green-200 whitespace-nowrap">
+              <CheckCircle2 className="w-3 h-3" /> {stats.completed} Done
+            </Badge>
+          )}
+          {stats.aiPlanned > 0 && (
+            <Badge variant="outline" className="text-[10px] gap-1 bg-amber-50 text-amber-700 border-amber-200 whitespace-nowrap">
+              <Brain className="w-3 h-3" /> {stats.aiPlanned} AI
+            </Badge>
+          )}
+        </div>
+      )}
 
-      {homeworks.length === 0 ? (
+      {/* Search + Filter tabs */}
+      {homeworks.length > 0 && (
+        <div className="space-y-3 mb-4">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search homework..."
+              onChange={(e) => debouncedSearch(e.target.value)}
+              className="pl-9 h-9"
+            />
+          </div>
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as StatusFilter)}>
+            <TabsList className="h-8 bg-muted/50">
+              <TabsTrigger value="all" className="text-xs h-7 px-3">All</TabsTrigger>
+              <TabsTrigger value="PENDING" className="text-xs h-7 px-3 gap-1">
+                <Clock className="w-3 h-3" /> Pending
+              </TabsTrigger>
+              <TabsTrigger value="COMPLETED" className="text-xs h-7 px-3 gap-1">
+                <CheckCircle2 className="w-3 h-3" /> Done
+              </TabsTrigger>
+              <TabsTrigger value="OVERDUE" className="text-xs h-7 px-3 gap-1">
+                <AlertTriangle className="w-3 h-3" /> Overdue
+              </TabsTrigger>
+              <TabsTrigger value="ai_planned" className="text-xs h-7 px-3 gap-1">
+                <Brain className="w-3 h-3" /> AI
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+      )}
+
+      {filteredHomeworks.length === 0 ? (
         <EmptyState
-          title="No homework yet!"
-          description={isAdminOrTeacher ? "Start by creating a new homework" : "No homework has been assigned yet"}
+          title={activeTab === 'all' && !searchTerm ? "No homework yet!" : "No matching homework"}
+          description={
+            activeTab === 'all' && !searchTerm
+              ? (isAdminOrTeacher ? "Start by creating a new homework" : "No homework has been assigned yet")
+              : "Try adjusting your search or filter"
+          }
           icon={<Book className="w-full h-full" />}
           action={
-            isAdminOrTeacher ? (
+            isAdminOrTeacher && activeTab === 'all' && !searchTerm ? (
               <Button className="text-sm" onClick={() => setDialogState({ isOpen: true, mode: 'create' })}>
                 Create Homework
               </Button>
@@ -163,26 +240,26 @@ export default function HomeworkPage() {
         />
       ) : (
         <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {homeworks.map((homework) => (
-            <div key={homework.id} className="relative">
+          {filteredHomeworks.map((homework) => (
+            <div key={homework.id} className="relative group">
               <HomeworkCard
                 homework={homework}
                 isStudent={profile?.role === 'STUDENT'}
                 attachments={homework.attachments}
               />
               {isAdminOrTeacher && (
-                <div className="absolute top-2 right-2 flex space-x-1 sm:space-x-2 bg-white/80 backdrop-blur-sm rounded-md p-0.5">
-                  <button className="p-1.5 rounded hover:bg-blue-50 transition-colors" onClick={() => handleEdit(homework)}>
-                    <Edit className="w-4 h-4 text-blue-500" />
+                <div className="absolute top-2 right-2 flex space-x-1 bg-white/90 backdrop-blur-sm rounded-lg p-0.5 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <button className="p-1.5 rounded-md hover:bg-blue-50 transition-colors" onClick={() => handleEdit(homework)}>
+                    <Edit className="w-3.5 h-3.5 text-blue-500" />
                   </button>
-                  <button className="p-1.5 rounded hover:bg-red-50 transition-colors" onClick={() => {
+                  <button className="p-1.5 rounded-md hover:bg-red-50 transition-colors" onClick={() => {
                     setSelectedHomework(homework);
                     setIsDeleteDialogOpen(true);
                   }}>
-                    <Trash className="w-4 h-4 text-red-500" />
+                    <Trash className="w-3.5 h-3.5 text-red-500" />
                   </button>
-                  <button className="p-1.5 rounded hover:bg-gray-100 transition-colors" onClick={() => navigate(`/homework/${homework.id}`)}>
-                    <Eye className="w-4 h-4 text-gray-600" />
+                  <button className="p-1.5 rounded-md hover:bg-gray-100 transition-colors" onClick={() => navigate(`/homework/${homework.id}`)}>
+                    <Eye className="w-3.5 h-3.5 text-gray-600" />
                   </button>
                 </div>
               )}

@@ -25,6 +25,8 @@ import {
   Star,
   Cake,
   Mic,
+  Brain,
+  BookMarked,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { useAuth } from '@/lib/auth-provider';
@@ -60,6 +62,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { id: 21, icon: GraduationCap, label: 'Subjects', path: '/subjects', role: 'teacher' },
     { id: 3, icon: BookOpen, label: 'Homework', path: ROUTES.HOMEWORK },
     { id: 4, icon: BookOpen, label: 'Classwork', path: ROUTES.CLASSWORK },
+    { id: 30, icon: Brain, label: 'AI Planner', path: ROUTES.NEXT_DAY_PLAN, role: 'teacher' },
+    { id: 31, icon: BookMarked, label: 'Syllabus', path: ROUTES.SYLLABUS, role: 'teacher' },
+    { id: 32, icon: BookOpen, label: 'Class Workbook', path: ROUTES.CLASS_WORKBOOK },
     { id: 13, icon: Puzzle, label: 'Interactive Assignments', path: ROUTES.INTERACTIVE_ASSIGNMENTS, role: 'teacher' },
     { id: 5, icon: Calendar, label: 'Attendance', path: ROUTES.ATTENDANCE },
     { id: 6, icon: CreditCard, label: 'Fees', path: ROUTES.FEES, role: 'teacher' },

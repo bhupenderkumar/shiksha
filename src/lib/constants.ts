@@ -31,6 +31,13 @@ export const USER_TABLE = 'User';
 export const ID_CARD_TABLE = 'IDCard';
 export const SCHEMA = 'school';
 export const PROFILE_TABLE = 'Profile';
+export const SYLLABUS_TABLE = 'Syllabus';
+export const SYLLABUS_ITEM_TABLE = 'SyllabusItem';
+export const SYLLABUS_PROGRESS_TABLE = 'SyllabusProgress';
+export const NEXT_DAY_PLAN_TABLE = 'NextDayPlan';
+export const NEXT_DAY_PLAN_ITEM_TABLE = 'NextDayPlanItem';
+export const AI_FLAG_TABLE = 'AiFlag';
+export const TIMETABLE_TABLE = 'TimeTable';
 
 export const ADMISSION_TABLES = {
   PROSPECTIVE_STUDENT: 'ProspectiveStudent',

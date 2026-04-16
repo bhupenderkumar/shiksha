@@ -78,6 +78,10 @@ const ParentSubmittedFeedbackDetail = lazy(() => import('./pages/ParentSubmitted
 const UnitTestMarksEntry = lazy(() => import('./pages/UnitTestMarksEntry'));
 const UnitTestReport = lazy(() => import('./pages/UnitTestReport'));
 const CopyRequest = lazy(() => import('./pages/CopyRequest'));
+const NextDayPlanPage = lazy(() => import('./pages/NextDayPlan'));
+const SyllabusPage = lazy(() => import('./pages/Syllabus'));
+const SyllabusDetailPage = lazy(() => import('./pages/SyllabusDetail'));
+const ClassWorkbookPage = lazy(() => import('./pages/ClassWorkbook'));
 
 // Private route component
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -390,6 +394,36 @@ function AppRoutes() {
 
         {/* Copy Request Route */}
         <Route path="/copy-request" element={<CopyRequest />} />
+
+        {/* AI Planning Routes */}
+        <Route path="/next-day-plan" element={
+          <PrivateRoute>
+            <Layout>
+              <NextDayPlanPage />
+            </Layout>
+          </PrivateRoute>
+        } />
+        <Route path="/syllabus" element={
+          <PrivateRoute>
+            <Layout>
+              <SyllabusPage />
+            </Layout>
+          </PrivateRoute>
+        } />
+        <Route path="/syllabus/:id" element={
+          <PrivateRoute>
+            <Layout>
+              <SyllabusDetailPage />
+            </Layout>
+          </PrivateRoute>
+        } />
+        <Route path="/class-workbook" element={
+          <PrivateRoute>
+            <Layout>
+              <ClassWorkbookPage />
+            </Layout>
+          </PrivateRoute>
+        } />
 
         {/* Birthday Routes */}
         <Route path="/birthdays" element={

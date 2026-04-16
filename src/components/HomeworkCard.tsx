@@ -1,13 +1,14 @@
-import React, { useState, useCallback } from 'react';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { useState, useCallback } from 'react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Paperclip, Download, File, ImageIcon } from 'lucide-react';
+import { Paperclip, Download, File, ImageIcon, Brain, BookOpen, CalendarClock } from 'lucide-react';
 import type { HomeworkType } from '@/services/homeworkService';
 import { fileService, signedUrlCache } from '@/services/fileService';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { format } from 'date-fns';
+import { format, isPast, isToday } from 'date-fns';
 import { LazyImage } from '@/components/ui/LazyImage';
 
 export type AttachmentType = {
@@ -29,14 +30,20 @@ type HomeworkCardProps = {
 
 const isImage = (fileName: string): boolean => /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName);
 
-const getStatusColor = (status: string) => {
+const getStatusConfig = (status: string) => {
   switch (status) {
-    case 'COMPLETED': return 'bg-green-100 text-green-800';
-    case 'PENDING': return 'bg-yellow-100 text-yellow-800';
-    case 'OVERDUE': return 'bg-red-100 text-red-800';
-    case 'SUBMITTED': return 'bg-blue-100 text-blue-800';
-    default: return 'bg-gray-100 text-gray-800';
+    case 'COMPLETED': return { label: 'Completed', color: 'bg-green-100 text-green-700 border-green-200' };
+    case 'PENDING': return { label: 'Pending', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' };
+    case 'OVERDUE': return { label: 'Overdue', color: 'bg-red-100 text-red-700 border-red-200' };
+    case 'SUBMITTED': return { label: 'Submitted', color: 'bg-blue-100 text-blue-700 border-blue-200' };
+    default: return { label: status, color: 'bg-gray-100 text-gray-700 border-gray-200' };
   }
+};
+
+const getDueDateConfig = (dueDate: Date) => {
+  if (isPast(dueDate) && !isToday(dueDate)) return { color: 'text-red-500', label: format(dueDate, 'MMM dd') };
+  if (isToday(dueDate)) return { color: 'text-amber-600 font-medium', label: 'Today' };
+  return { color: 'text-muted-foreground', label: format(dueDate, 'MMM dd') };
 };
 
 export function HomeworkCard({ homework, attachments }: HomeworkCardProps) {
@@ -66,24 +73,66 @@ export function HomeworkCard({ homework, attachments }: HomeworkCardProps) {
   const thumbnailCount = Math.min(imageAttachments.length, 4);
   const remainingCount = imageAttachments.length - thumbnailCount;
 
+  const statusConfig = getStatusConfig(homework.status);
+  const dueDateConfig = getDueDateConfig(new Date(homework.dueDate));
+  const isAIPlanned = !!homework.sourcePlanItemId;
+
+  // Status-based left border
+  const borderColor = homework.status === 'COMPLETED' ? 'border-l-green-400'
+    : homework.status === 'OVERDUE' ? 'border-l-red-400'
+    : homework.status === 'SUBMITTED' ? 'border-l-blue-400'
+    : 'border-l-yellow-400';
+
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
+    <Card className={cn(
+      "overflow-hidden hover:shadow-lg transition-all duration-200 border-l-4",
+      borderColor,
+      isAIPlanned && "ring-1 ring-amber-200/50"
+    )}>
       <CardHeader className="p-3 sm:p-4 pb-2">
-        <div>
-          <h3 className="text-base sm:text-lg font-semibold truncate text-foreground" title={homework.title}>
+        <div className="space-y-1.5">
+          {/* Top badges */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 font-medium", statusConfig.color)}>
+              {statusConfig.label}
+            </Badge>
+            {isAIPlanned && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-1 font-medium bg-amber-50 text-amber-700 border-amber-200">
+                <Brain className="w-3 h-3" />
+                AI Plan
+              </Badge>
+            )}
+            {homework.subject?.name && (
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-medium bg-slate-100 text-slate-600">
+                {homework.subject.name}
+              </Badge>
+            )}
+          </div>
+
+          {/* Title */}
+          <h3 className="text-sm sm:text-base font-semibold truncate text-foreground leading-tight" title={homework.title}>
             {homework.title}
           </h3>
-          <p className="text-xs sm:text-sm text-muted-foreground truncate" title={`${homework.class?.name} - ${homework.class?.section}`}>
-            {homework.class?.name} - {homework.class?.section}
-          </p>
-          <div className="flex items-center gap-2 mt-1">
-            <p className="text-xs text-muted-foreground">
-              Due: {format(new Date(homework.dueDate), 'MMM dd, yyyy')}
-            </p>
-            <Badge className={`text-[10px] px-1.5 py-0 ${getStatusColor(homework.status)}`}>
-              {homework.status}
-            </Badge>
+
+          {/* Meta row */}
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="truncate">{homework.class?.name} - {homework.class?.section}</span>
+            <span className="text-muted-foreground/40">·</span>
+            <span className={cn("flex items-center gap-1", dueDateConfig.color)}>
+              <CalendarClock className="w-3 h-3" />
+              Due: {dueDateConfig.label}
+            </span>
           </div>
+
+          {/* Chapter info */}
+          {homework.chapterName && (
+            <div className="flex items-center gap-1.5 text-xs">
+              <BookOpen className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+              <span className="font-medium text-foreground/80 truncate">
+                {homework.chapterName}
+              </span>
+            </div>
+          )}
         </div>
       </CardHeader>
 
@@ -100,7 +149,7 @@ export function HomeworkCard({ homework, attachments }: HomeworkCardProps) {
           </button>
         )}
 
-        {/* Image thumbnails - lazy loaded */}
+        {/* Image thumbnails */}
         {imageAttachments.length > 0 && (
           <div className="mt-3">
             <div className="flex items-center gap-1.5 mb-2">

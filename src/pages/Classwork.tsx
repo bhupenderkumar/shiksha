@@ -1,26 +1,31 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useAsync } from '@/hooks/use-async';
-import { classworkService, type ClassworkType } from '@/services/classworkService';
+import { classworkService, type ClassworkType, type CreateClassworkData, type UpdateClassworkData } from '@/services/classworkService';
 import { PageHeader } from '@/components/ui/page-header';
 import { ClassworkCard } from '@/components/ClassworkCard';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ClassworkForm } from '@/components/forms/classwork-form';
-import { Book, Plus, Edit, Trash, EyeIcon } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Book, Plus, Edit, Trash, EyeIcon, Mic, PenLine, Brain, SlidersHorizontal } from 'lucide-react';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { useProfileAccess } from '@/services/profileService';
+import { cn } from '@/lib/utils';
+
+type FilterTab = 'all' | 'oral' | 'writing' | 'ai_planned';
 
 export default function ClassworkPage() {
-  const { user } = useAuth(); // Retrieve user from Auth context
-
+  const { user } = useAuth();
   const { profile, loading: profileLoading, isAdminOrTeacher } = useProfileAccess();
 
   const [classworks, setClassworks] = useState<ClassworkType[]>([]);
+  const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [dialogState, setDialogState] = useState<{
     isOpen: boolean;
     mode: 'create' | 'edit';
@@ -119,6 +124,24 @@ export default function ClassworkPage() {
     setIsDeleteDialogOpen(true);
   };
 
+  // Filter + stats
+  const stats = useMemo(() => {
+    const oral = classworks.filter(c => c.workType === 'oral').length;
+    const writing = classworks.filter(c => c.workType === 'writing').length;
+    const aiPlanned = classworks.filter(c => !!c.sourcePlanItemId).length;
+    const done = classworks.filter(c => c.completionStatus === 'done').length;
+    return { oral, writing, aiPlanned, done, total: classworks.length };
+  }, [classworks]);
+
+  const filteredClassworks = useMemo(() => {
+    switch (activeTab) {
+      case 'oral': return classworks.filter(c => c.workType === 'oral');
+      case 'writing': return classworks.filter(c => c.workType === 'writing');
+      case 'ai_planned': return classworks.filter(c => !!c.sourcePlanItemId);
+      default: return classworks;
+    }
+  }, [classworks, activeTab]);
+
   if (loading || profileLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -144,13 +167,64 @@ export default function ClassworkPage() {
         }
       />
 
-      {classworks.length === 0 ? (
+      {/* Stats bar */}
+      {classworks.length > 0 && (
+        <div className="flex items-center gap-3 mb-4 overflow-x-auto pb-1">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
+            <span className="font-medium text-foreground">{stats.total}</span> total
+          </div>
+          {stats.oral > 0 && (
+            <Badge variant="outline" className="text-[10px] gap-1 bg-purple-50 text-purple-700 border-purple-200 whitespace-nowrap">
+              <Mic className="w-3 h-3" /> {stats.oral} Oral
+            </Badge>
+          )}
+          {stats.writing > 0 && (
+            <Badge variant="outline" className="text-[10px] gap-1 bg-blue-50 text-blue-700 border-blue-200 whitespace-nowrap">
+              <PenLine className="w-3 h-3" /> {stats.writing} Writing
+            </Badge>
+          )}
+          {stats.aiPlanned > 0 && (
+            <Badge variant="outline" className="text-[10px] gap-1 bg-amber-50 text-amber-700 border-amber-200 whitespace-nowrap">
+              <Brain className="w-3 h-3" /> {stats.aiPlanned} AI
+            </Badge>
+          )}
+          {stats.done > 0 && (
+            <span className="text-[10px] text-green-600 font-medium whitespace-nowrap">
+              {stats.done} done
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Filter tabs */}
+      {classworks.length > 0 && (
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FilterTab)} className="mb-4">
+          <TabsList className="h-8 bg-muted/50">
+            <TabsTrigger value="all" className="text-xs h-7 px-3">All</TabsTrigger>
+            <TabsTrigger value="oral" className="text-xs h-7 px-3 gap-1">
+              <Mic className="w-3 h-3" /> Oral
+            </TabsTrigger>
+            <TabsTrigger value="writing" className="text-xs h-7 px-3 gap-1">
+              <PenLine className="w-3 h-3" /> Writing
+            </TabsTrigger>
+            <TabsTrigger value="ai_planned" className="text-xs h-7 px-3 gap-1">
+              <Brain className="w-3 h-3" /> AI Planned
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      )}
+
+      {filteredClassworks.length === 0 ? (
         <EmptyState
-          title="No classwork yet!"
-          description={isAdminOrTeacher ? "Start by creating a new classwork" : "No classwork has been assigned yet"}
+          title={activeTab === 'all' ? "No classwork yet!" : `No ${activeTab.replace('_', ' ')} classwork`}
+          description={
+            activeTab === 'all' 
+              ? (isAdminOrTeacher ? "Start by creating a new classwork" : "No classwork has been assigned yet")
+              : "Try a different filter"
+          }
           icon={<Book className="w-full h-full" />}
           action={
-            isAdminOrTeacher ? (
+            isAdminOrTeacher && activeTab === 'all' ? (
               <Button className="text-sm" onClick={() => setDialogState({ isOpen: true, mode: 'create', loading: false })}>
                 Create Classwork
               </Button>
@@ -159,23 +233,23 @@ export default function ClassworkPage() {
         />
       ) : (
         <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {classworks.map((classwork) => (
-            <div key={classwork.id} className="relative">
+          {filteredClassworks.map((classwork) => (
+            <div key={classwork.id} className="relative group">
               <ClassworkCard
                 classwork={classwork}
                 isStudent={!isAdminOrTeacher}
                 attachments={classwork.attachments}
               />
               {isAdminOrTeacher && (
-                <div className="absolute top-2 right-2 flex space-x-1 sm:space-x-2 bg-white/80 backdrop-blur-sm rounded-md p-0.5">
-                  <button className="p-1.5 rounded hover:bg-blue-50 transition-colors" onClick={() => handleEdit(classwork)}>
-                    <Edit className="w-4 h-4 text-blue-500" />
+                <div className="absolute top-2 right-2 flex space-x-1 bg-white/90 backdrop-blur-sm rounded-lg p-0.5 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <button className="p-1.5 rounded-md hover:bg-blue-50 transition-colors" onClick={() => handleEdit(classwork)}>
+                    <Edit className="w-3.5 h-3.5 text-blue-500" />
                   </button>
-                  <button className="p-1.5 rounded hover:bg-red-50 transition-colors" onClick={() => handleDelete(classwork)}>
-                    <Trash className="w-4 h-4 text-red-500" />
+                  <button className="p-1.5 rounded-md hover:bg-red-50 transition-colors" onClick={() => handleDelete(classwork)}>
+                    <Trash className="w-3.5 h-3.5 text-red-500" />
                   </button>
-                  <button className="p-1.5 rounded hover:bg-gray-100 transition-colors" onClick={() => navigate(`/classwork/${classwork.id}`)}>
-                    <EyeIcon className="w-4 h-4 text-gray-600" />
+                  <button className="p-1.5 rounded-md hover:bg-gray-100 transition-colors" onClick={() => navigate(`/classwork/${classwork.id}`)}>
+                    <EyeIcon className="w-3.5 h-3.5 text-gray-600" />
                   </button>
                 </div>
               )}

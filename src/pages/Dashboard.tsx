@@ -2,10 +2,9 @@ import { useEffect, useState } from 'react';
 import { useProfileAccess } from '@/services/profileService';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Calendar } from '@/components/ui/calendar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Book, Users, Calendar as CalendarIcon, BookOpen, Clock,
+  Book, Users, BookOpen, Clock,
   CheckCircle, XCircle, AlertCircle, Menu, Home, GraduationCap,
   UserCircle, FileText, Bell, Settings, DollarSign, BarChart,
   PieChart, TrendingUp, School, BookCheck, CreditCard, CheckSquare
@@ -22,11 +21,12 @@ import { cn } from '@/lib/utils';
 import { getDashboardSummary, getStudentDashboardData } from '@/services/dashboardService';
 import { LineChart } from '@/components/ui/line-chart';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { toast } from 'react-hot-toast'; // Import toast
 import { EmptyState } from '@/components/ui/empty-state';
 import FeeCard from '@/components/ui/FeeCard';
 import { sportsEnrollmentService, type SportsEnrollment } from '@/services/sportsEnrollmentService';
+import { DashboardCalendar } from '@/components/DashboardCalendar';
 
 export default function Dashboard() {
   const { profile, isAdminOrTeacher } = useProfileAccess();
@@ -57,7 +57,6 @@ export default function Dashboard() {
     }
   });
   const [loading, setLoading] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [sportsEnrollments, setSportsEnrollments] = useState<SportsEnrollment[]>([]);
   const [sportsLoading, setSportsLoading] = useState(false);
   const navigate = useNavigate();
@@ -388,36 +387,7 @@ export default function Dashboard() {
           
 
             {/* Calendar and Schedule */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Calendar</CardTitle>
-                <CardDescription>Your schedule and important dates</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="w-full md:w-auto">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={(date) => date && setSelectedDate(date)}
-                      className="rounded-md border max-w-full"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-semibold mb-4">Events for {selectedDate.toLocaleDateString()}</h4>
-                    <ScrollArea className="h-[200px] w-full rounded-md">
-                      <div className="pr-4 space-y-4">
-                        {/* Add events for selected date here */}
-                        <div className="flex flex-col items-center justify-center h-[150px] text-gray-500">
-                          <CalendarIcon className="h-8 w-8 mb-2 opacity-50" />
-                          <p>No events scheduled</p>
-                        </div>
-                      </div>
-                    </ScrollArea>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <DashboardCalendar />
           </div>
         )}
       </div>
