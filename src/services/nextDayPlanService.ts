@@ -149,9 +149,8 @@ export const nextDayPlanService = {
       updatedAt: new Date().toISOString(),
     };
 
-    if (status === 'teacher_edited' && userId) {
+    if (status === 'teacher_edited') {
       updateData.editedAt = new Date().toISOString();
-      updateData.editedBy = userId;
     }
 
     const { data, error } = await supabase
@@ -305,7 +304,6 @@ export const nextDayPlanService = {
     const plan = await this.create({
       classId,
       planDate,
-      editedBy: userId,
       aiRawResponse: aiResponse,
     });
 

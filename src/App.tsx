@@ -82,6 +82,7 @@ const NextDayPlanPage = lazy(() => import('./pages/NextDayPlan'));
 const SyllabusPage = lazy(() => import('./pages/Syllabus'));
 const SyllabusDetailPage = lazy(() => import('./pages/SyllabusDetail'));
 const ClassWorkbookPage = lazy(() => import('./pages/ClassWorkbook'));
+const TimetablePage = lazy(() => import('./pages/Timetable'));
 
 // Private route component
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -421,6 +422,13 @@ function AppRoutes() {
           <PrivateRoute>
             <Layout>
               <ClassWorkbookPage />
+            </Layout>
+          </PrivateRoute>
+        } />
+        <Route path="/timetable" element={
+          <PrivateRoute>
+            <Layout>
+              <TimetablePage />
             </Layout>
           </PrivateRoute>
         } />

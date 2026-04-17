@@ -324,11 +324,11 @@ export const aiService = {
    * Generate next day plan using AI
    */
   async generateNextDayPlan(classId: string, targetDate: string, userId?: string) {
-    const context = await this.gatherPlanningContext(classId, targetDate);
+    const context: any = await this.gatherPlanningContext(classId, targetDate);
 
     const userMessage = JSON.stringify({
       targetDate,
-      todayClasswork: context.todayClasswork.map(c => ({
+      todayClasswork: context.todayClasswork.map((c: any) => ({
         title: c.title,
         description: c.description,
         workType: c.workType,
@@ -337,13 +337,13 @@ export const aiService = {
         completionStatus: c.completionStatus,
         hasPhotos: c.attachments?.length > 0,
       })),
-      todayHomework: context.todayHomework.map(h => ({
+      todayHomework: context.todayHomework.map((h: any) => ({
         title: h.title,
         description: h.description,
         subjectId: h.subjectId,
         status: h.status,
       })),
-      syllabusProgress: context.syllabusProgress.map(p => ({
+      syllabusProgress: context.syllabusProgress.map((p: any) => ({
         subjectName: p.syllabusItem?.syllabus?.subject?.name,
         subjectId: p.syllabusItem?.syllabus?.subjectId,
         chapterNumber: p.syllabusItem?.chapterNumber,
@@ -352,22 +352,22 @@ export const aiService = {
         status: p.status,
         actualDays: p.actualDays,
       })),
-      tomorrowTimetable: context.tomorrowTimetable.map(t => ({
+      tomorrowTimetable: context.tomorrowTimetable.map((t: any) => ({
         subjectId: t.subjectId,
         subjectName: t.subject?.name,
         startTime: t.startTime,
         endTime: t.endTime,
       })),
-      upcomingHolidays: context.upcomingHolidays.map(h => ({
+      upcomingHolidays: context.upcomingHolidays.map((h: any) => ({
         name: h.name,
         date: h.date,
       })),
       recentWorkPatterns: {
         totalClasswork: context.recentClasswork.length,
-        oralCount: context.recentClasswork.filter(c => c.workType === 'oral').length,
-        writingCount: context.recentClasswork.filter(c => c.workType === 'writing').length,
+        oralCount: context.recentClasswork.filter((c: any) => c.workType === 'oral').length,
+        writingCount: context.recentClasswork.filter((c: any) => c.workType === 'writing').length,
       },
-      activeFlags: context.activeFlags.map(f => ({
+      activeFlags: context.activeFlags.map((f: any) => ({
         flagType: f.flagType,
         severity: f.severity,
         message: f.message,
@@ -377,23 +377,56 @@ export const aiService = {
     const response = await llm.complete(PLANNING_PROMPT, userMessage);
     const result = llm.parseJSON<PlanGenerationResult>(response);
 
-    // Save the plan to database
-    const planItems: CreatePlanItemData[] = result.planItems.map((item, index) => ({
-      planId: '', // Will be set during save
-      subjectId: item.subjectId,
-      syllabusItemId: item.syllabusItemId || undefined,
-      chapterName: item.chapterName,
-      oralWork: item.oralWork,
-      oralDetails: item.oralDetails,
-      writingWork: item.writingWork,
-      writingDetails: item.writingDetails,
-      homeworkTitle: item.homeworkTitle,
-      homeworkDescription: item.homeworkDescription,
-      aiRationale: item.aiRationale,
-      carryForward: item.carryForward || false,
-      carryForwardReason: item.carryForwardReason,
-      sortOrder: index,
-    }));
+    // Build a map of valid subject IDs and names for this class
+    const { data: classSubjects } = await supabase
+      .schema(SCHEMA)
+      .from('Subject')
+      .select('id, name, code')
+      .eq('classId', classId);
+    const subjectMap = new Map<string, string>(); // name/code -> id
+    const validIds = new Set<string>();
+    for (const s of classSubjects || []) {
+      validIds.add(s.id);
+      subjectMap.set(s.name?.toLowerCase(), s.id);
+      if (s.code) subjectMap.set(s.code?.toLowerCase(), s.id);
+    }
+
+    // Save the plan to database — validate subjectIds
+    const planItems: CreatePlanItemData[] = result.planItems
+      .map((item: any, index: number) => {
+        let subjectId = item.subjectId;
+        // If AI returned an invalid subjectId, try to match by name
+        if (!validIds.has(subjectId)) {
+          const byName = subjectMap.get(item.subjectName?.toLowerCase() || '');
+          if (byName) {
+            subjectId = byName;
+          } else {
+            // Skip this item — no matching subject found
+            return null;
+          }
+        }
+        return {
+          planId: '', // Will be set during save
+          subjectId,
+          syllabusItemId: item.syllabusItemId || undefined,
+          chapterName: item.chapterName,
+          oralWork: item.oralWork,
+          oralDetails: item.oralDetails,
+          writingWork: item.writingWork,
+          writingDetails: item.writingDetails,
+          homeworkTitle: item.homeworkTitle,
+          homeworkDescription: item.homeworkDescription,
+          aiRationale: item.aiRationale,
+          carryForward: item.carryForward || false,
+          carryForwardReason: item.carryForwardReason,
+          sortOrder: index,
+        } as CreatePlanItemData;
+      })
+      .filter(Boolean) as CreatePlanItemData[];
+
+    if (planItems.length === 0) {
+      throw new Error('AI generated plan items but none matched valid subjects for this class. Please check that subjects are configured.');
+    }
 
     const savedPlan = await nextDayPlanService.savePlan(
       classId,
@@ -424,7 +457,8 @@ export const aiService = {
   /**
    * Materialize a plan — convert NextDayPlanItems into real Classwork/Homework entries
    */
-  async materializePlan(planId: string, userId: string) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async materializePlan(planId: string, _userId: string) {
     const plan = await nextDayPlanService.getById(planId);
     if (plan.materialized) return plan;
 
@@ -433,9 +467,9 @@ export const aiService = {
     for (const item of planItems) {
       // Create Oral Classwork entry
       if (item.oralWork) {
-        await supabase
+        await (supabase
           .schema(SCHEMA)
-          .from(CLASSWORK_TABLE)
+          .from(CLASSWORK_TABLE) as any)
           .insert({
             title: `${item.chapterName || ''} — ${item.oralWork}`.trim(),
             description: item.oralDetails || item.oralWork,
@@ -454,9 +488,9 @@ export const aiService = {
 
       // Create Writing Classwork entry
       if (item.writingWork) {
-        await supabase
+        await (supabase
           .schema(SCHEMA)
-          .from(CLASSWORK_TABLE)
+          .from(CLASSWORK_TABLE) as any)
           .insert({
             title: `${item.chapterName || ''} — ${item.writingWork}`.trim(),
             description: item.writingDetails || item.writingWork,
@@ -481,9 +515,9 @@ export const aiService = {
           return d.toISOString().split('T')[0];
         })();
 
-        await supabase
+        await (supabase
           .schema(SCHEMA)
-          .from(HOMEWORK_TABLE)
+          .from(HOMEWORK_TABLE) as any)
           .insert({
             title: item.homeworkTitle,
             description: item.homeworkDescription || item.homeworkTitle,

@@ -1,27 +1,54 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  BookOpen, Mic, Pencil, Camera, CheckCircle, AlertTriangle,
-  Clock, ArrowRight, Brain, FileText, Flag, ChevronDown, ChevronUp,
-  Sparkles, AlertCircle, Info, RefreshCw
+  BookOpen, Mic, Pencil, CheckCircle, AlertTriangle,
+  Clock, Brain, FileText, Flag, ChevronDown, ChevronUp,
+  Sparkles, Info, RefreshCw, Plus, Trash2, PenLine, Save, Trash, Camera
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { PageAnimation } from '@/components/ui/page-animation';
-import { nextDayPlanService, type NextDayPlanType, type NextDayPlanItemType } from '@/services/nextDayPlanService';
+import { nextDayPlanService, type NextDayPlanType, type NextDayPlanItemType, type CreatePlanItemData } from '@/services/nextDayPlanService';
 import { aiFlagService, type AiFlagRecord } from '@/services/aiFlagService';
 import { aiService } from '@/services/aiService';
 import { useAuth } from '@/lib/auth-provider';
 import { supabase } from '@/lib/api-client';
 import { SCHEMA } from '@/lib/constants';
+import { AiPhotoValidator } from '@/components/AiPhotoValidator';
+import { fileTableService } from '@/services/fileTableService';
 
 type ViewMode = 'today' | 'report' | 'plan';
+
+interface ManualPlanItem {
+  key: string;
+  subjectId: string;
+  chapterName: string;
+  oralWork: string;
+  oralDetails: string;
+  writingWork: string;
+  writingDetails: string;
+  homeworkTitle: string;
+  homeworkDescription: string;
+}
+
+const emptyItem = (): ManualPlanItem => ({
+  key: crypto.randomUUID(),
+  subjectId: '',
+  chapterName: '',
+  oralWork: '',
+  oralDetails: '',
+  writingWork: '',
+  writingDetails: '',
+  homeworkTitle: '',
+  homeworkDescription: '',
+});
 
 export default function NextDayPlan() {
   const { user } = useAuth();
@@ -30,7 +57,7 @@ export default function NextDayPlan() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [materializing, setMaterializing] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('today');
+  const [viewMode, setViewMode] = useState<ViewMode>('plan');
 
   // Today's plan data
   const [todayPlan, setTodayPlan] = useState<NextDayPlanType | null>(null);
@@ -51,6 +78,12 @@ export default function NextDayPlan() {
   // Expanded items
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
+  // Manual plan form
+  const [showManualForm, setShowManualForm] = useState(false);
+  const [subjects, setSubjects] = useState<any[]>([]);
+  const [manualItems, setManualItems] = useState<ManualPlanItem[]>([emptyItem()]);
+  const [savingManual, setSavingManual] = useState(false);
+
   const today = new Date().toISOString().split('T')[0];
   const tomorrow = (() => {
     const d = new Date();
@@ -63,7 +96,10 @@ export default function NextDayPlan() {
   }, []);
 
   useEffect(() => {
-    if (selectedClass) loadPlanData();
+    if (selectedClass) {
+      loadPlanData();
+      loadSubjects();
+    }
   }, [selectedClass]);
 
   async function loadClasses() {
@@ -84,20 +120,33 @@ export default function NextDayPlan() {
     }
   }
 
+  async function loadSubjects() {
+    try {
+      const { data } = await supabase
+        .schema(SCHEMA as any)
+        .from('Subject')
+        .select('id, name, code')
+        .eq('classId', selectedClass);
+      setSubjects(data || []);
+    } catch {
+      console.error('Failed to load subjects');
+    }
+  }
+
   async function loadPlanData() {
     try {
       setLoading(true);
 
       const [todayPlanData, tomorrowPlanData, classworkData, flagsData] = await Promise.all([
-        nextDayPlanService.getByClassAndDate(selectedClass, today),
-        nextDayPlanService.getByClassAndDate(selectedClass, tomorrow),
+        nextDayPlanService.getByClassAndDate(selectedClass, today).catch(() => null),
+        nextDayPlanService.getByClassAndDate(selectedClass, tomorrow).catch(() => null),
         supabase
           .schema(SCHEMA)
           .from('Classwork')
           .select('*, attachments:File(*)')
           .eq('classId', selectedClass)
           .eq('date', today),
-        aiFlagService.getByClass(selectedClass),
+        aiFlagService.getByClass(selectedClass).catch(() => []),
       ]);
 
       setTodayPlan(todayPlanData);
@@ -106,15 +155,26 @@ export default function NextDayPlan() {
       setFlags(flagsData);
 
       if (todayPlanData) {
-        const items = await nextDayPlanService.getItems(todayPlanData.id);
+        const items = await nextDayPlanService.getItems(todayPlanData.id).catch((e) => {
+          console.error('Failed to load today items:', e);
+          return [];
+        });
         setTodayItems(items);
+      } else {
+        setTodayItems([]);
       }
 
       if (tomorrowPlanData) {
-        const items = await nextDayPlanService.getItems(tomorrowPlanData.id);
+        const items = await nextDayPlanService.getItems(tomorrowPlanData.id).catch((e) => {
+          console.error('Failed to load tomorrow items:', e);
+          return [];
+        });
         setTomorrowItems(items);
+      } else {
+        setTomorrowItems([]);
       }
-    } catch {
+    } catch (err) {
+      console.error('Error loading plan data:', err);
       toast.error('Failed to load plan data');
     } finally {
       setLoading(false);
@@ -125,14 +185,74 @@ export default function NextDayPlan() {
     if (!selectedClass) return;
     try {
       setGenerating(true);
+      // Delete existing plan for this class+date to avoid unique constraint violation
+      if (tomorrowPlan) {
+        await nextDayPlanService.delete(tomorrowPlan.id);
+      }
       await aiService.generateNextDayPlan(selectedClass, tomorrow, user?.id);
       toast.success("Tomorrow's plan generated!");
+      setShowManualForm(false);
       await loadPlanData();
       setViewMode('plan');
     } catch (err: any) {
       toast.error(err.message || 'Failed to generate plan');
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function handleSaveManualPlan() {
+    if (!selectedClass) return;
+
+    const validItems = manualItems.filter(item => item.subjectId && (item.oralWork || item.writingWork));
+    if (validItems.length === 0) {
+      toast.error('Add at least one subject with oral or writing work');
+      return;
+    }
+
+    try {
+      setSavingManual(true);
+
+      // Delete existing plan if any
+      if (tomorrowPlan) {
+        await nextDayPlanService.delete(tomorrowPlan.id);
+      }
+
+      const planItems: CreatePlanItemData[] = validItems.map((item, index) => ({
+        planId: '',
+        subjectId: item.subjectId,
+        chapterName: item.chapterName || undefined,
+        oralWork: item.oralWork || undefined,
+        oralDetails: item.oralDetails || undefined,
+        writingWork: item.writingWork || undefined,
+        writingDetails: item.writingDetails || undefined,
+        homeworkTitle: item.homeworkTitle || undefined,
+        homeworkDescription: item.homeworkDescription || undefined,
+        sortOrder: index,
+      }));
+
+      await nextDayPlanService.savePlan(
+        selectedClass,
+        tomorrow,
+        { source: 'manual' },
+        planItems,
+        user?.id
+      );
+
+      // Update status to teacher_edited since it's manual
+      const plan = await nextDayPlanService.getByClassAndDate(selectedClass, tomorrow);
+      if (plan) {
+        await nextDayPlanService.updateStatus(plan.id, 'teacher_edited', user?.id);
+      }
+
+      toast.success('Manual plan saved!');
+      setShowManualForm(false);
+      setManualItems([emptyItem()]);
+      await loadPlanData();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save plan');
+    } finally {
+      setSavingManual(false);
     }
   }
 
@@ -187,6 +307,18 @@ export default function NextDayPlan() {
     }
   }
 
+  async function handleDeletePlan() {
+    if (!tomorrowPlan) return;
+    if (!confirm('Delete tomorrow\'s plan? This cannot be undone.')) return;
+    try {
+      await nextDayPlanService.delete(tomorrowPlan.id);
+      toast.success('Plan deleted');
+      await loadPlanData();
+    } catch {
+      toast.error('Failed to delete plan');
+    }
+  }
+
   function toggleExpand(id: string) {
     setExpandedItems(prev => {
       const next = new Set(prev);
@@ -194,6 +326,21 @@ export default function NextDayPlan() {
       else next.add(id);
       return next;
     });
+  }
+
+  // Manual plan item helpers
+  function updateManualItem(key: string, field: keyof ManualPlanItem, value: string) {
+    setManualItems(prev => prev.map(item =>
+      item.key === key ? { ...item, [field]: value } : item
+    ));
+  }
+
+  function addManualItem() {
+    setManualItems(prev => [...prev, emptyItem()]);
+  }
+
+  function removeManualItem(key: string) {
+    setManualItems(prev => prev.length > 1 ? prev.filter(item => item.key !== key) : prev);
   }
 
   // Count stats for today
@@ -310,7 +457,6 @@ export default function NextDayPlan() {
                   </CardHeader>
                 </Card>
 
-                {/* Plan items */}
                 {todayItems.map((item) => (
                   <PlanItemCard
                     key={item.id}
@@ -319,6 +465,7 @@ export default function NextDayPlan() {
                     expanded={expandedItems.has(item.id)}
                     onToggle={() => toggleExpand(item.id)}
                     showUpload
+                    onPhotoUploaded={loadPlanData}
                   />
                 ))}
 
@@ -333,7 +480,10 @@ export default function NextDayPlan() {
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Clock className="h-12 w-12 text-muted-foreground mb-4" />
                   <p className="text-lg font-medium mb-2">No plan for today</p>
-                  <p className="text-muted-foreground mb-4">Generate a plan or manually create classwork entries.</p>
+                  <p className="text-muted-foreground mb-4">Switch to Tomorrow tab to create a new plan.</p>
+                  <Button onClick={() => setViewMode('plan')} size="lg">
+                    <Sparkles className="w-4 h-4 mr-2" /> Go to Tomorrow's Plan
+                  </Button>
                 </CardContent>
               </Card>
             )}
@@ -346,7 +496,6 @@ export default function NextDayPlan() {
             {todayPlan?.dayScore != null ? (
               <EndOfDayReportView
                 plan={todayPlan}
-                items={todayItems}
                 report={report}
                 onGeneratePlan={handleGeneratePlan}
                 generating={generating}
@@ -354,7 +503,6 @@ export default function NextDayPlan() {
             ) : report ? (
               <EndOfDayReportView
                 plan={todayPlan}
-                items={todayItems}
                 report={report}
                 onGeneratePlan={handleGeneratePlan}
                 generating={generating}
@@ -388,9 +536,11 @@ export default function NextDayPlan() {
                       <Badge className={
                         tomorrowPlan.status === 'finalized' ? 'bg-green-100 text-green-800' :
                         tomorrowPlan.status === 'materialized' ? 'bg-purple-100 text-purple-800' :
+                        tomorrowPlan.status === 'teacher_edited' ? 'bg-indigo-100 text-indigo-800' :
                         'bg-blue-100 text-blue-800'
                       }>
                         {tomorrowPlan.status === 'ai_generated' ? '🤖 AI Generated' :
+                         tomorrowPlan.status === 'teacher_edited' ? '✏️ Manual' :
                          tomorrowPlan.status === 'finalized' ? '✅ Finalized' :
                          tomorrowPlan.status === 'materialized' ? '📦 Materialized' :
                          tomorrowPlan.status}
@@ -399,22 +549,31 @@ export default function NextDayPlan() {
                   </CardHeader>
                 </Card>
 
-                {tomorrowItems.map((item) => (
-                  <PlanItemCard
-                    key={item.id}
-                    item={item}
-                    expanded={expandedItems.has(item.id)}
-                    onToggle={() => toggleExpand(item.id)}
-                  />
-                ))}
+                {tomorrowItems.length > 0 ? (
+                  tomorrowItems.map((item) => (
+                    <PlanItemCard
+                      key={item.id}
+                      item={item}
+                      expanded={expandedItems.has(item.id)}
+                      onToggle={() => toggleExpand(item.id)}
+                    />
+                  ))
+                ) : (
+                  <Card>
+                    <CardContent className="py-8 text-center text-muted-foreground">
+                      <Info className="w-8 h-8 mx-auto mb-2" />
+                      <p>No plan items found. Try regenerating or creating a manual plan.</p>
+                    </CardContent>
+                  </Card>
+                )}
 
                 <div className="flex gap-2">
-                  {tomorrowPlan.status === 'ai_generated' && (
+                  {(tomorrowPlan.status === 'ai_generated' || tomorrowPlan.status === 'teacher_edited') && (
                     <Button onClick={handleFinalizePlan} variant="outline" className="flex-1">
                       ✅ Finalize Plan
                     </Button>
                   )}
-                  {(tomorrowPlan.status === 'finalized' || tomorrowPlan.status === 'ai_generated') && !tomorrowPlan.materialized && (
+                  {(tomorrowPlan.status === 'finalized' || tomorrowPlan.status === 'ai_generated' || tomorrowPlan.status === 'teacher_edited') && !tomorrowPlan.materialized && (
                     <Button onClick={handleMaterialize} disabled={materializing} className="flex-1">
                       {materializing ? 'Creating entries...' : '📦 Materialize → Create Classwork/HW'}
                     </Button>
@@ -423,30 +582,220 @@ export default function NextDayPlan() {
                     <RefreshCw className="w-4 h-4 mr-1" />
                     {generating ? 'Generating...' : 'Regenerate'}
                   </Button>
+                  <Button onClick={handleDeletePlan} variant="outline" className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                    <Trash className="w-4 h-4" />
+                  </Button>
                 </div>
               </>
             ) : (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <Sparkles className="h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-lg font-medium mb-2">No plan for tomorrow yet</p>
-                  <p className="text-muted-foreground mb-4">
-                    AI will analyze today's work and generate an optimized plan.
-                  </p>
-                  <Button onClick={handleGeneratePlan} disabled={generating} size="lg">
-                    {generating ? (
-                      <><LoadingSpinner /> Generating Plan...</>
-                    ) : (
-                      <>🤖 Generate Tomorrow's Plan</>
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
+              <>
+                {/* No plan yet — show options */}
+                {!showManualForm ? (
+                  <Card>
+                    <CardContent className="flex flex-col items-center justify-center py-12">
+                      <Sparkles className="h-12 w-12 text-muted-foreground mb-4" />
+                      <p className="text-lg font-medium mb-2">No plan for tomorrow yet</p>
+                      <p className="text-muted-foreground mb-6 text-center max-w-md">
+                        Let AI analyze today's work and generate an optimized plan, or create one yourself.
+                      </p>
+                      <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md">
+                        <Button onClick={handleGeneratePlan} disabled={generating} size="lg" className="flex-1">
+                          {generating ? (
+                            <><LoadingSpinner /> Generating...</>
+                          ) : (
+                            <><Brain className="w-4 h-4 mr-2" /> AI Generate Plan</>
+                          )}
+                        </Button>
+                        <Button
+                          onClick={() => setShowManualForm(true)}
+                          variant="outline"
+                          size="lg"
+                          className="flex-1"
+                        >
+                          <PenLine className="w-4 h-4 mr-2" />
+                          Write Manually
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  /* Manual Plan Form */
+                  <ManualPlanForm
+                    subjects={subjects}
+                    items={manualItems}
+                    onUpdateItem={updateManualItem}
+                    onAddItem={addManualItem}
+                    onRemoveItem={removeManualItem}
+                    onSave={handleSaveManualPlan}
+                    onCancel={() => { setShowManualForm(false); setManualItems([emptyItem()]); }}
+                    saving={savingManual}
+                    tomorrow={tomorrow}
+                  />
+                )}
+              </>
             )}
           </div>
         )}
       </div>
     </PageAnimation>
+  );
+}
+
+// ─── Manual Plan Form ────────────────────────────────────────
+
+function ManualPlanForm({
+  subjects,
+  items,
+  onUpdateItem,
+  onAddItem,
+  onRemoveItem,
+  onSave,
+  onCancel,
+  saving,
+  tomorrow,
+}: {
+  subjects: any[];
+  items: ManualPlanItem[];
+  onUpdateItem: (key: string, field: keyof ManualPlanItem, value: string) => void;
+  onAddItem: () => void;
+  onRemoveItem: (key: string) => void;
+  onSave: () => void;
+  onCancel: () => void;
+  saving: boolean;
+  tomorrow: string;
+}) {
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <PenLine className="w-5 h-5" />
+              Manual Plan — {new Date(tomorrow).toLocaleDateString('en-IN', { weekday: 'long', month: 'long', day: 'numeric' })}
+            </CardTitle>
+            <Badge className="bg-indigo-100 text-indigo-800">✏️ Manual</Badge>
+          </div>
+          <CardDescription>Add subjects and fill in what you plan to teach</CardDescription>
+        </CardHeader>
+      </Card>
+
+      {items.map((item, idx) => (
+        <Card key={item.key} className="border-l-4 border-l-indigo-300">
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-muted-foreground">Subject {idx + 1}</span>
+              {items.length > 1 && (
+                <Button variant="ghost" size="sm" className="h-7 text-red-500 hover:text-red-700" onClick={() => onRemoveItem(item.key)}>
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              )}
+            </div>
+
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+              <div className="space-y-1">
+                <Label className="text-xs">Subject</Label>
+                <Select value={item.subjectId} onValueChange={(v) => onUpdateItem(item.key, 'subjectId', v)}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Select subject" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subjects.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs">Chapter / Topic</Label>
+                <Input
+                  value={item.chapterName}
+                  onChange={(e) => onUpdateItem(item.key, 'chapterName', e.target.value)}
+                  placeholder="e.g. Ch-4: The Water Cycle"
+                  className="h-9"
+                />
+              </div>
+            </div>
+
+            {/* Oral Work */}
+            <div className="p-3 rounded-lg bg-blue-50/50 border border-blue-100 space-y-2">
+              <div className="flex items-center gap-1.5 text-sm font-medium text-blue-800">
+                <Mic className="w-3.5 h-3.5" /> Oral Work
+              </div>
+              <Input
+                value={item.oralWork}
+                onChange={(e) => onUpdateItem(item.key, 'oralWork', e.target.value)}
+                placeholder="e.g. Reading aloud, Q&A discussion"
+                className="h-8 text-sm bg-white"
+              />
+              <Textarea
+                value={item.oralDetails}
+                onChange={(e) => onUpdateItem(item.key, 'oralDetails', e.target.value)}
+                placeholder="Detailed instructions (optional)"
+                className="min-h-[50px] text-sm bg-white"
+              />
+            </div>
+
+            {/* Writing Work */}
+            <div className="p-3 rounded-lg bg-purple-50/50 border border-purple-100 space-y-2">
+              <div className="flex items-center gap-1.5 text-sm font-medium text-purple-800">
+                <Pencil className="w-3.5 h-3.5" /> Writing Work
+              </div>
+              <Input
+                value={item.writingWork}
+                onChange={(e) => onUpdateItem(item.key, 'writingWork', e.target.value)}
+                placeholder="e.g. Notebook exercises page 45-46"
+                className="h-8 text-sm bg-white"
+              />
+              <Textarea
+                value={item.writingDetails}
+                onChange={(e) => onUpdateItem(item.key, 'writingDetails', e.target.value)}
+                placeholder="Detailed instructions (optional)"
+                className="min-h-[50px] text-sm bg-white"
+              />
+            </div>
+
+            {/* Homework (optional) */}
+            <div className="p-3 rounded-lg bg-green-50/50 border border-green-100 space-y-2">
+              <div className="flex items-center gap-1.5 text-sm font-medium text-green-800">
+                <FileText className="w-3.5 h-3.5" /> Homework (optional)
+              </div>
+              <Input
+                value={item.homeworkTitle}
+                onChange={(e) => onUpdateItem(item.key, 'homeworkTitle', e.target.value)}
+                placeholder="Homework title"
+                className="h-8 text-sm bg-white"
+              />
+              <Textarea
+                value={item.homeworkDescription}
+                onChange={(e) => onUpdateItem(item.key, 'homeworkDescription', e.target.value)}
+                placeholder="Description (optional)"
+                className="min-h-[50px] text-sm bg-white"
+              />
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+
+      {/* Add subject button */}
+      <Button variant="outline" onClick={onAddItem} className="w-full border-dashed">
+        <Plus className="w-4 h-4 mr-2" /> Add Another Subject
+      </Button>
+
+      {/* Action buttons */}
+      <div className="flex gap-2 sticky bottom-0 bg-background pt-3 pb-2 border-t">
+        <Button variant="outline" onClick={onCancel} className="flex-1">
+          Cancel
+        </Button>
+        <Button onClick={onSave} disabled={saving} className="flex-1">
+          {saving ? (
+            <><LoadingSpinner /> Saving...</>
+          ) : (
+            <><Save className="w-4 h-4 mr-2" /> Save Plan</>
+          )}
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -458,15 +807,68 @@ function PlanItemCard({
   expanded,
   onToggle,
   showUpload,
+  onPhotoUploaded,
 }: {
   item: NextDayPlanItemType;
   classwork?: any[];
   expanded: boolean;
   onToggle: () => void;
   showUpload?: boolean;
+  onPhotoUploaded?: () => void;
 }) {
+  const [uploading, setUploading] = useState(false);
+  const [photoBase64, setPhotoBase64] = useState<string | null>(null);
+
   const oralClasswork = classwork?.find((c: any) => c.workType === 'oral');
   const writingClasswork = classwork?.find((c: any) => c.workType === 'writing');
+  const totalPhotos = (oralClasswork?.attachments?.length || 0) + (writingClasswork?.attachments?.length || 0);
+  const hasOralDone = oralClasswork?.attachments?.length > 0;
+  const hasWritingDone = writingClasswork?.attachments?.length > 0;
+
+  async function handlePhotoUpload(workType: 'oral' | 'writing', e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const cw = workType === 'oral' ? oralClasswork : writingClasswork;
+    if (!cw) {
+      toast.error(`No ${workType} classwork entry found. Materialize the plan first.`);
+      return;
+    }
+
+    try {
+      setUploading(true);
+
+      // Read as base64 for AI validation
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = (reader.result as string).split(',')[1];
+        setPhotoBase64(base64);
+      };
+      reader.readAsDataURL(file);
+
+      // Upload to storage
+      const filePath = `classwork/${cw.id}/${Date.now()}_${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('File')
+        .upload(filePath, file);
+      if (uploadError) throw uploadError;
+
+      // Create file record linked to classwork
+      await fileTableService.createFile({
+        fileName: file.name,
+        filePath,
+        fileType: file.type,
+        classworkId: cw.id,
+        uploadedBy: 'teacher',
+      });
+
+      toast.success('Photo uploaded!');
+      onPhotoUploaded?.();
+    } catch (err: any) {
+      toast.error(err.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  }
 
   return (
     <Card className={item.carryForward ? 'border-amber-200' : ''}>
@@ -482,6 +884,11 @@ function PlanItemCard({
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {showUpload && totalPhotos > 0 && (
+              <Badge className="bg-green-100 text-green-800 text-xs">
+                📷 {totalPhotos}
+              </Badge>
+            )}
             {item.carryForward && (
               <Badge variant="outline" className="text-amber-600 border-amber-300 text-xs">
                 ⚠️ Carry Forward
@@ -504,46 +911,92 @@ function PlanItemCard({
           <div className="mt-4 space-y-3">
             {/* Oral Work */}
             {item.oralWork && (
-              <div className="flex items-start gap-2 p-2 rounded bg-blue-50">
-                <Mic className="w-4 h-4 text-blue-600 mt-0.5" />
-                <div className="flex-1">
-                  <p className="font-medium text-sm text-blue-900">Oral: {item.oralWork}</p>
-                  {item.oralDetails && (
-                    <p className="text-xs text-blue-700 mt-1">{item.oralDetails}</p>
-                  )}
-                  {showUpload && oralClasswork && (
-                    <div className="mt-1 flex items-center gap-1 text-xs">
-                      {oralClasswork.attachments?.length > 0 ? (
-                        <span className="text-green-600">✅ {oralClasswork.attachments.length} photo(s)</span>
-                      ) : (
-                        <span className="text-gray-400">No photos uploaded</span>
-                      )}
-                    </div>
-                  )}
+              <div className="p-2 rounded bg-blue-50">
+                <div className="flex items-start gap-2">
+                  <Mic className="w-4 h-4 text-blue-600 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-medium text-sm text-blue-900">Oral: {item.oralWork}</p>
+                    {item.oralDetails && (
+                      <p className="text-xs text-blue-700 mt-1">{item.oralDetails}</p>
+                    )}
+                    {showUpload && (
+                      <div className="mt-2 flex items-center gap-2">
+                        {hasOralDone ? (
+                          <span className="text-xs text-green-600">✅ {oralClasswork.attachments.length} photo(s)</span>
+                        ) : (
+                          <span className="text-xs text-gray-400">No photos yet</span>
+                        )}
+                        {oralClasswork && (
+                          <label className="inline-flex items-center gap-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-2 py-1 rounded cursor-pointer transition-colors">
+                            <Camera className="w-3 h-3" />
+                            {uploading ? 'Uploading...' : 'Upload'}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              capture="environment"
+                              className="hidden"
+                              onChange={(e) => handlePhotoUpload('oral', e)}
+                              disabled={uploading}
+                            />
+                          </label>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
 
             {/* Writing Work */}
             {item.writingWork && (
-              <div className="flex items-start gap-2 p-2 rounded bg-purple-50">
-                <Pencil className="w-4 h-4 text-purple-600 mt-0.5" />
-                <div className="flex-1">
-                  <p className="font-medium text-sm text-purple-900">Writing: {item.writingWork}</p>
-                  {item.writingDetails && (
-                    <p className="text-xs text-purple-700 mt-1">{item.writingDetails}</p>
-                  )}
-                  {showUpload && writingClasswork && (
-                    <div className="mt-1 flex items-center gap-1 text-xs">
-                      {writingClasswork.attachments?.length > 0 ? (
-                        <span className="text-green-600">✅ {writingClasswork.attachments.length} photo(s)</span>
-                      ) : (
-                        <span className="text-gray-400">No photos uploaded</span>
-                      )}
-                    </div>
-                  )}
+              <div className="p-2 rounded bg-purple-50">
+                <div className="flex items-start gap-2">
+                  <Pencil className="w-4 h-4 text-purple-600 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-medium text-sm text-purple-900">Writing: {item.writingWork}</p>
+                    {item.writingDetails && (
+                      <p className="text-xs text-purple-700 mt-1">{item.writingDetails}</p>
+                    )}
+                    {showUpload && (
+                      <div className="mt-2 flex items-center gap-2">
+                        {hasWritingDone ? (
+                          <span className="text-xs text-green-600">✅ {writingClasswork.attachments.length} photo(s)</span>
+                        ) : (
+                          <span className="text-xs text-gray-400">No photos yet</span>
+                        )}
+                        {writingClasswork && (
+                          <label className="inline-flex items-center gap-1 text-xs bg-purple-100 hover:bg-purple-200 text-purple-700 px-2 py-1 rounded cursor-pointer transition-colors">
+                            <Camera className="w-3 h-3" />
+                            {uploading ? 'Uploading...' : 'Upload'}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              capture="environment"
+                              className="hidden"
+                              onChange={(e) => handlePhotoUpload('writing', e)}
+                              disabled={uploading}
+                            />
+                          </label>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
+            )}
+
+            {/* AI Photo Validation - show after upload */}
+            {showUpload && photoBase64 && (
+              <AiPhotoValidator
+                imageBase64={photoBase64}
+                planned={{
+                  plannedTitle: item.subject?.name || '',
+                  plannedDescription: `${item.oralWork || ''} / ${item.writingWork || ''}`,
+                  plannedWorkType: 'classwork',
+                  plannedChapter: item.chapterName || '',
+                }}
+                className="mt-2"
+              />
             )}
 
             {/* Homework */}
@@ -594,13 +1047,11 @@ function PlanItemCard({
 
 function EndOfDayReportView({
   plan,
-  items,
   report,
   onGeneratePlan,
   generating,
 }: {
   plan: NextDayPlanType | null;
-  items: NextDayPlanItemType[];
   report: any;
   onGeneratePlan: () => void;
   generating: boolean;
