@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 export default function DemoIndex() {
@@ -18,7 +18,7 @@ export default function DemoIndex() {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="mb-6 flex items-center">
-        <Link href="/">
+        <Link to="/">
           <Button variant="outline" size="sm" className="flex items-center gap-2">
             <ArrowLeft className="h-4 w-4" />
             Back to Home
@@ -42,7 +42,7 @@ export default function DemoIndex() {
             </CardHeader>
             <CardContent>
               <p className="mb-4 text-gray-600">{demo.description}</p>
-              <Link href={demo.path}>
+              <Link to={demo.path}>
                 <Button className="w-full flex items-center justify-center gap-2">
                   View Demo
                   <ArrowRight className="h-4 w-4" />

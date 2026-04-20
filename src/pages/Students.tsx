@@ -41,10 +41,8 @@ import {
   UserCircle,
   X,
 } from 'lucide-react';
-import { PageAnimation } from '@/components/ui/page-animation';
-import { AnimatedText } from '@/components/ui/animated-text';
-import { CardAnimation, CardHoverAnimation } from '@/components/ui/card-animation';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { PageHeader } from '@/components/ui/page-header';
 import { useProfileAccess } from '@/services/profileService';
 import { Navigate } from 'react-router-dom';
 
@@ -370,28 +368,34 @@ export default function StudentsPage() {
 
   // Show loading spinner while profile is loading
   if (profileLoading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
   }
 
   return (
-    <PageAnimation>
-      <div className="container mx-auto p-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <AnimatedText
-            text="Students"
-            className="text-3xl font-bold"
-          />
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
+      <PageHeader
+        title="Students"
+        subtitle="Manage student records and enrollment"
+        icon={<Users className="text-primary-500" />}
+        action={
           <Button
+            size="sm"
+            className="text-xs sm:text-sm"
             onClick={() => {
               setIsDialogOpen(true);
               setEditingStudent(null);
             }}
-            className="flex items-center gap-2"
           >
-            <Plus className="w-4 h-4" />
-            Add Student
+            <Plus className="w-4 h-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Add Student</span>
+            <span className="sm:hidden">Add</span>
           </Button>
-        </div>
+        }
+      />
 
         {/* Filters Section */}
         <Card className="mb-6 bg-card/50 backdrop-blur-sm border-border/50">
@@ -528,7 +532,6 @@ export default function StudentsPage() {
           classes={classes}
         />
       </div>
-    </PageAnimation>
   );
 }
 

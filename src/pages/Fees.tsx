@@ -34,6 +34,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { PageHeader } from '@/components/ui/page-header';
 import { Plus, Filter, CreditCard, X, AlertCircle, User, IndianRupee } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 import { generateFeePDF } from '@/services/pdfService';
@@ -291,13 +292,21 @@ const Fees = () => {
   };
 
   if (profileLoading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
   }
 
   if (!isAdminOrTeacher) {
     return (
-      <div className="p-4">
-        <h1 className="text-2xl font-bold mb-4">My Fees</h1>
+      <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
+        <PageHeader
+          title="My Fees"
+          subtitle="View your fee records and receipts"
+          icon={<IndianRupee className="text-primary-500" />}
+        />
         {loading ? (
           <LoadingSpinner />
         ) : fees.length === 0 ? (
@@ -342,14 +351,19 @@ const Fees = () => {
   };
 
   return (
-    <div className="p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Fees Management</h1>
-        <Button onClick={() => setShowCreateDialog(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Fee
-        </Button>
-      </div>
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
+      <PageHeader
+        title="Fees Management"
+        subtitle="Create and manage student fee records"
+        icon={<CreditCard className="text-primary-500" />}
+        action={
+          <Button size="sm" className="text-xs sm:text-sm" onClick={() => setShowCreateDialog(true)}>
+            <Plus className="w-4 h-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Create Fee</span>
+            <span className="sm:hidden">Add</span>
+          </Button>
+        }
+      />
 
       {/* Tabs for All Fees and Pending Fees */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-4">

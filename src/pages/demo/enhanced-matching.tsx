@@ -3,7 +3,7 @@ import { EnhancedMatchingExercise } from '@/components/interactive/EnhancedMatch
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 
 export default function EnhancedMatchingDemo() {
   // Sample matching question data
@@ -97,7 +97,7 @@ export default function EnhancedMatchingDemo() {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="mb-6">
-        <Link href="/demo">
+        <Link to="/demo">
           <Button variant="outline" size="sm" className="flex items-center gap-2">
             <ArrowLeft className="h-4 w-4" />
             Back to Demos

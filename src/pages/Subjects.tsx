@@ -7,7 +7,9 @@ import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Book, Edit, Trash } from 'lucide-react';
+import { Book, Edit, Trash, Plus } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { PageHeader } from '@/components/ui/page-header';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 
 interface Subject {
@@ -167,22 +169,28 @@ export default function SubjectsPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Subjects</h1>
-        {(profile?.role === 'admin' || profile?.role === 'teacher') && (
-          <Button onClick={() => setIsDialogOpen(true)}>
-            Add New Subject
-          </Button>
-        )}
-      </div>
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
+      <PageHeader
+        title="Subjects"
+        subtitle="Manage subjects and class assignments"
+        icon={<Book className="text-primary-500" />}
+        action={
+          (profile?.role === 'admin' || profile?.role === 'teacher') ? (
+            <Button size="sm" className="text-xs sm:text-sm" onClick={() => setIsDialogOpen(true)}>
+              <Plus className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Add New Subject</span>
+              <span className="sm:hidden">Add</span>
+            </Button>
+          ) : null
+        }
+      />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {subjects.map((subject) => (
