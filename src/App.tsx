@@ -158,6 +158,9 @@ function AppRoutes() {
         {/* Public School Feedback - No authentication required */}
         <Route path="/school-feedback" element={<SchoolFeedback />} />
 
+        {/* Public Timetable - No authentication required */}
+        <Route path="/timetable" element={<TimetablePage />} />
+
         {/* Protected Routes */}
         <Route path="/dashboard" element={
           <PrivateRoute>
@@ -425,13 +428,7 @@ function AppRoutes() {
             </Layout>
           </PrivateRoute>
         } />
-        <Route path="/timetable" element={
-          <PrivateRoute>
-            <Layout>
-              <TimetablePage />
-            </Layout>
-          </PrivateRoute>
-        } />
+        {/* Timetable moved to public routes */}
 
         {/* Birthday Routes */}
         <Route path="/birthdays" element={

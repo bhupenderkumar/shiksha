@@ -119,7 +119,8 @@ export const PUBLIC_ROUTES = [
   '/birthday/:studentId',
   '/date-sheet',
   '/copy-request',
-  '/school-feedback'
+  '/school-feedback',
+  '/timetable'
 ] as const;
 
 
