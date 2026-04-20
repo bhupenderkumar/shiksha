@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { AttachmentsList } from '@/components/ui/AttachmentsList';
+import { PageHeader } from '@/components/ui/page-header';
 import {
   ArrowLeft,
   Calendar,
@@ -170,13 +171,17 @@ const ViewAdmissionEnquiries = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto p-4 space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Admission Enquiries</h1>
-          <Button onClick={() => navigate('/admission/new')}>
-            New Enquiry
-          </Button>
-        </div>
+      <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-6">
+        <PageHeader
+          title="Admission Enquiries"
+          subtitle="View and manage admission enquiries"
+          icon={<FileText className="text-primary-500" />}
+          action={
+            <Button size="sm" className="text-xs sm:text-sm" onClick={() => navigate('/admission/new')}>
+              New Enquiry
+            </Button>
+          }
+        />
 
         {/* Filters */}
         <Card>

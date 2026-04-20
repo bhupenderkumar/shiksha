@@ -477,7 +477,7 @@ export default function StudentsPage() {
 
         {/* Student Form Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent>
+          <DialogContent aria-describedby={undefined}>
             <DialogHeader>
               <DialogTitle>{editingStudent ? 'Edit Student' : 'Add Student'}</DialogTitle>
             </DialogHeader>
@@ -625,7 +625,7 @@ const StudentDetailModal = ({
 
   return (
     <Dialog open={!!student} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <UserCircle className="h-6 w-6 text-primary" />

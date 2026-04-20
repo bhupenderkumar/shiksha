@@ -15,7 +15,6 @@ import {
   ChevronUp,
   Eye,
   AlertCircle,
-  GraduationCap,
   Pencil,
   BookOpen,
 } from 'lucide-react';
@@ -187,10 +186,10 @@ export const PublicContentShare: React.FC<PublicContentShareProps> = ({ contentT
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
               <div className={cn(
-                "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
+                "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden",
                 config.iconBg
               )}>
-                <GraduationCap className="w-5 h-5 text-white" />
+                <img src={SCHOOL_INFO.logo} alt={SCHOOL_INFO.name} className="w-full h-full object-contain p-1" />
               </div>
               <div className="min-w-0">
                 <h1 className={cn(
@@ -514,7 +513,7 @@ export const PublicContentShare: React.FC<PublicContentShareProps> = ({ contentT
           "text-gray-400"
         )}>
           <div className="flex items-center justify-center gap-2">
-            <GraduationCap className="w-5 h-5" />
+            <img src={SCHOOL_INFO.logo} alt={SCHOOL_INFO.name} className="w-5 h-5 object-contain" />
             <span className="font-medium">{SCHOOL_INFO.name}</span>
           </div>
           <p className="text-xs">{SCHOOL_INFO.phone}</p>

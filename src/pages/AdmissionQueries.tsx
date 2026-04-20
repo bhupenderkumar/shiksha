@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Input } from '@/components/ui/input';
+import { PageHeader } from '@/components/ui/page-header';
 import {
   Select,
   SelectContent,
@@ -32,6 +33,7 @@ import {
   RefreshCw,
   Filter,
   X,
+  FileText,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ADMISSION_STATUS } from '@/lib/constants';
@@ -144,25 +146,23 @@ const AdmissionQueries = () => {
   }
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Admission Queries</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {totalEnquiries} total {totalEnquiries === 1 ? 'query' : 'queries'}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={fetchEnquiries}>
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
-          <Button size="sm" onClick={() => navigate('/admission-enquiry')}>
-            + New Query
-          </Button>
-        </div>
-      </div>
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-6">
+      <PageHeader
+        title="Admission Queries"
+        subtitle={`${totalEnquiries} total ${totalEnquiries === 1 ? 'query' : 'queries'}`}
+        icon={<FileText className="text-primary-500" />}
+        action={
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="text-xs sm:text-sm" onClick={fetchEnquiries}>
+              <RefreshCw className="w-4 h-4 mr-1" />
+              Refresh
+            </Button>
+            <Button size="sm" className="text-xs sm:text-sm" onClick={() => navigate('/admission-enquiry')}>
+              + New Query
+            </Button>
+          </div>
+        }
+      />
 
       {/* Filters */}
       <Card>

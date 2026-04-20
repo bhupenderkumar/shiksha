@@ -4,9 +4,11 @@ import { parentSubmittedFeedbackService } from '@/services/parentSubmittedFeedba
 import { ParentSubmittedFeedback } from '@/types/parentFeedback';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/ui/page-header';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { toast } from 'react-hot-toast';
-import { 
-  ArrowLeft, 
+import {
+  ArrowLeft,
   Loader2, 
   Clock, 
   Eye, 
@@ -100,19 +102,25 @@ const ParentSubmittedFeedbackDetail: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Button
-        variant="ghost"
-        className="mb-4"
-        onClick={() => navigate('/parent-submitted-feedback-list')}
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to List
-      </Button>
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
+      <PageHeader
+        title="Parent Feedback Details"
+        subtitle="Review submitted parent feedback"
+        action={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/parent-submitted-feedback-list')}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to List
+          </Button>
+        }
+      />
 
       {loading ? (
         <div className="flex justify-center py-8">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <LoadingSpinner size="lg" />
         </div>
       ) : !feedback ? (
         <Card>

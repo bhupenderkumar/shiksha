@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Plus, BookOpen, CheckCircle, Clock, FileText, Trash2, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { PageAnimation } from '@/components/ui/page-animation';
+import { PageHeader } from '@/components/ui/page-header';
 import { syllabusService, type SyllabusType, type CreateSyllabusData } from '@/services/syllabusService';
 import { aiService } from '@/services/aiService';
 import { useAuth } from '@/lib/auth-provider';
@@ -120,21 +120,27 @@ export default function Syllabus() {
     }
   };
 
-  if (loading) return <div className="flex justify-center p-8"><LoadingSpinner /></div>;
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <LoadingSpinner size="lg" />
+    </div>
+  );
 
   return (
-    <PageAnimation>
-      <div className="container mx-auto p-4 max-w-4xl">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">Syllabus Management</h1>
-            <p className="text-muted-foreground">Academic Year 2026-27</p>
-          </div>
-          <Dialog open={showCreate} onOpenChange={setShowCreate}>
-            <DialogTrigger asChild>
-              <Button><Plus className="w-4 h-4 mr-2" /> Add Syllabus</Button>
-            </DialogTrigger>
-            <DialogContent>
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
+      <PageHeader
+        title="Syllabus Management"
+        subtitle="Academic Year 2026-27"
+        icon={<BookOpen className="text-primary-500" />}
+        action={
+          <Button size="sm" className="text-xs sm:text-sm" onClick={() => setShowCreate(true)}>
+            <Plus className="w-4 h-4 mr-1 sm:mr-2" /> Add Syllabus
+          </Button>
+        }
+      />
+
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+            <DialogContent aria-describedby={undefined}>
               <DialogHeader>
                 <DialogTitle>Create Syllabus</DialogTitle>
               </DialogHeader>
@@ -192,8 +198,7 @@ export default function Syllabus() {
                 </Button>
               </div>
             </DialogContent>
-          </Dialog>
-        </div>
+      </Dialog>
 
         {/* Class filter */}
         <div className="mb-4">
@@ -261,6 +266,5 @@ export default function Syllabus() {
           </div>
         )}
       </div>
-    </PageAnimation>
   );
 }

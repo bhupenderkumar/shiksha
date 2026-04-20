@@ -7,7 +7,8 @@ import { toast } from "react-hot-toast";
 import { ROUTES } from "@/constants/app-constants";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
-import { ArrowLeft, Trash } from "lucide-react";
+import { PageHeader } from '@/components/ui/page-header';
+import { ArrowLeft, Trash, Edit } from "lucide-react";
 import { InteractiveAssignmentType } from "@/types/interactiveAssignment";
 import {
   AlertDialog,
@@ -261,8 +262,8 @@ export default function EditInteractiveAssignment() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[400px]">
-        <LoadingSpinner />
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
@@ -284,24 +285,29 @@ export default function EditInteractiveAssignment() {
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center">
-          <Button variant="ghost" onClick={() => navigate(ROUTES.INTERACTIVE_ASSIGNMENTS)} className="mr-4">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Assignments
-          </Button>
-          <h1 className="text-2xl font-bold">Edit Interactive Assignment</h1>
-        </div>
-        <Button
-          variant="outline"
-          className="text-red-500 hover:text-red-700"
-          onClick={() => setIsDeleteDialogOpen(true)}
-        >
-          <Trash className="h-4 w-4 mr-2" />
-          Delete Assignment
-        </Button>
-      </div>
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
+      <PageHeader
+        title="Edit Interactive Assignment"
+        subtitle="Modify assignment details and questions"
+        icon={Edit}
+        action={
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.INTERACTIVE_ASSIGNMENTS)}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-red-500 hover:text-red-700"
+              onClick={() => setIsDeleteDialogOpen(true)}
+            >
+              <Trash className="h-4 w-4 mr-2" />
+              Delete
+            </Button>
+          </div>
+        }
+      />
 
       {assignment && (
         <InteractiveAssignmentForm

@@ -26,7 +26,6 @@ import {
 import { Label } from '@/components/ui/label';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { PageHeader } from '@/components/ui/page-header';
-import { PageAnimation } from '@/components/ui/page-animation';
 import { yearEndFeedbackService } from '@/services/yearEndFeedbackService';
 import { studentService } from '@/services/student.service';
 import { classService } from '@/services/classService';
@@ -383,8 +382,7 @@ const YearEndFeedback = () => {
 
   // Content to render (without layout wrapper)
   const content = (
-    <PageAnimation>
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
         <PageHeader 
           title="Year-End Feedback"
           description="Submit year-end feedback for student evaluation and progression"
@@ -819,7 +817,6 @@ const YearEndFeedback = () => {
             </form>
           </Form>
         </div>
-      </PageAnimation>
   );
 
   // If user is authenticated, return content directly (Layout is handled by the route)

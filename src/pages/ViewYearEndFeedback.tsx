@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { PageAnimation } from '@/components/ui/page-animation';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card } from '@/components/ui/card';
 import { Table } from '@/components/ui/table';
@@ -107,14 +106,14 @@ const ViewYearEndFeedback = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <LoadingSpinner />
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
 
   return (
-    <PageAnimation>
+    <>
       {/* Fixed Header */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -431,7 +430,7 @@ const ViewYearEndFeedback = () => {
           </div>
         )}
       </div>
-    </PageAnimation>
+    </>
   );
 };
 

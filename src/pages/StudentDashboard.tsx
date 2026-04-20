@@ -7,6 +7,8 @@ import { Progress } from '@/components/ui/progress';
 import { Calendar } from '@/components/ui/calendar';
 import { Bell, Book, CheckCircle, Clock, GraduationCap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { PageHeader } from '@/components/ui/page-header';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 const StatCard = ({ stat }: { stat: any }) => (
   <Card>
@@ -54,8 +56,8 @@ export default function StudentDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
@@ -84,22 +86,12 @@ export default function StudentDashboard() {
   ];
 
   return (
-    <div className="container mx-auto p-4 md:p-6 space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold">My Dashboard</h1>
-          <p className="text-muted-foreground">
-            {data?.studentName ? `Welcome, ${data.studentName}!` : 'Welcome back!'}
-          </p>
-        </div>
-        {data?.className && (
-          <Badge variant="outline" className="flex items-center gap-2">
-            <GraduationCap className="w-4 h-4" />
-            <span>{data.className}</span>
-          </Badge>
-        )}
-      </div>
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-6">
+      <PageHeader
+        title={data?.studentName ? `Welcome, ${data.studentName}!` : 'My Dashboard'}
+        subtitle={data?.className ? `Class ${data.className}` : 'Student dashboard'}
+        icon={<GraduationCap className="text-primary-500" />}
+      />
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-3">

@@ -31,11 +31,11 @@ import type { SchoolSettings, NotificationSettings, ThemeSettings, SecuritySetti
 
 import { supabase } from '@/lib/api-client';
 
-import { PageAnimation, CardAnimation } from '@/components/ui/page-animation';
+import { CardAnimation } from '@/components/ui/page-animation';
 
-import { motion } from "framer-motion";
+import { PageHeader } from '@/components/ui/page-header';
 
-import { AnimatedText } from "@/components/ui/animated-text";
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 import { useProfileAccess } from '@/services/profileService';
 
@@ -483,7 +483,7 @@ export default function SettingsPage() {
 
       <div className="flex items-center justify-center min-h-screen">
 
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+        <LoadingSpinner size="lg" />
 
       </div>
 
@@ -505,39 +505,13 @@ export default function SettingsPage() {
 
   return (
 
-    <PageAnimation>
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-8">
 
-      <div className="container mx-auto py-8 px-4 space-y-8">
-
-        <div className="flex items-center space-x-4">
-
-          <motion.div
-
-            initial={{ rotate: -90 }}
-
-            animate={{ rotate: 0 }}
-
-            transition={{ duration: 0.5 }}
-
-          >
-
-            <School className="w-8 h-8 text-primary" />
-
-          </motion.div>
-
-          <AnimatedText
-
-            text="Settings"
-
-            className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent"
-
-            variant="slideUp"
-
-          />
-
-        </div>
-
-        <Separator className="my-6" />
+      <PageHeader
+        title="Settings"
+        subtitle="Manage school and account settings"
+        icon={<School className="text-primary-500" />}
+      />
 
         <Tabs defaultValue="profile" className="space-y-6">
 
@@ -1526,8 +1500,6 @@ export default function SettingsPage() {
         </Tabs>
 
       </div>
-
-    </PageAnimation>
 
   );
 

@@ -5,12 +5,13 @@ import { Card } from '@/components/ui/card';
 import { Alert } from '@/components/ui/alert';
 import { format } from 'date-fns';
 import { studentService } from '@/services/student.service';
-import { motion } from 'framer-motion';
 import { CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, User, Calendar, Droplet, School, Mail } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { generateProfilePDF } from '@/services/pdfService';
+import { PageHeader } from '@/components/ui/page-header';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 const ProfilePage = () => {
   const { profile, loading, error } = useProfile();
@@ -51,10 +52,8 @@ const ProfilePage = () => {
 
   if (loading || loadingStudent) {
     return (
-      <div className="container mx-auto px-4 py-8 space-y-6">
-        <Skeleton className="h-12 w-3/4 md:w-1/2" />
-        <Skeleton className="h-[200px] w-full" />
-        <Skeleton className="h-[300px] w-full" />
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
@@ -80,25 +79,25 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <h1 className="text-3xl font-bold text-foreground">{profile.full_name}</h1>
-        <Button
-          onClick={handleDownloadProfile}
-          disabled={downloading}
-          className="bg-primary hover:bg-primary/90 text-white"
-        >
-          <Download className="mr-2 h-4 w-4" />
-          {downloading ? 'Downloading...' : 'Download Profile'}
-        </Button>
-      </div>
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-6">
+      <PageHeader
+        title={profile.full_name}
+        subtitle={`${profile.role.charAt(0) + profile.role.slice(1).toLowerCase()} Profile`}
+        icon={<User className="text-primary-500" />}
+        action={
+          <Button
+            size="sm"
+            className="text-xs sm:text-sm"
+            onClick={handleDownloadProfile}
+            disabled={downloading}
+          >
+            <Download className="w-4 h-4 mr-1 sm:mr-2" />
+            {downloading ? 'Downloading...' : 'Download Profile'}
+          </Button>
+        }
+      />
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        <Card className="overflow-hidden bg-card shadow-lg hover:shadow-xl transition-shadow duration-300">
+      <Card className="overflow-hidden bg-card shadow-lg hover:shadow-xl transition-shadow duration-300">
           <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5 text-primary" />
@@ -122,15 +121,9 @@ const ProfilePage = () => {
             </div>
           </CardContent>
         </Card>
-      </motion.div>
 
       
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <Card className="overflow-hidden bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <Card className="overflow-hidden bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
             <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
               <CardTitle className="flex items-center gap-2">
                 <School className="h-5 w-5 text-primary" />
@@ -166,7 +159,6 @@ const ProfilePage = () => {
               </div>
             </CardContent>
           </Card>
-        </motion.div>
       
     </div>
   );

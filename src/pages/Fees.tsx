@@ -560,7 +560,7 @@ const Fees = () => {
       </Tabs>
 
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>{editingFee ? 'Edit Fee' : 'Create Fee'}</DialogTitle>
           </DialogHeader>

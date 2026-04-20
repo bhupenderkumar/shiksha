@@ -557,10 +557,10 @@ export const idCardService = {
 
   async saveIDCardData(data: IDCardData): Promise<string> {
     try {
-      // Check for duplicate submission
+      // Check for duplicate submission — warn but allow re-submission
       const isDuplicate = await this.checkDuplicateSubmission(data);
       if (isDuplicate) {
-        throw new Error('A student with the same name, class, and parents already exists. Please check your information.');
+        console.warn('Duplicate ID card submission detected — allowing for merge later.');
       }
 
       // Check storage limit

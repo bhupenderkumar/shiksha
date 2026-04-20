@@ -118,14 +118,18 @@ export default function InteractiveAssignmentFormPage() {
   };
 
   if (loading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
   }
 
   // Add id to initialData if it exists
   const formData = initialData && id ? { ...initialData, id } : initialData;
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
       <InteractiveAssignmentForm
         initialData={formData as any}
         onSubmit={handleSubmit}

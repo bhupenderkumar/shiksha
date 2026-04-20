@@ -48,11 +48,12 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'react-hot-toast';
-import { Search, Eye, ArrowUpDown, Edit, Trash2, Phone, MapPin, FileDown, FileSpreadsheet, CheckSquare } from 'lucide-react';
+import { Search, Eye, ArrowUpDown, Edit, Trash2, Phone, MapPin, FileDown, FileSpreadsheet, CheckSquare, CreditCard } from 'lucide-react';
 import { format } from 'date-fns';
 import { Checkbox } from '@/components/ui/checkbox';
 import IDCardDetailModal from '@/components/IDCardDetailModal';
 import IDCardExportButton from '@/components/IDCardExportButton';
+import { PageHeader } from '@/components/ui/page-header';
 
 const IDCardDetails: React.FC = () => {
   const navigate = useNavigate();
@@ -493,11 +494,20 @@ const IDCardDetails: React.FC = () => {
   };
 
   if (profileLoading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-6">
+      <PageHeader
+        title="ID Card Details"
+        subtitle="View and manage all student ID cards"
+        icon={<CreditCard className="text-primary-500" />}
+      />
       <Card>
         <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
           <div>

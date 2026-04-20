@@ -14,7 +14,7 @@ import {
   Sparkles, Info, RefreshCw, Plus, Trash2, PenLine, Save, Trash, Camera
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { PageAnimation } from '@/components/ui/page-animation';
+import { PageHeader } from '@/components/ui/page-header';
 import { nextDayPlanService, type NextDayPlanType, type NextDayPlanItemType, type CreatePlanItemData } from '@/services/nextDayPlanService';
 import { aiFlagService, type AiFlagRecord } from '@/services/aiFlagService';
 import { aiService } from '@/services/aiService';
@@ -348,21 +348,20 @@ export default function NextDayPlan() {
   const totalPlannedClasswork = todayClasswork.filter((c: any) => c.completionStatus === 'planned' || c.completionStatus === 'completed').length;
 
   if (loading && classes.length === 0) {
-    return <div className="flex justify-center p-8"><LoadingSpinner /></div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
   }
 
   return (
-    <PageAnimation>
-      <div className="container mx-auto p-4 max-w-4xl">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Brain className="w-6 h-6 text-primary" />
-              AI Planner
-            </h1>
-            <p className="text-muted-foreground">Daily class planning with AI</p>
-          </div>
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
+      <PageHeader
+        title="AI Planner"
+        subtitle="Daily class planning with AI"
+        icon={<Brain className="text-primary-500" />}
+        action={
           <Select value={selectedClass} onValueChange={setSelectedClass}>
             <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="Select class" />
@@ -373,7 +372,8 @@ export default function NextDayPlan() {
               ))}
             </SelectContent>
           </Select>
-        </div>
+        }
+      />
 
         {/* View Mode Tabs */}
         <div className="flex gap-2 mb-6 border-b pb-2">
@@ -637,7 +637,6 @@ export default function NextDayPlan() {
           </div>
         )}
       </div>
-    </PageAnimation>
   );
 }
 

@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { BookOpen, Mic, Pencil, FileText, Camera, ChevronLeft, ChevronRight } from 'lucide-react';
-import { PageAnimation } from '@/components/ui/page-animation';
+import { PageHeader } from '@/components/ui/page-header';
 import { toast } from 'react-hot-toast';
 import { supabase } from '@/lib/api-client';
 import { SCHEMA } from '@/lib/constants';
@@ -107,20 +107,20 @@ export default function ClassWorkbook() {
   }
 
   if (loading && classes.length === 0) {
-    return <div className="flex justify-center p-8"><LoadingSpinner /></div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
   }
 
   return (
-    <PageAnimation>
-      <div className="container mx-auto p-4 max-w-4xl">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <BookOpen className="w-6 h-6 text-primary" />
-              Class Workbook
-            </h1>
-            <p className="text-muted-foreground">Weekly view of all classwork & homework</p>
-          </div>
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
+      <PageHeader
+        title="Class Workbook"
+        subtitle="Weekly view of all classwork & homework"
+        icon={<BookOpen className="text-primary-500" />}
+        action={
           <Select value={selectedClass} onValueChange={setSelectedClass}>
             <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="Select class" />
@@ -131,7 +131,8 @@ export default function ClassWorkbook() {
               ))}
             </SelectContent>
           </Select>
-        </div>
+        }
+      />
 
         {/* Week navigation */}
         <div className="flex items-center justify-between mb-4">
@@ -231,6 +232,5 @@ export default function ClassWorkbook() {
           </div>
         )}
       </div>
-    </PageAnimation>
   );
 }

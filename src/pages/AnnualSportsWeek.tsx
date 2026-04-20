@@ -14,7 +14,9 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from '@/components/ui/dialog';
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui/toast';
 import { SCHOOL_INFO } from '@/lib/constants';
@@ -931,7 +933,10 @@ function GameDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto p-0 gap-0 rounded-2xl border-2 overflow-hidden">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto p-0 gap-0 rounded-2xl border-2 overflow-hidden" aria-describedby={undefined}>
+        <VisuallyHidden.Root>
+          <DialogTitle>Game Details</DialogTitle>
+        </VisuallyHidden.Root>
         {/* Modal Header with gradient */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -1563,7 +1568,10 @@ function EnrollmentSection({ lang }: { lang: Lang }) {
       <>
         {/* Success Modal */}
         <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
+            <VisuallyHidden.Root>
+              <DialogTitle>Enrollment Successful</DialogTitle>
+            </VisuallyHidden.Root>
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}

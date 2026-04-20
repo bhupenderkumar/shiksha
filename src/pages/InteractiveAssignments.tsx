@@ -297,11 +297,15 @@ export function InteractiveAssignments() {
   };
 
   if (fetchLoading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
       <PageHeader
         title="Interactive Assignments"
         subtitle="Create and manage interactive assignments for students"
@@ -381,7 +385,7 @@ export function InteractiveAssignments() {
 
       {/* Share Dialog */}
       <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>Share Assignment</DialogTitle>
           </DialogHeader>

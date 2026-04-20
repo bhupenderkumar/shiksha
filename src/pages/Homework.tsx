@@ -274,7 +274,7 @@ export default function HomeworkPage() {
           <Dialog open={dialogState.isOpen} onOpenChange={(open) => {
             if (!open) handleCloseDialog();
           }}>
-            <DialogContent className="max-w-4xl w-[98%] sm:w-[95%] h-[95vh] sm:h-[90vh] overflow-y-auto p-3 sm:p-6">
+            <DialogContent className="max-w-4xl w-[98%] sm:w-[95%] max-h-[95vh] sm:max-h-[90vh] overflow-y-auto p-3 sm:p-6" aria-describedby={undefined}>
               <DialogHeader className="sticky top-0 bg-background z-10 pb-3 sm:pb-4 border-b">
                 <DialogTitle className="text-lg sm:text-xl">
                   {dialogState.mode === 'create' ? 'Create Homework' : 'Edit Homework'}

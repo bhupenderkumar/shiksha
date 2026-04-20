@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAsync } from '@/hooks/use-async';
 import { attendanceService } from '@/services/attendanceService';
 import { PageHeader } from '@/components/ui/page-header';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AttendanceForm } from '@/components/forms/attendance-form';
@@ -216,11 +217,15 @@ export default function AttendancePage() {
   };
 
   if (classesLoading || profileLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-6">
       <PageHeader
         title="Attendance Management"
         description={isAdminOrTeacher ? "Manage student attendance records" : "View your attendance records"}
@@ -423,7 +428,7 @@ export default function AttendancePage() {
 
       {/* Create Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="w-[95vw] max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-3xl max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>Mark Attendance</DialogTitle>
           </DialogHeader>
@@ -440,7 +445,7 @@ export default function AttendancePage() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="w-[95vw] max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-lg max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>Edit Attendance</DialogTitle>
           </DialogHeader>
@@ -525,7 +530,7 @@ export default function AttendancePage() {
 
       {/* Details Dialog */}
       <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
-        <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>
               Attendance Details - {selectedDateDetails[0] && format(new Date(selectedDateDetails[0].date), 'dd MMM yyyy')}

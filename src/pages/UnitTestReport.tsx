@@ -203,7 +203,11 @@ export default function UnitTestReport() {
 
   const pendingRequests = copyRequests.filter((r) => r.status === 'pending').length;
 
-  if (profileLoading) return <LoadingSpinner />;
+  if (profileLoading) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <LoadingSpinner size="lg" />
+    </div>
+  );
 
   if (!isAdminOrTeacher) {
     return (
@@ -217,7 +221,7 @@ export default function UnitTestReport() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-6">
       <PageHeader
         title="Unit Test 4 - Reports"
         description="View marks reports and manage copy requests"
@@ -571,7 +575,7 @@ export default function UnitTestReport() {
       <Dialog open={statusDialog.open} onOpenChange={(open) => {
         if (!open) setStatusDialog({ open: false, request: null });
       }}>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>Update Request Status</DialogTitle>
           </DialogHeader>

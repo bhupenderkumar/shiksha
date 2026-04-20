@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { PageHeader } from '@/components/ui/page-header';
 import { ProcessTimeline } from '@/components/admission/ProcessTimeline';
 import { ButtonWithIcon } from '@/components/ui/button-with-icon';
 import { Card } from '@/components/ui/card';
@@ -46,8 +47,8 @@ export default function AdmissionProgress() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin" />
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
@@ -64,10 +65,8 @@ export default function AdmissionProgress() {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="container mx-auto py-8 px-4"
+    <div
+      className="container mx-auto px-3 sm:px-6 py-4 sm:py-8"
     >
       <div className="max-w-4xl mx-auto">
         {/* Mobile Progress Header */}
@@ -137,6 +136,6 @@ export default function AdmissionProgress() {
           </ButtonWithIcon>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

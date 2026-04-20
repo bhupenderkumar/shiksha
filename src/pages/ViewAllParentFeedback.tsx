@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PageHeader } from '@/components/ui/page-header';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { toast } from 'react-hot-toast';
 import {
   Search,
@@ -247,21 +249,20 @@ const ViewAllParentFeedback: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Parent Submitted Feedback</CardTitle>
-            <CardDescription>
-              View and manage feedback submitted by parents
-            </CardDescription>
-          </div>
-          <Button onClick={handleRefresh} variant="outline">
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
+      <PageHeader
+        title="Parent Submitted Feedback"
+        subtitle="View and manage feedback submitted by parents"
+        icon={MessageSquare}
+        action={
+          <Button onClick={handleRefresh} variant="outline" size="sm">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-        </CardHeader>
-        <CardContent>
+        }
+      />
+      <Card>
+        <CardContent className="pt-6">
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div>

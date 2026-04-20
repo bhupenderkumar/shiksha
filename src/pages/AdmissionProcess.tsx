@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { PageHeader } from '@/components/ui/page-header';
 import { toast } from "react-hot-toast";
 import {
   Card,
@@ -300,32 +301,38 @@ const AdmissionProcess = () => {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
   }
 
   if (!state.student || !state.admissionProgress) {
-    return <div>Student not found</div>;
+    return <div className="p-8 text-center">Student not found</div>;
   }
 
   const currentTimelineStep = state.timeline.find(step => step.current);
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="container mx-auto py-6 space-y-6"
+    <div
+      className="container mx-auto px-3 sm:px-6 py-4 sm:py-8"
     >
-      <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          Back
-        </Button>
-      </div>
+      <PageHeader
+        title="Admission Process"
+        subtitle={state.student?.studentName || ''}
+        icon={Calendar}
+        action={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(-1)}
+          >
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            Back
+          </Button>
+        }
+      />
 
       <div className="grid gap-6 md:grid-cols-12">
         <div className="md:col-span-8 space-y-6">
@@ -469,7 +476,7 @@ const AdmissionProcess = () => {
           </Card>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 

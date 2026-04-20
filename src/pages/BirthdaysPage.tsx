@@ -29,8 +29,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { PageHeader } from '@/components/ui/page-header';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { birthdayService, BirthdayStudent } from '@/services/birthdayService';
 import { SCHOOL_INFO } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
@@ -117,31 +117,19 @@ const BirthdaysPage: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <LoadingSpinner className="w-12 h-12 mx-auto" />
-          <p className="text-gray-500">Loading birthdays...</p>
-        </div>
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white py-8 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <Cake className="w-10 h-10" />
-            <h1 className="text-3xl sm:text-4xl font-bold">Birthday Celebrations</h1>
-            <PartyPopper className="w-10 h-10" />
-          </div>
-          <p className="text-center text-white/80">
-            Celebrate special days with our {SCHOOL_INFO.name} family! 🎉
-          </p>
-        </div>
-      </div>
-
-      <div className="max-w-6xl mx-auto px-4 py-8">
+    <div>
+      <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
+        <PageHeader
+          title="Birthday Celebrations"
+          subtitle={`Celebrate special days with our ${SCHOOL_INFO.name} family!`}
+          icon={Cake}
+        />
         {/* Stats Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           <Card className="bg-gradient-to-br from-yellow-100 to-orange-100 border-0">

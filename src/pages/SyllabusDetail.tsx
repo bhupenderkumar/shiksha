@@ -14,7 +14,7 @@ import {
   BookOpen, AlertTriangle, Trash2
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { PageAnimation } from '@/components/ui/page-animation';
+import { PageHeader } from '@/components/ui/page-header';
 import { syllabusService, type SyllabusType, type SyllabusItemType, type CreateSyllabusItemData } from '@/services/syllabusService';
 import { useAuth } from '@/lib/auth-provider';
 
@@ -133,18 +133,21 @@ export default function SyllabusDetail() {
   const completedCount = items.filter(i => i.progress?.status === 'completed').length;
   const progressPercent = items.length > 0 ? Math.round((completedCount / items.length) * 100) : 0;
 
-  if (loading) return <div className="flex justify-center p-8"><LoadingSpinner /></div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><LoadingSpinner size="lg" /></div>;
   if (!syllabus) return <div className="p-8 text-center">Syllabus not found.</div>;
 
   return (
-    <PageAnimation>
-      <div className="container mx-auto p-4 max-w-3xl">
-        {/* Header */}
-        <div className="flex items-center gap-2 mb-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/syllabus')}>
-            <ArrowLeft className="w-4 h-4 mr-1" /> Back
-          </Button>
-        </div>
+      <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
+        <PageHeader
+          title={syllabus.title}
+          subtitle={`${syllabus.class?.name} ${syllabus.class?.section} — ${syllabus.subject?.name} — ${syllabus.academicYear}`}
+          icon={BookOpen}
+          action={
+            <Button variant="outline" size="sm" onClick={() => navigate('/syllabus')}>
+              <ArrowLeft className="w-4 h-4 mr-1" /> Back
+            </Button>
+          }
+        />
 
         <Card className="mb-6">
           <CardHeader>
@@ -183,7 +186,7 @@ export default function SyllabusDetail() {
             <DialogTrigger asChild>
               <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Add Chapter</Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent aria-describedby={undefined}>
               <DialogHeader>
                 <DialogTitle>Add Chapter</DialogTitle>
               </DialogHeader>
@@ -293,6 +296,5 @@ export default function SyllabusDetail() {
           </div>
         )}
       </div>
-    </PageAnimation>
   );
 }

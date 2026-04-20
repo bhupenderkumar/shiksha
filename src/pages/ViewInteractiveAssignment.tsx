@@ -7,7 +7,8 @@ import { ROUTES } from "@/constants/app-constants";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
-import { ArrowLeft, Edit, Trash, Share2 } from "lucide-react";
+import { PageHeader } from '@/components/ui/page-header';
+import { ArrowLeft, Edit, Trash, Share2, Eye } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -110,8 +111,8 @@ export default function ViewInteractiveAssignment() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[400px]">
-        <LoadingSpinner />
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
@@ -133,33 +134,36 @@ export default function ViewInteractiveAssignment() {
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center">
-          <Button variant="ghost" onClick={() => navigate(ROUTES.INTERACTIVE_ASSIGNMENTS)} className="mr-4">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Assignments
-          </Button>
-          <h1 className="text-2xl font-bold">View Assignment</h1>
-        </div>
-        
-        {isAdminOrTeacher && (
-          <div className="flex space-x-2">
-            <Button variant="outline" onClick={handleShare}>
-              <Share2 className="h-4 w-4 mr-2" />
-              Share
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
+      <PageHeader
+        title="View Assignment"
+        subtitle={assignment?.title || ''}
+        icon={Eye}
+        action={
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.INTERACTIVE_ASSIGNMENTS)}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
             </Button>
-            <Button variant="outline" onClick={() => navigate(`${ROUTES.INTERACTIVE_ASSIGNMENT_EDIT.replace(':id', id!)}`)}>
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
-            <Button variant="outline" className="text-red-500 hover:text-red-700" onClick={() => setIsDeleteDialogOpen(true)}>
-              <Trash className="h-4 w-4 mr-2" />
-              Delete
-            </Button>
+            {isAdminOrTeacher && (
+              <>
+                <Button variant="outline" size="sm" onClick={handleShare}>
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Share
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => navigate(`${ROUTES.INTERACTIVE_ASSIGNMENT_EDIT.replace(':id', id!)}`)}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+                <Button variant="outline" size="sm" className="text-red-500 hover:text-red-700" onClick={() => setIsDeleteDialogOpen(true)}>
+                  <Trash className="h-4 w-4 mr-2" />
+                  Delete
+                </Button>
+              </>
+            )}
           </div>
-        )}
-      </div>
+        }
+      />
 
       {assignment && (
         <div className="space-y-6">

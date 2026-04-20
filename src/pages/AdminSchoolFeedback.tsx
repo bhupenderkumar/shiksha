@@ -19,6 +19,9 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { PageHeader } from '@/components/ui/page-header';
+
 import { cn } from '@/lib/utils';
 
 const AdminSchoolFeedback: React.FC = () => {
@@ -106,7 +109,12 @@ const AdminSchoolFeedback: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-4xl">
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
+      <PageHeader
+        title="Parent Feedback"
+        subtitle="Voice & text feedback from parents"
+        icon={MessageSquare}
+      />
       <audio ref={audioRef} onEnded={() => setPlayingId(null)} className="hidden" />
 
       <Card>

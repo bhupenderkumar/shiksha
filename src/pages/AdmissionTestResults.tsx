@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Input } from '@/components/ui/input';
+import { PageHeader } from '@/components/ui/page-header';
 import {
   Select,
   SelectContent,
@@ -138,25 +139,23 @@ const AdmissionTestResults = () => {
   }
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Admission Test Results</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {totalResults} total {totalResults === 1 ? 'result' : 'results'}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={fetchResults}>
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
-          <Button size="sm" onClick={() => navigate('/admission-test')}>
-            + New Test
-          </Button>
-        </div>
-      </div>
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-6">
+      <PageHeader
+        title="Admission Test Results"
+        subtitle={`${totalResults} total ${totalResults === 1 ? 'result' : 'results'}`}
+        icon={<GraduationCap className="text-primary-500" />}
+        action={
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="text-xs sm:text-sm" onClick={fetchResults}>
+              <RefreshCw className="w-4 h-4 mr-1" />
+              Refresh
+            </Button>
+            <Button size="sm" className="text-xs sm:text-sm" onClick={() => navigate('/admission-test')}>
+              + New Test
+            </Button>
+          </div>
+        }
+      />
 
       {/* Filters */}
       <Card>

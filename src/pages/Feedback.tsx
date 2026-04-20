@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
-import { MessageSquare, Send, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { MessageSquare, Send, AlertCircle, CheckCircle2, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import { EmptyState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/ui/page-header';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import {
     Dialog,
     DialogContent,
@@ -123,15 +125,21 @@ export default function Feedback() {
     };
 
     return (
-        <div className="container mx-auto p-4 space-y-4">
-            <h1 className="text-3xl font-bold mb-6 text-center text-foreground">Feedback System</h1>
+        <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-4">
+            <PageHeader
+                title="Feedback System"
+                subtitle="Share your thoughts and feedback"
+                icon={<MessageSquare className="text-primary-500" />}
+                action={
+                    <Button size="sm" className="text-xs sm:text-sm" onClick={() => setShowForm(true)}>
+                        <Plus className="w-4 h-4 mr-1 sm:mr-2" />
+                        Submit Feedback
+                    </Button>
+                }
+            />
 
-
-                <Dialog open={showForm} onOpenChange={setShowForm}>
-                    <DialogTrigger asChild>
-                        <Button>Submit New Feedback</Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[500px]">
+            <Dialog open={showForm} onOpenChange={setShowForm}>
+                    <DialogContent className="sm:max-w-[500px]" aria-describedby={undefined}>
                         <DialogHeader>
                             <DialogTitle>Submit New Feedback</DialogTitle>
                         </DialogHeader>
@@ -171,7 +179,7 @@ export default function Feedback() {
                             </DialogFooter>
                         </form>
                     </DialogContent>
-                </Dialog>
+            </Dialog>
 
 
             <div className="grid gap-4">
@@ -225,7 +233,7 @@ export default function Feedback() {
                                                 View Details
                                             </Button>
                                         </DialogTrigger>
-                                        <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+                                        <DialogContent className="sm:max-w-[600px]" aria-describedby={undefined}>
                                             <DialogHeader>
                                                 <DialogTitle>Feedback Details</DialogTitle>
                                             </DialogHeader>

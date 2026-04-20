@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'react-hot-toast';
 import { Search, RefreshCw, Loader2, MessageCircle, Calendar, User, School } from 'lucide-react';
+import { PageHeader } from '@/components/ui/page-header';
 import { format } from 'date-fns';
 
 const AdminFeedbackPage: React.FC = () => {
@@ -35,7 +36,12 @@ const AdminFeedbackPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
+      <PageHeader
+        title="Admin Feedback"
+        subtitle="Submit feedback on behalf of parents"
+        icon={MessageCircle}
+      />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Admin Feedback Form */}
         <div className="lg:col-span-2">

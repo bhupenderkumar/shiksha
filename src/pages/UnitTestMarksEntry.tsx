@@ -207,7 +207,11 @@ export default function UnitTestMarksEntry() {
     }
   };
 
-  if (profileLoading) return <LoadingSpinner />;
+  if (profileLoading) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <LoadingSpinner size="lg" />
+    </div>
+  );
 
   if (!isAdminOrTeacher) {
     return (
@@ -221,7 +225,7 @@ export default function UnitTestMarksEntry() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-6">
       <PageHeader
         title="Unit Test 4 - Marks Entry"
         description="Enter writing (max 15) and oral (max 5) marks for each student. Total: 20"

@@ -13,8 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Progress } from '@/components/ui/progress';
-import { PageAnimation } from '@/components/ui/page-animation';
-import { AnimatedText } from '@/components/ui/animated-text';
+import { PageHeader } from '@/components/ui/page-header';
 import { cn } from '@/lib/utils';
 import { getDashboardSummary, getStudentDashboardData } from '@/services/dashboardService';
 import { LineChart } from '@/components/ui/line-chart';
@@ -60,40 +59,31 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <PageAnimation>
-        <div className="flex items-center justify-center h-[60vh]">
-          <LoadingSpinner size="lg" />
-        </div>
-      </PageAnimation>
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
     );
   }
 
   return (
-    <PageAnimation>
-      <div className="flex flex-col gap-6 p-4 md:p-6 max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <AnimatedText 
-              text={`${getGreeting()}, ${profile?.full_name || 'User'}!`} 
-              className="text-2xl md:text-3xl font-bold" 
-            />
-            <p className="text-muted-foreground mt-1 flex items-center gap-2">
-              <Badge variant="outline" className="font-normal">{profile?.role || 'User'}</Badge>
-              <span>{isAdminOrTeacher ? 'School Overview' : 'My Dashboard'}</span>
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate('/notifications')}>
-              <Bell className="h-4 w-4 mr-1.5" />
-              Notifications
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate('/settings')}>
-              <Settings className="h-4 w-4 mr-1.5" />
-              Settings
-            </Button>
-          </div>
-        </div>
+      <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
+        <PageHeader
+          title={`${getGreeting()}, ${profile?.full_name || 'User'}!`}
+          subtitle={isAdminOrTeacher ? 'School Overview' : 'My Dashboard'}
+          icon={School}
+          action={
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => navigate('/notifications')}>
+                <Bell className="h-4 w-4 mr-1.5" />
+                Notifications
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate('/settings')}>
+                <Settings className="h-4 w-4 mr-1.5" />
+                Settings
+              </Button>
+            </div>
+          }
+        />
 
         {/* Role-specific content */}
         {isAdminOrTeacher ? (
@@ -105,7 +95,6 @@ export default function Dashboard() {
         {/* Calendar - shared */}
         <DashboardCalendar />
       </div>
-    </PageAnimation>
   );
 }
 

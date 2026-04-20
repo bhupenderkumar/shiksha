@@ -7,7 +7,8 @@ import { fileService, signedUrlCache } from '@/services/fileService';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import { format, isPast, isToday } from 'date-fns';
 import { LazyImage } from '@/components/ui/LazyImage';
 
@@ -226,7 +227,10 @@ export function HomeworkCard({ homework, attachments }: HomeworkCardProps) {
 
       {/* Image Preview Dialog */}
       <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
-        <DialogContent className="max-w-[95vw] sm:max-w-3xl p-1 sm:p-2">
+        <DialogContent className="max-w-[95vw] sm:max-w-3xl p-1 sm:p-2" aria-describedby={undefined}>
+          <VisuallyHidden.Root>
+            <DialogTitle>Image Preview</DialogTitle>
+          </VisuallyHidden.Root>
           {previewImage && (
             <img
               src={previewImage}

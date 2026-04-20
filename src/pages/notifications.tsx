@@ -25,9 +25,11 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { BellIcon } from 'lucide-react';
+import { BellIcon, Plus } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 import  MultiSelect  from '@/components/ui/multi-select';
+import { PageHeader } from '@/components/ui/page-header';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { UserProfile } from '@/services/profileService';
 
 const NotificationCard = ({ notification, onUpdate, onDelete }) => {
@@ -256,8 +258,12 @@ const NotificationsPage = () => {
 };
 
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">Notifications</h1>
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
+      <PageHeader
+        title="Notifications"
+        subtitle="View and manage notifications"
+        icon={<BellIcon className="text-primary-500" />}
+      />
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
         <TabsList>
           <TabsTrigger value="view" className={activeTab === 'view' ? 'font-bold' : ''}>View Notifications</TabsTrigger>

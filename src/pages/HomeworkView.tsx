@@ -4,6 +4,8 @@ import { HomeworkType, homeworkService } from '@/services/homeworkService';
 import { HomeworkForm } from '@/components/forms/homework-form';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Card } from '@/components/ui/card';
+import { PageHeader } from '@/components/ui/page-header';
+import { Book } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function HomeworkView() {
@@ -42,8 +44,8 @@ export default function HomeworkView() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8 flex justify-center">
-        <LoadingSpinner />
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
@@ -66,9 +68,13 @@ export default function HomeworkView() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
+      <PageHeader
+        title={homework.title}
+        subtitle="Homework details"
+        icon={<Book className="text-primary-500" />}
+      />
       <Card className="p-6">
-        <h1 className="text-2xl font-bold mb-6">{homework.title}</h1>
         <HomeworkForm
           initialData={homework}
           files={homework.attachments}

@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'react-hot-toast';
+import { PageHeader } from '@/components/ui/page-header';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import {
   Plus,
   Search,
@@ -16,7 +18,8 @@ import {
   FileDown,
   RefreshCw,
   AlertCircle,
-  Loader2
+  Loader2,
+  ClipboardList
 } from 'lucide-react';
 import {
   Table,
@@ -155,21 +158,20 @@ const ParentFeedbackList: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Parent Feedback Management</CardTitle>
-            <CardDescription>
-              Create, edit, and manage feedback for parents to view
-            </CardDescription>
-          </div>
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
+      <PageHeader
+        title="Parent Feedback Management"
+        subtitle="Create, edit, and manage feedback for parents to view"
+        icon={ClipboardList}
+        action={
           <Button onClick={() => navigate('/parent-feedback-form')}>
             <Plus className="h-4 w-4 mr-2" />
-            Create New Feedback
+            Create New
           </Button>
-        </CardHeader>
-        <CardContent>
+        }
+      />
+      <Card>
+        <CardContent className="pt-6">
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div>

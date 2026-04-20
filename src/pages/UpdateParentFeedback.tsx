@@ -8,9 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PageHeader } from '@/components/ui/page-header';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { toast } from 'react-hot-toast';
-import { 
-  ArrowLeft, 
+import {
+  ArrowLeft,
   Loader2, 
   Save,
   User,
@@ -99,19 +101,25 @@ const UpdateParentFeedback: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Button
-        variant="ghost"
-        className="mb-4"
-        onClick={() => navigate('/view-all-parent-feedback')}
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to All Feedback
-      </Button>
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
+      <PageHeader
+        title="Update Parent Feedback"
+        subtitle={feedback ? `Feedback from ${feedback.parent_name}` : 'Loading...'}
+        action={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/view-all-parent-feedback')}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+        }
+      />
 
       {loading ? (
         <div className="flex justify-center py-8">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <LoadingSpinner size="lg" />
         </div>
       ) : !feedback ? (
         <Card>
