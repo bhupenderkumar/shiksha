@@ -114,6 +114,7 @@ export const PUBLIC_ROUTES = [
   '/classwork/:id',
   '/admission-enquiry',
   '/id-card',
+  '/id-card/lookup',
   '/share/homework/:token',
   '/share/classwork/:token',
   '/birthday/:studentId',

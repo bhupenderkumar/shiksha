@@ -193,7 +193,7 @@ export default function SettingsPage() {
 
         .from('profiles')
 
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file, { upsert: false });
 
       if (uploadError) {
 

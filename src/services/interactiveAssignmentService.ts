@@ -135,10 +135,8 @@ export const interactiveAssignmentService = {
       }
 
       // Fallback: If decryption fails or assignment not found, try to find by token in database
-      console.log('Trying fallback method: searching by token in database');
-
-      // Use the supabase client directly instead of REST API to avoid schema issues
-      const { data: allAssignments, error: allError } = await supabase
+      // Query only by the specific token — never fetch all records
+      const { data: matchedAssignment, error: matchError } = await supabase
         .schema(SCHEMA)
         .from(INTERACTIVE_ASSIGNMENT_TABLE)
         .select(`
@@ -153,48 +151,16 @@ export const interactiveAssignmentService = {
             name,
             code
           )
-        `);
+        `)
+        .eq('shareableLink', token)
+        .single();
 
-      if (allError) {
-        console.error('Error fetching all assignments:', allError);
+      if (matchError || !matchedAssignment) {
+        console.error('Assignment not found for token');
         return null;
       }
 
-      if (!allAssignments || allAssignments.length === 0) {
-        console.log('No assignments found in the database');
-        return null;
-      }
-
-      console.log(`Found ${allAssignments.length} assignments in the database`);
-
-      // Try to find an exact match first
-      let foundAssignment = allAssignments.find(a =>
-        a.shareableLink === token
-      );
-
-      if (foundAssignment) {
-        console.log('Found assignment with exact shareableLink match:', foundAssignment);
-      } else {
-        // Try to find a partial match - only match the base64 part before the hyphen
-        const baseToken = token.split('-')[0];
-        console.log('Trying to match with base token part:', baseToken);
-
-        foundAssignment = allAssignments.find(a =>
-          a.shareableLink && (
-            a.shareableLink.includes(token) ||
-            (baseToken && a.shareableLink.includes(baseToken))
-          )
-        );
-
-        if (foundAssignment) {
-          console.log('Found assignment with partial shareableLink match:', foundAssignment);
-        }
-      }
-
-      if (!foundAssignment) {
-        console.error('Assignment not found with any query method');
-        return null;
-      }
+      const foundAssignment = matchedAssignment;
 
       // Check if link has expired based on database expiration date
       if (foundAssignment.shareableLinkExpiresAt && new Date(foundAssignment.shareableLinkExpiresAt) < new Date()) {
@@ -274,7 +240,8 @@ export const interactiveAssignmentService = {
       }
 
       if (filters?.searchTerm) {
-        query = query.or(`title.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`);
+        const sanitized = filters.searchTerm.replace(/[%,().]/g, '');
+        query = query.or(`title.ilike.%${sanitized}%,description.ilike.%${sanitized}%`);
       }
 
       const { data, error } = await query.order('createdAt', { ascending: false });

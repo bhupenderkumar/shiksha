@@ -5,6 +5,24 @@ import { v4 as uuidv4 } from 'uuid';
 const SCHOOL_FEEDBACK_TABLE = 'SchoolFeedback';
 const STORAGE_BUCKET = 'File';
 
+// Client-side rate limiting for public feedback submissions
+const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
+const MAX_SUBMISSIONS_PER_WINDOW = 3;
+const submissionTimestamps: number[] = [];
+
+function checkRateLimit(): boolean {
+  const now = Date.now();
+  // Remove expired timestamps
+  while (submissionTimestamps.length > 0 && submissionTimestamps[0] < now - RATE_LIMIT_WINDOW_MS) {
+    submissionTimestamps.shift();
+  }
+  return submissionTimestamps.length < MAX_SUBMISSIONS_PER_WINDOW;
+}
+
+function recordSubmission(): void {
+  submissionTimestamps.push(Date.now());
+}
+
 // Helper to get typed query builder (table not yet in generated types)
 const fromTable = () =>
   (supabase.schema(SCHEMA) as any).from(SCHOOL_FEEDBACK_TABLE);
@@ -60,6 +78,11 @@ export const schoolFeedbackService = {
    * Submit school feedback (public - no auth needed)
    */
   async submitFeedback(formData: SchoolFeedbackFormData): Promise<SchoolFeedback> {
+    // Rate limit check
+    if (!checkRateLimit()) {
+      throw new Error('Too many submissions. Please try again after a few minutes.');
+    }
+
     let voice_url: string | null = null;
 
     // Upload voice if provided
@@ -91,6 +114,7 @@ export const schoolFeedbackService = {
       throw new Error('फीडबैक जमा नहीं हो सका / Feedback submission failed');
     }
 
+    recordSubmission();
     return data as SchoolFeedback;
   },
 

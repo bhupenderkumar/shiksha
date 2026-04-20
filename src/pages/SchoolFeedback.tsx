@@ -90,9 +90,9 @@ const SchoolFeedback: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       {/* Header */}
-      <div className="bg-blue-600 text-white px-4 py-5 text-center">
+      <div className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-4 py-6 text-center">
         <h1 className="text-xl font-bold">{SCHOOL_INFO?.name || 'School'}</h1>
-        <p className="text-blue-100 text-sm mt-1">
+        <p className="text-violet-100 text-sm mt-1">
           अपनी राय दें / Share Your Feedback
         </p>
       </div>
@@ -209,8 +209,8 @@ const SchoolFeedback: React.FC = () => {
           className={cn(
             'w-full py-5 rounded-2xl text-white text-xl font-bold flex items-center justify-center gap-3 active:scale-95 transition-all shadow-lg',
             submitting || (!rating && !message.trim() && !voiceBlob)
-              ? 'bg-gray-300 cursor-not-allowed'
-              : 'bg-blue-600 hover:bg-blue-700'
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 shadow-violet-200'
           )}
         >
           {submitting ? (

@@ -13,6 +13,9 @@ export default defineConfig(({ mode }) => {
       __APP_VERSION__: JSON.stringify(pkg.version),
       __BUILD_TIMESTAMP__: JSON.stringify(new Date().toISOString()),
     },
+    esbuild: {
+      drop: mode === 'production' ? ['console', 'debugger'] : [],
+    },
   plugins: [
     react(),
     VitePWA({
@@ -94,11 +97,26 @@ export default defineConfig(({ mode }) => {
                 maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
               }
             }
+          },
+          {
+            urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'supabase-api-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 // 1 hour
+              },
+              networkTimeoutSeconds: 5,
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
           }
         ]
       },
       devOptions: {
-        enabled: true // Enable PWA in development mode
+        enabled: false // Disable PWA in dev to avoid stale cache issues
       }
     })
   ],

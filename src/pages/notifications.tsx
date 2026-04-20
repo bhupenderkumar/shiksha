@@ -3,6 +3,7 @@ import { notificationService, Notification } from '@/services/notificationServic
 import { isAdminOrTeacher, profileService } from '@/services/profileService';
 import { useProfileAccess } from '@/services/profileService';
 import { useAuth } from '@/lib/auth';
+import { clearNotificationBadge } from '@/hooks/use-notifications';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -115,12 +116,25 @@ const NotificationsPage = () => {
 
   useEffect(() => {
     const fetchNotifications = async () => {
-      if (classId) {
-        const fetchedNotifications = await notificationService.getNotificationsByClassId(classId);
+      try {
+        setLoading(true);
+        let fetchedNotifications: Notification[];
+        if (classId) {
+          fetchedNotifications = await notificationService.getNotificationsByClassId(classId);
+        } else {
+          fetchedNotifications = await notificationService.getNotifications();
+        }
         setNotifications(fetchedNotifications);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+        toast.error('Failed to load notifications');
+      } finally {
+        setLoading(false);
       }
     };
     fetchNotifications();
+    // Clear app badge when viewing notifications
+    clearNotificationBadge();
   }, [classId]);
 
   useEffect(() => {
@@ -156,7 +170,7 @@ const NotificationsPage = () => {
     );
 
     if (createdNotifications) {
-      toast.success('Notifications created successfully!');
+      toast.success('Notifications sent! Recipients will receive push alerts.');
       setNewNotification({
         title: '',
         message: '',
@@ -252,18 +266,26 @@ const NotificationsPage = () => {
           )}
         </TabsList>
         <TabsContent value="view">
-          {notifications.length > 0 ? (
-            notifications.map(notification => (
-              <NotificationCard key={notification.id} notification={notification} />
-            ))
+          {loading ? (
+            <div className="space-y-4">
+              <NotificationSkeleton />
+              <NotificationSkeleton />
+              <NotificationSkeleton />
+            </div>
+          ) : notifications.length > 0 ? (
+            <div className="space-y-4">
+              {notifications.map(notification => (
+                <NotificationCard key={notification.id} notification={notification} onUpdate={handleUpdate} onDelete={handleDeleteClick} />
+              ))}
+            </div>
           ) : (
             <EmptyState message="No notifications available" />
           )}
         </TabsContent>
         {isAdminOrTeacher && (
           <TabsContent value="create">
-            <div>
-              <h2>Create Notification</h2>
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold">Create Notification</h2>
               <Input
                 value={newNotification.title}
                 onChange={(e) => setNewNotification({ ...newNotification, title: e.target.value })}
@@ -290,6 +312,45 @@ const NotificationsPage = () => {
                   <SelectItem value="EMERGENCY">Emergency</SelectItem>
                 </SelectContent>
               </Select>
+              <Select
+                value={newNotification.classId || 'all'}
+                onValueChange={(value) => {
+                  const classId = value === 'all' ? '' : value;
+                  setNewNotification({ ...newNotification, classId });
+                  if (classId) {
+                    const classStudents = students.filter((s: any) => s.classId === classId);
+                    setSelectedStudents(classStudents.map((s: any) => s.id));
+                  } else {
+                    setSelectedStudents([]);
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Filter by Class" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Classes</SelectItem>
+                  {classes.map((cls: any) => (
+                    <SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <MultiSelect
+                options={
+                  (newNotification.classId
+                    ? students.filter((s: any) => s.classId === newNotification.classId)
+                    : students
+                  ).map((s: any) => ({ value: s.id, label: s.name }))
+                }
+                selectedValues={selectedStudents}
+                onChange={setSelectedStudents}
+                placeholder="Select Students"
+              />
+              {selectedStudents.length > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  {selectedStudents.length} student{selectedStudents.length !== 1 ? 's' : ''} selected
+                </p>
+              )}
               <Button onClick={handleCreate}>Create Notification</Button>
             </div>
           </TabsContent>

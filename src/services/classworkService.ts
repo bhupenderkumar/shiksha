@@ -141,7 +141,7 @@ export const classworkService = {
         const filePromises = attachments.map(async (attachment) => {
           if (attachment.id) return attachment; // Skip if it's an existing file
           
-          return await fileTableService.createFileRecord({
+          return await fileTableService.createFile({
             fileName: attachment.fileName,
             filePath: attachment.filePath,
             fileType: attachment.fileType,

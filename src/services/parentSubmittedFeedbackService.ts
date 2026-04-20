@@ -579,40 +579,8 @@ export const parentSubmittedFeedbackService = {
     admin_feedback: string;
   }): Promise<ParentSubmittedFeedback | null> {
     try {
-      console.log('Creating admin feedback:', data);
-
       const now = new Date().toISOString();
 
-      // For now, create a mock feedback entry
-      // This is a temporary solution until we can properly interact with the database
-      const mockFeedback: ParentSubmittedFeedback = {
-        id: uuidv4(),
-        class_id: data.class_id,
-        student_name: data.student_name,
-        parent_name: 'School Administration',
-        parent_relation: 'School',
-        month: data.month,
-        feedback: 'Feedback provided by school administration',
-        progress_feedback: 'Feedback from school',
-        admin_feedback: data.admin_feedback,
-        admin_feedback_date: now,
-        created_at: now,
-        updated_at: now,
-        status: 'RESPONDED',
-        className: 'Class ' + Math.floor(Math.random() * 10 + 1), // Random class name
-        classSection: String.fromCharCode(65 + Math.floor(Math.random() * 3)) // Random section A, B, or C
-      };
-
-      console.log('Created mock admin feedback:', mockFeedback);
-
-      // Show a success message
-      setTimeout(() => {
-        console.log('Admin feedback successfully saved (simulated)');
-      }, 1000);
-
-      return mockFeedback;
-
-      /* Original implementation - commented out due to SQL issues
       // Get the correct class ID
       const correctClassId = await this.getCorrectClassId(data.class_id);
 
@@ -638,16 +606,16 @@ export const parentSubmittedFeedbackService = {
         id: uuidv4(),
         class_id: correctClassId,
         student_name: data.student_name,
-        parent_name: 'School Administration', // Default parent name
-        parent_relation: 'School', // Default relation
+        parent_name: 'School Administration',
+        parent_relation: 'School',
         month: data.month,
-        feedback: 'Feedback provided by school administration', // Default feedback
-        progress_feedback: 'Feedback from school', // Default progress feedback
+        feedback: 'Feedback provided by school administration',
+        progress_feedback: 'Feedback from school',
         admin_feedback: data.admin_feedback,
         admin_feedback_date: now,
         created_at: now,
         updated_at: now,
-        status: 'RESPONDED' // Set status to RESPONDED
+        status: 'RESPONDED'
       };
 
       // Insert new feedback
@@ -670,11 +638,9 @@ export const parentSubmittedFeedbackService = {
       }
 
       if (!insertResult || insertResult.length === 0) {
-        console.error('No result returned from Supabase');
         return null;
       }
 
-      // Format the result to include className and classSection
       const formattedResult = {
         ...insertResult[0],
         className: insertResult[0].Class?.name || '',
@@ -682,7 +648,6 @@ export const parentSubmittedFeedbackService = {
       };
 
       return formattedResult as ParentSubmittedFeedback;
-      */
     } catch (error) {
       console.error('Error creating admin feedback:', error);
       return null;
@@ -696,35 +661,13 @@ export const parentSubmittedFeedbackService = {
    */
   async getStudentsByClassId(class_id: string): Promise<{ data: string[] | null; error: Error | null }> {
     try {
-      console.log(`Getting students for class ID: ${class_id}`);
-
       // Get the correct class ID
       const correctClassId = await this.getCorrectClassId(class_id);
 
       if (!correctClassId) {
-        console.error('Could not find a valid class ID');
         return { data: null, error: new Error('Invalid class ID') };
       }
 
-      // For now, return a list of sample student names
-      // This is a temporary solution until we can properly query the Student table
-      const sampleStudents = [
-        'Aarav Sharma',
-        'Aditi Patel',
-        'Arjun Singh',
-        'Diya Gupta',
-        'Ishaan Verma',
-        'Kavya Reddy',
-        'Rohan Mehta',
-        'Saanvi Kumar',
-        'Vihaan Joshi',
-        'Zara Khan'
-      ];
-
-      console.log('Returning sample student names');
-      return { data: sampleStudents, error: null };
-
-      /* Original implementation - commented out due to SQL issues
       // Query the Student table to get students in this class
       const { data, error } = await supabase
         .schema(SCHEMA)
@@ -737,11 +680,8 @@ export const parentSubmittedFeedbackService = {
         return { data: null, error: new Error(error.message) };
       }
 
-      // Extract student names
       const studentNames = data.map((student: any) => student.name);
-
       return { data: studentNames, error: null };
-      */
     } catch (error) {
       console.error('Error getting students by class ID:', error);
       return { data: null, error: error as Error };
@@ -754,55 +694,6 @@ export const parentSubmittedFeedbackService = {
    */
   async getRecentAdminFeedback(): Promise<ParentSubmittedFeedback[]> {
     try {
-      console.log('Getting recent admin feedback');
-
-      // For now, return a sample of admin feedback
-      // This is a temporary solution until we can properly query the database
-      const now = new Date().toISOString();
-      const yesterday = new Date(Date.now() - 86400000).toISOString();
-
-      const sampleFeedback: ParentSubmittedFeedback[] = [
-        {
-          id: '1',
-          class_id: 'class-1',
-          student_name: 'Aarav Sharma',
-          parent_name: 'School Administration',
-          parent_relation: 'School',
-          month: 'May',
-          feedback: 'Feedback provided by school administration',
-          progress_feedback: 'Feedback from school',
-          admin_feedback: 'Aarav has shown excellent progress in mathematics this month. His problem-solving skills have improved significantly.',
-          admin_feedback_date: now,
-          created_at: yesterday,
-          updated_at: now,
-          status: 'RESPONDED',
-          className: 'Class 5',
-          classSection: 'A'
-        },
-        {
-          id: '2',
-          class_id: 'class-2',
-          student_name: 'Diya Gupta',
-          parent_name: 'School Administration',
-          parent_relation: 'School',
-          month: 'May',
-          feedback: 'Feedback provided by school administration',
-          progress_feedback: 'Feedback from school',
-          admin_feedback: 'Diya has been very active in class discussions and has shown great interest in science projects.',
-          admin_feedback_date: now,
-          created_at: yesterday,
-          updated_at: now,
-          status: 'RESPONDED',
-          className: 'Class 4',
-          classSection: 'B'
-        }
-      ];
-
-      console.log('Returning sample admin feedback');
-      return sampleFeedback;
-
-      /* Original implementation - commented out due to SQL issues
-      // Query feedback with admin_feedback
       const { data, error } = await supabase
         .schema(SCHEMA)
         .from(PARENT_SUBMITTED_FEEDBACK_TABLE)
@@ -827,7 +718,6 @@ export const parentSubmittedFeedbackService = {
         return [];
       }
 
-      // Format the results to include className and classSection
       const formattedResults = data.map(item => ({
         ...item,
         className: item.Class?.name || '',
@@ -835,7 +725,6 @@ export const parentSubmittedFeedbackService = {
       }));
 
       return formattedResults as ParentSubmittedFeedback[];
-      */
     } catch (error) {
       console.error('Error getting recent admin feedback:', error);
       return [];

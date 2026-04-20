@@ -12,7 +12,6 @@ const ERROR_MESSAGES = {
 
 import { supabase, supabaseAdmin } from '@/lib/api-client';
 import { STUDENT_TABLE, SCHEMA } from '../lib/constants';
-import { generateSupabaseRestUrl, generateSupabaseRestHeaders } from '../lib/supabase-helpers';
 
 export interface StudentCredentials {
   email: string;
@@ -245,13 +244,13 @@ class StudentService {
         .from(STUDENT_TABLE)
         .select(`*, class:Class (id, name, section)`)
         .eq('parentEmail', email)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;
     } catch (error) {
       console.error('Error fetching student by email:', error);
-      throw error;
+      return null;
     }
   }
 
@@ -261,162 +260,15 @@ class StudentService {
 
   async getStudentsByClass(classId: string) {
     try {
-      console.log(`Fetching students for class ID: ${classId}`);
-      console.log('SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL ? 'Set' : 'Not set');
-      console.log('SUPABASE_ANON_KEY:', import.meta.env.VITE_SUPABASE_ANON_KEY ? 'Set' : 'Not set');
+      const { data, error } = await supabase
+        .schema(SCHEMA)
+        .from(STUDENT_TABLE)
+        .select('id, name, admissionNumber, classId')
+        .eq('classId', classId)
+        .order('name');
 
-      // Method 1: Direct SQL query via Supabase RPC
-      try {
-        console.log('Method 1: Using direct SQL query via RPC');
-
-        // Escape single quotes in the classId to prevent SQL injection
-        const safeClassId = classId.replace(/'/g, "''");
-
-        // Create a SQL query that handles case-sensitive column names
-        const query = `
-          SELECT
-            id,
-            name,
-            "admissionNumber",
-            "classId"
-          FROM
-            school."Student"
-          WHERE
-            "classId" = '${safeClassId}'
-          ORDER BY
-            name
-        `;
-
-        // Execute the query using Supabase's RPC function
-        const { data: rpcData, error: rpcError } = await supabase.rpc('execute_sql', { sql: query });
-
-        if (rpcError) {
-          console.error('Error with RPC query:', rpcError);
-        } else if (rpcData && rpcData.length > 0) {
-          console.log(`Found ${rpcData.length} students using RPC query`);
-          return rpcData;
-        }
-      } catch (rpcError) {
-        console.error('Exception with RPC query:', rpcError);
-      }
-
-      // Method 2: Using REST API with proper headers and URL structure
-      try {
-        console.log('Method 2: Using REST API with proper headers');
-
-        // Build the URL manually to ensure proper encoding of column names
-        const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const apiPath = '/rest/v1/Student';
-        const queryParams = new URLSearchParams({
-          'select': 'id,name,admissionNumber,classId',
-          'classId': `eq.${classId}`,
-          'order': 'name.asc'
-        });
-
-        const url = `${baseUrl}${apiPath}?${queryParams.toString()}`;
-
-        // Create headers with Accept-Profile for schema
-        const headers = {
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-          'Accept-Profile': SCHEMA
-        };
-
-        console.log('Fetching with URL:', url);
-
-        const response = await fetch(url, {
-          method: 'GET',
-          headers
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          console.log(`Found ${data.length} students using REST API`);
-
-          if (data && data.length > 0) {
-            return data;
-          }
-        } else {
-          const errorText = await response.text();
-          console.error('Error with REST API:', response.status, errorText);
-        }
-      } catch (restError) {
-        console.error('Exception with REST API:', restError);
-      }
-
-      // Method 3: Using Supabase client with explicit schema
-      try {
-        console.log('Method 3: Using Supabase client with explicit schema');
-
-        // Use the Supabase client with explicit schema
-        const { data, error } = await supabase
-          .schema(SCHEMA)
-          .from(STUDENT_TABLE)
-          .select('id, name, admissionNumber, classId')
-          .eq('classId', classId)
-          .order('name');
-
-        if (error) {
-          console.error('Error with Supabase client:', error);
-        } else if (data && data.length > 0) {
-          console.log(`Found ${data.length} students using Supabase client`);
-          return data;
-        }
-      } catch (clientError) {
-        console.error('Exception with Supabase client:', clientError);
-      }
-
-      // Method 4: Fallback to direct database query
-      try {
-        console.log('Method 4: Fallback to direct database query');
-
-        // Execute a direct database query
-        const { data, error } = await supabase.schema(SCHEMA as any).from(STUDENT_TABLE).select('*').eq('classId', classId);
-
-        if (error) {
-          console.error('Error with direct query:', error);
-        } else if (data && data.length > 0) {
-          console.log(`Found ${data.length} students using direct query`);
-          return data;
-        }
-      } catch (directError) {
-        console.error('Exception with direct query:', directError);
-      }
-
-      // If all methods fail, query the database directly to check if the class exists
-      try {
-        console.log('Checking if class exists');
-
-        const { data: classData, error: classError } = await supabase
-          .schema(SCHEMA)
-          .from(CLASS_TABLE)
-          .select('id, name')
-          .eq('id', classId)
-          .single();
-
-        if (classError) {
-          console.error('Error checking class:', classError);
-        } else if (classData) {
-          console.log(`Class exists: ${classData.name} (${classData.id}), but no students found`);
-        }
-      } catch (classCheckError) {
-        console.error('Exception checking class:', classCheckError);
-      }
-
-      // If all else fails, return hardcoded data for testing
-      console.log('Returning hardcoded data for testing');
-
-      const mockData = [
-        { id: 'STU001', name: 'Test Student 1', classId: classId, admissionNumber: 'ADM001' },
-        { id: 'STU002', name: 'Test Student 2', classId: classId, admissionNumber: 'ADM002' },
-        { id: 'STU003', name: 'Test Student 3', classId: classId, admissionNumber: 'ADM003' },
-        { id: 'STU004', name: 'Test Student 4', classId: classId, admissionNumber: 'ADM004' },
-        { id: 'STU005', name: 'Test Student 5', classId: classId, admissionNumber: 'ADM005' }
-      ];
-
-      console.log('Mock data:', mockData);
-      return mockData;
+      if (error) throw error;
+      return data || [];
     } catch (error) {
       console.error('Error fetching students by class:', error);
       throw error;

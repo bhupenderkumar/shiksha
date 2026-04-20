@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/api-client';
+import { SCHEMA } from '@/lib/constants';
 
 // Assuming Student type is already defined in '@/types/supabase'
 import { Student } from '@/types/supabase';
@@ -13,8 +14,9 @@ export const useAllStudents = () => {
     const fetchStudents = async () => {
       try {
         const { data, error } = await supabase
-          .from('students')
-          .select('*')
+          .schema(SCHEMA)
+          .from('Student')
+          .select('id, name, admissionNumber, classId, dateOfBirth, gender')
           .order('name', { ascending: true });
 
         if (error) {

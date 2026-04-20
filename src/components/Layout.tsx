@@ -27,6 +27,7 @@ import {
   Mic,
   Brain,
   BookMarked,
+  Clock,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { useAuth } from '@/lib/auth-provider';
@@ -37,11 +38,24 @@ import { useProfileAccess } from '@/services/profileService';
 import { NoInternet } from './NoInternet';
 import { NetworkProvider } from '@/contexts/NetworkContext';
 import { InstallPWAButton } from "./ui/install-pwa-button";
+import { BottomNav } from './layout/BottomNav';
+import { useNotificationListener } from '@/hooks/use-notifications';
+import { NotificationPermissionBanner } from './pwa/NotificationPermission';
+import { notificationService } from '@/services/notificationService';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Listen for realtime notifications and show browser notifications
+  useNotificationListener();
+
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    notificationService.getUnreadCount().then(setUnreadCount);
+  }, [location.pathname]);
   const { user, signOut } = useAuth();
   const { profile } = useProfileAccess();
 
@@ -55,51 +69,66 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   }, []);
 
   const menuItems = [
+    // Main
     { id: 1, icon: Home, label: 'Dashboard', path: ROUTES.DASHBOARD },
     { id: 20, icon: LayoutDashboard, label: 'Student Dashboard', path: '/student-dashboard', role: 'student' },
-    { id: 9, icon: Bell, label: 'Notifications', path: '/notifications' },
+    { id: 9, icon: Bell, label: 'Notifications', path: ROUTES.NOTIFICATIONS },
+
+    // Academics
+    { id: 'section-academics', label: 'Academics', isSection: true },
     { id: 2, icon: Users, label: 'Students', path: ROUTES.STUDENTS, role: 'teacher' },
     { id: 21, icon: GraduationCap, label: 'Subjects', path: '/subjects', role: 'teacher' },
     { id: 3, icon: BookOpen, label: 'Homework', path: ROUTES.HOMEWORK },
     { id: 4, icon: BookOpen, label: 'Classwork', path: ROUTES.CLASSWORK },
+    { id: 32, icon: BookOpen, label: 'Class Workbook', path: ROUTES.CLASS_WORKBOOK },
+    { id: 13, icon: Puzzle, label: 'Interactive Tasks', path: ROUTES.INTERACTIVE_ASSIGNMENTS },
+    { id: 5, icon: Calendar, label: 'Attendance', path: ROUTES.ATTENDANCE },
+    { id: 33, icon: Clock, label: 'Timetable', path: ROUTES.TIMETABLE },
+    { id: 37, icon: FileText, label: 'Date Sheet', path: '/date-sheet' },
+
+    // Teaching Tools
+    { id: 'section-teaching', label: 'Teaching Tools', isSection: true, role: 'teacher' },
     { id: 30, icon: Brain, label: 'AI Planner', path: ROUTES.NEXT_DAY_PLAN, role: 'teacher' },
     { id: 31, icon: BookMarked, label: 'Syllabus', path: ROUTES.SYLLABUS, role: 'teacher' },
-    { id: 33, icon: Calendar, label: 'Timetable', path: ROUTES.TIMETABLE, role: 'teacher' },
-    { id: 32, icon: BookOpen, label: 'Class Workbook', path: ROUTES.CLASS_WORKBOOK },
-    { id: 13, icon: Puzzle, label: 'Interactive Assignments', path: ROUTES.INTERACTIVE_ASSIGNMENTS, role: 'teacher' },
-    { id: 5, icon: Calendar, label: 'Attendance', path: ROUTES.ATTENDANCE },
-    { id: 6, icon: CreditCard, label: 'Fees', path: ROUTES.FEES, role: 'teacher' },
-    { id: 7, icon: MessageSquare, label: 'Feedback', path: ROUTES.FEEDBACK, role: 'teacher' },
+    { id: 38, icon: FileText, label: 'Copy Request', path: ROUTES.COPY_REQUEST, role: 'teacher' },
 
-    // Year End Feedback Section
+    // Admissions
+    { id: 'section-admissions', label: 'Admissions', isSection: true, role: 'teacher' },
+    { id: 29, icon: ClipboardList, label: 'New Enquiry', path: ROUTES.ADMISSION_ENQUIRY, role: 'teacher' },
+    { id: 34, icon: ClipboardList, label: 'All Queries', path: ROUTES.ADMISSION_QUERIES, role: 'teacher' },
+    { id: 35, icon: GraduationCap, label: 'Admission Test', path: ROUTES.ADMISSION_TEST, role: 'teacher' },
+    { id: 36, icon: GraduationCap, label: 'Test Results', path: ROUTES.ADMISSION_TEST_RESULTS, role: 'teacher' },
+    { id: 24, icon: ClipboardList, label: 'All Enquiries', path: ROUTES.ADMISSION_ENQUIRIES, role: 'admin' },
+
+    // Finance
+    { id: 'section-finance', label: 'Finance', isSection: true, role: 'teacher' },
+    { id: 6, icon: CreditCard, label: 'Fees', path: ROUTES.FEES, role: 'teacher' },
+
+    // Assessment
+    { id: 'section-assessment', label: 'Assessment', isSection: true, role: 'teacher' },
+    { id: 26, icon: FileText, label: 'Marks Entry', path: ROUTES.UNIT_TEST_MARKS, role: 'teacher' },
+    { id: 27, icon: ClipboardList, label: 'Test Report', path: ROUTES.UNIT_TEST_REPORT, role: 'teacher' },
+
+    // Feedback
+    { id: 'section-feedback', label: 'Feedback', isSection: true, role: 'teacher' },
+    { id: 7, icon: MessageSquare, label: 'Teacher Feedback', path: ROUTES.FEEDBACK, role: 'teacher' },
     { id: 22, icon: Star, label: 'Year End Feedback', path: '/year-end-feedback', role: 'teacher' },
     { id: 23, icon: Star, label: 'View Year End Feedback', path: '/view-year-end-feedback', role: 'admin' },
-
-    // Admission Section
-    { id: 29, icon: ClipboardList, label: 'New Admission Query', path: ROUTES.ADMISSION_ENQUIRY, role: 'teacher' },
-    { id: 31, icon: ClipboardList, label: 'All Admission Queries', path: ROUTES.ADMISSION_QUERIES, role: 'teacher' },
-    { id: 30, icon: GraduationCap, label: 'Admission Test', path: ROUTES.ADMISSION_TEST, role: 'teacher' },
-    { id: 32, icon: GraduationCap, label: 'Test Results', path: ROUTES.ADMISSION_TEST_RESULTS, role: 'teacher' },
-    { id: 24, icon: ClipboardList, label: 'Admission Enquiries', path: ROUTES.ADMISSION_ENQUIRIES, role: 'admin' },
-
-    // Parent Feedback Section
     { id: 14, icon: FileText, label: 'Create Parent Feedback', path: ROUTES.PARENT_FEEDBACK_LIST, role: 'admin' },
-    { id: 15, icon: MessageCircle, label: 'Parent Submitted Feedback', path: '/parent-submitted-feedback-list', role: 'admin' },
-    { id: 28, icon: Mic, label: 'School Feedback (Voice)', path: ROUTES.ADMIN_SCHOOL_FEEDBACK, role: 'admin' },
-    { id: 16, icon: ListChecks, label: 'View All Parent Feedback', path: ROUTES.VIEW_ALL_PARENT_FEEDBACK, role: 'admin' },
-    { id: 17, icon: MessageSquare, label: 'Parent Feedback Search', path: ROUTES.PARENT_FEEDBACK_SEARCH },
-    { id: 18, icon: MessageCircle, label: 'Submit Admin Feedback', path: ROUTES.ADMIN_FEEDBACK, role: 'admin' },
+    { id: 15, icon: MessageCircle, label: 'Submitted Feedback', path: '/parent-submitted-feedback-list', role: 'admin' },
+    { id: 28, icon: Mic, label: 'Voice Feedback', path: ROUTES.ADMIN_SCHOOL_FEEDBACK, role: 'admin' },
+    { id: 16, icon: ListChecks, label: 'All Parent Feedback', path: ROUTES.VIEW_ALL_PARENT_FEEDBACK, role: 'admin' },
+    { id: 17, icon: MessageSquare, label: 'Search Feedback', path: ROUTES.PARENT_FEEDBACK_SEARCH, role: 'teacher' },
+    { id: 18, icon: MessageCircle, label: 'Admin Feedback', path: ROUTES.ADMIN_FEEDBACK, role: 'admin' },
 
+    // Account
+    { id: 'section-account', label: 'Account', isSection: true },
     { id: 8, icon: Settings, label: 'Settings', path: ROUTES.SETTINGS },
     { id: 10, icon: Users, label: 'Profile', path: '/profile' },
     { id: 11, icon: IdCard, label: 'ID Card', path: '/id-card' },
     { id: 12, icon: IdCard, label: 'ID Card Details', path: '/idcarddetails', role: 'admin' },
-    { id: 19, icon: IdCard, label: 'View All ID Cards', path: '/id-cards', role: 'admin' },
+    { id: 19, icon: IdCard, label: 'All ID Cards', path: '/id-cards', role: 'admin' },
     { id: 25, icon: Cake, label: 'Birthdays', path: '/birthdays' },
-
-    // Unit Test Section
-    { id: 26, icon: FileText, label: 'UT4 Marks Entry', path: ROUTES.UNIT_TEST_MARKS, role: 'admin' },
-    { id: 27, icon: ClipboardList, label: 'UT4 Report & Requests', path: ROUTES.UNIT_TEST_REPORT, role: 'admin' },
   ];
 
   const handleSignOut = async () => {
@@ -146,7 +175,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </motion.div>
                 <AnimatedText
                   text="First Step Public School"
-                  className="text-xl font-bold text-foreground"
+                  className="text-xl font-bold text-foreground hidden sm:block"
+                  variant="slideUp"
+                />
+                <AnimatedText
+                  text="First Step"
+                  className="text-lg font-bold text-foreground sm:hidden"
                   variant="slideUp"
                 />
               </Link>
@@ -165,7 +199,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 onClick={() => navigate('/notifications')}
               >
                 <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white px-1">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
               </Button>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
@@ -210,19 +248,40 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               isSidebarOpen ? "translate-x-0" : "-translate-x-full"
             )}
           >
-            <nav className="h-full p-4 space-y-2 overflow-y-auto">
-              {menuItems.filter(item => {
+            <nav className="h-full p-4 space-y-1 overflow-y-auto">
+              {(() => {
                 const userRole = profile?.role?.toUpperCase();
-                // No role restriction — visible to all
-                if (!item.role) return true;
-                // Admin sees everything
-                if (userRole === 'ADMIN') return true;
-                // Teacher sees teacher + student items
-                if (userRole === 'TEACHER') return item.role === 'teacher' || item.role === 'student';
-                // Student sees only student items
-                if (userRole === 'STUDENT') return item.role === 'student';
-                return false;
-              }).map((item) => {
+                const isVisible = (item: any) => {
+                  if (!item.role) return true;
+                  if (userRole === 'ADMIN') return true;
+                  if (userRole === 'TEACHER') return item.role === 'teacher' || item.role === 'student';
+                  if (userRole === 'STUDENT') return item.role === 'student';
+                  return false;
+                };
+                // Filter items and remove empty sections
+                const filtered = menuItems.filter((item, idx) => {
+                  if (item.isSection) {
+                    // Check if any non-section item after this section (until next section) is visible
+                    for (let i = idx + 1; i < menuItems.length; i++) {
+                      if (menuItems[i].isSection) break;
+                      if (isVisible(menuItems[i])) return true;
+                    }
+                    return false;
+                  }
+                  return isVisible(item);
+                });
+                return filtered;
+              })().map((item: any) => {
+                if (item.isSection) {
+                  return (
+                    <div key={item.id} className="pt-4 pb-1 px-3 first:pt-0">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                        {item.label}
+                      </span>
+                    </div>
+                  );
+                }
+
                 const isActive = location.pathname === item.path;
                 const Icon = item.icon;
 
@@ -252,11 +311,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Main Content */}
           <main className="flex-1 w-full md:pl-64">
-            <div className="container mx-auto p-6">
+            <NotificationPermissionBanner />
+            <div className="container mx-auto p-4 sm:p-6 pb-20 md:pb-6">
               {children}
             </div>
           </main>
         </div>
+
+        {/* Bottom Navigation - Mobile Only */}
+        <BottomNav />
       </div>
     </NetworkProvider>
   );

@@ -337,7 +337,8 @@ export const admissionService = {
       query = query.eq('status', params.status);
     }
     if (params.search) {
-      query = query.or(`studentName.ilike.%${params.search}%,parentName.ilike.%${params.search}%,email.ilike.%${params.search}%,contactNumber.ilike.%${params.search}%`);
+      const sanitized = params.search.replace(/[%,().]/g, '');
+      query = query.or(`studentName.ilike.%${sanitized}%,parentName.ilike.%${sanitized}%,email.ilike.%${sanitized}%,contactNumber.ilike.%${sanitized}%`);
     }
     if (params.fromDate) {
       query = query.gte('appliedDate', params.fromDate.toISOString());

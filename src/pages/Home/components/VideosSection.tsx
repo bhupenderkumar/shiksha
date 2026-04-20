@@ -70,6 +70,12 @@ export function VideosSection() {
 
         {/* Videos horizontal scroll */}
         <div className="relative">
+          {/* Mobile scroll hint */}
+          <div className="md:hidden text-center mb-3">
+            <span className="inline-flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+              <span>👉</span> Swipe to see more videos
+            </span>
+          </div>
           <div className="flex overflow-x-auto gap-5 pb-4 snap-x snap-mandatory scrollbar-hide px-1">
             {videos.map((video, index) => (
               <motion.div

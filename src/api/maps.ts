@@ -1,11 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
-import type { Database } from '@/types/supabase';
+import { supabase } from '@/lib/api-client';
 import { SCHEMA } from '@/lib/constants';
-
-const supabase = createClient<Database>(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const PLACE_ID = 'ChIJQZ8W_lnmDDkRKKD9jMgstPA'; // First Step Public School's Place ID

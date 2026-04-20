@@ -6,9 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { PageHeader } from '@/components/ui/page-header';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Clock, Plus, Trash2, Pencil, X, Check, Calendar, ChevronLeft, ChevronRight, LayoutGrid, List } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { PageAnimation } from '@/components/ui/page-animation';
 import { timetableService, type TimetableEntry, type CreateTimetableEntry } from '@/services/timetableService';
 import { supabase } from '@/lib/api-client';
 import { SCHEMA } from '@/lib/constants';
@@ -266,69 +267,83 @@ export default function Timetable() {
   }
 
   if (loading && classes.length === 0) {
-    return <div className="flex justify-center p-8"><LoadingSpinner /></div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
   }
 
   return (
-    <PageAnimation>
-      <div className="container mx-auto px-3 sm:px-4 py-4 max-w-5xl">
-        {/* Header */}
-        <div className="flex flex-col gap-3 mb-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
-                <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-                Class Timetable
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {selectedClassName ? `${selectedClassName.name} ${selectedClassName.section || ''}`.trim() : 'Select a class'}
-              </p>
-            </div>
-            {isAuthenticated && (
-              <Button
-                variant={editMode ? 'default' : 'outline'}
-                onClick={() => { setEditMode(!editMode); setEditingEntryId(null); }}
-                size="sm"
-              >
-                {editMode ? 'Done Editing' : 'Edit'}
-              </Button>
-            )}
-          </div>
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
+      <PageHeader
+        title="Class Timetable"
+        subtitle={selectedClassName ? `${selectedClassName.name} ${selectedClassName.section || ''}`.trim() : 'Weekly schedule and periods'}
+        icon={<Calendar className="text-primary-500" />}
+        action={
+          isAuthenticated ? (
+            <Button
+              variant={editMode ? 'default' : 'outline'}
+              onClick={() => { setEditMode(!editMode); setEditingEntryId(null); }}
+              size="sm"
+              className="text-xs sm:text-sm"
+            >
+              {editMode ? 'Done Editing' : 'Edit'}
+            </Button>
+          ) : null
+        }
+      />
 
-          {/* Class selector + View toggle */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            <Select value={selectedClass} onValueChange={setSelectedClass}>
-              <SelectTrigger className="w-full sm:w-[200px]">
-                <SelectValue placeholder="Select class" />
-              </SelectTrigger>
-              <SelectContent>
-                {classes.map(c => (
-                  <SelectItem key={c.id} value={c.id}>{c.name} {c.section}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
-              <Button
-                variant={viewMode === 'day' ? 'default' : 'ghost'}
-                size="sm"
-                className="h-8 px-3 text-xs"
-                onClick={() => setViewMode('day')}
-              >
-                <List className="w-3.5 h-3.5 mr-1" />
-                Day
-              </Button>
-              <Button
-                variant={viewMode === 'week' ? 'default' : 'ghost'}
-                size="sm"
-                className="h-8 px-3 text-xs"
-                onClick={() => setViewMode('week')}
-              >
-                <LayoutGrid className="w-3.5 h-3.5 mr-1" />
-                Week
-              </Button>
-            </div>
-          </div>
+      {/* Class selector + View toggle */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-4">
+        <Select value={selectedClass} onValueChange={setSelectedClass}>
+          <SelectTrigger className="w-full sm:w-[200px]">
+            <SelectValue placeholder="Select class" />
+          </SelectTrigger>
+          <SelectContent>
+            {classes.map(c => (
+              <SelectItem key={c.id} value={c.id}>{c.name} {c.section}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
+          <Button
+            variant={viewMode === 'day' ? 'default' : 'ghost'}
+            size="sm"
+            className="h-8 px-3 text-xs"
+            onClick={() => setViewMode('day')}
+          >
+            <List className="w-3.5 h-3.5 mr-1" />
+            Day
+          </Button>
+          <Button
+            variant={viewMode === 'week' ? 'default' : 'ghost'}
+            size="sm"
+            className="h-8 px-3 text-xs"
+            onClick={() => setViewMode('week')}
+          >
+            <LayoutGrid className="w-3.5 h-3.5 mr-1" />
+            Week
+          </Button>
         </div>
+      </div>
+
+      {/* Stats bar */}
+      {entries.length > 0 && (
+        <div className="flex items-center gap-3 mb-3 overflow-x-auto pb-1">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
+            <span className="font-medium text-foreground">{entries.length}</span> periods
+          </div>
+          <Badge variant="outline" className="text-[10px] gap-1 bg-blue-50 text-blue-700 border-blue-200 whitespace-nowrap">
+            <Calendar className="w-3 h-3" /> {entriesByDay.filter(d => d.entries.length > 0).length} days
+          </Badge>
+          {subjects.length > 0 && (
+            <Badge variant="outline" className="text-[10px] gap-1 bg-purple-50 text-purple-700 border-purple-200 whitespace-nowrap">
+              {subjects.length} subjects
+            </Badge>
+          )}
+        </div>
+      )}
 
         {/* Today highlight - shown in week view or when not viewing today */}
         {!editMode && todayEntries && todayEntries.entries.length > 0 && viewMode === 'week' && (
@@ -412,11 +427,11 @@ export default function Timetable() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Teacher</Label>
+                  <Label className="text-xs">Activity / Notes</Label>
                   <Input
-                    placeholder="Optional"
-                    value={newEntry.teacherName || ''}
-                    onChange={e => setNewEntry(p => ({ ...p, teacherName: e.target.value || undefined }))}
+                    placeholder="e.g. Hindi Copy, Book Reading"
+                    value={newEntry.room || ''}
+                    onChange={e => setNewEntry(p => ({ ...p, room: e.target.value || undefined }))}
                     className="h-8 text-xs"
                   />
                 </div>
@@ -438,20 +453,18 @@ export default function Timetable() {
 
         {/* Empty state */}
         {entries.length === 0 && !loading && (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Calendar className="h-10 w-10 text-muted-foreground mb-3" />
-              <p className="text-base font-medium mb-1">No timetable set</p>
-              <p className="text-sm text-muted-foreground mb-4 text-center">
-                {isAuthenticated ? 'Click Edit to configure the class schedule.' : 'Timetable has not been configured yet.'}
-              </p>
-              {isAuthenticated && (
+          <EmptyState
+            title="No timetable set"
+            description={isAuthenticated ? 'Click Edit to configure the class schedule.' : 'Timetable has not been configured yet.'}
+            icon={<Calendar className="w-16 h-16 text-muted-foreground" />}
+            action={
+              isAuthenticated ? (
                 <Button onClick={() => { setEditMode(true); handleQuickFill(); }} disabled={saving} size="sm">
                   ✨ Auto-Generate Timetable
                 </Button>
-              )}
-            </CardContent>
-          </Card>
+              ) : undefined
+            }
+          />
         )}
 
         {/* DAY VIEW - Mobile optimized single day view */}
@@ -542,9 +555,9 @@ export default function Timetable() {
                               />
                             </div>
                             <div className="space-y-1">
-                              <Label className="text-xs">Room</Label>
+                              <Label className="text-xs">Activity / Notes</Label>
                               <Input
-                                placeholder="Room"
+                                placeholder="e.g. Hindi Copy, Book Reading"
                                 value={editForm.room || ''}
                                 onChange={e => setEditForm(p => ({ ...p, room: e.target.value || undefined }))}
                                 className="h-8 text-xs"
@@ -578,12 +591,20 @@ export default function Timetable() {
 
                       {/* Details */}
                       <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-sm truncate">{entry.subject?.name || 'Subject'}</div>
-                        <div className="flex items-center gap-2 text-xs opacity-75 mt-0.5">
-                          <Clock className="w-3 h-3" />
-                          <span>{entry.startTime} – {entry.endTime}</span>
+                        <div className="font-semibold text-sm truncate">
+                          {entry.room || entry.subject?.name || 'Subject'}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs opacity-75 mt-0.5 flex-wrap">
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {entry.startTime} – {entry.endTime}
+                          </span>
+                          {entry.room && (
+                            <span className="bg-white/50 px-1.5 py-0.5 rounded text-[10px]">
+                              {entry.subject?.name}
+                            </span>
+                          )}
                           {entry.teacherName && <span>· {entry.teacherName}</span>}
-                          {entry.room && <span>· {entry.room}</span>}
                         </div>
                       </div>
 
@@ -659,7 +680,7 @@ export default function Timetable() {
                             <div className="grid grid-cols-2 gap-2 mt-2">
                               <Input placeholder="Teacher" value={editForm.teacherName || ''}
                                 onChange={e => setEditForm(p => ({ ...p, teacherName: e.target.value || undefined }))} className="h-8 text-xs" />
-                              <Input placeholder="Room" value={editForm.room || ''}
+                              <Input placeholder="e.g. Hindi Copy" value={editForm.room || ''}
                                 onChange={e => setEditForm(p => ({ ...p, room: e.target.value || undefined }))} className="h-8 text-xs" />
                             </div>
                             <div className="flex gap-2 mt-2">
@@ -679,7 +700,8 @@ export default function Timetable() {
                           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                             <span className="text-xs font-mono text-muted-foreground w-5 flex-shrink-0">P{entry.periodNumber}</span>
                             <span className="text-xs text-muted-foreground flex-shrink-0 hidden sm:inline">{entry.startTime}–{entry.endTime}</span>
-                            <span className="font-medium text-sm truncate">{entry.subject?.name || 'Subject'}</span>
+                            <span className="font-medium text-sm truncate">{entry.room || entry.subject?.name || 'Subject'}</span>
+                            {entry.room && <span className="text-[10px] text-muted-foreground hidden sm:inline">({entry.subject?.name})</span>}
                             {entry.teacherName && <span className="text-xs text-muted-foreground hidden sm:inline">· {entry.teacherName}</span>}
                           </div>
                           <div className="flex items-center gap-1 flex-shrink-0">
@@ -707,22 +729,26 @@ export default function Timetable() {
 
         {/* Legend - Subject colors (day view) */}
         {!loading && entries.length > 0 && viewMode === 'day' && (
-          <div className="mt-6 flex flex-wrap gap-2">
-            {subjects.length > 0 ? subjects.map(s => (
-              <span key={s.id} className={`text-xs px-2 py-0.5 rounded border ${getSubjectColor(s.id, allSubjectIds)}`}>
-                {s.name}
-              </span>
-            )) : allSubjectIds.map(id => {
-              const entry = entries.find(e => e.subjectId === id);
-              return (
-                <span key={id} className={`text-xs px-2 py-0.5 rounded border ${getSubjectColor(id, allSubjectIds)}`}>
-                  {entry?.subject?.name || id}
-                </span>
-              );
+          <Card className="mt-6">
+            <CardContent className="py-3 px-4">
+              <p className="text-xs font-medium text-muted-foreground mb-2">Subjects</p>
+              <div className="flex flex-wrap gap-2">
+                {subjects.length > 0 ? subjects.map(s => (
+                  <span key={s.id} className={`text-xs px-2 py-0.5 rounded border ${getSubjectColor(s.id, allSubjectIds)}`}>
+                    {s.name}
+                  </span>
+                )) : allSubjectIds.map(id => {
+                  const entry = entries.find(e => e.subjectId === id);
+                  return (
+                    <span key={id} className={`text-xs px-2 py-0.5 rounded border ${getSubjectColor(id, allSubjectIds)}`}>
+                      {entry?.subject?.name || id}
+                    </span>
+                  );
             })}
-          </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
       </div>
-    </PageAnimation>
   );
 }

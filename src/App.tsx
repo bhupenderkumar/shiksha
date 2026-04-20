@@ -8,6 +8,8 @@ import Login from './pages/Login';
 import { useAuth } from '@/lib/auth-provider';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 
+import { PWAInstallBanner } from '@/components/pwa/PWAInstallBanner';
+
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Students = lazy(() => import('./pages/Students'));
 const Subjects = lazy(() => import('./pages/Subjects'));
@@ -38,6 +40,7 @@ const WhatsAppTest = lazy(() => import('./pages/WhatsAppTest'));
 const IDCardDetails = lazy(() => import('./pages/IDCardDetails'));
 const IDCardView = lazy(() => import('./pages/IDCardView'));
 const IDCardForm = lazy(() => import('./pages/IDCardForm'));
+const PublicIDCardLookup = lazy(() => import('./pages/PublicIDCardLookup'));
 const TestInteractiveAssignment = lazy(() => import('./pages/TestInteractiveAssignment'));
 const KonvaTestPage = lazy(() => import('./pages/KonvaTestPage'));
 const InteractiveAssignmentForm = lazy(() => import('@/components/interactive/InteractiveAssignmentForm').then(module => ({ default: module.InteractiveAssignmentForm })));
@@ -121,6 +124,7 @@ function AppRoutes() {
         <Route path="/whatsapp-test" element={<WhatsAppTest />} />
         <Route path="/id-card" element={<IDCardView />} />
         <Route path="/id-card/new" element={<IDCardForm />} />
+        <Route path="/id-card/lookup" element={<PublicIDCardLookup />} />
         <Route path="/id-cards" element={<IDCardDetails />} />
         <Route path="/test-interactive-assignment" element={<TestInteractiveAssignment />} />
         <Route path="/konva-test" element={<KonvaTestPage />} />
@@ -509,6 +513,7 @@ function App() {
         <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center"><div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div></div>}>
           <AppRoutes />
           <Toaster />
+          <PWAInstallBanner />
         </Suspense>
       </div>
     </TooltipProvider>

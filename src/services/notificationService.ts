@@ -3,6 +3,8 @@ import { Notification } from '@/types';
 import { profileService } from '@/services/profileService';
 import { NOTIFICATION_TABLE } from '../lib/constants';
 
+const SCHEMA = 'school';
+
 // String Constants
 const ERROR_MESSAGES = {
   FETCH_NOTIFICATIONS: 'Error fetching notifications:',
@@ -22,7 +24,7 @@ class NotificationService {
   async getNotifications(): Promise<Notification[]> {
     try {
       const { data, error } = await supabase
-        .schema('school')
+        .schema(SCHEMA)
         .from(NOTIFICATION_TABLE)
         .select(TABLE_COLUMNS)
         .order('createdAt', SORT_ORDER.CREATED_DESC);
@@ -47,7 +49,7 @@ class NotificationService {
       }
 
       const { data, error } = await supabase
-        .schema('school')
+        .schema(SCHEMA)
         .from(NOTIFICATION_TABLE)
         .select(TABLE_COLUMNS)
         .or(`studentId.eq.${userProfile.id},classId.eq.${userProfile.classId}`)
@@ -68,7 +70,7 @@ class NotificationService {
   async createNotification(notification: Omit<Notification, 'id' | 'createdAt' | 'updatedAt'>): Promise<Notification | null> {
     try {
       const { data, error } = await supabase
-        .schema('school')
+        .schema(SCHEMA)
         .from(NOTIFICATION_TABLE)
         .insert(notification)
         .select()
@@ -89,7 +91,7 @@ class NotificationService {
   async createNotificationForClass(title: string, message: string, type: string, classId: string): Promise<void> {
     try {
       const { error } = await supabase
-        .schema('school')
+        .schema(SCHEMA)
         .from(NOTIFICATION_TABLE)
         .insert({ title, message, type, classId, studentId: null });
 
@@ -104,7 +106,7 @@ class NotificationService {
   async getNotificationsByClassId(classId: string): Promise<Notification[]> {
     try {
       const { data, error } = await supabase
-        .schema('school')
+        .schema(SCHEMA)
         .from(NOTIFICATION_TABLE)
         .select(TABLE_COLUMNS)
         .eq('classId', classId)
@@ -125,7 +127,7 @@ class NotificationService {
   async updateNotification(id: string, notification: Partial<Notification>): Promise<Notification | null> {
     try {
       const { data, error } = await supabase
-        .schema('school')
+        .schema(SCHEMA)
         .from(NOTIFICATION_TABLE)
         .update(notification)
         .eq('id', id)
@@ -147,7 +149,7 @@ class NotificationService {
   async deleteNotification(id: string): Promise<boolean> {
     try {
       const { error } = await supabase
-        .schema('school')
+        .schema(SCHEMA)
         .from(NOTIFICATION_TABLE)
         .delete()
         .eq('id', id);
@@ -160,6 +162,78 @@ class NotificationService {
       return true;
     } catch (error) {
       console.error(ERROR_MESSAGES.DELETE_NOTIFICATION, error);
+      return false;
+    }
+  }
+
+  async getUnreadCount(classId?: string): Promise<number> {
+    try {
+      let query = supabase
+        .schema(SCHEMA)
+        .from(NOTIFICATION_TABLE)
+        .select('id', { count: 'exact', head: true })
+        .eq('isRead', false);
+
+      if (classId) {
+        query = query.eq('classId', classId);
+      }
+
+      const { count, error } = await query;
+
+      if (error) {
+        console.error('Error fetching unread count:', error);
+        return 0;
+      }
+
+      return count || 0;
+    } catch (error) {
+      console.error('Error fetching unread count:', error);
+      return 0;
+    }
+  }
+
+  async markAsRead(id: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .schema(SCHEMA)
+        .from(NOTIFICATION_TABLE)
+        .update({ isRead: true })
+        .eq('id', id);
+
+      if (error) {
+        console.error(ERROR_MESSAGES.UPDATE_NOTIFICATION, error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error(ERROR_MESSAGES.UPDATE_NOTIFICATION, error);
+      return false;
+    }
+  }
+
+  async markAllAsRead(classId?: string): Promise<boolean> {
+    try {
+      let query = supabase
+        .schema(SCHEMA)
+        .from(NOTIFICATION_TABLE)
+        .update({ isRead: true })
+        .eq('isRead', false);
+
+      if (classId) {
+        query = query.eq('classId', classId);
+      }
+
+      const { error } = await query;
+
+      if (error) {
+        console.error(ERROR_MESSAGES.UPDATE_NOTIFICATION, error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error(ERROR_MESSAGES.UPDATE_NOTIFICATION, error);
       return false;
     }
   }

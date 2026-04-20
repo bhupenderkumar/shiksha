@@ -43,6 +43,7 @@ export class SettingsService extends BaseService {
   async getSchoolSettings(): Promise<SchoolSettings | null> {
     try {
       const { data, error } = await supabase
+        .schema('school')
         .from(SETTINGS_TABLE)
         .select('*')
         .eq('id', SCHOOL_SETTINGS_ROW_ID)
@@ -87,6 +88,7 @@ export class SettingsService extends BaseService {
   async getUserSettings(userId: string): Promise<UserSettings | null> {
     try {
       const { data, error } = await supabase
+        .schema('school')
         .from(USER_SETTINGS_TABLE)
         .select('*')
         .eq('user_id', userId)
@@ -162,7 +164,7 @@ export class SettingsService extends BaseService {
       const filePath = `school/logo.${file.name.split('.').pop()}`;
       const { error: uploadError } = await supabase.storage
         .from(STORAGE_BUCKET)
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file, { upsert: false });
 
       if (uploadError) throw uploadError;
 

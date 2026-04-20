@@ -21,10 +21,12 @@ const LOG_MESSAGES = {
   STUDENT_RESPONSE: 'Student query response:'
 };
 
-const ROLE_HIERARCHY = {
+const ROLE_HIERARCHY: Record<string, readonly string[]> = {
   [USER_ROLES.ADMIN]: ['ADMIN', 'TEACHER', 'STUDENT'],
   [USER_ROLES.TEACHER]: ['TEACHER', 'STUDENT'],
-  [USER_ROLES.STUDENT]: ['STUDENT']
+  [USER_ROLES.STUDENT]: ['STUDENT'],
+  'PRINCIPAL': ['ADMIN', 'TEACHER', 'STUDENT'],
+  'ACCOUNTANT': ['ADMIN', 'TEACHER', 'STUDENT'],
 } as const;
 
 const DEFAULT_VALUES = {
@@ -80,41 +82,26 @@ class ProfileService {
       return this.cache.get(userId) || null;
     }
 
-    console.log(LOG_MESSAGES.FETCH_ROLE, userId);
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
       if (error) {
         console.error('Error getting auth user:', error);
-        // Instead of throwing an error, return a default user profile
-        const defaultProfile: UserProfile = {
-          id: userId,
-          role: USER_ROLES.TEACHER, // Default to teacher role
-          full_name: 'User',
-          avatar_url: '',
-          app_metadata: {},
-          user_metadata: {},
-          aud: 'authenticated',
-          created_at: '',
-        };
-        this.cache.set(userId, defaultProfile);
-        return defaultProfile;
+        // Return null instead of granting elevated default role
+        return null;
       }
 
       if (user?.email) {
         const sanitizedEmail = this.sanitizeEmail(user.email);
-        console.log(LOG_MESSAGES.QUERY_STAFF, sanitizedEmail);
 
-        // First try staff lookup
-        let { data: staffData, error: staffError } = await supabase
+        // First try staff lookup — only fetch needed fields
+        const { data: staffData } = await supabase
           .schema(SCHEMA)
           .from(STAFF_TABLE)
-          .select('*')
+          .select('name, role, email')
           .eq('email', sanitizedEmail);
 
-        console.log(LOG_MESSAGES.STAFF_RESPONSE, { staffData, staffError });
-
         if (staffData && staffData.length > 0) {
-          const role = staffData[0].role ? (staffData[0].role as UserRole) : USER_ROLES.TEACHER;
+          const role = staffData[0].role ? (staffData[0].role as UserRole) : USER_ROLES.STUDENT;
 
           const userProfile: UserProfile = {
             ...user,
@@ -122,18 +109,16 @@ class ProfileService {
             full_name: staffData[0].name,
             avatar_url: user.user_metadata?.avatar_url,
           };
-          this.cache.set(userId, userProfile); // Cache the user profile
+          this.cache.set(userId, userProfile);
           return userProfile;
         }
 
-        // Try student lookup using parent's email
-        let { data: studentData, error: studentError } = await supabase
+        // Try student lookup using parent's email — only fetch needed fields
+        const { data: studentData } = await supabase
           .schema(SCHEMA)
           .from(STUDENT_TABLE)
-          .select('*')
+          .select('name, parentEmail')
           .eq('parentEmail', sanitizedEmail);
-
-        console.log(LOG_MESSAGES.STUDENT_RESPONSE, { studentData, studentError });
 
         if (studentData && studentData.length > 0) {
           const userProfile: UserProfile = {
@@ -142,14 +127,14 @@ class ProfileService {
             full_name: studentData[0].name,
             avatar_url: user.user_metadata?.avatar_url,
           };
-          this.cache.set(userId, userProfile); // Cache the user profile
+          this.cache.set(userId, userProfile);
           return userProfile;
         }
 
-        // Default profile if no specific role found
+        // Default profile if no specific role found — least privilege
         const userProfile: UserProfile = {
           ...user,
-          role: USER_ROLES.TEACHER, // Default to TEACHER instead of STUDENT
+          role: USER_ROLES.STUDENT,
           full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || DEFAULT_VALUES.USER_NAME,
           avatar_url: user.user_metadata?.avatar_url,
         };
@@ -157,34 +142,12 @@ class ProfileService {
         return userProfile;
       }
 
-      // If we get here, create a default profile
-      const defaultProfile: UserProfile = {
-        id: userId,
-        role: USER_ROLES.TEACHER, // Default to teacher role
-        full_name: 'User',
-        avatar_url: '',
-        app_metadata: {},
-        user_metadata: {},
-        aud: 'authenticated',
-        created_at: '',
-      };
-      this.cache.set(userId, defaultProfile);
-      return defaultProfile;
+      // No email on user — return null (deny access)
+      return null;
     } catch (error) {
       console.error(ERROR_MESSAGES.FETCH_USER, error);
-      // Instead of throwing an error, return a default user profile
-      const defaultProfile: UserProfile = {
-        id: userId,
-        role: USER_ROLES.TEACHER, // Default to teacher role
-        full_name: 'User',
-        avatar_url: '',
-        app_metadata: {},
-        user_metadata: {},
-        aud: 'authenticated',
-        created_at: '',
-      };
-      this.cache.set(userId, defaultProfile);
-      return defaultProfile;
+      // Return null instead of granting elevated default role
+      return null;
     }
   }
 
@@ -219,25 +182,13 @@ class ProfileService {
   async getCurrentUser(): Promise<UserProfile | null> {
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
-      if (error) {
-        console.error('Error getting current user:', error);
-        // Create a default user profile with a random ID
-        const defaultId = 'default-' + Math.random().toString(36).substring(2, 15);
-        return this.getUser(defaultId);
+      if (error || !user) {
+        return null;
       }
-
-      if (user) {
-        return this.getUser(user.id);
-      }
-
-      // Create a default user profile with a random ID
-      const defaultId = 'default-' + Math.random().toString(36).substring(2, 15);
-      return this.getUser(defaultId);
+      return this.getUser(user.id);
     } catch (error) {
       console.error(ERROR_MESSAGES.FETCH_USER, error);
-      // Create a default user profile with a random ID
-      const defaultId = 'default-' + Math.random().toString(36).substring(2, 15);
-      return this.getUser(defaultId);
+      return null;
     }
   }
 }
@@ -318,16 +269,6 @@ export function useProfile() {
  */
 export function useProfileAccess() {
   const { profile, loading, error } = useProfile();
-  // Add debug logging
-  useEffect(() => {
-    console.log('Profile Access Check:', {
-      profile,
-      loading,
-      isAdmin: isAdmin(profile),
-      isTeacher: isTeacher(profile),
-      isAdminOrTeacher: isAdmin(profile) || isTeacher(profile)
-    });
-  }, [profile]);
   return {
     profile,
     loading,

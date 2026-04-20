@@ -154,7 +154,7 @@ export const fileService = {
         .from('File')
         .upload(uniquePath, file, {
           cacheControl: '3600',
-          upsert: true
+          upsert: false
         });
 
       if (error) throw error;

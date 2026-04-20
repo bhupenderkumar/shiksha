@@ -105,14 +105,9 @@ export function ClassworkForm({ onSubmit, initialData }: ClassworkFormProps) {
       const newFiles = formData.attachments.filter(file => !file.id) as File[];
       const existingFiles = formData.attachments.filter(file => file.id);
 
-      const timestamp = new Date().getTime();
       const uploadedFiles = await Promise.all(
-        newFiles.map(async (file: File, index: number) => {
-          const sanitizedFileName = file.name
-            .replace(/\\s+/g, '_')
-            .replace(/[^a-zA-Z0-9._-]/g, '');
-          const uniqueFileName = `${timestamp}_${index}_${sanitizedFileName}`;
-          const filePath = `classwork/${formData.classId}/${uniqueFileName}`;
+        newFiles.map(async (file: File) => {
+          const filePath = `classwork/${formData.classId}`;
           
           try {
             const uploadedFile = await fileService.uploadFile(file, filePath);

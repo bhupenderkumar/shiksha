@@ -402,18 +402,18 @@ export function InteractiveAssignmentForm({
         // Create new assignment
         console.log("Creating new assignment")
         // Use the current user's ID, or a fallback UUID if user is not available
-        const userId = user?.id || '00000000-0000-0000-0000-000000000000'
-        console.log("Using user ID:", userId)
+        const userId = user?.id
+        if (!userId) {
+          toast.error("You must be logged in to create an assignment")
+          return
+        }
 
         try {
-          // Try to create the assignment with the user ID
           result = await interactiveAssignmentService.create(formattedData, userId)
         } catch (createError) {
-          console.error("Error creating assignment with user ID:", createError)
-
-          // If that fails, try with a hardcoded UUID as fallback
-          console.log("Trying with fallback UUID...")
-          result = await interactiveAssignmentService.create(formattedData, '00000000-0000-0000-0000-000000000000')
+          console.error("Error creating assignment:", createError)
+          toast.error("Failed to create assignment")
+          return
         }
       }
 

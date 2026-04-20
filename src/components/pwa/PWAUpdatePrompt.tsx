@@ -43,7 +43,7 @@ export const PWAUpdatePrompt: React.FC = () => {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-[9999] flex justify-center pointer-events-none">
+    <div className="fixed bottom-20 md:bottom-4 left-4 right-4 z-[9999] flex justify-center pointer-events-none">
       <div className="pointer-events-auto max-w-md w-full animate-in slide-in-from-bottom-5 duration-300">
         {needRefresh && (
           <div className="bg-gradient-to-r from-indigo-700 to-purple-800 text-white rounded-xl shadow-2xl p-4 border border-white/20">

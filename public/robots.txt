@@ -1,6 +1,27 @@
-# Allow all web crawlers to access all content
+# Allow all web crawlers to access public content
 User-agent: *
 Allow: /
+Allow: /admission-enquiry
+Allow: /fee-structure
+Allow: /school-feedback
+
+# Block internal/admin routes
+Disallow: /dashboard
+Disallow: /login
+Disallow: /register
+Disallow: /settings
+Disallow: /homework
+Disallow: /classwork
+Disallow: /students
+Disallow: /subjects
+Disallow: /attendance
+Disallow: /fees
+Disallow: /idcard
+Disallow: /admin-
+Disallow: /unit-test-
+Disallow: /parent-feedback-list
+Disallow: /parent-feedback-form
+Disallow: /copy-request
 
 # Sitemap location
 Sitemap: https://myfirststepschool.com/sitemap.xml

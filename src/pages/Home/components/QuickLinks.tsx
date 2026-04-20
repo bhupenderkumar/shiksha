@@ -9,8 +9,8 @@ const links = [
     label: "Admission Enquiry",
     description: "Start your child's journey with us",
     icon: ClipboardList,
-    border: "border-blue-100",
-    hoverBorder: "hover:border-blue-200",
+    border: "border-blue-200",
+    hoverBorder: "hover:border-blue-300",
     shadow: "hover:shadow-blue-100/50",
     iconBg: "bg-gradient-to-br from-blue-500 to-cyan-500",
   },
@@ -92,13 +92,13 @@ export function QuickLinks() {
             Quick Actions
           </span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-4">
-            Get Started{" "}
+            Everything You{" "}
             <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
-              Today
+              Need
             </span>
           </h2>
           <p className="text-lg text-slate-400 max-w-xl mx-auto">
-            Access important features and connect with us instantly
+            Admissions, fees, feedback, and more — all in one place
           </p>
         </motion.div>
 

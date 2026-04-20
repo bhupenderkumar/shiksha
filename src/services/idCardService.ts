@@ -1638,5 +1638,79 @@ export const idCardService = {
       toast.error(error instanceof Error ? error.message : 'Failed to fetch ID cards');
       throw error;
     }
+  },
+
+  async lookupByMobileAndName(mobile: string, studentFirstName: string): Promise<IDCardData[]> {
+    try {
+      const cleanMobile = mobile.replace(/\D/g, '').slice(-10);
+
+      const { data, error } = await supabase
+        .schema(SCHEMA)
+        .from(`${ID_CARD_TABLE}`)
+        .select(`
+          id,
+          student_name,
+          class_id,
+          date_of_birth,
+          student_photo_url,
+          father_name,
+          mother_name,
+          father_photo_url,
+          mother_photo_url,
+          father_mobile,
+          mother_mobile,
+          address,
+          created_at,
+          download_count
+        `)
+        .or(`father_mobile.ilike.%${cleanMobile}%,mother_mobile.ilike.%${cleanMobile}%`)
+        .ilike('student_name', `${studentFirstName}%`);
+
+      if (error) throw error;
+      if (!data || data.length === 0) return [];
+
+      const classIds = data.map(card => card.class_id).filter(Boolean);
+      let classMap: Record<string, { name: string; section: string }> = {};
+
+      if (classIds.length > 0) {
+        const { data: classData, error: classError } = await supabase
+          .schema(SCHEMA)
+          .from(`${CLASS_TABLE}`)
+          .select('id, name, section')
+          .in('id', classIds);
+
+        if (!classError && classData) {
+          classMap = classData.reduce((acc, cls) => {
+            acc[cls.id] = { name: cls.name, section: cls.section };
+            return acc;
+          }, {} as Record<string, { name: string; section: string }>);
+        }
+      }
+
+      return data.map(card => {
+        const classInfo = classMap[card.class_id] || { name: 'Unknown', section: '' };
+        return {
+          id: card.id,
+          studentName: card.student_name,
+          classId: card.class_id,
+          className: classInfo.name,
+          section: classInfo.section,
+          dateOfBirth: card.date_of_birth,
+          studentPhoto: card.student_photo_url,
+          fatherName: card.father_name,
+          motherName: card.mother_name,
+          fatherPhoto: card.father_photo_url,
+          motherPhoto: card.mother_photo_url,
+          fatherMobile: card.father_mobile,
+          motherMobile: card.mother_mobile,
+          address: card.address,
+          createdAt: new Date(card.created_at),
+          downloadCount: card.download_count
+        } as IDCardData;
+      });
+    } catch (error) {
+      console.error('Error looking up ID card:', error);
+      throw error;
+    }
   }
 };

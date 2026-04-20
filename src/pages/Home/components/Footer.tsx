@@ -14,6 +14,7 @@ const quickLinks = [
 const moreLinks = [
   { label: "Portal Login", to: "/login" },
   { label: "Date Sheet", to: "/final-date-sheet" },
+  { label: "School Feedback", to: "/school-feedback" },
 ];
 
 export function Footer() {
@@ -74,7 +75,7 @@ export function Footer() {
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 mb-4">More</h3>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 mb-4">Parents Portal</h3>
             <ul className="space-y-2.5">
               {moreLinks.map((link) => (
                 <li key={link.label}>
@@ -113,6 +114,17 @@ export function Footer() {
               <li className="flex items-start gap-3 text-sm text-slate-400">
                 <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5" />
                 <span>{SCHOOL_INFO.address}</span>
+              </li>
+              <li>
+                <a
+                  href={`https://wa.me/${SCHOOL_INFO.whatsappNumber}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 text-sm text-slate-400 hover:text-green-400 transition-colors"
+                >
+                  <span className="w-4 h-4 flex-shrink-0 text-center">💬</span>
+                  WhatsApp Us
+                </a>
               </li>
             </ul>
           </motion.div>

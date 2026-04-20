@@ -136,6 +136,11 @@ const Login = () => {
             Create Account
           </Link>
         </p>
+        <p className="mt-3 text-center">
+          <Link to="/" className="text-xs text-gray-400 hover:text-violet-600 transition-colors">
+            ← Back to Homepage
+          </Link>
+        </p>
       </div>
     </div>
   );

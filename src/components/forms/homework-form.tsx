@@ -156,7 +156,7 @@ export function HomeworkForm({ onSubmit, initialData, files: initialFiles, onCan
           .from('File')
           .upload(path, file, {
             cacheControl: '3600',
-            upsert: true
+            upsert: false
           });
 
         if (error) throw error;

@@ -264,9 +264,6 @@ export const birthdayService = {
           mother_name,
           father_photo_url,
           mother_photo_url,
-          father_mobile,
-          mother_mobile,
-          address,
           class:${CLASS_TABLE} (
             id,
             name,

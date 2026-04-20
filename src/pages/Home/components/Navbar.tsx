@@ -127,7 +127,7 @@ export function Navbar() {
                   {link.label}
                 </button>
               ))}
-              <div className="pt-3 border-t border-slate-100">
+              <div className="pt-3 border-t border-slate-100 space-y-2">
                 <Link
                   to="/admission-enquiry"
                   onClick={() => setIsMobileOpen(false)}
@@ -135,6 +135,23 @@ export function Navbar() {
                 >
                   Apply for Admission
                 </Link>
+                <div className="flex gap-2">
+                  <a
+                    href={`tel:${SCHOOL_INFO.phone}`}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold rounded-xl text-sm hover:bg-emerald-100 transition-colors"
+                  >
+                    <Phone className="w-4 h-4" />
+                    Call Now
+                  </a>
+                  <a
+                    href={`https://wa.me/${SCHOOL_INFO.whatsappNumber}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-50 border border-green-200 text-green-700 font-semibold rounded-xl text-sm hover:bg-green-100 transition-colors"
+                  >
+                    💬 WhatsApp
+                  </a>
+                </div>
               </div>
             </div>
           </motion.div>

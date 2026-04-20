@@ -241,7 +241,7 @@ export default function ClassworkPage() {
                 attachments={classwork.attachments}
               />
               {isAdminOrTeacher && (
-                <div className="absolute top-2 right-2 flex space-x-1 bg-white/90 backdrop-blur-sm rounded-lg p-0.5 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <div className="absolute top-2 right-2 flex space-x-1 bg-white/90 backdrop-blur-sm rounded-lg p-0.5 shadow-sm sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
                   <button className="p-1.5 rounded-md hover:bg-blue-50 transition-colors" onClick={() => handleEdit(classwork)}>
                     <Edit className="w-3.5 h-3.5 text-blue-500" />
                   </button>

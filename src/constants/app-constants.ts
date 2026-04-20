@@ -45,6 +45,7 @@ export const ROUTES = {
   SYLLABUS_DETAIL: '/syllabus/:id',
   CLASS_WORKBOOK: '/class-workbook',
   TIMETABLE: '/timetable',
+  NOTIFICATIONS: '/notifications',
 } as const;
 
 export const API_ENDPOINTS = {

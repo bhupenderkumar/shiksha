@@ -88,13 +88,13 @@ export const sportsEnrollmentService = {
   },
 
   /**
-   * Get all enrollments (for admin/list view)
+   * Get all enrollments (for admin/list view) — excludes contact numbers
    */
   async getAllEnrollments(): Promise<SportsEnrollment[]> {
     const { data, error } = await supabase
       .schema(SCHEMA)
       .from(SPORTS_ENROLLMENT_TABLE)
-      .select('*')
+      .select('id, studentName, parentName, classId, className, selectedGames, specialNotes, status, enrolledAt, createdAt, updatedAt')
       .order('createdAt', { ascending: false });
 
     if (error) {
