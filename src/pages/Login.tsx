@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/auth-provider';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -20,12 +20,14 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { user, signIn } = useAuth();
+  const location = useLocation();
+  const from = (location.state as any)?.from?.pathname || '/dashboard';
 
   useEffect(() => {
     if (user) {
-      window.location.href = '/dashboard';
+      window.location.href = from;
     }
-  }, [user]);
+  }, [user, from]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +36,7 @@ const Login = () => {
     try {
       await signIn(email, password);
       toast.success('Successfully signed in!');
-      window.location.href = '/dashboard';
+      window.location.href = from;
     } catch (error: any) {
       toast.error('Failed to sign in. Please check your credentials.');
       console.error('Login error:', error);
