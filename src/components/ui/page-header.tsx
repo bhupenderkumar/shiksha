@@ -1,4 +1,4 @@
-import { ReactNode, ElementType } from 'react';
+import { ReactNode, ElementType, createElement } from 'react';
 
 interface PageHeaderProps {
   title: string;
@@ -10,9 +10,9 @@ interface PageHeaderProps {
 export function PageHeader({ title, subtitle, icon: Icon, action }: PageHeaderProps) {
   const renderIcon = () => {
     if (!Icon) return null;
-    // If it's a component type (function/class), render it
-    if (typeof Icon === 'function') {
-      return <Icon className="h-8 w-8" />;
+    // If it's a component (function, class, or forwardRef object with $$typeof)
+    if (typeof Icon === 'function' || (typeof Icon === 'object' && Icon !== null && '$$typeof' in (Icon as any))) {
+      return createElement(Icon as ElementType, { className: "h-8 w-8" });
     }
     // Otherwise it's already a rendered ReactNode
     return Icon;
