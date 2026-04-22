@@ -1,19 +1,29 @@
-import { ReactNode } from 'react';
+import { ReactNode, ElementType } from 'react';
 
 interface PageHeaderProps {
   title: string;
   subtitle?: string;
-  icon?: ReactNode;
+  icon?: ElementType | ReactNode;
   action?: ReactNode;
 }
 
-export function PageHeader({ title, subtitle, icon, action }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, icon: Icon, action }: PageHeaderProps) {
+  const renderIcon = () => {
+    if (!Icon) return null;
+    // If it's a component type (function/class), render it
+    if (typeof Icon === 'function') {
+      return <Icon className="h-8 w-8" />;
+    }
+    // Otherwise it's already a rendered ReactNode
+    return Icon;
+  };
+
   return (
     <div className="flex items-center justify-between mb-8 bg-card rounded-lg p-6 shadow-sm border border-border">
       <div className="flex items-center space-x-4">
-        {icon && (
+        {Icon && (
           <div className="text-primary text-3xl animate-float">
-            {icon}
+            {renderIcon()}
           </div>
         )}
         <div>
