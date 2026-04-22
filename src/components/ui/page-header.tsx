@@ -1,4 +1,4 @@
-import { ReactNode, ElementType, createElement } from 'react';
+import { ReactNode, ElementType, createElement, isValidElement } from 'react';
 
 interface PageHeaderProps {
   title: string;
@@ -10,12 +10,13 @@ interface PageHeaderProps {
 export function PageHeader({ title, subtitle, icon: Icon, action }: PageHeaderProps) {
   const renderIcon = () => {
     if (!Icon) return null;
-    // If it's a component (function, class, or forwardRef object with $$typeof)
-    if (typeof Icon === 'function' || (typeof Icon === 'object' && Icon !== null && '$$typeof' in (Icon as any))) {
+    // Already a rendered JSX element like <BookOpen className="..." />
+    if (isValidElement(Icon)) return Icon;
+    // A component type (function, class, or forwardRef) — render it
+    if (typeof Icon === 'function' || typeof Icon === 'object') {
       return createElement(Icon as ElementType, { className: "h-8 w-8" });
     }
-    // Otherwise it's already a rendered ReactNode
-    return Icon;
+    return null;
   };
 
   return (
