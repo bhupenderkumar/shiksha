@@ -53,7 +53,7 @@ export const IDCardGenerator: React.FC<IDCardGeneratorProps> = ({ data }) => {
       const parentImgData = parentCanvas.toDataURL('image/jpeg', 1.0);
       pdf.addImage(parentImgData, 'JPEG', 0, 0, 105, 148);
 
-      pdf.save(`${data.student_name.replace(/\s+/g, '_')}_ID_Card.pdf`);
+      pdf.save(`${(data.studentName || '').replace(/\s+/g, '_')}_ID_Card.pdf`);
 
       toast.success('ID card downloaded successfully!', { id: toastId });
     } catch (error) {
@@ -94,15 +94,15 @@ export const IDCardGenerator: React.FC<IDCardGeneratorProps> = ({ data }) => {
               </div>
               <div className="flex justify-center mb-4">
                 <img
-                  src={data.student_photo_url || ''}
+                  src={(typeof data.studentPhoto === 'string' ? data.studentPhoto : '') || ''}
                   alt="Student"
                   className="w-32 h-40 object-cover rounded-md border-4 border-blue-200"
                   onError={(e) => renderPlaceholder(e, 'Student')}
                 />
               </div>
               <div className="text-center space-y-1">
-                <h3 className="text-lg font-bold">{data.student_name}</h3>
-                <p>Class: {data.class_id}</p>
+                <h3 className="text-lg font-bold">{data.studentName}</h3>
+                <p>Class: {data.className} {data.section}</p>
               </div>
             </div>
           </CardContent>
@@ -114,34 +114,34 @@ export const IDCardGenerator: React.FC<IDCardGeneratorProps> = ({ data }) => {
             <div ref={parentCardRef} className="id-card bg-white p-4">
               <div className="text-center mb-4">
                 <h2 className="text-xl font-bold text-blue-800">Parent Card</h2>
-                <p className="text-sm">Guardian of: {data.student_name}</p>
+                <p className="text-sm">Guardian of: {data.studentName}</p>
               </div>
               <div className="flex justify-around mb-4">
                 <div className="text-center">
                   <img
-                    src={data.father_photo_url || ''}
+                    src={(typeof data.fatherPhoto === 'string' ? data.fatherPhoto : '') || ''}
                     alt="Father"
                     className="w-24 h-32 object-cover rounded-md border-4 border-blue-200"
                     onError={(e) => renderPlaceholder(e, 'Father')}
                   />
                   <p className="mt-2 font-semibold">Father</p>
-                  <p>{data.father_name}</p>
+                  <p>{data.fatherName}</p>
                 </div>
                 <div className="text-center">
                   <img
-                    src={data.mother_photo_url || ''}
+                    src={(typeof data.motherPhoto === 'string' ? data.motherPhoto : '') || ''}
                     alt="Mother"
                     className="w-24 h-32 object-cover rounded-md border-4 border-blue-200"
                     onError={(e) => renderPlaceholder(e, 'Mother')}
                   />
                   <p className="mt-2 font-semibold">Mother</p>
-                  <p>{data.mother_name}</p>
+                  <p>{data.motherName}</p>
                 </div>
               </div>
               <div className="space-y-1 text-sm">
                 <p><strong>Address:</strong> {data.address}</p>
-                <p><strong>Father's Mobile:</strong> {data.father_mobile}</p>
-                <p><strong>Mother's Mobile:</strong> {data.mother_mobile}</p>
+                <p><strong>Father's Mobile:</strong> {data.fatherMobile}</p>
+                <p><strong>Mother's Mobile:</strong> {data.motherMobile}</p>
               </div>
             </div>
           </CardContent>

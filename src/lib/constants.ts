@@ -113,7 +113,7 @@ export const PUBLIC_ROUTES = [
   '/homework/:id',
   '/classwork/:id',
   '/admission-enquiry',
-  '/id-card',
+  '/id-card/new',
   '/id-card/lookup',
   '/share/homework/:token',
   '/share/classwork/:token',
@@ -121,7 +121,8 @@ export const PUBLIC_ROUTES = [
   '/date-sheet',
   '/copy-request',
   '/school-feedback',
-  '/timetable'
+  '/timetable',
+  '/voice-assistant'
 ] as const;
 
 

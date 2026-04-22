@@ -86,6 +86,7 @@ const SyllabusPage = lazy(() => import('./pages/Syllabus'));
 const SyllabusDetailPage = lazy(() => import('./pages/SyllabusDetail'));
 const ClassWorkbookPage = lazy(() => import('./pages/ClassWorkbook'));
 const TimetablePage = lazy(() => import('./pages/Timetable'));
+const VoiceAssistant = lazy(() => import('./pages/VoiceAssistant'));
 
 // Private route component
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -122,10 +123,11 @@ function AppRoutes() {
         <Route path="/register" element={<Register />} />
         <Route path="/pwa-test" element={<PwaTest />} />
         <Route path="/whatsapp-test" element={<WhatsAppTest />} />
-        <Route path="/id-card" element={<IDCardView />} />
+        <Route path="/id-card" element={<PrivateRoute><IDCardView /></PrivateRoute>} />
         <Route path="/id-card/new" element={<IDCardForm />} />
         <Route path="/id-card/lookup" element={<PublicIDCardLookup />} />
-        <Route path="/id-cards" element={<IDCardDetails />} />
+        <Route path="/voice-assistant" element={<VoiceAssistant />} />
+        <Route path="/id-cards" element={<PrivateRoute><IDCardDetails /></PrivateRoute>} />
         <Route path="/test-interactive-assignment" element={<TestInteractiveAssignment />} />
         <Route path="/konva-test" element={<KonvaTestPage />} />
         <Route path="/unauthorized" element={<Unauthorized />} />

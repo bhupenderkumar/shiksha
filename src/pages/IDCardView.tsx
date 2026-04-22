@@ -27,7 +27,7 @@ const IDCardView: React.FC = () => {
 
       try {
         setLoading(true);
-        const data = await idCardService.getByStudentId(studentId);
+        const data = await idCardService.getIDCardById(studentId);
 
         if (!data) {
           setError('ID card not found for the specified student.');

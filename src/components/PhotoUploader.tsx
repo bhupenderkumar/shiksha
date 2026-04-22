@@ -1,8 +1,9 @@
 import React, { useState, useRef, ChangeEvent } from 'react';
 import { Button } from '@/components/ui/button';
-import { Camera, Upload, RefreshCw } from 'lucide-react';
+import { Camera, Upload, RefreshCw, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { PhotoType } from '@/types/idCard';
+import { verifyIDCardPhoto, PhotoVerificationResult } from '@/services/groqService';
 
 interface PhotoUploaderProps {
   onPhotoChange: (file: File | null) => void;
@@ -17,10 +18,37 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
 }) => {
   const [preview, setPreview] = useState<string | null>(initialPhoto || null);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [verification, setVerification] = useState<PhotoVerificationResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  const runVerification = async (file: File) => {
+    setVerifying(true);
+    setVerification(null);
+    try {
+      const reader = new FileReader();
+      const base64 = await new Promise<string>((resolve) => {
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(',')[1]); // Remove data:image/...;base64, prefix
+        };
+        reader.readAsDataURL(file);
+      });
+      const result = await verifyIDCardPhoto(base64, photoType);
+      setVerification(result);
+      if (!result.isValid) {
+        toast.error(`Photo issue: ${result.message}`);
+      }
+    } catch {
+      // Don't block on verification failure
+      setVerification({ isValid: true, message: 'Verification skipped.', issues: [] });
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   // Compress image function
   const compressImage = (file: File, maxWidth = 800, quality = 0.7): Promise<File> => {
@@ -105,6 +133,7 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
       reader.onload = () => {
         setPreview(reader.result as string);
         onPhotoChange(compressedFile);
+        runVerification(compressedFile);
       };
       reader.readAsDataURL(compressedFile);
     } catch (error) {
@@ -114,6 +143,7 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
       reader.onload = () => {
         setPreview(reader.result as string);
         onPhotoChange(file);
+        runVerification(file);
       };
       reader.readAsDataURL(file);
     }
@@ -181,6 +211,7 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
               const imageUrl = URL.createObjectURL(compressedFile);
               setPreview(imageUrl);
               onPhotoChange(compressedFile);
+              runVerification(compressedFile);
               
               // Stop camera
               stopCamera();
@@ -191,6 +222,7 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
               const imageUrl = URL.createObjectURL(blob);
               setPreview(imageUrl);
               onPhotoChange(file);
+              runVerification(file);
               stopCamera();
             }
           }
@@ -201,6 +233,8 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
 
   const handleRetake = () => {
     setPreview(null);
+    setVerification(null);
+    setVerifying(false);
     onPhotoChange(null);
   };
 
@@ -319,6 +353,32 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
               style={{ maxHeight: '200px' }} /* Limit height on mobile */
             />
           </div>
+          {/* Photo verification status */}
+          {verifying && (
+            <div className="flex items-center gap-2 text-xs text-blue-600 justify-center">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Verifying photo...
+            </div>
+          )}
+          {verification && !verifying && (
+            <div className={`flex items-start gap-2 text-xs p-2 rounded-md ${verification.isValid ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>
+              {verification.isValid ? (
+                <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              ) : (
+                <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              )}
+              <div>
+                <p className="font-medium">{verification.message}</p>
+                {verification.issues.length > 0 && (
+                  <ul className="list-disc pl-4 mt-1">
+                    {verification.issues.map((issue, i) => (
+                      <li key={i}>{issue}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          )}
           <div className="flex justify-center mt-1">
             <Button
               type="button"

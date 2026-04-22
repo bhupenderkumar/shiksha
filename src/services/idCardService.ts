@@ -25,8 +25,17 @@ const validateFile = (file: File) => {
     throw new Error('File size too large. Maximum size is 4MB.');
   }
 };
+const getBatchYear = (): string => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth(); // 0-indexed, March = 2
+  // Academic year starts in April: Apr 2026 → Mar 2027 = "2026-27"
+  const startYear = month >= 3 ? year : year - 1;
+  return `${startYear}-${String(startYear + 1).slice(-2)}`;
+};
+
 const getPhotoPath = (idCardId: string, photoType: PhotoType) => {
-  return `id-cards/${idCardId}/${photoType}`;
+  return `id-cards/${getBatchYear()}/${idCardId}/${photoType}`;
 };
 
 // Helper function to check for duplicate ID card entries
@@ -723,21 +732,12 @@ export const idCardService = {
 
       if (uploadError) throw uploadError;
 
-      // Get a signed URL that will work for public access
-      const { data } = await supabase.storage
+      // Use public URL (bucket is public — signed URLs expire after 7 days)
+      const { data } = supabase.storage
         .from(FILE_CONFIG.BUCKET)
-        .createSignedUrl(filePath, 60 * 60 * 24 * 7); // 7 days expiry
+        .getPublicUrl(filePath);
 
-      // If signed URL fails, fall back to public URL
-      if (!data?.signedUrl) {
-        const publicUrlData = supabase.storage
-          .from(FILE_CONFIG.BUCKET)
-          .getPublicUrl(filePath);
-
-        return publicUrlData.data.publicUrl;
-      }
-
-      return data.signedUrl;
+      return data.publicUrl;
     } catch (error) {
       console.error('Error uploading photo:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to upload photo');
