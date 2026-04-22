@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { SCHOOL_INFO } from '@/lib/constants';
-import { UserPlus, RefreshCw, FileText } from 'lucide-react';
+import { UserPlus, FileText } from 'lucide-react';
 
 export function maskValue(value: string | null | undefined, visibleChars = 3): string {
   if (!value) return '••••';
@@ -69,15 +69,15 @@ const PublicIDCardLookup: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* New Student */}
+        {/* Fill Form — for all parents */}
         <Card className="border-green-200 shadow-md hover:shadow-lg transition-shadow">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2 text-green-800">
-              <UserPlus className="h-5 w-5" />
-              New Student
+              <FileText className="h-5 w-5" />
+              Student ID Card Form
             </CardTitle>
             <CardDescription className="text-xs">
-              First time? Fill the form to create your child's ID card.
+              Whether your child is <strong>new</strong> or <strong>already enrolled</strong>, please fill this form with the latest details. Our team will take care of the rest.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -85,31 +85,8 @@ const PublicIDCardLookup: React.FC = () => {
               className="w-full gap-2"
               onClick={() => navigate('/id-card/new')}
             >
-              <FileText className="h-4 w-4" />
+              <UserPlus className="h-4 w-4" />
               Fill ID Card Form
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Existing Student - Update */}
-        <Card className="border-amber-200 shadow-md hover:shadow-lg transition-shadow">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2 text-amber-800">
-              <RefreshCw className="h-5 w-5" />
-              Existing Student — Update Details
-            </CardTitle>
-            <CardDescription className="text-xs">
-              Already submitted before? Fill the form again with your <strong>updated</strong> class, address, or other changes. We will merge it with your old record.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              variant="outline"
-              className="w-full gap-2 border-amber-300 text-amber-800 hover:bg-amber-50"
-              onClick={() => navigate('/id-card/new')}
-            >
-              <FileText className="h-4 w-4" />
-              Update ID Card Details
             </Button>
           </CardContent>
         </Card>
