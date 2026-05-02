@@ -385,10 +385,14 @@ const DateSheet: React.FC = () => {
       : CLASS_OPTIONS.filter((c) => c.value === selectedClass);
 
   const handleShare = async () => {
+    // Use the static UT-1 share URL so WhatsApp / Facebook / Twitter
+    // pick up the rich Open Graph preview (image + title + description).
+    const shareUrl =
+      window.location.origin + '/ut1-date-sheet.html';
     const shareData = {
       title: `${SCHOOL_INFO.name} - Unit Test 1 Date Sheet`,
       text: `Check out the Unit Test 1 examination schedule for ${SCHOOL_INFO.name}`,
-      url: window.location.href,
+      url: shareUrl,
     };
 
     if (navigator.share) {
@@ -401,7 +405,7 @@ const DateSheet: React.FC = () => {
         }
       }
     } else {
-      navigator.clipboard.writeText(window.location.href);
+      navigator.clipboard.writeText(shareUrl);
       toast.success('Link copied to clipboard!');
     }
   };

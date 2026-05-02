@@ -216,7 +216,9 @@ export function HeroSection() {
               📝 Final Exam Date Sheet
             </Link>
             <Link
-              to="/date-sheet"
+              to="/ut1-date-sheet.html"
+              target="_self"
+              reloadDocument
               className="relative inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs sm:text-sm font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.05] ring-2 ring-orange-200 ring-offset-1"
             >
               <span className="absolute -top-1 -right-1 flex h-3 w-3">
