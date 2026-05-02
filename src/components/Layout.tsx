@@ -78,13 +78,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { id: 'section-academics', label: 'Academics', isSection: true },
     { id: 2, icon: Users, label: 'Students', path: ROUTES.STUDENTS, role: 'teacher' },
     { id: 21, icon: GraduationCap, label: 'Subjects', path: '/subjects', role: 'teacher' },
-    { id: 3, icon: BookOpen, label: 'Homework', path: ROUTES.HOMEWORK },
-    { id: 4, icon: BookOpen, label: 'Classwork', path: ROUTES.CLASSWORK },
-    { id: 32, icon: BookOpen, label: 'Class Workbook', path: ROUTES.CLASS_WORKBOOK },
+    { id: 3, icon: BookOpen, label: 'Homework', path: ROUTES.HOMEWORK, role: 'teacher' },
+    { id: 4, icon: BookOpen, label: 'Classwork', path: ROUTES.CLASSWORK, role: 'teacher' },
+    { id: 32, icon: BookOpen, label: 'Class Workbook', path: ROUTES.CLASS_WORKBOOK, role: 'teacher' },
     { id: 13, icon: Puzzle, label: 'Interactive Tasks', path: ROUTES.INTERACTIVE_ASSIGNMENTS },
-    { id: 5, icon: Calendar, label: 'Attendance', path: ROUTES.ATTENDANCE },
+    { id: 5, icon: Calendar, label: 'Attendance', path: ROUTES.ATTENDANCE, role: 'teacher' },
     { id: 33, icon: Clock, label: 'Timetable', path: ROUTES.TIMETABLE },
-    { id: 37, icon: FileText, label: 'Date Sheet', path: '/date-sheet' },
+    { id: 37, icon: FileText, label: 'UT-1 Date Sheet', path: '/date-sheet' },
 
     // Teaching Tools
     { id: 'section-teaching', label: 'Teaching Tools', isSection: true, role: 'teacher' },
@@ -127,7 +127,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { id: 10, icon: Users, label: 'Profile', path: '/profile' },
     { id: 11, icon: IdCard, label: 'ID Card', path: '/id-card' },
     { id: 12, icon: IdCard, label: 'ID Card Details', path: '/idcarddetails', role: 'admin' },
-    { id: 19, icon: IdCard, label: 'All ID Cards', path: '/id-cards', role: 'admin' },
+    { id: 19, icon: IdCard, label: 'All ID Cards', path: '/id-cards', role: 'teacher' },
     { id: 25, icon: Cake, label: 'Birthdays', path: '/birthdays' },
   ];
 
@@ -210,6 +210,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                     <span className="text-sm font-medium text-primary">
                       {user.email?.[0].toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="hidden sm:flex flex-col leading-tight">
+                    <span className="text-xs font-medium text-foreground truncate max-w-[120px]">
+                      {profile?.full_name || user.email?.split('@')[0]}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {profile?.role?.charAt(0).toUpperCase()}{profile?.role?.slice(1).toLowerCase()}
+                      {profile?.className && ` · ${profile.className}`}
                     </span>
                   </div>
                 </div>

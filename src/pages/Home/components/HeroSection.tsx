@@ -215,6 +215,16 @@ export function HeroSection() {
             >
               📝 Final Exam Date Sheet
             </Link>
+            <Link
+              to="/date-sheet"
+              className="relative inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs sm:text-sm font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.05] ring-2 ring-orange-200 ring-offset-1"
+            >
+              <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-300"></span>
+              </span>
+              📢 UT-1 Date Sheet (May 5–13, 2026) — New!
+            </Link>
             <a
               href="/promotion-fee-2026-27.html"
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-green-50 border-2 border-green-300 text-green-700 text-xs sm:text-sm font-semibold hover:bg-green-100 hover:border-green-400 transition-all duration-200 hover:scale-[1.03] ring-2 ring-green-200 ring-offset-1"
