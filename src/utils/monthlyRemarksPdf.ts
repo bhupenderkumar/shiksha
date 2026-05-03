@@ -15,7 +15,6 @@ import type {
 
 interface SentimentInfo {
   label: string;
-  emoji: string;
 }
 
 function classify(
@@ -26,11 +25,11 @@ function classify(
 ): SentimentInfo {
   const text = `${remarks ?? ''} ${parent_message ?? ''}`.toLowerCase();
   const ratio = total && total > 0 && attendance != null ? attendance / total : null;
-  if (/excellent|wonderful|very good|perfect/.test(text)) return { label: 'Excellent', emoji: '★' };
-  if (ratio != null && ratio < 0.5) return { label: 'Needs Care', emoji: '♥' };
-  if (/cries|late|difficulty|trouble|need improvement|still building|low/i.test(text)) return { label: 'Needs Care', emoji: '♥' };
-  if (/slowly|starting to|making progress|settling|improving/.test(text)) return { label: 'Improving', emoji: '✦' };
-  return { label: 'Doing Well', emoji: '✓' };
+  if (/excellent|wonderful|very good|perfect/.test(text)) return { label: 'Excellent' };
+  if (ratio != null && ratio < 0.5) return { label: 'Needs Care' };
+  if (/cries|late|difficulty|trouble|need improvement|still building|low/i.test(text)) return { label: 'Needs Care' };
+  if (/slowly|starting to|making progress|settling|improving/.test(text)) return { label: 'Improving' };
+  return { label: 'Doing Well' };
 }
 
 const COLORS = {
@@ -130,19 +129,32 @@ export async function buildMonthlyRemarksPdf(
   cursorY += 18;
 
   // ─── Per-student detail blocks via autoTable (multi-row text) ─────────
+  // We build a parallel meta[] array (roll/days line) and render it manually
+  // in didDrawCell so it appears as a smaller, lighter sub-line under the name.
+  const meta: string[] = reg.entries.map((e) => {
+    const parts: string[] = [];
+    if (e.roll_no) parts.push(`Roll ${e.roll_no}`);
+    if (e.attendance_days != null) {
+      parts.push(
+        total != null
+          ? `Days ${e.attendance_days}/${total}`
+          : `Days ${e.attendance_days}`,
+      );
+    }
+    return parts.join('   ·   ');
+  });
+
   const body = reg.entries.map((e: MonthlyRemarksEntry) => {
     const sent = classify(e.remarks, e.parent_message, e.attendance_days, total);
+    // Two-line student cell — first line bold (name), second line empty space
+    // that we fill manually in didDrawCell with the meta string in a lighter style.
+    const studentCell = `${e.serial_no}.  ${e.student_name}\n `;
     return [
-      String(e.serial_no),
-      `${e.student_name}\n` +
-        (e.roll_no ? `Roll ${e.roll_no}` : '') +
-        (e.attendance_days != null && total != null
-          ? `${e.roll_no ? '   ·   ' : ''}Days: ${e.attendance_days}/${total}`
-          : ''),
+      studentCell,
       e.remarks ?? '',
       e.parent_message ?? '—',
       e.original_remark ?? '—',
-      `${sent.emoji} ${sent.label}`,
+      sent.label,
     ];
   });
 
@@ -151,7 +163,6 @@ export async function buildMonthlyRemarksPdf(
     margin: { left: margin, right: margin, top: 60 },
     head: [
       [
-        '#',
         'Student',
         "Teacher's Remarks",
         'Message for Parents',
@@ -177,27 +188,55 @@ export async function buildMonthlyRemarksPdf(
       halign: 'left',
     },
     columnStyles: {
-      0: { cellWidth: 22, halign: 'center', fontStyle: 'bold' },
-      1: { cellWidth: 90, fontStyle: 'normal' },
-      2: { cellWidth: 130 },
-      3: { cellWidth: 130, fillColor: COLORS.blueBg, textColor: COLORS.blue },
-      4: { cellWidth: 90, fillColor: COLORS.amberBg, textColor: COLORS.amber, fontStyle: 'italic' },
-      5: { cellWidth: 60, halign: 'center' },
+      0: { cellWidth: 110, fontStyle: 'bold' },
+      1: { cellWidth: 130 },
+      2: { cellWidth: 130, fillColor: COLORS.blueBg, textColor: COLORS.blue },
+      3: { cellWidth: 90, fillColor: COLORS.amberBg, textColor: COLORS.amber, fontStyle: 'italic' },
+      4: { cellWidth: 62, halign: 'center' },
     },
     didParseCell: (data) => {
       if (data.section !== 'body') return;
-      // Bold the student-name first line (column 1)
-      if (data.column.index === 1 && Array.isArray(data.cell.text)) {
-        // first line is student name → keep default; subsequent lines are smaller
-      }
-      // Colour Status cell by sentiment label
-      if (data.column.index === 5) {
-        const txt = Array.isArray(data.cell.text) ? data.cell.text.join(' ') : String(data.cell.text);
-        if (txt.includes('Excellent')) data.cell.styles.textColor = COLORS.gold;
-        else if (txt.includes('Doing Well')) data.cell.styles.textColor = COLORS.green;
-        else if (txt.includes('Improving')) data.cell.styles.textColor = COLORS.blue;
-        else if (txt.includes('Needs Care')) data.cell.styles.textColor = COLORS.rose;
+      if (data.column.index === 0) {
         data.cell.styles.fontStyle = 'bold';
+        data.cell.styles.textColor = COLORS.slate800;
+      }
+      // Hide raw status text — we'll draw a colored chip in didDrawCell.
+      if (data.column.index === 4) {
+        data.cell.text = [''];
+      }
+    },
+    didDrawCell: (data) => {
+      if (data.section !== 'body') return;
+
+      // Render meta line (Roll · Days) manually in light slate beneath the name.
+      if (data.column.index === 0) {
+        const m = meta[data.row.index];
+        if (m) {
+          const x = data.cell.x + 6;
+          const y = data.cell.y + 6 + 11 + 11; // padding + name line + meta baseline
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8);
+          doc.setTextColor(...COLORS.slate);
+          doc.text(m, x, y);
+        }
+      }
+
+      // Colored status chip in the Status column.
+      if (data.column.index === 4) {
+        const label = body[data.row.index]?.[4] ?? '';
+        const color = sentimentColor(String(label));
+        const chipW = Math.min(54, data.cell.width - 8);
+        const chipH = 14;
+        const cx = data.cell.x + (data.cell.width - chipW) / 2;
+        const cy = data.cell.y + (data.cell.height - chipH) / 2;
+        doc.setFillColor(...color);
+        doc.roundedRect(cx, cy, chipW, chipH, 3, 3, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor(...COLORS.white);
+        doc.text(String(label).toUpperCase(), cx + chipW / 2, cy + chipH / 2 + 2.5, {
+          align: 'center',
+        });
       }
     },
     didDrawPage: () => {

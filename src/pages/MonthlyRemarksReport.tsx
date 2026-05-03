@@ -675,20 +675,9 @@ const MonthlyRemarksReport: React.FC = () => {
                   <table className="w-full">
                     <thead className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
                       <tr>
-                        <th className="text-center w-12 py-3.5 px-3 text-[11px] uppercase tracking-wider font-medium">
-                          #
-                        </th>
-                        <th className="text-left w-56 py-3.5 px-4 text-[11px] uppercase tracking-wider font-medium">
+                        <th className="text-left w-72 py-3.5 px-4 text-[11px] uppercase tracking-wider font-medium">
                           <span className="inline-flex items-center gap-1.5">
                             <User2 className="w-3 h-3" /> Student
-                          </span>
-                        </th>
-                        <th className="text-center w-20 py-3.5 px-3 text-[11px] uppercase tracking-wider font-medium">
-                          Roll
-                        </th>
-                        <th className="text-center w-28 py-3.5 px-3 text-[11px] uppercase tracking-wider font-medium">
-                          <span className="inline-flex items-center gap-1.5">
-                            <CalendarCheck2 className="w-3 h-3" /> Days
                           </span>
                         </th>
                         <th className="text-left py-3.5 px-4 text-[11px] uppercase tracking-wider font-medium min-w-[260px]">
@@ -714,7 +703,7 @@ const MonthlyRemarksReport: React.FC = () => {
                     <tbody>
                       {data.entries.length === 0 && (
                         <tr>
-                          <td colSpan={8} className="text-center py-10 text-slate-500">
+                          <td colSpan={5} className="text-center py-10 text-slate-500">
                             No entries yet for this register.
                           </td>
                         </tr>
@@ -729,36 +718,36 @@ const MonthlyRemarksReport: React.FC = () => {
                           transition={{ duration: 0.3, delay: Math.min(i * 0.03, 0.5) }}
                           className={cn('border-b border-slate-100 last:border-b-0 transition-colors hover:brightness-95', p.rowTint)}
                         >
-                          <td className="py-4 px-3 text-center text-sm text-slate-500 font-semibold align-top">
-                            {e.serial_no}
-                          </td>
                           <td className="py-4 px-4 align-top">
                             <div className="flex items-center gap-3">
-                              <div className={cn('w-9 h-9 rounded-full bg-gradient-to-br text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0', p.avatar)}>
+                              <div className={cn('w-10 h-10 rounded-full bg-gradient-to-br text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0', p.avatar)}>
                                 {e.student_name.trim().charAt(0).toUpperCase()}
                               </div>
-                              <div className="font-semibold text-slate-900 text-[14px]">
-                                {e.student_name}
+                              <div className="min-w-0">
+                                <div className="font-semibold text-slate-900 text-[14px] leading-tight truncate">
+                                  {e.student_name}
+                                </div>
+                                <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
+                                  <span className="inline-flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-600 font-medium px-1.5 py-0.5 rounded">
+                                    #{e.serial_no}
+                                  </span>
+                                  {e.roll_no && (
+                                    <span className="inline-flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-700 font-semibold px-1.5 py-0.5 rounded">
+                                      Roll {e.roll_no}
+                                    </span>
+                                  )}
+                                  {e.attendance_days != null && (
+                                    <span className={cn('inline-flex items-center gap-1 font-semibold px-1.5 py-0.5 rounded border', p.daysBg, p.daysText, p.daysBorder)}>
+                                      <CalendarCheck2 className="w-2.5 h-2.5" />
+                                      {e.attendance_days}
+                                      {data.total_present_days != null && (
+                                        <span className="opacity-70">/{data.total_present_days}</span>
+                                      )}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </td>
-                          <td className="py-4 px-3 text-center align-top">
-                            {e.roll_no ? (
-                              <span className="inline-block bg-slate-100 border border-slate-200 text-slate-700 font-semibold text-xs px-2.5 py-1 rounded-md min-w-[36px]">
-                                {e.roll_no}
-                              </span>
-                            ) : (
-                              <span className="text-slate-300">—</span>
-                            )}
-                          </td>
-                          <td className="py-4 px-3 text-center align-top">
-                            {e.attendance_days != null ? (
-                              <span className={cn('inline-block font-semibold text-xs px-3 py-1 rounded-full border', p.daysBg, p.daysText, p.daysBorder)}>
-                                {e.attendance_days}
-                              </span>
-                            ) : (
-                              <span className="text-slate-300">—</span>
-                            )}
                           </td>
                           <td className="py-4 px-4 text-sm text-slate-700 leading-relaxed align-top">
                             {e.remarks}
