@@ -588,6 +588,82 @@ const AdminMonthlyRemarks: React.FC = () => {
         }
       />
 
+      {/* Aggregate view stats */}
+      {(() => {
+        const ids = new Set(filtered.map((r) => r.id));
+        let total = 0;
+        let last7d = 0;
+        const uniqueClients = new Set<string>();
+        let publishedCount = 0;
+        filtered.forEach((r) => {
+          if (r.is_published) publishedCount += 1;
+          const v = viewStats[r.id];
+          if (v) {
+            total += v.total_views;
+            last7d += v.views_last_7d;
+          }
+        });
+        // unique clients across the filtered set: approximate from per-register unique sums
+        // (over-counts if same client viewed multiple registers; acceptable as "engagements")
+        filtered.forEach((r) => {
+          const v = viewStats[r.id];
+          if (v) for (let i = 0; i < v.unique_clients; i++) uniqueClients.add(`${r.id}-${i}`);
+        });
+        const _ = ids; // noop
+        return (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+            <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100">
+              <CardContent className="pt-5 pb-4">
+                <div className="text-[11px] uppercase tracking-wider text-blue-700 font-semibold mb-1">
+                  Total Views
+                </div>
+                <div className="text-2xl font-bold text-blue-900">👁 {total}</div>
+                <div className="text-[11px] text-blue-700/70 mt-1">
+                  across {filtered.length} register{filtered.length === 1 ? '' : 's'}
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-100">
+              <CardContent className="pt-5 pb-4">
+                <div className="text-[11px] uppercase tracking-wider text-emerald-700 font-semibold mb-1">
+                  Unique Devices
+                </div>
+                <div className="text-2xl font-bold text-emerald-900">
+                  {uniqueClients.size}
+                </div>
+                <div className="text-[11px] text-emerald-700/70 mt-1">
+                  distinct viewers (engagements)
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-100">
+              <CardContent className="pt-5 pb-4">
+                <div className="text-[11px] uppercase tracking-wider text-amber-700 font-semibold mb-1">
+                  Last 7 Days
+                </div>
+                <div className="text-2xl font-bold text-amber-900">{last7d}</div>
+                <div className="text-[11px] text-amber-700/70 mt-1">
+                  recent parent visits
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-gradient-to-br from-fuchsia-50 to-pink-50 border-fuchsia-100">
+              <CardContent className="pt-5 pb-4">
+                <div className="text-[11px] uppercase tracking-wider text-fuchsia-700 font-semibold mb-1">
+                  Published
+                </div>
+                <div className="text-2xl font-bold text-fuchsia-900">
+                  {publishedCount} / {filtered.length}
+                </div>
+                <div className="text-[11px] text-fuchsia-700/70 mt-1">
+                  reports live for parents
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+      })()}
+
       <Card className="mb-6">
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -754,6 +830,38 @@ const AdminMonthlyRemarks: React.FC = () => {
                       </TableCell>
                     </motion.tr>
                   ))}
+                  {filtered.length > 0 && (() => {
+                    const totalStudents = filtered.reduce((s, r) => s + r.entry_count, 0);
+                    const totalViews = filtered.reduce(
+                      (s, r) => s + (viewStats[r.id]?.total_views ?? 0),
+                      0
+                    );
+                    const total7d = filtered.reduce(
+                      (s, r) => s + (viewStats[r.id]?.views_last_7d ?? 0),
+                      0
+                    );
+                    return (
+                      <TableRow className="bg-slate-50 hover:bg-slate-50 font-semibold">
+                        <TableCell colSpan={4} className="text-right text-slate-700">
+                          Total
+                        </TableCell>
+                        <TableCell className="text-center text-slate-900">
+                          {totalStudents}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="inline-flex flex-col items-center leading-tight">
+                            <span className="text-sm font-bold text-blue-700">
+                              👁 {totalViews}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground font-normal">
+                              {total7d} in last 7d
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell colSpan={2} />
+                      </TableRow>
+                    );
+                  })()}
                 </TableBody>
               </Table>
             </div>
