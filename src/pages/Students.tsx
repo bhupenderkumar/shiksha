@@ -191,6 +191,15 @@ const StudentForm = ({ handleSubmit, formData, setFormData, loading, editingStud
 export default function StudentsPage() {
   const { profile, isAdminOrTeacher, loading: profileLoading } = useProfileAccess();
   const navigate = useNavigate();
+
+  // Redirect non-admin/teacher users
+  useEffect(() => {
+    if (!profileLoading && !isAdminOrTeacher) {
+      toast.error('You do not have permission to access this page');
+      navigate('/dashboard');
+    }
+  }, [profileLoading, isAdminOrTeacher, navigate]);
+
   const [students, setStudents] = useState<Student[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(false);

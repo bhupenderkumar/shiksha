@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth-provider';
 import { supabase } from '../lib/api-client';
+import { SCHEMA } from '../lib/constants';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -30,7 +31,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     const checkRole = async () => {
       try {
         const { data, error } = await supabase
-          .from('profiles')
+          .schema(SCHEMA)
+          .from('Profile')
           .select('role')
           .eq('user_id', user.id)
           .single();

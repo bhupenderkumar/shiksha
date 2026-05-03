@@ -44,6 +44,7 @@ export interface UserProfile extends User {
   role: UserRole;
   full_name?: string;
   avatar_url?: string;
+  className?: string;
 }
 
 /**
@@ -117,15 +118,17 @@ class ProfileService {
         const { data: studentData } = await supabase
           .schema(SCHEMA)
           .from(STUDENT_TABLE)
-          .select('name, parentEmail')
+          .select('name, parentEmail, class:Class(name)')
           .eq('parentEmail', sanitizedEmail);
 
         if (studentData && studentData.length > 0) {
+          const classInfo = (studentData[0] as any).class;
           const userProfile: UserProfile = {
             ...user,
             role: USER_ROLES.STUDENT,
             full_name: studentData[0].name,
             avatar_url: user.user_metadata?.avatar_url,
+            className: classInfo?.name,
           };
           this.cache.set(userId, userProfile);
           return userProfile;

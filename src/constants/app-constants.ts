@@ -46,6 +46,8 @@ export const ROUTES = {
   CLASS_WORKBOOK: '/class-workbook',
   TIMETABLE: '/timetable',
   NOTIFICATIONS: '/notifications',
+  MONTHLY_REMARKS: '/monthly-remarks',
+  ADMIN_MONTHLY_REMARKS: '/admin/monthly-remarks',
 } as const;
 
 export const API_ENDPOINTS = {

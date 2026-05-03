@@ -116,17 +116,36 @@ const NotificationsPage = () => {
   const classId = user?.classId; // Assuming user has classId property
   const [deleteDialog, setDeleteDialog] = useState({ open: false, notificationId: null });
 
+  // Deduplicate notifications that have the same title+message+type
+  // (from old per-student creation). Keeps the newest one from each group.
+  const deduplicateNotifications = (list: Notification[]): Notification[] => {
+    const seen = new Map<string, Notification>();
+    for (const n of list) {
+      const key = `${n.title}||${n.message}||${n.type}`;
+      const existing = seen.get(key);
+      if (!existing || new Date(n.createdAt || 0) > new Date(existing.createdAt || 0)) {
+        seen.set(key, n);
+      }
+    }
+    return Array.from(seen.values()).sort(
+      (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+    );
+  };
+
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
         setLoading(true);
         let fetchedNotifications: Notification[];
-        if (classId) {
+        if (isAdminOrTeacher) {
+          // Teachers/admins see all notifications
+          fetchedNotifications = await notificationService.getNotifications();
+        } else if (classId) {
           fetchedNotifications = await notificationService.getNotificationsByClassId(classId);
         } else {
           fetchedNotifications = await notificationService.getNotifications();
         }
-        setNotifications(fetchedNotifications);
+        setNotifications(deduplicateNotifications(fetchedNotifications));
       } catch (error) {
         console.error('Error fetching notifications:', error);
         toast.error('Failed to load notifications');
@@ -137,7 +156,7 @@ const NotificationsPage = () => {
     fetchNotifications();
     // Clear app badge when viewing notifications
     clearNotificationBadge();
-  }, [classId]);
+  }, [classId, isAdminOrTeacher]);
 
   useEffect(() => {
     const fetchClassesAndStudents = async () => {
@@ -146,6 +165,8 @@ const NotificationsPage = () => {
         setClasses(classData);
         const studentData = await studentService.findMany();
         setStudents(studentData);
+        // Auto-select all students by default (matches "All Classes" default)
+        setSelectedStudents(studentData.map((s: any) => s.id));
       } catch (error) {
         console.error('Error fetching classes and students:', error);
         toast.error('Failed to load classes and students');
@@ -156,31 +177,57 @@ const NotificationsPage = () => {
   }, []);
 
   const handleCreate = async () => {
-    if (selectedStudents.length === 0) {
-      toast.error('Please select at least one student.');
+    if (!newNotification.title.trim() || !newNotification.message.trim()) {
+      toast.error('Please enter title and message.');
       return;
     }
 
-    const createdNotifications = await Promise.all(
-      selectedStudents.map(async (studentId) => {
-        return await notificationService.createNotification({
-          ...newNotification,
-          studentId, // Use single studentId for each notification
-          isRead: false,
-        });
-      })
-    );
+    let success = false;
 
-    if (createdNotifications) {
-      toast.success('Notifications sent! Recipients will receive push alerts.');
+    if (newNotification.classId) {
+      // Send to a specific class
+      const result = await notificationService.createNotification({
+        title: newNotification.title,
+        message: newNotification.message,
+        type: newNotification.type,
+        classId: newNotification.classId,
+        studentId: null,
+        isRead: false,
+      });
+      success = !!result;
+    } else {
+      // Send to all classes — create one notification per class
+      const uniqueClassIds = [...new Set(classes.map((c: any) => c.id))];
+      const results = await Promise.all(
+        uniqueClassIds.map((cId) =>
+          notificationService.createNotification({
+            title: newNotification.title,
+            message: newNotification.message,
+            type: newNotification.type,
+            classId: cId,
+            studentId: null,
+            isRead: false,
+          })
+        )
+      );
+      success = results.some((r) => !!r);
+    }
+
+    if (success) {
+      toast.success('Notifications sent!');
       setNewNotification({
         title: '',
         message: '',
         type: 'GENERAL',
         classId: '',
       });
-      setSelectedStudents([]);
-      // Refresh notifications after creating new ones
+      setSelectedStudents(students.map((s: any) => s.id));
+      // Refresh notifications and switch to view tab
+      const refreshed = await notificationService.getNotifications();
+      setNotifications(deduplicateNotifications(refreshed));
+      setActiveTab('view');
+    } else {
+      toast.error('Failed to create notification.');
     }
   };
 
@@ -327,7 +374,7 @@ const NotificationsPage = () => {
                     const classStudents = students.filter((s: any) => s.classId === classId);
                     setSelectedStudents(classStudents.map((s: any) => s.id));
                   } else {
-                    setSelectedStudents([]);
+                    setSelectedStudents(students.map((s: any) => s.id));
                   }
                 }}
               >

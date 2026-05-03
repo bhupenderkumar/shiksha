@@ -14,6 +14,7 @@ import { timetableService, type TimetableEntry, type CreateTimetableEntry } from
 import { supabase } from '@/lib/api-client';
 import { SCHEMA } from '@/lib/constants';
 import { useAuth } from '@/lib/auth-provider';
+import { useProfileAccess } from '@/services/profileService';
 
 const DAYS = [
   { value: 1, label: 'Monday', short: 'Mon' },
@@ -63,7 +64,8 @@ function getSubjectColor(subjectId: string, allSubjectIds: string[]) {
 
 export default function Timetable() {
   const { user } = useAuth();
-  const isAuthenticated = !!user;
+  const { isAdminOrTeacher } = useProfileAccess();
+  const canEdit = isAdminOrTeacher;
 
   const [classes, setClasses] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
@@ -100,7 +102,7 @@ export default function Timetable() {
   useEffect(() => {
     if (selectedClass) {
       loadTimetable();
-      if (isAuthenticated) loadSubjects();
+      if (canEdit) loadSubjects();
     }
   }, [selectedClass]);
 
@@ -281,7 +283,7 @@ export default function Timetable() {
         subtitle={selectedClassName ? `${selectedClassName.name} ${selectedClassName.section || ''}`.trim() : 'Weekly schedule and periods'}
         icon={<Calendar className="text-primary-500" />}
         action={
-          isAuthenticated ? (
+          canEdit ? (
             <Button
               variant={editMode ? 'default' : 'outline'}
               onClick={() => { setEditMode(!editMode); setEditingEntryId(null); }}
@@ -367,7 +369,7 @@ export default function Timetable() {
         )}
 
         {/* Edit mode: Add period + Quick fill */}
-        {editMode && isAuthenticated && (
+        {editMode && canEdit && (
           <Card className="mb-4 border-dashed border-2">
             <CardHeader className="pb-2 pt-3">
               <div className="flex items-center justify-between">
@@ -455,10 +457,10 @@ export default function Timetable() {
         {entries.length === 0 && !loading && (
           <EmptyState
             title="No timetable set"
-            description={isAuthenticated ? 'Click Edit to configure the class schedule.' : 'Timetable has not been configured yet.'}
+            description={canEdit ? 'Click Edit to configure the class schedule.' : 'Timetable has not been configured yet.'}
             icon={<Calendar className="w-16 h-16 text-muted-foreground" />}
             action={
-              isAuthenticated ? (
+              canEdit ? (
                 <Button onClick={() => { setEditMode(true); handleQuickFill(); }} disabled={saving} size="sm">
                   ✨ Auto-Generate Timetable
                 </Button>
@@ -609,7 +611,7 @@ export default function Timetable() {
                       </div>
 
                       {/* Edit/Delete buttons */}
-                      {editMode && isAuthenticated && (
+                      {editMode && canEdit && (
                         <div className="flex gap-1 flex-shrink-0">
                           <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => startEditing(entry)}>
                             <Pencil className="w-3.5 h-3.5" />
@@ -706,7 +708,7 @@ export default function Timetable() {
                           </div>
                           <div className="flex items-center gap-1 flex-shrink-0">
                             <span className="text-xs text-muted-foreground sm:hidden">{entry.startTime}</span>
-                            {editMode && isAuthenticated && (
+                            {editMode && canEdit && (
                               <>
                                 <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => startEditing(entry)}>
                                   <Pencil className="w-3.5 h-3.5" />

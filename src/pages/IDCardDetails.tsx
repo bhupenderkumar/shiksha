@@ -57,7 +57,7 @@ import { PageHeader } from '@/components/ui/page-header';
 
 const IDCardDetails: React.FC = () => {
   const navigate = useNavigate();
-  const { profile, isAdmin, loading: profileLoading } = useProfileAccess();
+  const { profile, isAdmin, isAdminOrTeacher, loading: profileLoading } = useProfileAccess();
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
   const [downloadingExcel, setDownloadingExcel] = useState(false);
@@ -113,13 +113,13 @@ const IDCardDetails: React.FC = () => {
     fetchClasses();
   }, []);
 
-  // Check if user is admin, redirect if not
+  // Check if user is admin or teacher, redirect if not
   useEffect(() => {
-    if (!profileLoading && !isAdmin) {
+    if (!profileLoading && !isAdminOrTeacher) {
       toast.error('You do not have permission to access this page');
       navigate('/dashboard');
     }
-  }, [profileLoading, isAdmin, navigate]);
+  }, [profileLoading, isAdminOrTeacher, navigate]);
 
   // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -506,7 +506,7 @@ const IDCardDetails: React.FC = () => {
       <PageHeader
         title="ID Card Details"
         subtitle="View and manage all student ID cards"
-        icon={<CreditCard className="text-primary-500" />}
+        icon={CreditCard}
       />
       <Card>
         <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">

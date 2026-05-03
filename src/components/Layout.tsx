@@ -120,6 +120,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { id: 16, icon: ListChecks, label: 'All Parent Feedback', path: ROUTES.VIEW_ALL_PARENT_FEEDBACK, role: 'admin' },
     { id: 17, icon: MessageSquare, label: 'Search Feedback', path: ROUTES.PARENT_FEEDBACK_SEARCH, role: 'teacher' },
     { id: 18, icon: MessageCircle, label: 'Admin Feedback', path: ROUTES.ADMIN_FEEDBACK, role: 'admin' },
+    { id: 35, icon: ClipboardList, label: 'Monthly Remarks', path: ROUTES.ADMIN_MONTHLY_REMARKS, role: 'admin' },
 
     // Account
     { id: 'section-account', label: 'Account', isSection: true },

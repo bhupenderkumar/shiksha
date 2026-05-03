@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../lib/auth-provider';
+import { useNavigate } from 'react-router-dom';
+import { useProfileAccess } from '@/services/profileService';
 import { supabase } from "@/lib/api-client";
 import { SCHEMA } from "@/lib/constants";
 import { toast } from 'react-hot-toast';
@@ -39,7 +40,17 @@ interface Teacher {
 }
 
 export default function SubjectsPage() {
-  const { profile } = useAuth();
+  const { profile, isAdminOrTeacher, loading: profileLoading } = useProfileAccess();
+  const navigate = useNavigate();
+
+  // Redirect non-admin/teacher users
+  useEffect(() => {
+    if (!profileLoading && !isAdminOrTeacher) {
+      toast.error('You do not have permission to access this page');
+      navigate('/dashboard');
+    }
+  }, [profileLoading, isAdminOrTeacher, navigate]);
+
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -182,7 +193,7 @@ export default function SubjectsPage() {
         subtitle="Manage subjects and class assignments"
         icon={<Book className="text-primary-500" />}
         action={
-          (profile?.role === 'admin' || profile?.role === 'teacher') ? (
+          isAdminOrTeacher ? (
             <Button size="sm" className="text-xs sm:text-sm" onClick={() => setIsDialogOpen(true)}>
               <Plus className="w-4 h-4 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Add New Subject</span>
@@ -205,7 +216,7 @@ export default function SubjectsPage() {
                   <p className="text-sm text-muted-foreground">Teacher: {subject.teacher?.name}</p>
                 </div>
               </div>
-              {(profile?.role === 'admin' || profile?.role === 'teacher') && (
+              {isAdminOrTeacher && (
                 <div className="mt-4 flex space-x-2">
                   <Button
                     variant="outline"

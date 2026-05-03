@@ -87,6 +87,8 @@ const SyllabusDetailPage = lazy(() => import('./pages/SyllabusDetail'));
 const ClassWorkbookPage = lazy(() => import('./pages/ClassWorkbook'));
 const TimetablePage = lazy(() => import('./pages/Timetable'));
 const VoiceAssistant = lazy(() => import('./pages/VoiceAssistant'));
+const MonthlyRemarksReport = lazy(() => import('./pages/MonthlyRemarksReport'));
+const AdminMonthlyRemarks = lazy(() => import('./pages/AdminMonthlyRemarks'));
 
 // Private route component
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -167,6 +169,9 @@ function AppRoutes() {
         {/* Public Timetable - No authentication required */}
         <Route path="/timetable" element={<TimetablePage />} />
 
+        {/* Public Monthly Remarks Report - parents view via shared link */}
+        <Route path="/monthly-remarks" element={<MonthlyRemarksReport />} />
+
         {/* Protected Routes */}
         <Route path="/dashboard" element={
           <PrivateRoute>
@@ -176,32 +181,32 @@ function AppRoutes() {
           </PrivateRoute>
         } />
         <Route path="/students" element={
-          <PrivateRoute>
+          <ProtectedRoute requireAuth={true} allowedRoles={['TEACHER', 'ADMIN']}>
             <Layout>
               <Students />
             </Layout>
-          </PrivateRoute>
+          </ProtectedRoute>
         } />
         <Route path="/subjects" element={
-          <PrivateRoute>
+          <ProtectedRoute requireAuth={true} allowedRoles={['TEACHER', 'ADMIN']}>
             <Layout>
               <Subjects />
             </Layout>
-          </PrivateRoute>
+          </ProtectedRoute>
         } />
         <Route path="/homework" element={
-          <PrivateRoute>
+          <ProtectedRoute requireAuth={true} allowedRoles={['TEACHER', 'ADMIN']}>
             <Layout>
               <Homework />
             </Layout>
-          </PrivateRoute>
+          </ProtectedRoute>
         } />
         <Route path="/classwork" element={
-          <PrivateRoute>
+          <ProtectedRoute requireAuth={true} allowedRoles={['TEACHER', 'ADMIN']}>
             <Layout>
               <ClassworkComponent />
             </Layout>
-          </PrivateRoute>
+          </ProtectedRoute>
         } />
         <Route path="/student-dashboard" element={
           <PrivateRoute>
@@ -211,18 +216,18 @@ function AppRoutes() {
           </PrivateRoute>
         } />
         <Route path="/fees" element={
-          <PrivateRoute>
+          <ProtectedRoute requireAuth={true} allowedRoles={['TEACHER', 'ADMIN']}>
             <Layout>
               <Fees />
             </Layout>
-          </PrivateRoute>
+          </ProtectedRoute>
         } />
         <Route path="/attendance" element={
-          <PrivateRoute>
+          <ProtectedRoute requireAuth={true} allowedRoles={['TEACHER', 'ADMIN']}>
             <Layout>
               <AttendancePage />
             </Layout>
-          </PrivateRoute>
+          </ProtectedRoute>
         } />
         <Route path="/settings" element={
           <PrivateRoute>
@@ -246,11 +251,11 @@ function AppRoutes() {
           </PrivateRoute>
         } />
         <Route path="/feedback" element={
-          <PrivateRoute>
+          <ProtectedRoute requireAuth={true} allowedRoles={['TEACHER', 'ADMIN']}>
             <Layout>
               <Feedback />
             </Layout>
-          </PrivateRoute>
+          </ProtectedRoute>
         } />
         <Route path="/notifications" element={
           <PrivateRoute>
@@ -274,48 +279,48 @@ function AppRoutes() {
           </PrivateRoute>
         } />
         <Route path='/admission-enquiries' element={
-          <PrivateRoute>
+          <ProtectedRoute requireAuth={true} allowedRoles={['ADMIN']}>
             <Layout>
               <ViewAdmissionEnquiries />
             </Layout>
-          </PrivateRoute>
+          </ProtectedRoute>
         } />
         <Route path='/admission-queries' element={
-          <PrivateRoute>
+          <ProtectedRoute requireAuth={true} allowedRoles={['TEACHER', 'ADMIN']}>
             <Layout>
               <AdmissionQueries />
             </Layout>
-          </PrivateRoute>
+          </ProtectedRoute>
         } />
         <Route path="/view-year-end-feedback" element={
-          <PrivateRoute>
+          <ProtectedRoute requireAuth={true} allowedRoles={['ADMIN']}>
             <Layout>
               <ViewYearEndFeedback />
             </Layout>
-          </PrivateRoute>
+          </ProtectedRoute>
         } />
         <Route path="/year-end-feedback" element={
-          <PrivateRoute>
+          <ProtectedRoute requireAuth={true} allowedRoles={['TEACHER', 'ADMIN']}>
             <Layout>
               <YearEndFeedback />
             </Layout>
-          </PrivateRoute>
+          </ProtectedRoute>
         } />
         <Route path="/year-end-feedback/:id" element={
-          <PrivateRoute>
+          <ProtectedRoute requireAuth={true} allowedRoles={['TEACHER', 'ADMIN']}>
             <Layout>
               <YearEndFeedback />
             </Layout>
-          </PrivateRoute>
+          </ProtectedRoute>
         } />
 
         {/* Protected Parent Feedback Routes */}
         <Route path="/parent-feedback-list" element={
-          <PrivateRoute>
+          <ProtectedRoute requireAuth={true} allowedRoles={['ADMIN']}>
             <Layout>
               <ParentFeedbackList />
             </Layout>
-          </PrivateRoute>
+          </ProtectedRoute>
         } />
         <Route path="/parent-feedback-form" element={
           <PrivateRoute>
@@ -332,11 +337,11 @@ function AppRoutes() {
           </PrivateRoute>
         } />
         <Route path="/view-all-parent-feedback" element={
-          <PrivateRoute>
+          <ProtectedRoute requireAuth={true} allowedRoles={['ADMIN']}>
             <Layout>
               <ViewAllParentFeedback />
             </Layout>
-          </PrivateRoute>
+          </ProtectedRoute>
         } />
         <Route path="/update-parent-feedback/:id" element={
           <PrivateRoute>
@@ -346,53 +351,60 @@ function AppRoutes() {
           </PrivateRoute>
         } />
         <Route path="/admin-feedback" element={
-          <PrivateRoute>
+          <ProtectedRoute requireAuth={true} allowedRoles={['ADMIN']}>
             <Layout>
               <AdminFeedbackPage />
             </Layout>
-          </PrivateRoute>
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/monthly-remarks" element={
+          <ProtectedRoute requireAuth={true} allowedRoles={['ADMIN', 'TEACHER']}>
+            <Layout>
+              <AdminMonthlyRemarks />
+            </Layout>
+          </ProtectedRoute>
         } />
         <Route path="/admin-school-feedback" element={
-          <PrivateRoute>
+          <ProtectedRoute requireAuth={true} allowedRoles={['ADMIN']}>
             <Layout>
               <AdminSchoolFeedback />
             </Layout>
-          </PrivateRoute>
+          </ProtectedRoute>
         } />
 
         {/* Admission Test Routes */}
         <Route path="/admission-test" element={<AdmissionTest />} />
         <Route path="/admission-test-results" element={
-          <PrivateRoute>
+          <ProtectedRoute requireAuth={true} allowedRoles={['TEACHER', 'ADMIN']}>
             <Layout>
               <AdmissionTestResults />
             </Layout>
-          </PrivateRoute>
+          </ProtectedRoute>
         } />
 
         {/* Unit Test Routes */}
         <Route path="/unit-test-marks" element={
-          <PrivateRoute>
+          <ProtectedRoute requireAuth={true} allowedRoles={['TEACHER', 'ADMIN']}>
             <Layout>
               <UnitTestMarksEntry />
             </Layout>
-          </PrivateRoute>
+          </ProtectedRoute>
         } />
         <Route path="/unit-test-report" element={
-          <PrivateRoute>
+          <ProtectedRoute requireAuth={true} allowedRoles={['TEACHER', 'ADMIN']}>
             <Layout>
               <UnitTestReport />
             </Layout>
-          </PrivateRoute>
+          </ProtectedRoute>
         } />
 
         {/* Parent Submitted Feedback Routes */}
         <Route path="/parent-submitted-feedback-list" element={
-          <PrivateRoute>
+          <ProtectedRoute requireAuth={true} allowedRoles={['ADMIN']}>
             <Layout>
               <ParentSubmittedFeedbackList />
             </Layout>
-          </PrivateRoute>
+          </ProtectedRoute>
         } />
         <Route path="/parent-submitted-feedback/:id" element={
           <PrivateRoute>
@@ -403,7 +415,13 @@ function AppRoutes() {
         } />
 
         {/* Copy Request Route */}
-        <Route path="/copy-request" element={<CopyRequest />} />
+        <Route path="/copy-request" element={
+          <ProtectedRoute requireAuth={true} allowedRoles={['TEACHER', 'ADMIN']}>
+            <Layout>
+              <CopyRequest />
+            </Layout>
+          </ProtectedRoute>
+        } />
 
         {/* AI Planning Routes */}
         <Route path="/next-day-plan" element={
