@@ -51,6 +51,12 @@ const AdminMonthlyRemarks: React.FC = () => {
   const [registers, setRegisters] = useState<
     (MonthlyRemarksRegister & { entry_count: number })[]
   >([]);
+  const [viewStats, setViewStats] = useState<
+    Record<
+      string,
+      { total_views: number; unique_clients: number; last_viewed_at: string | null; views_last_7d: number }
+    >
+  >({});
   const [loading, setLoading] = useState(false);
 
   // Filters
@@ -80,8 +86,12 @@ const AdminMonthlyRemarks: React.FC = () => {
   const loadRegisters = async () => {
     setLoading(true);
     try {
-      const data = await monthlyRemarksService.listRegisterSummaries();
+      const [data, stats] = await Promise.all([
+        monthlyRemarksService.listRegisterSummaries(),
+        monthlyRemarksService.getViewStats().catch(() => ({})),
+      ]);
       setRegisters(data);
+      setViewStats(stats as any);
     } catch (e: any) {
       toast.error(e?.message ?? 'Failed to load registers');
     } finally {
@@ -654,6 +664,7 @@ const AdminMonthlyRemarks: React.FC = () => {
                     <TableHead>Year</TableHead>
                     <TableHead>Section</TableHead>
                     <TableHead className="text-center">Students</TableHead>
+                    <TableHead className="text-center">Views</TableHead>
                     <TableHead className="text-center">Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -672,6 +683,35 @@ const AdminMonthlyRemarks: React.FC = () => {
                       <TableCell>{r.academic_year}</TableCell>
                       <TableCell>{r.section ?? '—'}</TableCell>
                       <TableCell className="text-center">{r.entry_count}</TableCell>
+                      <TableCell className="text-center">
+                        {(() => {
+                          const v = viewStats[r.id];
+                          if (!v || v.total_views === 0) {
+                            return <span className="text-xs text-muted-foreground">—</span>;
+                          }
+                          const last = v.last_viewed_at
+                            ? new Date(v.last_viewed_at).toLocaleString(undefined, {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })
+                            : '';
+                          return (
+                            <div
+                              title={`${v.total_views} total · ${v.unique_clients} unique · ${v.views_last_7d} in last 7 days${last ? ' · last ' + last : ''}`}
+                              className="inline-flex flex-col items-center leading-tight"
+                            >
+                              <span className="text-sm font-semibold text-blue-700">
+                                👁 {v.total_views}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground">
+                                {v.unique_clients} unique · {v.views_last_7d} / 7d
+                              </span>
+                            </div>
+                          );
+                        })()}
+                      </TableCell>
                       <TableCell className="text-center">
                         <span
                           className={

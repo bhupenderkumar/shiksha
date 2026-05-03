@@ -3,6 +3,7 @@ import { SCHEMA } from '@/lib/constants';
 
 export const MONTHLY_REMARKS_REGISTER_TABLE = 'MonthlyRemarksRegister';
 export const MONTHLY_REMARKS_ENTRY_TABLE = 'MonthlyRemarksEntry';
+export const MONTHLY_REMARKS_VIEW_TABLE = 'MonthlyRemarksView';
 
 export const REMARKS_CLASS_OPTIONS = [
   'Pre Nursery',
@@ -274,5 +275,92 @@ export const monthlyRemarksService = {
       ...r,
       entry_count: countMap.get(r.id) ?? 0,
     }));
+  },
+
+  /** Fire-and-forget: log a public view of a register. Safe for anon. */
+  async logView(registerId: string): Promise<void> {
+    if (!registerId) return;
+    try {
+      let clientId = '';
+      if (typeof window !== 'undefined') {
+        try {
+          clientId = localStorage.getItem('mrv_cid') || '';
+          if (!clientId) {
+            clientId = (crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)) + '';
+            localStorage.setItem('mrv_cid', clientId);
+          }
+        } catch {
+          // ignore storage errors (private mode, etc.)
+        }
+      }
+      await supabase
+        .schema(SCHEMA)
+        .from(MONTHLY_REMARKS_VIEW_TABLE)
+        .insert({
+          register_id: registerId,
+          user_agent: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 400) : null,
+          referrer: typeof document !== 'undefined' ? document.referrer.slice(0, 400) : null,
+          client_id: clientId || null,
+        });
+    } catch {
+      // never throw to the caller
+    }
+  },
+
+  /** Aggregate view stats per register_id. Authenticated only. */
+  async getViewStats(): Promise<
+    Record<
+      string,
+      {
+        total_views: number;
+        unique_clients: number;
+        last_viewed_at: string | null;
+        views_last_7d: number;
+      }
+    >
+  > {
+    const { data, error } = await supabase
+      .schema(SCHEMA)
+      .from(MONTHLY_REMARKS_VIEW_TABLE)
+      .select('register_id, viewed_at, client_id')
+      .order('viewed_at', { ascending: false })
+      .limit(50000);
+    if (error) throw error;
+
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const map: Record<
+      string,
+      { total_views: number; unique_clients: number; last_viewed_at: string | null; views_last_7d: number; _seen: Set<string> }
+    > = {};
+    (data ?? []).forEach((row: any) => {
+      const id = row.register_id as string;
+      if (!map[id]) {
+        map[id] = {
+          total_views: 0,
+          unique_clients: 0,
+          last_viewed_at: null,
+          views_last_7d: 0,
+          _seen: new Set<string>(),
+        };
+      }
+      const m = map[id];
+      m.total_views += 1;
+      if (row.client_id) m._seen.add(row.client_id);
+      const ts = new Date(row.viewed_at).getTime();
+      if (!m.last_viewed_at || ts > new Date(m.last_viewed_at).getTime()) {
+        m.last_viewed_at = row.viewed_at;
+      }
+      if (ts >= sevenDaysAgo) m.views_last_7d += 1;
+    });
+    const result: Record<string, { total_views: number; unique_clients: number; last_viewed_at: string | null; views_last_7d: number }> = {};
+    Object.entries(map).forEach(([k, v]) => {
+      result[k] = {
+        total_views: v.total_views,
+        unique_clients: v._seen.size,
+        last_viewed_at: v.last_viewed_at,
+        views_last_7d: v.views_last_7d,
+      };
+    });
+    return result;
   },
 };

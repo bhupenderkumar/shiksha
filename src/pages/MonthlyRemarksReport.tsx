@@ -301,6 +301,7 @@ const MonthlyRemarksReport: React.FC = () => {
           return;
         }
         setData(result);
+        void monthlyRemarksService.logView(result.id);
       } catch (e: any) {
         setError(e?.message ?? 'Failed to load report.');
       } finally {
@@ -331,6 +332,7 @@ const MonthlyRemarksReport: React.FC = () => {
         }
         const full = await monthlyRemarksService.getRegisterWithEntries(reg.id);
         setData(full);
+        void monthlyRemarksService.logView(reg.id);
       } catch (e: any) {
         setError(e?.message ?? 'Failed to load remarks.');
       } finally {
