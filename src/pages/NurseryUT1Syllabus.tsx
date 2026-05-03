@@ -287,13 +287,13 @@ const NurseryUT1Syllabus: React.FC = () => {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <img
-                src="/syllabus/nursery-ut1-page-1.png"
+                src="/syllabus/nursery-ut1-page-1.jpg"
                 alt="Nursery UT-1 Syllabus — Page 1 (English, Hindi, Math)"
                 className="w-full rounded-lg border border-gray-200 shadow-sm"
                 loading="lazy"
               />
               <img
-                src="/syllabus/nursery-ut1-page-2.png"
+                src="/syllabus/nursery-ut1-page-2.jpg"
                 alt="Nursery UT-1 Syllabus — Page 2 (E.V.S.)"
                 className="w-full rounded-lg border border-gray-200 shadow-sm"
                 loading="lazy"

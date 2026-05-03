@@ -21,7 +21,7 @@ import toast from 'react-hot-toast';
 
 const PDF_URL = '/syllabus/pre-nursery-ut1-syllabus-2026-27.pdf';
 const PAGE_IMAGES = [1, 2, 3, 4, 5, 6, 7, 8].map(
-  (n) => `/syllabus/pre-nursery-ut1-page-${n}.png`
+  (n) => `/syllabus/pre-nursery-ut1-page-${n}.jpg`
 );
 
 interface SubjectSection {
