@@ -43,6 +43,9 @@ export interface MonthlyRemarksEntry {
   attendance_days: number | null;
   remarks: string;
   parent_message: string | null;
+  /** Original short remark exactly as written by the class teacher in the
+   *  handwritten register – kept as a safe-side reference. */
+  original_remark: string | null;
   student_photo_url: string | null;
   created_at: string;
   updated_at: string;

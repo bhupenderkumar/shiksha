@@ -43,6 +43,7 @@ interface DraftEntry {
   attendance_days: number | '';
   remarks: string;
   parent_message: string;
+  original_remark: string;
 }
 
 const AdminMonthlyRemarks: React.FC = () => {
@@ -163,6 +164,7 @@ const AdminMonthlyRemarks: React.FC = () => {
           attendance_days: e.attendance_days ?? '',
           remarks: e.remarks,
           parent_message: e.parent_message ?? '',
+          original_remark: e.original_remark ?? '',
         }))
       );
       setMode('edit');
@@ -195,6 +197,7 @@ const AdminMonthlyRemarks: React.FC = () => {
         attendance_days: '',
         remarks: '',
         parent_message: '',
+        original_remark: '',
       },
     ]);
   };
@@ -234,6 +237,7 @@ const AdminMonthlyRemarks: React.FC = () => {
               d.attendance_days === '' ? null : Number(d.attendance_days),
             remarks: d.remarks ?? '',
             parent_message: d.parent_message?.trim() || null,
+            original_remark: d.original_remark?.trim() || null,
           }))
       );
       toast.success('Saved');
@@ -253,6 +257,7 @@ const AdminMonthlyRemarks: React.FC = () => {
             attendance_days: e.attendance_days ?? '',
             remarks: e.remarks,
             parent_message: e.parent_message ?? '',
+            original_remark: e.original_remark ?? '',
           }))
         );
       }
@@ -433,6 +438,7 @@ const AdminMonthlyRemarks: React.FC = () => {
                     <TableHead className="w-24">Days Present</TableHead>
                     <TableHead className="min-w-[260px]">Teacher's Remarks</TableHead>
                     <TableHead className="min-w-[260px]">Message for Parents</TableHead>
+                    <TableHead className="min-w-[200px]">Clear Message</TableHead>
                     <TableHead className="w-12" />
                   </TableRow>
                 </TableHeader>
@@ -521,6 +527,16 @@ const AdminMonthlyRemarks: React.FC = () => {
                           />
                         </TableCell>
                         <TableCell>
+                          <Textarea
+                            rows={3}
+                            value={row.original_remark}
+                            onChange={(e) =>
+                              updateRow(idx, { original_remark: e.target.value })
+                            }
+                            placeholder="Original short remark exactly as written by teacher (safe-side reference)"
+                          />
+                        </TableCell>
+                        <TableCell>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -534,7 +550,7 @@ const AdminMonthlyRemarks: React.FC = () => {
                   </AnimatePresence>
                   {draft.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                         No students yet — click <strong>Add Student</strong> above to begin.
                       </TableCell>
                     </TableRow>

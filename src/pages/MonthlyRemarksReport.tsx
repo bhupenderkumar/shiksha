@@ -13,6 +13,10 @@ import {
   MessageCircleHeart,
   CalendarCheck2,
   Lock,
+  Sparkles,
+  Heart,
+  PartyPopper,
+  ScrollText,
 } from 'lucide-react';
 import {
   monthlyRemarksService,
@@ -131,6 +135,119 @@ const SENTIMENT_META: Record<
   },
 };
 
+/* ----- Per-student colorful palette (cycles through rainbow tones) ----- */
+
+type Palette = {
+  avatar: string; // gradient for avatar
+  cardHeader: string; // mobile card header bg
+  cardBorder: string; // card border accent
+  rowTint: string; // desktop row bg
+  daysBg: string; // attendance pill
+  daysText: string;
+  daysBorder: string;
+  parentBg: string; // parent-message card bg
+  parentBorder: string;
+  parentLeft: string;
+  parentText: string;
+  parentLabel: string;
+  parentIcon: string;
+};
+
+const PALETTES: Palette[] = [
+  {
+    avatar: 'from-rose-500 to-pink-600',
+    cardHeader: 'from-rose-50 to-pink-50',
+    cardBorder: 'border-rose-100',
+    rowTint: 'bg-rose-50/40',
+    daysBg: 'bg-rose-50',
+    daysText: 'text-rose-700',
+    daysBorder: 'border-rose-200',
+    parentBg: 'bg-rose-50/70',
+    parentBorder: 'border-rose-200',
+    parentLeft: 'border-l-rose-500',
+    parentText: 'text-rose-900',
+    parentLabel: 'text-rose-700',
+    parentIcon: 'text-rose-600',
+  },
+  {
+    avatar: 'from-amber-500 to-orange-600',
+    cardHeader: 'from-amber-50 to-orange-50',
+    cardBorder: 'border-amber-100',
+    rowTint: 'bg-amber-50/40',
+    daysBg: 'bg-amber-50',
+    daysText: 'text-amber-700',
+    daysBorder: 'border-amber-200',
+    parentBg: 'bg-amber-50/70',
+    parentBorder: 'border-amber-200',
+    parentLeft: 'border-l-amber-500',
+    parentText: 'text-amber-900',
+    parentLabel: 'text-amber-700',
+    parentIcon: 'text-amber-600',
+  },
+  {
+    avatar: 'from-emerald-500 to-teal-600',
+    cardHeader: 'from-emerald-50 to-teal-50',
+    cardBorder: 'border-emerald-100',
+    rowTint: 'bg-emerald-50/40',
+    daysBg: 'bg-emerald-50',
+    daysText: 'text-emerald-700',
+    daysBorder: 'border-emerald-200',
+    parentBg: 'bg-emerald-50/70',
+    parentBorder: 'border-emerald-200',
+    parentLeft: 'border-l-emerald-500',
+    parentText: 'text-emerald-900',
+    parentLabel: 'text-emerald-700',
+    parentIcon: 'text-emerald-600',
+  },
+  {
+    avatar: 'from-sky-500 to-blue-600',
+    cardHeader: 'from-sky-50 to-blue-50',
+    cardBorder: 'border-sky-100',
+    rowTint: 'bg-sky-50/40',
+    daysBg: 'bg-sky-50',
+    daysText: 'text-sky-700',
+    daysBorder: 'border-sky-200',
+    parentBg: 'bg-sky-50/70',
+    parentBorder: 'border-sky-200',
+    parentLeft: 'border-l-sky-500',
+    parentText: 'text-sky-900',
+    parentLabel: 'text-sky-700',
+    parentIcon: 'text-sky-600',
+  },
+  {
+    avatar: 'from-violet-500 to-purple-600',
+    cardHeader: 'from-violet-50 to-purple-50',
+    cardBorder: 'border-violet-100',
+    rowTint: 'bg-violet-50/40',
+    daysBg: 'bg-violet-50',
+    daysText: 'text-violet-700',
+    daysBorder: 'border-violet-200',
+    parentBg: 'bg-violet-50/70',
+    parentBorder: 'border-violet-200',
+    parentLeft: 'border-l-violet-500',
+    parentText: 'text-violet-900',
+    parentLabel: 'text-violet-700',
+    parentIcon: 'text-violet-600',
+  },
+  {
+    avatar: 'from-fuchsia-500 to-pink-600',
+    cardHeader: 'from-fuchsia-50 to-pink-50',
+    cardBorder: 'border-fuchsia-100',
+    rowTint: 'bg-fuchsia-50/40',
+    daysBg: 'bg-fuchsia-50',
+    daysText: 'text-fuchsia-700',
+    daysBorder: 'border-fuchsia-200',
+    parentBg: 'bg-fuchsia-50/70',
+    parentBorder: 'border-fuchsia-200',
+    parentLeft: 'border-l-fuchsia-500',
+    parentText: 'text-fuchsia-900',
+    parentLabel: 'text-fuchsia-700',
+    parentIcon: 'text-fuchsia-600',
+  },
+];
+
+const paletteFor = (i: number) => PALETTES[i % PALETTES.length];
+
 const SentimentBadge: React.FC<{ sentiment: Sentiment; size?: 'sm' | 'md' }> = ({
   sentiment,
   size = 'md',
@@ -245,10 +362,31 @@ const MonthlyRemarksReport: React.FC = () => {
     }
   };
 
+  const referSchool = async () => {
+    const url = `${window.location.origin}/`;
+    const message =
+      'Looking for a loving, learning-rich school for your child? Admissions are now open at First Step School (Pre Nursery to Class V) — Saurabh Vihar, Jaitpur, New Delhi. Please visit ' +
+      url;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'First Step School · Admissions Open',
+          text: message,
+          url,
+        });
+        return;
+      }
+      await navigator.clipboard.writeText(message);
+      toast.success('Referral message copied — share with friends & family!');
+    } catch {
+      toast(message);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 print:bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-amber-50 to-sky-50 print:bg-white">
       {/* APP-LIKE STICKY HEADER */}
-      <header className="sticky top-0 z-30 bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-md print:hidden">
+      <header className="sticky top-0 z-30 bg-gradient-to-r from-fuchsia-600 via-violet-600 to-indigo-700 text-white shadow-md print:hidden">
         <div className="max-w-5xl mx-auto px-4 py-3 sm:py-4 flex items-center gap-3">
           <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white/95 ring-1 ring-white/30 shadow-sm flex items-center justify-center flex-shrink-0 overflow-hidden">
             <img
@@ -258,7 +396,7 @@ const MonthlyRemarksReport: React.FC = () => {
             />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-[11px] sm:text-xs uppercase tracking-wider text-blue-100/80 font-medium">
+            <div className="text-[11px] sm:text-xs uppercase tracking-wider text-fuchsia-100/90 font-medium">
               First Step School
             </div>
             <h1 className="text-base sm:text-lg font-semibold leading-tight truncate">
@@ -363,17 +501,19 @@ const MonthlyRemarksReport: React.FC = () => {
                     No entries yet for this register.
                   </div>
                 ) : (
-                  data.entries.map((e, i) => (
+                  data.entries.map((e, i) => {
+                    const p = paletteFor(i);
+                    return (
                     <motion.div
                       key={e.id}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, delay: Math.min(i * 0.03, 0.4) }}
-                      className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
+                      className={cn('bg-white rounded-2xl border shadow-sm overflow-hidden', p.cardBorder)}
                     >
                       {/* Card header */}
-                      <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50/70 to-indigo-50/70 border-b border-slate-100">
-                        <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-base shadow-sm flex-shrink-0">
+                      <div className={cn('flex items-center gap-3 p-4 bg-gradient-to-r border-b border-slate-100', p.cardHeader)}>
+                        <div className={cn('w-11 h-11 rounded-full bg-gradient-to-br text-white flex items-center justify-center font-bold text-base shadow-sm flex-shrink-0', p.avatar)}>
                           {e.student_name.trim().charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -391,8 +531,8 @@ const MonthlyRemarksReport: React.FC = () => {
                           </div>
                         </div>
                         {e.attendance_days != null && (
-                          <div className="flex flex-col items-center bg-white rounded-xl border border-blue-100 px-2.5 py-1.5 flex-shrink-0">
-                            <span className="text-base font-bold text-blue-700 leading-none">
+                          <div className={cn('flex flex-col items-center bg-white rounded-xl border px-2.5 py-1.5 flex-shrink-0', p.daysBorder)}>
+                            <span className={cn('text-base font-bold leading-none', p.daysText)}>
                               {e.attendance_days}
                             </span>
                             <span className="text-[9px] uppercase tracking-wider text-slate-500 mt-0.5">
@@ -428,19 +568,32 @@ const MonthlyRemarksReport: React.FC = () => {
                         </div>
 
                         {e.parent_message && (
-                          <div className="bg-blue-50/70 border border-blue-100 border-l-[3px] border-l-blue-500 rounded-lg p-3">
-                            <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-blue-700 font-medium mb-1">
+                          <div className={cn('border border-l-[3px] rounded-lg p-3', p.parentBg, p.parentBorder, p.parentLeft)}>
+                            <div className={cn('flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-medium mb-1', p.parentLabel)}>
                               <MessageCircleHeart className="w-3 h-3" />
                               Message for Parents
                             </div>
-                            <p className="text-sm text-blue-900 leading-relaxed">
+                            <p className={cn('text-sm leading-relaxed', p.parentText)}>
                               {e.parent_message}
+                            </p>
+                          </div>
+                        )}
+
+                        {e.original_remark && (
+                          <div className="border border-amber-200 bg-amber-50/60 border-l-[3px] border-l-amber-400 rounded-lg p-3">
+                            <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-medium mb-1 text-amber-800">
+                              <ScrollText className="w-3 h-3" />
+                              Clear Message
+                            </div>
+                            <p className="text-sm leading-relaxed text-amber-900 italic">
+                              {e.original_remark}
                             </p>
                           </div>
                         )}
                       </div>
                     </motion.div>
-                  ))
+                    );
+                  })
                 )}
               </div>
 
@@ -476,6 +629,11 @@ const MonthlyRemarksReport: React.FC = () => {
                             <MessageCircleHeart className="w-3 h-3" /> Message for Parents
                           </span>
                         </th>
+                        <th className="text-left py-3.5 px-4 text-[11px] uppercase tracking-wider font-medium min-w-[180px]">
+                          <span className="inline-flex items-center gap-1.5">
+                            <ScrollText className="w-3 h-3" /> Clear Message
+                          </span>
+                        </th>
                         <th className="text-center w-36 py-3.5 px-3 text-[11px] uppercase tracking-wider font-medium">
                           Status
                         </th>
@@ -484,25 +642,27 @@ const MonthlyRemarksReport: React.FC = () => {
                     <tbody>
                       {data.entries.length === 0 && (
                         <tr>
-                          <td colSpan={7} className="text-center py-10 text-slate-500">
+                          <td colSpan={8} className="text-center py-10 text-slate-500">
                             No entries yet for this register.
                           </td>
                         </tr>
                       )}
-                      {data.entries.map((e, i) => (
+                      {data.entries.map((e, i) => {
+                        const p = paletteFor(i);
+                        return (
                         <motion.tr
                           key={e.id}
                           initial={{ opacity: 0, x: -8 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ duration: 0.3, delay: Math.min(i * 0.03, 0.5) }}
-                          className="border-b border-slate-100 last:border-b-0 even:bg-slate-50/40 hover:bg-blue-50/40 transition-colors"
+                          className={cn('border-b border-slate-100 last:border-b-0 transition-colors hover:brightness-95', p.rowTint)}
                         >
                           <td className="py-4 px-3 text-center text-sm text-slate-500 font-semibold align-top">
                             {e.serial_no}
                           </td>
                           <td className="py-4 px-4 align-top">
                             <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
+                              <div className={cn('w-9 h-9 rounded-full bg-gradient-to-br text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0', p.avatar)}>
                                 {e.student_name.trim().charAt(0).toUpperCase()}
                               </div>
                               <div className="font-semibold text-slate-900 text-[14px]">
@@ -521,7 +681,7 @@ const MonthlyRemarksReport: React.FC = () => {
                           </td>
                           <td className="py-4 px-3 text-center align-top">
                             {e.attendance_days != null ? (
-                              <span className="inline-block bg-blue-50 text-blue-700 font-semibold text-xs px-3 py-1 rounded-full border border-blue-100">
+                              <span className={cn('inline-block font-semibold text-xs px-3 py-1 rounded-full border', p.daysBg, p.daysText, p.daysBorder)}>
                                 {e.attendance_days}
                               </span>
                             ) : (
@@ -533,10 +693,22 @@ const MonthlyRemarksReport: React.FC = () => {
                           </td>
                           <td className="py-4 px-4 align-top">
                             {e.parent_message ? (
-                              <div className="bg-blue-50/70 border border-blue-100 border-l-[3px] border-l-blue-500 rounded-lg p-2.5 flex items-start gap-2">
-                                <MessageCircleHeart className="w-3.5 h-3.5 text-blue-600 flex-shrink-0 mt-0.5" />
-                                <span className="text-sm text-blue-900 leading-relaxed">
+                              <div className={cn('border border-l-[3px] rounded-lg p-2.5 flex items-start gap-2', p.parentBg, p.parentBorder, p.parentLeft)}>
+                                <MessageCircleHeart className={cn('w-3.5 h-3.5 flex-shrink-0 mt-0.5', p.parentIcon)} />
+                                <span className={cn('text-sm leading-relaxed', p.parentText)}>
                                   {e.parent_message}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-slate-300">—</span>
+                            )}
+                          </td>
+                          <td className="py-4 px-4 align-top">
+                            {e.original_remark ? (
+                              <div className="border border-amber-200 bg-amber-50/60 border-l-[3px] border-l-amber-400 rounded-lg p-2.5 flex items-start gap-2">
+                                <ScrollText className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-amber-700" />
+                                <span className="text-sm leading-relaxed text-amber-900 italic">
+                                  {e.original_remark}
                                 </span>
                               </div>
                             ) : (
@@ -554,11 +726,15 @@ const MonthlyRemarksReport: React.FC = () => {
                             />
                           </td>
                         </motion.tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
               </div>
+
+              {/* ADMISSIONS + REFERRAL CTA */}
+              <AdmissionsCTA onRefer={referSchool} />
 
               <footer className="text-center mt-6 text-xs text-slate-500 print:mt-4">
                 First Step School &nbsp;·&nbsp; Saurabh Vihar, Jaitpur, New Delhi
@@ -646,6 +822,58 @@ const GhostBtn: React.FC<{
     {icon}
     {children}
   </button>
+);
+
+/* ----- Admissions Open + Refer CTA card ----- */
+
+const AdmissionsCTA: React.FC<{ onRefer: () => void }> = ({ onRefer }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 12 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.4, delay: 0.1 }}
+    className="relative overflow-hidden rounded-2xl mt-6 shadow-md print:hidden"
+  >
+    {/* Animated colorful background */}
+    <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-500 via-orange-500 to-amber-400" />
+    <div className="absolute inset-0 opacity-20 [background-image:radial-gradient(circle_at_20%_20%,white_1px,transparent_1px),radial-gradient(circle_at_80%_60%,white_1px,transparent_1px)] [background-size:36px_36px,48px_48px]" />
+
+    <div className="relative p-5 sm:p-6 text-white">
+      <div className="flex items-center gap-2 mb-2">
+        <motion.span
+          animate={{ rotate: [0, -10, 10, -6, 6, 0], scale: [1, 1.15, 1] }}
+          transition={{ duration: 1.6, repeat: Infinity, repeatDelay: 1.4 }}
+          className="inline-flex"
+        >
+          <PartyPopper className="w-5 h-5" />
+        </motion.span>
+        <span className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-sm border border-white/30 text-[11px] uppercase tracking-wider font-semibold px-2.5 py-1 rounded-full">
+          <Sparkles className="w-3 h-3" /> Admissions Open 2026-27
+        </span>
+      </div>
+      <h3 className="text-lg sm:text-xl font-bold leading-snug mb-1">
+        Loved your child's progress? 💖
+      </h3>
+      <p className="text-sm sm:text-[15px] text-white/95 leading-relaxed mb-4">
+        Please refer <strong>First Step School</strong> to your friends &amp; family.
+        Pre Nursery to Class V admissions are now open — a warm, joyful, learning-rich
+        space for every little one.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={onRefer}
+          className="inline-flex items-center gap-1.5 bg-white text-fuchsia-700 hover:text-fuchsia-800 font-semibold text-sm px-4 py-2.5 rounded-xl shadow-sm active:scale-[0.98] transition"
+        >
+          <Heart className="w-4 h-4 fill-fuchsia-700" /> Refer a Friend
+        </button>
+        <a
+          href="/admission"
+          className="inline-flex items-center gap-1.5 bg-white/15 hover:bg-white/25 backdrop-blur-sm border border-white/30 text-white font-semibold text-sm px-4 py-2.5 rounded-xl active:scale-[0.98] transition"
+        >
+          <Share2 className="w-4 h-4" /> Apply for Admission
+        </a>
+      </div>
+    </div>
+  </motion.div>
 );
 
 export default MonthlyRemarksReport;
