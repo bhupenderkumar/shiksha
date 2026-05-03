@@ -65,6 +65,7 @@ const BirthdaysPage = lazy(() => import('./pages/BirthdaysPage'));
 // Date Sheet pages
 const DateSheet = lazy(() => import('./pages/DateSheet'));
 const FinalDateSheet = lazy(() => import('./pages/FinalDateSheet'));
+const NurseryUT1Syllabus = lazy(() => import('./pages/NurseryUT1Syllabus'));
 // Public Fee Structure page
 const FeeStructure = lazy(() => import('./pages/FeeStructure'));
 const FeeChartPrint = lazy(() => import('./pages/FeeChartPrint'));
@@ -155,6 +156,9 @@ function AppRoutes() {
         {/* Public Date Sheet - No authentication required */}
         <Route path="/date-sheet" element={<DateSheet />} />
         <Route path="/final-date-sheet" element={<FinalDateSheet />} />
+
+        {/* Public Syllabus pages - No authentication required */}
+        <Route path="/syllabus/nursery-ut1" element={<NurseryUT1Syllabus />} />
         
         {/* Public Fee Structure - No authentication required */}
         <Route path="/fee-structure" element={<FeeStructure />} />
