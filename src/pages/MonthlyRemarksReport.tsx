@@ -17,12 +17,19 @@ import {
   Heart,
   PartyPopper,
   ScrollText,
+  Download,
+  FileText,
 } from 'lucide-react';
 import {
   monthlyRemarksService,
   type RegisterWithEntries,
 } from '@/services/monthlyRemarksService';
 import { normaliseClassName } from '@/lib/class-names';
+import {
+  downloadMonthlyRemarksPdf,
+  buildMonthlyRemarksPdfBlob,
+  buildMonthlyRemarksPdfFilename,
+} from '@/utils/monthlyRemarksPdf';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 
@@ -364,6 +371,63 @@ const MonthlyRemarksReport: React.FC = () => {
     }
   };
 
+  const handleDownloadPdf = async () => {
+    if (!data) return;
+    const t = toast.loading('Preparing PDF…');
+    try {
+      await downloadMonthlyRemarksPdf(data);
+      toast.success('PDF downloaded', { id: t });
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message ?? 'Could not generate PDF', { id: t });
+    }
+  };
+
+  const handleSharePdf = async () => {
+    if (!data) return;
+    const t = toast.loading('Building PDF…');
+    try {
+      const blob = await buildMonthlyRemarksPdfBlob(data);
+      const filename = buildMonthlyRemarksPdfFilename(data);
+      const file = new File([blob], filename, { type: 'application/pdf' });
+
+      // Try native share with file (mobile / supporting browsers)
+      const navAny = navigator as any;
+      if (navAny.canShare?.({ files: [file] }) && navigator.share) {
+        await navigator.share({
+          title: `Monthly Remarks · ${data.class_name} · ${data.month}`,
+          text: `Monthly progress report for ${data.class_name} (${data.month} ${data.academic_year}) — First Step School`,
+          files: [file],
+        });
+        toast.success('Opened share sheet', { id: t });
+        return;
+      }
+
+      // Fallback: download the PDF and open WhatsApp Web with a message
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+
+      const message =
+        `Monthly progress report for ${data.class_name} (${data.month} ${data.academic_year}) — First Step School. ` +
+        `Please attach the downloaded PDF: ${filename}`;
+      window.open(
+        `https://wa.me/?text=${encodeURIComponent(message)}`,
+        '_blank',
+        'noopener,noreferrer',
+      );
+      toast.success('PDF saved — attach it on WhatsApp', { id: t });
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message ?? 'Could not share PDF', { id: t });
+    }
+  };
+
   const referSchool = async () => {
     const url = `${window.location.origin}/`;
     const message =
@@ -490,6 +554,12 @@ const MonthlyRemarksReport: React.FC = () => {
               <div className="hidden sm:flex justify-end gap-2 mb-3 print:hidden">
                 <GhostBtn onClick={() => window.print()} icon={<Printer className="w-3.5 h-3.5" />}>
                   Print
+                </GhostBtn>
+                <GhostBtn onClick={handleDownloadPdf} icon={<Download className="w-3.5 h-3.5" />}>
+                  Download PDF
+                </GhostBtn>
+                <GhostBtn onClick={handleSharePdf} icon={<FileText className="w-3.5 h-3.5" />}>
+                  Share PDF
                 </GhostBtn>
                 <GhostBtn onClick={handleShare} icon={<Share2 className="w-3.5 h-3.5" />}>
                   Share Link
@@ -789,7 +859,13 @@ const MonthlyRemarksReport: React.FC = () => {
             <Printer className="w-4 h-4" /> Print
           </button>
           <button
-            onClick={handleShare}
+            onClick={handleDownloadPdf}
+            className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 font-medium text-sm active:scale-[0.98] transition"
+          >
+            <Download className="w-4 h-4" /> PDF
+          </button>
+          <button
+            onClick={handleSharePdf}
             className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium text-sm active:scale-[0.98] transition shadow-sm"
           >
             <Share2 className="w-4 h-4" /> Share

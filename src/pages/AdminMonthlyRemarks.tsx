@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, Trash2, Save, Pencil, Eye, Share2, Loader2, ClipboardList,
+  Download,
   ChevronLeft, GripVertical, Search, Calendar, GraduationCap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ import {
   type MonthlyRemarksRegister,
   type MonthlyRemarksEntry,
 } from '@/services/monthlyRemarksService';
+import { downloadMonthlyRemarksPdf } from '@/utils/monthlyRemarksPdf';
 
 const CURRENT_AY = '2026-27';
 
@@ -317,6 +319,23 @@ const AdminMonthlyRemarks: React.FC = () => {
       toast.success('Direct link copied');
     } catch {
       toast(url);
+    }
+  };
+
+  // Build & download a clean A4 PDF of the register (loads entries on the fly)
+  const downloadRegisterPdf = async (r: MonthlyRemarksRegister) => {
+    const t = toast.loading('Building PDF…');
+    try {
+      const full = await monthlyRemarksService.getRegisterWithEntries(r.id);
+      if (!full) {
+        toast.error('Register not found', { id: t });
+        return;
+      }
+      await downloadMonthlyRemarksPdf(full);
+      toast.success('PDF downloaded', { id: t });
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message ?? 'Could not generate PDF', { id: t });
     }
   };
 
@@ -802,6 +821,14 @@ const AdminMonthlyRemarks: React.FC = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => downloadRegisterPdf(r)}
+                            title="Download PDF"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"
