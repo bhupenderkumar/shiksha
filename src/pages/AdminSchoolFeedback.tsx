@@ -15,6 +15,9 @@ import {
   Phone,
   User,
   Filter,
+  Reply as ReplyIcon,
+  Send,
+  Copy,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,9 +30,13 @@ import { cn } from '@/lib/utils';
 const AdminSchoolFeedback: React.FC = () => {
   const [feedbacks, setFeedbacks] = useState<SchoolFeedback[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'NEW' | 'REVIEWED'>('all');
+  const [filter, setFilter] = useState<'all' | 'NEW' | 'REVIEWED' | 'REPLIED'>('all');
   const [playingId, setPlayingId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Per-row reply state
+  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+  const [openReplyId, setOpenReplyId] = useState<string | null>(null);
+  const [savingReplyId, setSavingReplyId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchFeedbacks();
@@ -68,6 +75,48 @@ const AdminSchoolFeedback: React.FC = () => {
       toast.success('Feedback deleted');
     } catch (error) {
       toast.error('Failed to delete');
+    }
+  };
+
+  const handleSendReply = async (id: string) => {
+    const reply = (replyDrafts[id] || '').trim();
+    if (!reply) {
+      toast.error('Reply is empty');
+      return;
+    }
+    try {
+      setSavingReplyId(id);
+      await schoolFeedbackService.replyFeedback(id, reply);
+      const repliedAt = new Date().toISOString();
+      setFeedbacks((prev) =>
+        prev.map((f) =>
+          f.id === id
+            ? {
+                ...f,
+                admin_reply: reply,
+                replied_at: repliedAt,
+                status: 'REPLIED' as const,
+              }
+            : f
+        )
+      );
+      setReplyDrafts((d) => ({ ...d, [id]: '' }));
+      setOpenReplyId(null);
+      toast.success('Reply sent. Parent can see it via their code.');
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to send reply');
+    } finally {
+      setSavingReplyId(null);
+    }
+  };
+
+  const handleCopyCode = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      toast.success('Code copied');
+    } catch {
+      toast.error('Could not copy');
     }
   };
 
@@ -133,8 +182,8 @@ const AdminSchoolFeedback: React.FC = () => {
                 Voice & text feedback from parents
               </CardDescription>
             </div>
-            <div className="flex gap-2">
-              {(['all', 'NEW', 'REVIEWED'] as const).map((f) => (
+            <div className="flex gap-2 flex-wrap">
+              {(['all', 'NEW', 'REVIEWED', 'REPLIED'] as const).map((f) => (
                 <Button
                   key={f}
                   variant={filter === f ? 'default' : 'outline'}
@@ -142,7 +191,13 @@ const AdminSchoolFeedback: React.FC = () => {
                   onClick={() => setFilter(f)}
                 >
                   <Filter className="w-3 h-3 mr-1" />
-                  {f === 'all' ? 'All' : f === 'NEW' ? 'New' : 'Reviewed'}
+                  {f === 'all'
+                    ? 'All'
+                    : f === 'NEW'
+                    ? 'New'
+                    : f === 'REVIEWED'
+                    ? 'Reviewed'
+                    : 'Replied'}
                 </Button>
               ))}
             </div>
@@ -167,12 +222,30 @@ const AdminSchoolFeedback: React.FC = () => {
                     'border rounded-xl p-4 transition-colors',
                     fb.status === 'NEW'
                       ? 'bg-blue-50 border-blue-200'
+                      : fb.status === 'REPLIED'
+                      ? 'bg-green-50/40 border-green-200'
                       : 'bg-white border-gray-200'
                   )}
                 >
-                  {/* Top row: rating + status + date */}
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
+                  {/* Top row: ticket + rating + status + date */}
+                  <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      {fb.ticket_code && (
+                        <button
+                          type="button"
+                          onClick={() => handleCopyCode(fb.ticket_code!)}
+                          className="inline-flex items-center gap-1 text-xs font-mono font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded"
+                          title="Copy code"
+                        >
+                          {fb.ticket_code}
+                          <Copy className="w-3 h-3" />
+                        </button>
+                      )}
+                      {fb.category && (
+                        <Badge variant="outline" className="text-xs">
+                          {fb.category}
+                        </Badge>
+                      )}
                       {renderStars(fb.rating)}
                       {fb.status === 'NEW' ? (
                         <Badge
@@ -182,10 +255,18 @@ const AdminSchoolFeedback: React.FC = () => {
                           <Clock className="w-3 h-3 mr-1" />
                           New
                         </Badge>
-                      ) : (
+                      ) : fb.status === 'REPLIED' ? (
                         <Badge
                           variant="outline"
                           className="bg-green-50 text-green-700 border-green-200 text-xs"
+                        >
+                          <ReplyIcon className="w-3 h-3 mr-1" />
+                          Replied
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="outline"
+                          className="bg-blue-50 text-blue-700 border-blue-200 text-xs"
                         >
                           <CheckCircle className="w-3 h-3 mr-1" />
                           Reviewed
@@ -243,13 +324,88 @@ const AdminSchoolFeedback: React.FC = () => {
 
                   {/* Text message */}
                   {fb.message && (
-                    <p className="text-gray-700 text-sm bg-gray-50 rounded-lg p-3 mb-3">
+                    <p className="text-gray-700 text-sm bg-gray-50 rounded-lg p-3 mb-3 whitespace-pre-wrap">
                       {fb.message}
                     </p>
                   )}
 
+                  {/* Existing reply (if any) */}
+                  {fb.admin_reply && (
+                    <div className="mb-3 rounded-lg border border-green-200 bg-green-50 p-3">
+                      <div className="flex items-center gap-1 text-xs font-medium text-green-700 mb-1">
+                        <ReplyIcon className="w-3.5 h-3.5" />
+                        Reply sent
+                        {fb.replied_at && (
+                          <span className="text-gray-500 font-normal ml-1">
+                            · {format(new Date(fb.replied_at), 'MMM d, yyyy h:mm a')}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                        {fb.admin_reply}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Reply composer */}
+                  {openReplyId === fb.id && (
+                    <div className="mb-3">
+                      <textarea
+                        value={replyDrafts[fb.id] || ''}
+                        onChange={(e) =>
+                          setReplyDrafts((d) => ({ ...d, [fb.id]: e.target.value }))
+                        }
+                        rows={3}
+                        placeholder="Write a reply to the parent..."
+                        className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-300"
+                      />
+                      <div className="flex gap-2 justify-end mt-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setOpenReplyId(null)}
+                          disabled={savingReplyId === fb.id}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleSendReply(fb.id)}
+                          disabled={
+                            savingReplyId === fb.id ||
+                            !(replyDrafts[fb.id] || '').trim()
+                          }
+                        >
+                          {savingReplyId === fb.id ? (
+                            <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                          ) : (
+                            <Send className="w-3.5 h-3.5 mr-1" />
+                          )}
+                          Send Reply
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Actions */}
-                  <div className="flex gap-2 justify-end">
+                  <div className="flex gap-2 justify-end flex-wrap">
+                    {openReplyId !== fb.id && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setOpenReplyId(fb.id);
+                          setReplyDrafts((d) => ({
+                            ...d,
+                            [fb.id]: d[fb.id] ?? fb.admin_reply ?? '',
+                          }));
+                        }}
+                        className="text-violet-700 border-violet-200 hover:bg-violet-50"
+                      >
+                        <ReplyIcon className="w-3.5 h-3.5 mr-1" />
+                        {fb.admin_reply ? 'Edit Reply' : 'Reply'}
+                      </Button>
+                    )}
                     {fb.status === 'NEW' && (
                       <Button
                         variant="outline"

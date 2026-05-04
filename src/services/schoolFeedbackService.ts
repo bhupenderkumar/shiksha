@@ -29,13 +29,18 @@ const fromTable = () =>
 
 export interface SchoolFeedback {
   id: string;
+  ticket_code: string | null;
+  category: string | null;
   parent_name: string | null;
   phone: string | null;
   message: string | null;
   voice_url: string | null;
   rating: number | null;
   created_at: string;
-  status: 'NEW' | 'REVIEWED';
+  status: 'NEW' | 'REVIEWED' | 'REPLIED';
+  admin_reply: string | null;
+  replied_at: string | null;
+  replied_by: string | null;
 }
 
 export interface SchoolFeedbackFormData {
@@ -44,6 +49,25 @@ export interface SchoolFeedbackFormData {
   message?: string;
   voice_blob?: Blob;
   rating?: number;
+  category?: string;
+}
+
+/**
+ * Generate a short, human-friendly ticket code (e.g. "FB-7K3X9P").
+ * Uses crypto where available, falls back to Math.random.
+ */
+function generateTicketCode(): string {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I to avoid confusion
+  let code = '';
+  const len = 6;
+  if (typeof crypto !== 'undefined' && 'getRandomValues' in crypto) {
+    const arr = new Uint32Array(len);
+    crypto.getRandomValues(arr);
+    for (let i = 0; i < len; i++) code += alphabet[arr[i] % alphabet.length];
+  } else {
+    for (let i = 0; i < len; i++) code += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+  return `FB-${code}`;
 }
 
 export const schoolFeedbackService = {
@@ -92,9 +116,12 @@ export const schoolFeedbackService = {
 
     const id = uuidv4();
     const now = new Date().toISOString();
+    const ticket_code = generateTicketCode();
 
     const feedbackData = {
       id,
+      ticket_code,
+      category: formData.category || null,
       parent_name: formData.parent_name || null,
       phone: formData.phone || null,
       message: formData.message || null,
@@ -145,6 +172,52 @@ export const schoolFeedbackService = {
     if (error) {
       console.error('Error updating feedback:', error);
       throw new Error('Failed to update feedback');
+    }
+  },
+
+  /**
+   * Look up a single feedback by its ticket code (public — for parents to check status).
+   * Returns null if not found.
+   */
+  async getByTicketCode(ticketCode: string): Promise<SchoolFeedback | null> {
+    const code = (ticketCode || '').trim().toUpperCase();
+    if (!code) return null;
+
+    const { data, error } = await fromTable()
+      .select('*')
+      .eq('ticket_code', code)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching feedback by ticket code:', error);
+      throw new Error('Failed to look up feedback');
+    }
+    return (data as SchoolFeedback) || null;
+  },
+
+  /**
+   * Save admin reply to a feedback. Sets status to REPLIED.
+   */
+  async replyFeedback(
+    id: string,
+    reply: string,
+    repliedBy?: string
+  ): Promise<void> {
+    const trimmed = (reply || '').trim();
+    if (!trimmed) throw new Error('Reply cannot be empty');
+
+    const { error } = await fromTable()
+      .update({
+        admin_reply: trimmed,
+        replied_at: new Date().toISOString(),
+        replied_by: repliedBy || null,
+        status: 'REPLIED',
+      })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error replying to feedback:', error);
+      throw new Error('Failed to send reply');
     }
   },
 

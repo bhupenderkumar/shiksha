@@ -371,7 +371,7 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
         <Route path="/admin-school-feedback" element={
-          <ProtectedRoute requireAuth={true} allowedRoles={['ADMIN']}>
+          <ProtectedRoute requireAuth={true} allowedRoles={['ADMIN', 'TEACHER']}>
             <Layout>
               <AdminSchoolFeedback />
             </Layout>
