@@ -53,7 +53,7 @@ export interface SchoolFeedbackFormData {
 }
 
 /**
- * Generate a short, human-friendly ticket code (e.g. "FB-7K3X9P").
+ * Generate a short, human-friendly ticket code (e.g. "FSPS-7K3X9P").
  * Uses crypto where available, falls back to Math.random.
  */
 function generateTicketCode(): string {
@@ -67,7 +67,7 @@ function generateTicketCode(): string {
   } else {
     for (let i = 0; i < len; i++) code += alphabet[Math.floor(Math.random() * alphabet.length)];
   }
-  return `FB-${code}`;
+  return `FSPS-${code}`;
 }
 
 export const schoolFeedbackService = {

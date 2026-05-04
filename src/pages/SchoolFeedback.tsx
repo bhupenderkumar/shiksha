@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Star,
   Send,
   CheckCircle,
   MessageSquare,
@@ -11,6 +10,8 @@ import {
   Clock,
   Reply as ReplyIcon,
   AlertCircle,
+  Sparkles,
+  Heart,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VoiceRecorder } from '@/components/VoiceRecorder';
@@ -23,10 +24,21 @@ import { SCHOOL_INFO } from '@/lib/constants';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const CATEGORIES: { value: string; label: string; emoji: string }[] = [
-  { value: 'COMPLAINT', label: 'शिकायत / Complaint', emoji: '😠' },
+  { value: 'COMPLAINT', label: 'शिकायत / Concern', emoji: '🙏' },
   { value: 'SUGGESTION', label: 'सुझाव / Suggestion', emoji: '💡' },
-  { value: 'APPRECIATION', label: 'सराहना / Appreciation', emoji: '⭐' },
+  { value: 'APPRECIATION', label: 'सराहना / Appreciation', emoji: '🌟' },
   { value: 'OTHER', label: 'अन्य / Other', emoji: '💬' },
+];
+
+// Friendly mood selector — replaces a 1-5 star bar so it
+// never "feels negative" to a parent. The numeric value (1–5)
+// is still stored in the existing rating column.
+const MOODS: { value: number; emoji: string; label: string }[] = [
+  { value: 1, emoji: '😕', label: 'ठीक नहीं / Could be better' },
+  { value: 2, emoji: '🙂', label: 'ठीक है / Okay' },
+  { value: 3, emoji: '😊', label: 'अच्छा / Good' },
+  { value: 4, emoji: '😄', label: 'बहुत अच्छा / Very good' },
+  { value: 5, emoji: '🤩', label: 'शानदार / Excellent' },
 ];
 
 // School WhatsApp number — digits only, with country code (no '+').
@@ -283,47 +295,62 @@ const SchoolFeedback: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-4 py-6 text-center">
-        <h1 className="text-xl font-bold">{SCHOOL_INFO?.name || 'School'}</h1>
-        <p className="text-violet-100 text-sm mt-1">
-          अपनी राय दें / Share Your Feedback
-        </p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-b from-violet-50 via-blue-50/40 to-white">
+      {/* Sticky app-shell header */}
+      <div className="sticky top-0 z-30 bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md">
+        <div className="max-w-md mx-auto px-3 pt-[env(safe-area-inset-top)]">
+          <div className="flex items-center gap-2 py-3">
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              className="p-2 -ml-1 rounded-full hover:bg-white/10 active:bg-white/20"
+              aria-label="Back"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-base font-bold leading-tight truncate">
+                {SCHOOL_INFO?.name || 'School'}
+              </h1>
+              <p className="text-[11px] text-violet-100/90 leading-tight">
+                आपकी आवाज — Share Your Voice
+              </p>
+            </div>
+            <Heart className="w-5 h-5 opacity-80" />
+          </div>
 
-      {/* Tabs: Submit / Check Status */}
-      <div className="max-w-md mx-auto px-4 pt-4">
-        <div className="bg-white border rounded-full p-1 flex shadow-sm">
-          <button
-            type="button"
-            onClick={() => {
-              setMode('submit');
-              setSearchParams({});
-            }}
-            className={cn(
-              'flex-1 py-2.5 rounded-full text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors',
-              mode === 'submit'
-                ? 'bg-violet-600 text-white'
-                : 'text-gray-600 hover:text-gray-900'
-            )}
-          >
-            <Send className="w-4 h-4" />
-            फीडबैक दें / Submit
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode('check')}
-            className={cn(
-              'flex-1 py-2.5 rounded-full text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors',
-              mode === 'check'
-                ? 'bg-violet-600 text-white'
-                : 'text-gray-600 hover:text-gray-900'
-            )}
-          >
-            <Search className="w-4 h-4" />
-            स्थिति देखें / Status
-          </button>
+          {/* Segmented control tabs */}
+          <div className="bg-white/15 backdrop-blur rounded-full p-1 flex mb-3">
+            <button
+              type="button"
+              onClick={() => {
+                setMode('submit');
+                setSearchParams({});
+              }}
+              className={cn(
+                'flex-1 py-2 rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 transition-all',
+                mode === 'submit'
+                  ? 'bg-white text-violet-700 shadow-sm'
+                  : 'text-white/90 hover:text-white'
+              )}
+            >
+              <Send className="w-3.5 h-3.5" />
+              भेजें / Submit
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('check')}
+              className={cn(
+                'flex-1 py-2 rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 transition-all',
+                mode === 'check'
+                  ? 'bg-white text-violet-700 shadow-sm'
+                  : 'text-white/90 hover:text-white'
+              )}
+            >
+              <Search className="w-3.5 h-3.5" />
+              स्थिति / Status
+            </button>
+          </div>
         </div>
       </div>
 
@@ -338,14 +365,30 @@ const SchoolFeedback: React.FC = () => {
           onBackHome={() => navigate('/')}
         />
       ) : (
-      <div className="max-w-md mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-md mx-auto px-4 pt-4 pb-32 space-y-4">
+        {/* Friendly intro card */}
+        <div className="bg-gradient-to-br from-white to-violet-50/40 rounded-3xl p-4 shadow-sm border border-violet-100">
+          <div className="flex items-start gap-3">
+            <div className="shrink-0 w-10 h-10 rounded-2xl bg-violet-100 flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-violet-600" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-800">
+                हमें आपकी राय चाहिए
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                We’d love to hear from you. Every voice helps us grow.
+              </p>
+            </div>
+          </div>
+        </div>
         {/* Category */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border">
-          <p className="text-center text-gray-700 font-medium mb-1">
+        <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
+          <p className="text-gray-800 font-semibold mb-1">
             किस बारे में है?
           </p>
-          <p className="text-center text-xs text-gray-400 mb-4">
-            What is this about? (optional)
+          <p className="text-xs text-gray-400 mb-3">
+            What is this about? <span className="text-gray-300">(optional)</span>
           </p>
           <div className="grid grid-cols-2 gap-2">
             {CATEGORIES.map((c) => (
@@ -354,158 +397,150 @@ const SchoolFeedback: React.FC = () => {
                 type="button"
                 onClick={() => setCategory(category === c.value ? '' : c.value)}
                 className={cn(
-                  'py-3 px-3 rounded-xl border text-sm font-medium flex items-center justify-center gap-1.5 transition-colors',
+                  'py-3 px-3 rounded-2xl border text-sm font-medium flex items-center gap-2 transition-all active:scale-95',
                   category === c.value
-                    ? 'bg-violet-50 border-violet-400 text-violet-700'
-                    : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                    ? 'bg-violet-50 border-violet-400 text-violet-700 ring-2 ring-violet-200'
+                    : 'bg-white border-gray-100 text-gray-700 hover:bg-gray-50'
                 )}
               >
-                <span>{c.emoji}</span>
-                <span>{c.label}</span>
+                <span className="text-lg">{c.emoji}</span>
+                <span className="text-xs leading-tight text-left">{c.label}</span>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Star Rating - BIG and tappable */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border">
-          <p className="text-center text-gray-700 font-medium mb-1">
-            स्कूल को कितने ⭐ देंगे?
+        {/* Mood selector — replaces stars with friendly emojis */}
+        <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
+          <p className="text-center text-gray-800 font-semibold mb-1">
+            स्कूल कैसा लगा?
           </p>
           <p className="text-center text-xs text-gray-400 mb-4">
-            How would you rate our school?
+            How was your experience?
           </p>
-          <div className="flex justify-center gap-2">
-            {[1, 2, 3, 4, 5].map((star) => (
+          <div className="flex justify-between gap-1.5">
+            {MOODS.map((m) => (
               <button
-                key={star}
+                key={m.value}
                 type="button"
-                onClick={() => setRating(star)}
-                className="active:scale-110 transition-transform p-1"
+                onClick={() => setRating(rating === m.value ? 0 : m.value)}
+                className={cn(
+                  'flex-1 flex flex-col items-center justify-center gap-1 py-3 rounded-2xl border transition-all active:scale-95',
+                  rating === m.value
+                    ? 'bg-violet-50 border-violet-400 ring-2 ring-violet-200'
+                    : 'bg-white border-gray-100 hover:bg-gray-50'
+                )}
+                aria-label={m.label}
               >
-                <Star
-                  className={cn(
-                    'w-12 h-12 transition-colors',
-                    star <= rating
-                      ? 'text-yellow-400 fill-yellow-400'
-                      : 'text-gray-300'
-                  )}
-                />
+                <span className={cn('text-3xl transition-transform', rating === m.value && 'scale-110')}>
+                  {m.emoji}
+                </span>
               </button>
             ))}
           </div>
           {rating > 0 && (
-            <p className="text-center mt-2 text-sm">
-              {rating <= 2 && '😟'}
-              {rating === 3 && '😐'}
-              {rating >= 4 && '😊'}
-              {' '}
-              {rating <= 2 && 'हम और बेहतर करेंगे'}
-              {rating === 3 && 'ठीक है, सुधार करेंगे'}
-              {rating >= 4 && 'बहुत अच्छा! शुक्रिया'}
+            <p className="text-center mt-3 text-sm text-violet-700 font-medium">
+              {MOODS.find((m) => m.value === rating)?.label}
             </p>
           )}
         </div>
 
         {/* Voice Recording - PRIMARY action for illiterate parents */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border">
-          <div className="flex items-center justify-center gap-2 mb-1">
-            <Mic className="w-5 h-5 text-blue-500" />
-            <p className="text-gray-700 font-medium">
-              आवाज में बताएं
-            </p>
+        <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center">
+              <Mic className="w-4 h-4 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-gray-800 font-semibold leading-tight">आवाज में बताएं</p>
+              <p className="text-xs text-gray-400">Record your voice (up to 2 min)</p>
+            </div>
           </div>
-          <p className="text-center text-xs text-gray-400 mb-4">
-            Record your voice message
-          </p>
-          <VoiceRecorder
-            onRecordingComplete={(blob) => setVoiceBlob(blob)}
-            onRecordingDelete={() => setVoiceBlob(null)}
-            maxDurationSeconds={120}
-          />
+          <div className="mt-3">
+            <VoiceRecorder
+              onRecordingComplete={(blob) => setVoiceBlob(blob)}
+              onRecordingDelete={() => setVoiceBlob(null)}
+              maxDurationSeconds={120}
+            />
+          </div>
         </div>
 
         {/* Optional Text Message */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border">
-          <div className="flex items-center justify-center gap-2 mb-1">
-            <MessageSquare className="w-5 h-5 text-blue-500" />
-            <p className="text-gray-700 font-medium">
-              लिखकर बताएं
-            </p>
+        <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center">
+              <MessageSquare className="w-4 h-4 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-gray-800 font-semibold leading-tight">लिखकर बताएं</p>
+              <p className="text-xs text-gray-400">Type your message (optional)</p>
+            </div>
           </div>
-          <p className="text-center text-xs text-gray-400 mb-3">
-            Type your message (optional)
-          </p>
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="यहाँ लिखें... / Type here..."
             rows={3}
-            className="w-full border rounded-xl px-4 py-3 text-base resize-none focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300"
+            className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-base resize-none focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-300 focus:bg-white"
           />
         </div>
 
         {/* Name & Phone (Optional) */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border">
-          <p className="text-center text-gray-700 font-medium mb-1">
-            आपका नाम और फोन
+        <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
+          <p className="text-gray-800 font-semibold mb-1">आपका नाम और फोन</p>
+          <p className="text-xs text-gray-400 mb-3">
+            Your name & phone <span className="text-gray-300">(optional)</span>
           </p>
-          <p className="text-center text-xs text-gray-400 mb-4">
-            Your name & phone (optional)
-          </p>
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             <input
               type="text"
               value={parentName}
               onChange={(e) => setParentName(e.target.value)}
               placeholder="👤 नाम / Name"
-              className="w-full border rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300"
+              className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-300 focus:bg-white"
             />
             <input
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="📱 फोन नंबर / Phone"
-              className="w-full border rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300"
+              className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-300 focus:bg-white"
             />
           </div>
         </div>
-
-        {/* Submit Button - BIG */}
-        <button
-          onClick={handleSubmit}
-          disabled={submitting || (!rating && !message.trim() && !voiceBlob)}
-          className={cn(
-            'w-full py-5 rounded-2xl text-white text-xl font-bold flex items-center justify-center gap-3 active:scale-95 transition-all shadow-lg',
-            submitting || (!rating && !message.trim() && !voiceBlob)
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 shadow-violet-200'
-          )}
-        >
-          {submitting ? (
-            <>
-              <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin" />
-              भेज रहे हैं...
-            </>
-          ) : (
-            <>
-              <Send className="w-6 h-6" />
-              भेजें / Submit
-            </>
-          )}
-        </button>
-
-        {/* Back to home */}
-        <div className="text-center pb-6">
-          <button
-            onClick={() => navigate('/')}
-            className="text-gray-400 hover:text-gray-600 text-sm flex items-center justify-center gap-1 mx-auto"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            वापस जाएं / Go Back
-          </button>
-        </div>
       </div>
+      )}
+
+      {/* Sticky bottom action bar (only on submit mode) */}
+      {mode === 'submit' && !submittedCode && (
+        <div className="fixed bottom-0 left-0 right-0 z-30 pointer-events-none">
+          <div className="max-w-md mx-auto px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-2 pointer-events-auto">
+            <div className="bg-white/95 backdrop-blur border border-gray-100 shadow-lg rounded-3xl p-2">
+              <button
+                onClick={handleSubmit}
+                disabled={submitting || (!rating && !message.trim() && !voiceBlob)}
+                className={cn(
+                  'w-full py-4 rounded-2xl text-white text-base font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-all',
+                  submitting || (!rating && !message.trim() && !voiceBlob)
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-violet-600 to-indigo-600 shadow-md shadow-violet-200'
+                )}
+              >
+                {submitting ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    भेज रहे हैं...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5" />
+                    भेजें / Submit
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -555,14 +590,14 @@ const CheckStatusPanel: React.FC<CheckStatusPanelProps> = ({
           अपना ट्रैकिंग कोड दर्ज करें
         </p>
         <p className="text-center text-xs text-gray-400 mb-4">
-          Enter your tracking code (e.g. FB-AB12CD)
+          Enter your tracking code (e.g. FSPS-AB12CD)
         </p>
         <div className="flex gap-2">
           <input
             type="text"
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
-            placeholder="FB-XXXXXX"
+            placeholder="FSPS-XXXXXX"
             className="flex-1 border rounded-xl px-4 py-3 text-base font-mono tracking-wider uppercase focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-300"
             onKeyDown={(e) => {
               if (e.key === 'Enter') onLookup();
@@ -634,18 +669,13 @@ const CheckStatusPanel: React.FC<CheckStatusPanelProps> = ({
               आपकी बात / Your message
             </p>
             {result.rating ? (
-              <div className="flex gap-0.5 mb-2">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <Star
-                    key={s}
-                    className={cn(
-                      'w-5 h-5',
-                      s <= (result.rating || 0)
-                        ? 'text-yellow-400 fill-yellow-400'
-                        : 'text-gray-200'
-                    )}
-                  />
-                ))}
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-3xl">
+                  {MOODS.find((m) => m.value === result.rating)?.emoji || '😊'}
+                </span>
+                <span className="text-sm text-gray-600">
+                  {MOODS.find((m) => m.value === result.rating)?.label}
+                </span>
               </div>
             ) : null}
             {result.message ? (
