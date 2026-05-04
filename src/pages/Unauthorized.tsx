@@ -1,40 +1,65 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-provider';
 import { supabase } from '@/lib/api-client';
+import { SCHEMA, PROFILE_TABLE } from '@/lib/constants';
 
 import { alertStyles } from '@/styles/theme';
 
 const Unauthorized: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [retrying, setRetrying] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     const fetchUserRole = async () => {
-      if (user) {
-        try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('user_id', user.id)
-            .single();
-
-          if (error) {
-            console.error('Error fetching user role:', error);
-          } else {
-            setUserRole(data?.role || null);
-          }
-        } catch (err) {
-          console.error('Error in role fetch:', err);
-        }
+      if (!user) {
+        if (!cancelled) setLoading(false);
+        return;
       }
-      setLoading(false);
+      try {
+        const { data, error } = await supabase
+          .schema(SCHEMA)
+          .from(PROFILE_TABLE)
+          .select('role')
+          .eq('user_id', user.id)
+          .single();
+
+        if (cancelled) return;
+        if (error) {
+          console.error('Error fetching user role:', error);
+        } else {
+          setUserRole(data?.role || null);
+        }
+      } catch (err) {
+        if (!cancelled) console.error('Error in role fetch:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     };
 
     fetchUserRole();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
+
+  // If we discover the user actually has an allowed role, bounce them back
+  // to the page they tried to reach. This handles the race where the role
+  // check on the protected route ran before the supabase auth header was
+  // attached.
+  useEffect(() => {
+    if (loading || retrying || !userRole) return;
+    if (['ADMIN', 'TEACHER'].includes(userRole)) {
+      setRetrying(true);
+      const t = setTimeout(() => navigate(-1), 600);
+      return () => clearTimeout(t);
+    }
+  }, [loading, userRole, retrying, navigate]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center bg-background transition-colors duration-300">

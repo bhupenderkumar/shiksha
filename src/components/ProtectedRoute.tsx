@@ -29,29 +29,54 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     let cancelled = false;
 
     const checkRole = async () => {
-      try {
-        const { data, error } = await supabase
-          .schema(SCHEMA)
-          .from('Profile')
-          .select('role')
-          .eq('user_id', user.id)
-          .single();
+      // Try up to 2 times with a short delay — defends against the race
+      // where the supabase client hasn't yet attached the JWT after a
+      // fresh login, which would otherwise return 0 rows under RLS.
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const { data, error } = await supabase
+            .schema(SCHEMA)
+            .from('Profile')
+            .select('role')
+            .eq('user_id', user.id)
+            .maybeSingle();
 
-        if (cancelled) return;
+          if (cancelled) return;
 
-        if (error || !data) {
-          console.error('Failed to fetch user role:', error);
+          if (!error && data?.role) {
+            setHasAccess(allowedRoles.includes(data.role));
+            setRoleLoading(false);
+            return;
+          }
+
+          if (error && attempt === 0) {
+            console.warn('Role check attempt 1 failed, retrying:', error);
+            await new Promise((r) => setTimeout(r, 300));
+            continue;
+          }
+
+          if (!data && attempt === 0) {
+            // No row yet — could be the auth-header race. Wait & retry.
+            await new Promise((r) => setTimeout(r, 300));
+            continue;
+          }
+
+          // Final attempt failed — deny.
+          if (error) console.error('Failed to fetch user role:', error);
           setHasAccess(false);
-        } else {
-          setHasAccess(allowedRoles.includes(data.role));
-        }
-      } catch (err) {
-        if (!cancelled) {
+          setRoleLoading(false);
+          return;
+        } catch (err) {
+          if (cancelled) return;
+          if (attempt === 0) {
+            await new Promise((r) => setTimeout(r, 300));
+            continue;
+          }
           console.error('Role check error:', err);
           setHasAccess(false);
+          setRoleLoading(false);
+          return;
         }
-      } finally {
-        if (!cancelled) setRoleLoading(false);
       }
     };
 
