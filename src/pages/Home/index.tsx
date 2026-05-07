@@ -48,10 +48,10 @@ export default function Home() {
       {/* Footer */}
       <Footer />
 
-      {/* Floating Click-to-Call Button (mobile-first lead capture) */}
+      {/* Floating Click-to-Call Button (mobile-first lead capture) — school brand red */}
       <a
         href={`tel:+${SCHOOL_INFO.whatsappNumber}`}
-        className="fixed bottom-24 right-6 z-50 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg shadow-blue-200 hover:shadow-blue-300 flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95"
+        className="fixed bottom-24 right-6 z-50 w-14 h-14 bg-[#C73E2C] hover:bg-[#A8311F] text-white rounded-full shadow-lg shadow-red-200 hover:shadow-red-300 flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 ring-2 ring-[#F5C518]"
         aria-label="Call school for admissions"
         onClick={() => {
           // Google Ads conversion tracking
@@ -63,6 +63,28 @@ export default function Home() {
         <svg viewBox="0 0 24 24" className="w-7 h-7 fill-current">
           <path d="M20 15.5c-1.25 0-2.45-.2-3.57-.57-.35-.11-.74-.03-1.02.24l-2.2 2.2c-2.83-1.44-5.15-3.75-6.59-6.59l2.2-2.21c.28-.27.36-.66.25-1.01C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-1-1zM19 12h2c0-4.97-4.03-9-9-9v2c3.87 0 7 3.13 7 7zm-4 0h2c0-2.76-2.24-5-5-5v2c1.66 0 3 1.34 3 3z"/>
         </svg>
+      </a>
+
+      {/* Floating "Apply Now" logo button — primary admission CTA */}
+      <a
+        href="/admission-enquiry"
+        className="fixed bottom-44 right-6 z-50 w-14 h-14 bg-[#F5E9D7] hover:bg-white rounded-full shadow-lg shadow-yellow-200 hover:shadow-yellow-300 flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 ring-2 ring-[#C73E2C] overflow-hidden"
+        aria-label="Apply for admission 2026-27"
+        title="Apply for Admission 2026-27"
+        onClick={() => {
+          if (typeof window !== 'undefined' && (window as any).gtag) {
+            (window as any).gtag('event', 'admission_click', { event_category: 'lead', event_label: 'floating_logo_button' });
+          }
+        }}
+      >
+        <img
+          src="/assets/images/logo.PNG"
+          alt="First Step Pre School & Primary School"
+          className="w-full h-full object-cover"
+          width="56"
+          height="56"
+          loading="eager"
+        />
       </a>
 
       {/* Floating WhatsApp Button */}
