@@ -40,7 +40,7 @@ const svg = `
     <rect width="500" height="58" rx="29" fill="#ffffff" opacity="0.95"/>
     <circle cx="34" cy="29" r="20" fill="#4f46e5"/>
     <text x="34" y="36" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#ffffff" text-anchor="middle">FS</text>
-    <text x="74" y="37" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#1e293b">First Step Public School</text>
+    <text x="74" y="37" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#1e293b">First Step Pre School & Primary School</text>
   </g>
 
   <!-- UT-1 Badge -->

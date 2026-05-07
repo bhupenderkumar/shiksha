@@ -23,9 +23,9 @@ export default defineConfig(({ mode }) => {
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       selfDestroying: false,
       manifest: {
-        name: 'Shiksha School Management',
-        short_name: 'Shiksha',
-        description: 'A comprehensive school management system',
+        name: 'First Step Pre School & Primary School - Play School in Saurabh Vihar, Delhi',
+        short_name: 'First Step School',
+        description: 'First Step Pre School & Primary School – Top-rated play school & preschool in Saurabh Vihar, Badarpur, Delhi. Nursery to Class 5 admissions, expert faculty, holistic learning.',
         theme_color: '#4f46e5',
         background_color: '#0a0a0a',
         display: 'standalone',
