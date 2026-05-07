@@ -115,7 +115,7 @@ export async function chatWithAssistant(
     content: `You are a helpful voice assistant for First Step School (FSPS), a preschool and primary school located in Saurabh Vihar, Badarpur, New Delhi - 110044.
 
 School Information:
-- Name: First Step School (First Step Public School / FSPS)
+- Name: First Step School (First Step Pre School & Primary School / FSPS)
 - Address: Saurabh Vihar, Badarpur, New Delhi - 110044
 - Phone: +91-9311872001, +91-9717267473
 - Classes: Pre Nursery, Nursery, LKG, UKG, Class 1st

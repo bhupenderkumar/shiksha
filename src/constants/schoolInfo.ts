@@ -18,7 +18,7 @@ export const SCHOOL_INFO = {
   affiliationNo: "20136251", // CBSE affiliation number
   bankDetails: {
     bankName: "ALLAHABAD BANK",
-    accountName: "First Step Public School",
+    accountName: "First Step Pre School & Primary School",
     accountNumber: "ALLA0212897",
     ifscCode: "110010132",
     branch: "Ashok Enclave II, Faridabad"

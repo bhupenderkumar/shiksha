@@ -9,6 +9,7 @@ import { VideosSection } from "./components/VideosSection";
 import { TestimonialsSection } from "./components/TestimonialsSection";
 import { MapSection } from "./components/MapSection";
 import { Footer } from "./components/Footer";
+import { SEO } from "@/components/SEO";
 import { SCHOOL_INFO } from "@/constants/schoolInfo";
 
 export default function Home() {
@@ -18,6 +19,11 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen bg-white overflow-x-hidden">
+      <SEO
+        title="First Step Pre School & Primary School – Best Play School in Saurabh Vihar, Badarpur, Delhi | Admissions Open 2026-27"
+        description="Top-rated 4.9★ play school, nursery, LKG, UKG and primary school in Saurabh Vihar, Jaitpur, Badarpur, New Delhi 110044. Activity-based learning, safe CCTV campus, expert teachers. Admissions open for 2026-27. Call +91 96679 35518."
+        path="/"
+      />
       {/* Sticky Navigation */}
       <Navbar />
 

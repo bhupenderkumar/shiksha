@@ -24,6 +24,7 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
+import { SEO } from '@/components/SEO';
 
 function seatBadge(status: FeeChartRow['seatStatus']) {
   if (status === 'full')
@@ -80,12 +81,17 @@ function exportPromotionCSV() {
 export default function FeeStructurePage() {
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Fee Structure 2026-27 – Admission, Promotion & Monthly Fees"
+        description="Transparent fee structure for First Step Pre School & Primary School, Saurabh Vihar, Badarpur, Delhi. Admission package, promotion charges and monthly fees for Playgroup, Nursery, LKG, UKG and Class 1–5 (Session 2026-27)."
+        path="/fee-structure"
+      />
       <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <Link to="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
             <img src="/assets/images/logo.PNG" alt="Logo" className="h-8 w-8 object-contain" />
             <div className="flex flex-col leading-tight">
-              <span className="text-sm font-bold">First Step Public School</span>
+              <span className="text-sm font-bold">First Step Pre School & Primary School</span>
               <span className="text-[10px] text-muted-foreground">School ID: 20136251</span>
             </div>
           </Link>

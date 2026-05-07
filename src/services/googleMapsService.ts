@@ -1,7 +1,7 @@
 // API key for Google Maps - used by useGoogleMaps hook for map display
 const _API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 // Place ID kept for reference if backend proxy is implemented later
-const _PLACE_ID = 'ChIJQZ8W_lnmDDkRKKD9jMgstPA'; // First Step Public School's Place ID
+const _PLACE_ID = 'ChIJQZ8W_lnmDDkRKKD9jMgstPA'; // First Step Pre School & Primary School's Place ID
 
 
 export const fetchPlaceDetails = async () => {
@@ -12,7 +12,7 @@ export const fetchPlaceDetails = async () => {
     reviews: [],
     user_ratings_total: 0,
     photos: [],
-    formatted_address: "The First Step Public School, Saurabh Vihar, Jaitpur, New Delhi, Delhi 110044",
+    formatted_address: "First Step Pre School & Primary School, Saurabh Vihar, Jaitpur, New Delhi, Delhi 110044",
     formatted_phone_number: "+91-9717267473"
   };
 };
@@ -29,7 +29,7 @@ const SCHOOL_LOCATION = {
 };
 
 const SCHOOL_ADDRESS = {
-  address: "The First Step Public School, Saurabh Vihar, Jaitpur, New Delhi, Delhi 110044",
+  address: "First Step Pre School & Primary School, Saurabh Vihar, Jaitpur, New Delhi, Delhi 110044",
   area: "Badarpur, Jaitpur, Saurabh Vihar",
   city: "New Delhi",
   pincode: "110044",

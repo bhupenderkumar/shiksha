@@ -112,7 +112,7 @@ const NurseryUT1Syllabus: React.FC = () => {
   const handleShare = async () => {
     const shareData = {
       title: 'Nursery — UT-1 Syllabus (2026-27)',
-      text: 'Nursery Unit Test - 1 Syllabus for Session 2026-27 — First Step Public School',
+      text: 'Nursery Unit Test - 1 Syllabus for Session 2026-27 — First Step Pre School & Primary School',
       url: typeof window !== 'undefined' ? window.location.href : '',
     };
     try {
@@ -139,7 +139,7 @@ const NurseryUT1Syllabus: React.FC = () => {
               </div>
               <div>
                 <p className="text-xs sm:text-sm uppercase tracking-widest text-white/80 font-semibold">
-                  {SCHOOL_INFO?.name || 'First Step Public School'}
+                  {SCHOOL_INFO?.name || 'First Step Pre School & Primary School'}
                 </p>
                 <h1 className="text-2xl sm:text-3xl font-extrabold leading-tight">
                   Nursery — UT-1 Syllabus

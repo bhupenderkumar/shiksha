@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { ClassAuthProvider } from './lib/class-auth-provider';
 import { PWAUpdatePrompt } from './components/pwa/PWAUpdatePrompt';
 import App from './App';
@@ -37,13 +38,15 @@ const root = document.getElementById('root');
 if (root) {
   ReactDOM.createRoot(root).render(
     <React.StrictMode>
-      <ClassAuthProvider>
-        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <GTMScript />
-          <App />
-          <PWAUpdatePrompt />
-        </Router>
-      </ClassAuthProvider>
+      <HelmetProvider>
+        <ClassAuthProvider>
+          <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <GTMScript />
+            <App />
+            <PWAUpdatePrompt />
+          </Router>
+        </ClassAuthProvider>
+      </HelmetProvider>
     </React.StrictMode>
   );
 }

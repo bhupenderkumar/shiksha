@@ -10,6 +10,7 @@ import { useAuth } from '@/lib/auth-provider';
 import Layout from '@/components/Layout';
 import PublicLayout from '@/components/PublicLayout';
 import { admissionTestResultService } from '@/services/admissionService';
+import { SEO } from '@/components/SEO';
 
 import { ClassLevel, CLASS_LEVEL_LABELS, CLASS_LEVEL_DESCRIPTIONS, TestResult } from '@/components/admission-tests/types';
 import { PreNurseryColorTest } from '@/components/admission-tests/PreNurseryColorTest';
@@ -131,6 +132,11 @@ export default function AdmissionTest() {
   // Show test selection screen
   return (
     <Wrapper>
+      <SEO
+        title="Online Admission Test – Pre-Nursery, Nursery, KG, Class 1"
+        description="Free interactive admission test for Pre-Nursery, Nursery, KG and Class 1 at First Step Pre School & Primary School, Saurabh Vihar, Badarpur, Delhi. Quick fun test to check your child's readiness."
+        path="/admission-test"
+      />
       <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100">
         {/* Hero */}
         <div className="relative overflow-hidden">

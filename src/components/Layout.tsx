@@ -175,7 +175,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <BookOpen className="h-6 w-6 text-primary" />
                 </motion.div>
                 <AnimatedText
-                  text="First Step Public School"
+                  text="First Step Pre School & Primary School"
                   className="text-xl font-bold text-foreground hidden sm:block"
                   variant="slideUp"
                 />

@@ -14,6 +14,7 @@ import {
   Heart,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SEO } from '@/components/SEO';
 import { VoiceRecorder } from '@/components/VoiceRecorder';
 import {
   schoolFeedbackService,
@@ -296,6 +297,11 @@ const SchoolFeedback: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-violet-50 via-blue-50/40 to-white">
+      <SEO
+        title="Parent Feedback – Share Your Experience"
+        description="Share your feedback as a parent of First Step Pre School & Primary School, Saurabh Vihar, Badarpur, Delhi. Help us improve and guide other parents looking for the best play school in the area."
+        path="/school-feedback"
+      />
       {/* Sticky app-shell header */}
       <div className="sticky top-0 z-30 bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md">
         <div className="max-w-md mx-auto px-3 pt-[env(safe-area-inset-top)]">

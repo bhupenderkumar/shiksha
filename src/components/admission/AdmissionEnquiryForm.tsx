@@ -101,6 +101,33 @@ export function AdmissionEnquiryForm({ initialData, onSubmit }: AdmissionEnquiry
       gender: data.gender,
       address: data.address,
     };
+    // Mirror submission to Netlify Forms for guaranteed lead capture (email notification)
+    // even if Supabase write fails. Fire-and-forget — never blocks main submit.
+    try {
+      const netlifyBody = new URLSearchParams({
+        'form-name': 'admission-enquiry',
+        studentName: data.studentName,
+        parentName: data.parentName,
+        email: data.email,
+        contactNumber: data.contactNumber,
+        gradeApplying: data.gradeApplying,
+        gender: data.gender,
+        dateOfBirth: typeof data.dateOfBirth === 'string' ? data.dateOfBirth : '',
+        address: data.address,
+      });
+      void fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: netlifyBody.toString(),
+      }).catch(() => { /* silent fail — primary submit is Supabase */ });
+    } catch { /* never block */ }
+    // GA4 / Google Ads conversion event
+    if (typeof window !== 'undefined' && (window as any).dataLayer) {
+      (window as any).dataLayer.push({
+        event: 'admission_enquiry_submit',
+        student_class: data.gradeApplying,
+      });
+    }
     await onSubmit(formattedData);
   };
 

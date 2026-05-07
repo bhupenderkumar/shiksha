@@ -721,7 +721,7 @@ const upcomingEvents: { date: string; label: { en: string; hi: string }; emoji: 
 const t = {
   title: { en: 'Annual Sports Week 2026', hi: 'वार्षिक खेल सप्ताह 2026' },
   subtitle: {
-    en: 'First Step Public School',
+    en: 'First Step Pre School & Primary School',
     hi: 'फर्स्ट स्टेप पब्लिक स्कूल',
   },
   heroTagline: {
@@ -2209,7 +2209,7 @@ export default function AnnualSportsWeek() {
             </div>
             <p className="text-xs text-muted-foreground">
               {lang === 'en'
-                ? '© 2026 First Step Public School. All rights reserved.'
+                ? '© 2026 First Step Pre School & Primary School. All rights reserved.'
                 : '© 2026 फर्स्ट स्टेप पब्लिक स्कूल। सर्वाधिकार सुरक्षित।'}
             </p>
           </motion.div>

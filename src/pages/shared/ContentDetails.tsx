@@ -85,7 +85,7 @@ export const ContentDetailsPage = ({ contentType }: ContentDetailsPageProps) => 
   useEffect(() => {
     if (content) {
       const dateStr = format(content.date, 'MMM dd, yyyy');
-      document.title = `${config.label} | ${content.class?.name || 'N/A'} | ${content.subject?.name || 'N/A'} | ${dateStr} | First Step Public School`;
+      document.title = `${config.label} | ${content.class?.name || 'N/A'} | ${content.subject?.name || 'N/A'} | ${dateStr} | First Step Pre School & Primary School`;
     }
   }, [content, config.label]);
 

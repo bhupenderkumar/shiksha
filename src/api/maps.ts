@@ -2,7 +2,7 @@ import { supabase } from '@/lib/api-client';
 import { SCHEMA } from '@/lib/constants';
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-const PLACE_ID = 'ChIJQZ8W_lnmDDkRKKD9jMgstPA'; // First Step Public School's Place ID
+const PLACE_ID = 'ChIJQZ8W_lnmDDkRKKD9jMgstPA'; // First Step Pre School & Primary School's Place ID
 
 export async function getPlaceDetails() {
   try {

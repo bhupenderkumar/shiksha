@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { AdmissionEnquiryForm } from '@/components/admission/AdmissionEnquiryForm';
+import { SEO } from "@/components/SEO";
 import {
   ArrowLeft,
   Calendar,
@@ -310,6 +311,11 @@ const AdmissionEnquiry = () => {
     const Wrapper = user ? Layout : PublicLayout;
     return (
       <Wrapper>
+        <SEO
+          title="Admission Enquiry 2026-27 – Apply Online"
+          description="Apply online for admission to First Step Pre School & Primary School in Saurabh Vihar, Badarpur, Delhi. Playgroup, Nursery, LKG, UKG, Class 1–5. Quick form, fast response. Call +91 96679 35518."
+          path="/admission-enquiry"
+        />
         <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100">
           {/* Hero Header */}
           <div className="relative overflow-hidden">
