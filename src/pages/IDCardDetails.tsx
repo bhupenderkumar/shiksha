@@ -73,11 +73,16 @@ const IDCardDetails: React.FC = () => {
     sortBy: 'created_at',
     sortOrder: 'desc',
     search: '',
-    classId: ''
+    classId: '',
+    year: 2026
   });
 
   // For the UI select component
   const [selectedClassId, setSelectedClassId] = useState<string>('all');
+  const [selectedYear, setSelectedYear] = useState<string>('2026');
+
+  // Available years for the filter dropdown (current year down to 2020)
+  const yearOptions = Array.from({ length: new Date().getFullYear() - 2019 }, (_, i) => new Date().getFullYear() - i);
 
   // Fetch ID cards on component mount and when search params change
   useEffect(() => {
@@ -136,6 +141,16 @@ const IDCardDetails: React.FC = () => {
     }));
   };
 
+  // Handle year filter change
+  const handleYearChange = (value: string) => {
+    setSelectedYear(value);
+    setSearchParams(prev => ({
+      ...prev,
+      year: value === 'all' ? 'all' : Number(value),
+      page: 1
+    }));
+  };
+
   // Handle sort change
   const handleSortChange = (column: string) => {
     setSearchParams(prev => ({
@@ -180,7 +195,7 @@ const IDCardDetails: React.FC = () => {
   // Clear selection when page/filter changes
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [searchParams.page, searchParams.classId, searchParams.search]);
+  }, [searchParams.page, searchParams.classId, searchParams.search, searchParams.year]);
 
   // State for modal and delete dialog
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -253,7 +268,8 @@ const IDCardDetails: React.FC = () => {
         search: searchParams.search,
         classId: searchParams.classId,
         sortBy: searchParams.sortBy,
-        sortOrder: searchParams.sortOrder
+        sortOrder: searchParams.sortOrder,
+        year: searchParams.year
       };
 
       // Export all ID cards with the current filters
@@ -293,7 +309,8 @@ const IDCardDetails: React.FC = () => {
         search: searchParams.search,
         classId: searchParams.classId,
         sortBy: searchParams.sortBy,
-        sortOrder: searchParams.sortOrder
+        sortOrder: searchParams.sortOrder,
+        year: searchParams.year
       };
 
       // Export all ID cards to Excel with the current filters
@@ -606,6 +623,22 @@ const IDCardDetails: React.FC = () => {
                 {classes.map(cls => (
                   <SelectItem key={cls.id} value={cls.id}>
                     {cls.name} {cls.section}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={selectedYear}
+              onValueChange={handleYearChange}
+            >
+              <SelectTrigger className="w-full md:w-[150px]">
+                <SelectValue placeholder="Filter by year" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Years</SelectItem>
+                {yearOptions.map(yr => (
+                  <SelectItem key={yr} value={String(yr)}>
+                    {yr}
                   </SelectItem>
                 ))}
               </SelectContent>

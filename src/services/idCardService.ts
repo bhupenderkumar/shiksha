@@ -90,6 +90,8 @@ export interface IDCardListParams {
   sortOrder?: 'asc' | 'desc';
   search?: string;
   classId?: string;
+  /** Filter by the year the record was created. Defaults to 2026 in the service. Pass 'all' to disable the year filter. */
+  year?: number | 'all';
 }
 
 export interface IDCardListResult {
@@ -398,66 +400,28 @@ export const idCardService = {
 
         // Load all images for this row first, then add them
         // This ensures images are properly associated with their row
-        let studentImageBase64: string | null = null;
-        let fatherImageBase64: string | null = null;
-        let motherImageBase64: string | null = null;
+        let studentImage: { base64: string; extension: 'jpeg' | 'png' } | null = null;
+        let fatherImage: { base64: string; extension: 'jpeg' | 'png' } | null = null;
+        let motherImage: { base64: string; extension: 'jpeg' | 'png' } | null = null;
 
-        // Load student photo
+        // Load photos at high quality (original bytes, no re-encoding) for crisp embedding in Excel
         if (typeof idCard.studentPhoto === 'string' && idCard.studentPhoto) {
-          try {
-            const img = await this.loadImage(idCard.studentPhoto);
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 100;
-            canvas.height = 120;
-            if (ctx) {
-              ctx.drawImage(img, 0, 0, 100, 120);
-              studentImageBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
-            }
-          } catch (error) {
-            console.error('Error loading student photo:', error);
-          }
+          studentImage = await this.getHighQualityImageBase64(idCard.studentPhoto);
         }
 
-        // Load father photo
         if (typeof idCard.fatherPhoto === 'string' && idCard.fatherPhoto) {
-          try {
-            const img = await this.loadImage(idCard.fatherPhoto);
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 100;
-            canvas.height = 120;
-            if (ctx) {
-              ctx.drawImage(img, 0, 0, 100, 120);
-              fatherImageBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
-            }
-          } catch (error) {
-            console.error('Error loading father photo:', error);
-          }
+          fatherImage = await this.getHighQualityImageBase64(idCard.fatherPhoto);
         }
 
-        // Load mother photo
         if (typeof idCard.motherPhoto === 'string' && idCard.motherPhoto) {
-          try {
-            const img = await this.loadImage(idCard.motherPhoto);
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 100;
-            canvas.height = 120;
-            if (ctx) {
-              ctx.drawImage(img, 0, 0, 100, 120);
-              motherImageBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
-            }
-          } catch (error) {
-            console.error('Error loading mother photo:', error);
-          }
+          motherImage = await this.getHighQualityImageBase64(idCard.motherPhoto);
         }
 
         // Now add all images for this row using the actual row number
-        if (studentImageBase64) {
+        if (studentImage) {
           const studentPhotoId = workbook.addImage({
-            base64: studentImageBase64,
-            extension: 'jpeg',
+            base64: studentImage.base64,
+            extension: studentImage.extension,
           });
           worksheet.addImage(studentPhotoId, {
             tl: { col: 0, row: actualRowNumber - 1 },
@@ -465,10 +429,10 @@ export const idCardService = {
           });
         }
 
-        if (fatherImageBase64) {
+        if (fatherImage) {
           const fatherPhotoId = workbook.addImage({
-            base64: fatherImageBase64,
-            extension: 'jpeg',
+            base64: fatherImage.base64,
+            extension: fatherImage.extension,
           });
           worksheet.addImage(fatherPhotoId, {
             tl: { col: 4, row: actualRowNumber - 1 },
@@ -476,10 +440,10 @@ export const idCardService = {
           });
         }
 
-        if (motherImageBase64) {
+        if (motherImage) {
           const motherPhotoId = workbook.addImage({
-            base64: motherImageBase64,
-            extension: 'jpeg',
+            base64: motherImage.base64,
+            extension: motherImage.extension,
           });
           worksheet.addImage(motherPhotoId, {
             tl: { col: 7, row: actualRowNumber - 1 },
@@ -1274,66 +1238,28 @@ export const idCardService = {
 
         // Load all images for this row first, then add them
         // This ensures images are properly associated with their row
-        let studentImageBase64: string | null = null;
-        let fatherImageBase64: string | null = null;
-        let motherImageBase64: string | null = null;
+        let studentImage: { base64: string; extension: 'jpeg' | 'png' } | null = null;
+        let fatherImage: { base64: string; extension: 'jpeg' | 'png' } | null = null;
+        let motherImage: { base64: string; extension: 'jpeg' | 'png' } | null = null;
 
-        // Load student photo
+        // Load photos at high quality (original bytes, no re-encoding) for crisp embedding in Excel
         if (typeof idCard.studentPhoto === 'string' && idCard.studentPhoto) {
-          try {
-            const img = await this.loadImage(idCard.studentPhoto);
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 100;
-            canvas.height = 120;
-            if (ctx) {
-              ctx.drawImage(img, 0, 0, 100, 120);
-              studentImageBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
-            }
-          } catch (error) {
-            console.error('Error loading student photo:', error);
-          }
+          studentImage = await this.getHighQualityImageBase64(idCard.studentPhoto);
         }
 
-        // Load father photo
         if (typeof idCard.fatherPhoto === 'string' && idCard.fatherPhoto) {
-          try {
-            const img = await this.loadImage(idCard.fatherPhoto);
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 100;
-            canvas.height = 120;
-            if (ctx) {
-              ctx.drawImage(img, 0, 0, 100, 120);
-              fatherImageBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
-            }
-          } catch (error) {
-            console.error('Error loading father photo:', error);
-          }
+          fatherImage = await this.getHighQualityImageBase64(idCard.fatherPhoto);
         }
 
-        // Load mother photo
         if (typeof idCard.motherPhoto === 'string' && idCard.motherPhoto) {
-          try {
-            const img = await this.loadImage(idCard.motherPhoto);
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 100;
-            canvas.height = 120;
-            if (ctx) {
-              ctx.drawImage(img, 0, 0, 100, 120);
-              motherImageBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
-            }
-          } catch (error) {
-            console.error('Error loading mother photo:', error);
-          }
+          motherImage = await this.getHighQualityImageBase64(idCard.motherPhoto);
         }
 
         // Now add all images for this row using the actual row number
-        if (studentImageBase64) {
+        if (studentImage) {
           const studentPhotoId = workbook.addImage({
-            base64: studentImageBase64,
-            extension: 'jpeg',
+            base64: studentImage.base64,
+            extension: studentImage.extension,
           });
           worksheet.addImage(studentPhotoId, {
             tl: { col: 1, row: actualRowNumber - 1 },
@@ -1341,10 +1267,10 @@ export const idCardService = {
           });
         }
 
-        if (fatherImageBase64) {
+        if (fatherImage) {
           const fatherPhotoId = workbook.addImage({
-            base64: fatherImageBase64,
-            extension: 'jpeg',
+            base64: fatherImage.base64,
+            extension: fatherImage.extension,
           });
           worksheet.addImage(fatherPhotoId, {
             tl: { col: 5, row: actualRowNumber - 1 },
@@ -1352,10 +1278,10 @@ export const idCardService = {
           });
         }
 
-        if (motherImageBase64) {
+        if (motherImage) {
           const motherPhotoId = workbook.addImage({
-            base64: motherImageBase64,
-            extension: 'jpeg',
+            base64: motherImage.base64,
+            extension: motherImage.extension,
           });
           worksheet.addImage(motherPhotoId, {
             tl: { col: 8, row: actualRowNumber - 1 },
@@ -1470,6 +1396,48 @@ export const idCardService = {
     });
   },
 
+  /**
+   * Fetch the original image bytes for a photo URL and return them as base64,
+   * so the exact source file is embedded in exports (no resizing/re-encoding
+   * quality loss, and no canvas/CORS-taint issues from drawing to a canvas).
+   * Excel scales the image to fit the given cell anchor for display only —
+   * the embedded file itself keeps its full original resolution.
+   * @param url Image URL to fetch
+   * @returns The base64 data (without data-URL prefix) and detected extension, or null on failure
+   */
+  async getHighQualityImageBase64(url: string): Promise<{ base64: string; extension: 'jpeg' | 'png' } | null> {
+    try {
+      // Resolve Supabase signed URLs to public URLs (same handling as loadImage)
+      let resolvedUrl = url;
+      if (url.includes('supabase.co/storage/v1/object/sign')) {
+        const pathMatch = url.match(/\/File\/(.+?)\?/);
+        if (pathMatch && pathMatch[1]) {
+          const publicUrlData = supabase.storage.from(FILE_CONFIG.BUCKET).getPublicUrl(pathMatch[1]);
+          resolvedUrl = publicUrlData.data.publicUrl;
+        }
+      }
+
+      const response = await fetch(resolvedUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image (${response.status}): ${resolvedUrl}`);
+      }
+      const blob = await response.blob();
+
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(blob);
+      });
+
+      const extension: 'jpeg' | 'png' = blob.type.includes('png') ? 'png' : 'jpeg';
+      return { base64, extension };
+    } catch (error) {
+      console.error('Error loading high-quality image:', error);
+      return null;
+    }
+  },
+
   async deleteIDCard(id: string): Promise<void> {
     try {
       // First, get the ID card to check if it exists and get photo URLs
@@ -1534,7 +1502,10 @@ export const idCardService = {
         sortBy = 'created_at',
         sortOrder = 'desc',
         search = '',
-        classId = ''
+        classId = '',
+        // Default to 2026 records unless the caller explicitly asks for another
+        // year or passes 'all' to disable this filter entirely.
+        year = 2026
       } = params;
 
       // Calculate offset for pagination
@@ -1571,6 +1542,13 @@ export const idCardService = {
       // Add class filter if provided
       if (classId) {
         query = query.eq('class_id', classId);
+      }
+
+      // Add year filter if provided (filters by created_at year); 'all' disables it
+      if (year !== 'all') {
+        query = query
+          .gte('created_at', `${year}-01-01T00:00:00.000Z`)
+          .lt('created_at', `${year + 1}-01-01T00:00:00.000Z`);
       }
 
       // Add sorting
